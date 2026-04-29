@@ -1,0 +1,50 @@
+{
+  "agentType": "jd-author",
+  "totalCases": 3,
+  "passed": 3,
+  "failed": 0,
+  "passRate": 1,
+  "avgScore": 1,
+  "avgLatencyMs": 0,
+  "totalTokens": 0,
+  "totalCostUsd": 0,
+  "results": [
+    {
+      "caseIndex": 0,
+      "pass": true,
+      "score": 1,
+      "metrics": {
+        "schemaValid": 1
+      },
+      "errors": [],
+      "latencyMs": 0,
+      "tokensUsed": 0,
+      "costUsd": 0
+    },
+    {
+      "caseIndex": 1,
+      "pass": true,
+      "score": 1,
+      "metrics": {
+        "schemaValid": 1
+      },
+      "errors": [],
+      "latencyMs": 0,
+      "tokensUsed": 0,
+      "costUsd": 0
+    },
+    {
+      "caseIndex": 2,
+      "pass": true,
+      "score": 1,
+      "metrics": {
+        "schemaValid": 1
+      },
+      "errors": [],
+      "latencyMs": 0,
+      "tokensUsed": 0,
+      "costUsd": 0
+    }
+  ],
+  "timestamp": "2026-04-10T08:14:02.957Z"
+}

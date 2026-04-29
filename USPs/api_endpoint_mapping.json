@@ -1,0 +1,861 @@
+{
+  "metadata": {
+    "generated": "2026-03-31",
+    "source_files": [
+      "D:/CDC/ATS/build_spec.json",
+      "D:/CDC/ATS/frontend/lib/api-client.ts",
+      "D:/CDC/ATS/backend/src/engines/*/routes.ts"
+    ],
+    "total_spec_endpoints": 374,
+    "total_backend_routes": 812,
+    "total_api_client_methods": 398,
+    "coverage_pct": 99,
+    "duplicates_found": 6,
+    "missing_from_api_client": 4,
+    "notes": "Backend routes significantly exceed spec endpoints — engines contain many USP-slug and P2/P3 extended routes beyond core spec. API-client coverage is nearly complete; 4 known DELETE gaps documented below."
+  },
+  "engines": [
+    {
+      "engine_id": "platform-core",
+      "base_path": "/api/platform",
+      "spec_endpoints": 21,
+      "implemented_routes": 21,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "GET",  "path": "/api/platform/health",                            "in_spec": true,  "in_api_client": true,  "spec_desc": "System health check" },
+        { "method": "GET",  "path": "/api/requisitions",                               "in_spec": true,  "in_api_client": true,  "spec_desc": "List all requisitions" },
+        { "method": "POST", "path": "/api/requisitions",                               "in_spec": true,  "in_api_client": true,  "spec_desc": "Create requisition" },
+        { "method": "GET",  "path": "/api/requisitions/:id",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Get requisition details" },
+        { "method": "PUT",  "path": "/api/requisitions/:id",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Update requisition" },
+        { "method": "DELETE","path": "/api/requisitions/:id",                          "in_spec": true,  "in_api_client": false, "spec_desc": "Archive requisition" },
+        { "method": "GET",  "path": "/api/requisitions/:id/snapshots",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Get versioned snapshots" },
+        { "method": "POST", "path": "/api/requisitions/:id/orchestrate",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Trigger end-to-end orchestration" },
+        { "method": "GET",  "path": "/api/requisitions/:id/status",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Get orchestration status" },
+        { "method": "GET",  "path": "/api/requisitions/duplicates",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Detect duplicate requisitions" },
+        { "method": "POST", "path": "/api/requisitions/:id/consolidate",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Consolidate duplicate requisitions" },
+        { "method": "GET",  "path": "/api/tenants",                                    "in_spec": true,  "in_api_client": true,  "spec_desc": "List tenants" },
+        { "method": "POST", "path": "/api/tenants",                                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Create tenant" },
+        { "method": "GET",  "path": "/api/tenants/:id",                                "in_spec": true,  "in_api_client": true,  "spec_desc": "Get tenant config" },
+        { "method": "PUT",  "path": "/api/tenants/:id/isolation",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Configure tenant isolation" },
+        { "method": "GET",  "path": "/api/skills/ontology",                            "in_spec": true,  "in_api_client": true,  "spec_desc": "Get skills ontology" },
+        { "method": "POST", "path": "/api/skills/ontology",                            "in_spec": true,  "in_api_client": true,  "spec_desc": "Update skills ontology" },
+        { "method": "GET",  "path": "/api/skills/ontology/search",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Search skills" },
+        { "method": "POST", "path": "/api/requisitions/:id/intake",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Automated intake and calibration" },
+        { "method": "GET",  "path": "/api/platform/localization",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Get localization config" },
+        { "method": "POST", "path": "/api/platform/localization/translate",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Translate content" },
+        { "method": "GET",  "path": "/api/requisitions/prioritization",                "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/knowledge-graph",                   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/skills/unified-ontology",                    "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/platform/sandbox/preview",                   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/talent-graph",                      "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/stalled-pipelines",                 "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/platform/stalled-pipelines/recover",         "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/requisitions/:id/calibration",               "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/ab-tests",                          "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/platform/ab-tests",                          "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/personalization-engine",            "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "PUT",  "path": "/api/platform/personalization-engine",            "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/autonomy-config",                   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "PUT",  "path": "/api/platform/autonomy-config",                   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/control-center",                    "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/platform/control-center/review/:reviewId",   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/platform/surge-capacity",                    "in_spec": false, "in_api_client": false, "spec_desc": null }
+      ]
+    },
+    {
+      "engine_id": "security-framework",
+      "base_path": "/api/security",
+      "spec_endpoints": 45,
+      "implemented_routes": 45,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "POST", "path": "/api/security/tool-router/validate",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Validate and route tool calls securely" },
+        { "method": "GET",  "path": "/api/security/tool-router/audit",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Get tool routing audit log" },
+        { "method": "POST", "path": "/api/security/consent",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Record candidate consent" },
+        { "method": "GET",  "path": "/api/security/consent/:candidateId",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Get consent status" },
+        { "method": "PUT",  "path": "/api/security/consent/:candidateId",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Update consent preferences" },
+        { "method": "DELETE","path": "/api/security/consent/:candidateId",             "in_spec": true,  "in_api_client": false, "spec_desc": "Revoke consent" },
+        { "method": "GET",  "path": "/api/security/consent/:candidateId/history",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Consent version history" },
+        { "method": "GET",  "path": "/api/security/data-residency/config",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Get data residency rules" },
+        { "method": "PUT",  "path": "/api/security/data-residency/config",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Update residency rules" },
+        { "method": "POST", "path": "/api/security/data-residency/route",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Route data to correct region" },
+        { "method": "GET",  "path": "/api/security/data-residency/audit",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Data residency audit log" },
+        { "method": "GET",  "path": "/api/security/vault",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "List vault entries (metadata only)" },
+        { "method": "POST", "path": "/api/security/vault",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Store sensitive data in vault" },
+        { "method": "GET",  "path": "/api/security/vault/:id",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Retrieve from vault (JIT access)" },
+        { "method": "DELETE","path": "/api/security/vault/:id",                        "in_spec": true,  "in_api_client": false, "spec_desc": "Purge vault entry" },
+        { "method": "POST", "path": "/api/security/retention/evaluate",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Evaluate retention policies" },
+        { "method": "POST", "path": "/api/security/retention/purge",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Execute retention purge" },
+        { "method": "GET",  "path": "/api/security/retention/schedule",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Get retention schedule" },
+        { "method": "PUT",  "path": "/api/security/retention/schedule",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Update retention schedule" },
+        { "method": "GET",  "path": "/api/security/access/config",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Get access control config" },
+        { "method": "POST", "path": "/api/security/access/jit-review",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Request JIT access review" },
+        { "method": "GET",  "path": "/api/security/access/audit",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Access audit trail" },
+        { "method": "PUT",  "path": "/api/security/access/roles",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Update RBAC roles" },
+        { "method": "POST", "path": "/api/security/prompt-firewall/scan",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Scan for prompt injection" },
+        { "method": "GET",  "path": "/api/security/prompt-firewall/log",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Prompt firewall log" },
+        { "method": "PUT",  "path": "/api/security/prompt-firewall/rules",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Update firewall rules" },
+        { "method": "GET",  "path": "/api/security/zero-trust/status",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Zero-trust validation status" },
+        { "method": "POST", "path": "/api/security/zero-trust/verify",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Verify zero-trust chain" },
+        { "method": "POST", "path": "/api/security/erasure/request",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "GDPR/CCPA erasure request" },
+        { "method": "GET",  "path": "/api/security/erasure/:requestId",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Erasure request status" },
+        { "method": "POST", "path": "/api/security/erasure/:requestId/execute",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Execute erasure cascade" },
+        { "method": "POST", "path": "/api/security/pii/mask",                          "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time PII masking" },
+        { "method": "POST", "path": "/api/security/pii/redact",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Redact PII from content" },
+        { "method": "GET",  "path": "/api/security/data-minimization/config",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Data minimization config" },
+        { "method": "POST", "path": "/api/security/data-minimization/evaluate",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Evaluate data minimization" },
+        { "method": "POST", "path": "/api/security/dsar",                              "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit data subject request" },
+        { "method": "GET",  "path": "/api/security/dsar/:id",                          "in_spec": true,  "in_api_client": true,  "spec_desc": "DSAR status" },
+        { "method": "POST", "path": "/api/security/dsar/:id/fulfill",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Fulfill DSAR" },
+        { "method": "POST", "path": "/api/security/fraud/detect",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Detect identity fraud" },
+        { "method": "POST", "path": "/api/security/fraud/deepfake",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Deepfake detection" },
+        { "method": "GET",  "path": "/api/security/fraud/log",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Fraud detection log" },
+        { "method": "GET",  "path": "/api/security/credentials/:candidateId",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Get candidate credential packet" },
+        { "method": "POST", "path": "/api/security/credentials/:candidateId",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Upload credential packet" },
+        { "method": "POST", "path": "/api/security/data-correction",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit data correction request" },
+        { "method": "GET",  "path": "/api/security/data-portability/:candidateId",     "in_spec": true,  "in_api_client": true,  "spec_desc": "Export candidate data" },
+        { "method": "GET",  "path": "/api/security/private-models",                    "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/security/private-models",                    "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "PUT",  "path": "/api/security/private-models/:id/deploy",         "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "PUT",  "path": "/api/security/private-models/:id/retire",         "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/ai-registry",                       "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/security/ai-registry",                       "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "PUT",  "path": "/api/security/ai-registry/:id",                   "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/ai-registry/:id/versions",          "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/security/dp-analytics/query",                "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/dp-analytics/budget",               "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/dp-analytics/log",                  "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/macl",                              "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "POST", "path": "/api/security/macl",                              "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "DELETE","path": "/api/security/macl/:entryId",                    "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/macl/check",                        "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/macl/expiring",                     "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/zero-trust/policy",                 "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "PUT",  "path": "/api/security/zero-trust/policy",                 "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/zero-trust/violations",             "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/ai-safety/guardrails",              "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "POST", "path": "/api/security/ai-safety/guardrails/test",         "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/ai-safety/alignment-score",         "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "POST", "path": "/api/security/red-team/run",                      "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/red-team/results",                  "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/enclaves/status",                   "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "POST", "path": "/api/security/enclaves/attest",                   "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/threat-intelligence/feed",          "in_spec": false, "in_api_client": true,  "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/threat-intelligence/ioc",           "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/posture/score",                     "in_spec": false, "in_api_client": false, "spec_desc": null },
+        { "method": "GET",  "path": "/api/security/posture/history",                   "in_spec": false, "in_api_client": false, "spec_desc": null }
+      ]
+    },
+    {
+      "engine_id": "bias-fairness-engine",
+      "base_path": "/api/bias",
+      "spec_endpoints": 34,
+      "implemented_routes": 34,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "POST", "path": "/api/bias/proxy-detect",                          "in_spec": true,  "in_api_client": true,  "spec_desc": "Detect protected-trait proxies" },
+        { "method": "GET",  "path": "/api/bias/proxy-detect/log",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Proxy detection log" },
+        { "method": "POST", "path": "/api/bias/adverse-impact/analyze",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Run adverse impact analysis" },
+        { "method": "GET",  "path": "/api/bias/adverse-impact/by-stage",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Adverse impact by pipeline stage" },
+        { "method": "GET",  "path": "/api/bias/adverse-impact/realtime",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time adverse impact monitor" },
+        { "method": "GET",  "path": "/api/bias/adverse-impact/four-fifths",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Four-fifths rule report" },
+        { "method": "POST", "path": "/api/bias/drift/check",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Check for bias drift" },
+        { "method": "GET",  "path": "/api/bias/drift/history",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Drift history over time" },
+        { "method": "GET",  "path": "/api/bias/drift/alerts",                          "in_spec": true,  "in_api_client": true,  "spec_desc": "Active drift alerts" },
+        { "method": "GET",  "path": "/api/bias/fairness/metrics",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Current fairness metrics" },
+        { "method": "GET",  "path": "/api/bias/fairness/by-role",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Fairness metrics per role" },
+        { "method": "POST", "path": "/api/bias/fairness/simulate",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Simulate fairness impact" },
+        { "method": "GET",  "path": "/api/bias/fairness/benchmarks",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Fairness benchmarks" },
+        { "method": "PUT",  "path": "/api/bias/fairness/objectives",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Set fairness objectives" },
+        { "method": "GET",  "path": "/api/bias/monitor/dashboard",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time bias dashboard" },
+        { "method": "GET",  "path": "/api/bias/monitor/diversity",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Diversity pipeline analytics" },
+        { "method": "GET",  "path": "/api/bias/monitor/intersectional",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Intersectional bias analysis" },
+        { "method": "POST", "path": "/api/bias/audit/run",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Run bias audit" },
+        { "method": "GET",  "path": "/api/bias/audit/results",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Get audit results" },
+        { "method": "GET",  "path": "/api/bias/audit/schedule",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Audit schedule" },
+        { "method": "POST", "path": "/api/bias/audit/schedule",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Schedule bias audit" },
+        { "method": "POST", "path": "/api/bias/pre-deployment/test",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Pre-deployment bias test" },
+        { "method": "GET",  "path": "/api/bias/pre-deployment/gate",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Pre-go-live fairness gate status" },
+        { "method": "POST", "path": "/api/bias/remediation/trigger",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Trigger bias remediation" },
+        { "method": "GET",  "path": "/api/bias/remediation/workflows",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Active remediation workflows" },
+        { "method": "POST", "path": "/api/bias/knockout-filter/simulate",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Simulate knockout filter impact" },
+        { "method": "POST", "path": "/api/bias/jd-screener/scan",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Scan job description for bias" },
+        { "method": "GET",  "path": "/api/bias/interviewer-calibration/:userId",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Interviewer calibration score" },
+        { "method": "GET",  "path": "/api/bias/interviewer-calibration/drift",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Interviewer drift monitoring" },
+        { "method": "GET",  "path": "/api/bias/manager-calibration/:userId",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Manager calibration and drift" },
+        { "method": "POST", "path": "/api/bias/demographic/segregate",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Segregate demographic data" },
+        { "method": "GET",  "path": "/api/bias/diversity/tracker",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Diversity and inclusion tracker" },
+        { "method": "GET",  "path": "/api/bias/diversity/slate/:reqId",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Diversity slate for requisition" },
+        { "method": "POST", "path": "/api/bias/diversity/generate-slate",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate diverse candidate slate" }
+      ]
+    },
+    {
+      "engine_id": "compliance-governance-engine",
+      "base_path": "/api/compliance",
+      "spec_endpoints": 71,
+      "implemented_routes": 71,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "CRITICAL",
+          "method": "GET",
+          "path": "/overrides",
+          "found_in": ["compliance-governance/routes.ts:828", "analytics/routes.ts:568", "explainability/routes.ts:1032"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "GET",  "path": "/api/compliance/audit-trail",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Query audit trail" },
+        { "method": "GET",  "path": "/api/compliance/audit-trail/:decisionId",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Decision audit detail" },
+        { "method": "GET",  "path": "/api/compliance/audit-trail/replay/:decisionId",  "in_spec": true,  "in_api_client": true,  "spec_desc": "Replay decision as it happened" },
+        { "method": "GET",  "path": "/api/compliance/audit-trail/timeline/:candidateId","in_spec": true, "in_api_client": true,  "spec_desc": "Immutable decision timeline" },
+        { "method": "GET",  "path": "/api/compliance/audit-trail/chain-of-custody/:id","in_spec": true,  "in_api_client": true,  "spec_desc": "Decision chain of custody" },
+        { "method": "POST", "path": "/api/compliance/evidence/generate",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate evidence pack" },
+        { "method": "GET",  "path": "/api/compliance/evidence/:packId",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Get evidence package" },
+        { "method": "POST", "path": "/api/compliance/evidence/export",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Export for counsel/procurement" },
+        { "method": "GET",  "path": "/api/compliance/evidence/vault",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Evidence vault contents" },
+        { "method": "POST", "path": "/api/compliance/legal-hold",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Apply litigation hold" },
+        { "method": "GET",  "path": "/api/compliance/legal-hold/active",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Active legal holds" },
+        { "method": "DELETE","path": "/api/compliance/legal-hold/:id",                 "in_spec": true,  "in_api_client": false, "spec_desc": "Release legal hold" },
+        { "method": "GET",  "path": "/api/compliance/policies",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "List active policies" },
+        { "method": "POST", "path": "/api/compliance/policies",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Create policy-as-code rule" },
+        { "method": "PUT",  "path": "/api/compliance/policies/:id",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Update policy" },
+        { "method": "POST", "path": "/api/compliance/policies/evaluate",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Evaluate policy against action" },
+        { "method": "GET",  "path": "/api/compliance/policies/impact-diff",            "in_spec": true,  "in_api_client": true,  "spec_desc": "AI change impact diff" },
+        { "method": "GET",  "path": "/api/compliance/jurisdiction/rules",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Jurisdiction-specific rules" },
+        { "method": "PUT",  "path": "/api/compliance/jurisdiction/rules",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Update jurisdiction rules" },
+        { "method": "GET",  "path": "/api/compliance/jurisdiction/:country",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Rules for specific jurisdiction" },
+        { "method": "POST", "path": "/api/compliance/jurisdiction/adapt",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Adapt workflow for jurisdiction" },
+        { "method": "GET",  "path": "/api/compliance/regulations/templates",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Regulation template library" },
+        { "method": "POST", "path": "/api/compliance/regulations/change-alert",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Check for regulation changes" },
+        { "method": "POST", "path": "/api/compliance/regulations/simulate",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Simulate regulation change impact" },
+        { "method": "GET",  "path": "/api/compliance/human-review/queue",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Human review queue" },
+        { "method": "POST", "path": "/api/compliance/human-review/submit",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit human review decision" },
+        { "method": "GET",  "path": "/api/compliance/human-review/gates",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Configured review gates" },
+        { "method": "PUT",  "path": "/api/compliance/human-review/gates",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Configure review gates" },
+        { "method": "POST", "path": "/api/compliance/human-review/escalate",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Escalate for senior review" },
+        { "method": "GET",  "path": "/api/compliance/overrides",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "List decision overrides" },
+        { "method": "POST", "path": "/api/compliance/overrides",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Record override with justification" },
+        { "method": "GET",  "path": "/api/compliance/overrides/patterns",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Override pattern analysis" },
+        { "method": "POST", "path": "/api/compliance/reports/eeoc",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate EEOC report" },
+        { "method": "POST", "path": "/api/compliance/reports/ofccp",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate OFCCP report" },
+        { "method": "POST", "path": "/api/compliance/reports/eeo1",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate EEO-1 report" },
+        { "method": "POST", "path": "/api/compliance/reports/eu-ai-act",               "in_spec": true,  "in_api_client": true,  "spec_desc": "EU AI Act conformity report" },
+        { "method": "GET",  "path": "/api/compliance/reports/audit-readiness",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Audit readiness scorecard" },
+        { "method": "GET",  "path": "/api/compliance/reports/regulatory-readiness",    "in_spec": true,  "in_api_client": true,  "spec_desc": "Regulatory readiness score" },
+        { "method": "POST", "path": "/api/compliance/reports/custom-export",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Custom audit export" },
+        { "method": "POST", "path": "/api/compliance/dpia/generate",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate DPIA assessment" },
+        { "method": "GET",  "path": "/api/compliance/dpia/:id",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Get DPIA result" },
+        { "method": "POST", "path": "/api/compliance/dpia/export",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Export pre-filled DPIA" },
+        { "method": "GET",  "path": "/api/compliance/eu-ai-act/risk-tier",             "in_spec": true,  "in_api_client": true,  "spec_desc": "EU AI Act risk classification" },
+        { "method": "POST", "path": "/api/compliance/eu-ai-act/conformity",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Run conformity assessment" },
+        { "method": "GET",  "path": "/api/compliance/eu-ai-act/annex-iii",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Annex III risk classification" },
+        { "method": "GET",  "path": "/api/compliance/nyc-ll144/status",                "in_spec": true,  "in_api_client": true,  "spec_desc": "NYC LL144 compliance status" },
+        { "method": "POST", "path": "/api/compliance/nyc-ll144/audit",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Run NYC LL144 bias audit" },
+        { "method": "GET",  "path": "/api/compliance/gdpr/article22/:candidateId",     "in_spec": true,  "in_api_client": true,  "spec_desc": "GDPR Art 22 flagging" },
+        { "method": "POST", "path": "/api/compliance/gdpr/significant-decision",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Flag significant decision" },
+        { "method": "POST", "path": "/api/compliance/works-council/package",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate works council package" },
+        { "method": "GET",  "path": "/api/compliance/works-council/status",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Works council consultation status" },
+        { "method": "GET",  "path": "/api/compliance/ai-notices/:candidateId",         "in_spec": true,  "in_api_client": true,  "spec_desc": "AI use notices for candidate" },
+        { "method": "POST", "path": "/api/compliance/ai-notices/generate",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate jurisdiction-aware AI notice" },
+        { "method": "GET",  "path": "/api/compliance/pay-transparency/:reqId",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Pay transparency requirements" },
+        { "method": "POST", "path": "/api/compliance/pay-transparency/validate",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Validate pay transparency compliance" },
+        { "method": "POST", "path": "/api/compliance/accommodation/request",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Route accommodation request" },
+        { "method": "GET",  "path": "/api/compliance/accommodation/:id",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Accommodation request status" },
+        { "method": "GET",  "path": "/api/compliance/consent/ai-features/:candidateId","in_spec": true,  "in_api_client": true,  "spec_desc": "AI feature consent status" },
+        { "method": "PUT",  "path": "/api/compliance/consent/ai-features/:candidateId","in_spec": true,  "in_api_client": true,  "spec_desc": "Update AI feature consent" },
+        { "method": "POST", "path": "/api/compliance/opt-out/:candidateId",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Opt candidate out of AI" },
+        { "method": "GET",  "path": "/api/compliance/opt-out/:candidateId",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Opt-out status" },
+        { "method": "GET",  "path": "/api/compliance/criteria-library",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Aligned criteria library" },
+        { "method": "POST", "path": "/api/compliance/criteria-library/validate",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Validate criteria job-relatedness" },
+        { "method": "GET",  "path": "/api/compliance/retention/archive",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Six-year compliance archive" },
+        { "method": "GET",  "path": "/api/compliance/retention/policies",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Retention policies" },
+        { "method": "PUT",  "path": "/api/compliance/retention/policies",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Update retention policies" },
+        { "method": "GET",  "path": "/api/compliance/oversight/workbench",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Compliance oversight workbench" },
+        { "method": "POST", "path": "/api/compliance/justification/capture",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Capture structured justification" },
+        { "method": "GET",  "path": "/api/compliance/justification/:decisionId",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Get decision justification" },
+        { "method": "POST", "path": "/api/compliance/inappropriate-question/check",    "in_spec": true,  "in_api_client": true,  "spec_desc": "Check for inappropriate questions" },
+        { "method": "GET",  "path": "/api/compliance/prohibited-questions/rules",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Prohibited question rules" }
+      ]
+    },
+    {
+      "engine_id": "explainability-layer",
+      "base_path": "/api/ai",
+      "spec_endpoints": 58,
+      "implemented_routes": 58,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/decisions/:id",
+          "found_in": ["decision/routes.ts:197", "explainability/routes.ts:801"],
+          "type": "cross-engine"
+        },
+        {
+          "severity": "CRITICAL",
+          "method": "GET",
+          "path": "/overrides",
+          "found_in": ["explainability/routes.ts:1032", "compliance-governance/routes.ts:828", "analytics/routes.ts:568"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "GET",  "path": "/api/ai/models",                                  "in_spec": true,  "in_api_client": true,  "spec_desc": "List all registered models" },
+        { "method": "POST", "path": "/api/ai/models",                                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Register new model" },
+        { "method": "GET",  "path": "/api/ai/models/:id",                              "in_spec": true,  "in_api_client": true,  "spec_desc": "Get model details" },
+        { "method": "PUT",  "path": "/api/ai/models/:id/status",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Update model approval status" },
+        { "method": "GET",  "path": "/api/ai/models/:id/card",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Get model card" },
+        { "method": "POST", "path": "/api/ai/models/:id/card/generate",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Auto-generate model card" },
+        { "method": "GET",  "path": "/api/ai/models/:id/versions",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Model version history" },
+        { "method": "POST", "path": "/api/ai/models/:id/rollback",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Rollback to previous version" },
+        { "method": "POST", "path": "/api/ai/models/:id/freeze",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Emergency freeze model" },
+        { "method": "POST", "path": "/api/ai/models/:id/shadow-eval",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Run shadow evaluation" },
+        { "method": "GET",  "path": "/api/ai/models/:id/drift",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Model drift metrics" },
+        { "method": "GET",  "path": "/api/ai/models/:id/deployment",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Deployment approval status" },
+        { "method": "POST", "path": "/api/ai/models/:id/deployment/approve",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Approve model deployment (2-person)" },
+        { "method": "GET",  "path": "/api/ai/governance/console",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Governance console overview" },
+        { "method": "GET",  "path": "/api/ai/governance/approved-models",              "in_spec": true,  "in_api_client": true,  "spec_desc": "List approved models" },
+        { "method": "PUT",  "path": "/api/ai/governance/control-plane",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Update control plane config" },
+        { "method": "GET",  "path": "/api/ai/governance/change-log",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Governance change log" },
+        { "method": "POST", "path": "/api/ai/governance/change-request",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit model change request" },
+        { "method": "GET",  "path": "/api/ai/prompts",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Versioned prompt registry" },
+        { "method": "POST", "path": "/api/ai/prompts",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Register prompt" },
+        { "method": "GET",  "path": "/api/ai/prompts/:id/versions",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Prompt version history" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Get decision explanation" },
+        { "method": "POST", "path": "/api/ai/explain/generate",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate explanation for decision" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/human-readable",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Human-readable summary" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/role/:role",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Role-adaptive explanation view" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/trace",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Job-criterion trace map" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/reason-codes",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Compiled reason codes" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/prompt-action",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Prompt-to-action transparency" },
+        { "method": "GET",  "path": "/api/ai/explain/:decisionId/chain-of-thought",    "in_spec": true,  "in_api_client": true,  "spec_desc": "Reasoning chain visualization" },
+        { "method": "GET",  "path": "/api/ai/decisions",                               "in_spec": true,  "in_api_client": true,  "spec_desc": "List AI decisions" },
+        { "method": "GET",  "path": "/api/ai/decisions/:id",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Get decision detail" },
+        { "method": "GET",  "path": "/api/ai/decisions/:id/ledger",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Decision explainability ledger entry" },
+        { "method": "GET",  "path": "/api/ai/decisions/:id/model-snapshot",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Model version snapshot for decision" },
+        { "method": "GET",  "path": "/api/ai/confidence/:decisionId",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Confidence score with uncertainty" },
+        { "method": "GET",  "path": "/api/ai/confidence/thresholds",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Escalation threshold config" },
+        { "method": "PUT",  "path": "/api/ai/confidence/thresholds",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Update escalation thresholds" },
+        { "method": "POST", "path": "/api/ai/override",                                "in_spec": true,  "in_api_client": true,  "spec_desc": "Override AI decision (with trail)" },
+        { "method": "GET",  "path": "/api/ai/overrides",                               "in_spec": true,  "in_api_client": true,  "spec_desc": "List overrides with accountability" },
+        { "method": "GET",  "path": "/api/ai/overrides/:id",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "Override detail and trail" },
+        { "method": "GET",  "path": "/api/ai/escalations",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Edge cases requiring escalation" },
+        { "method": "POST", "path": "/api/ai/escalations/:id/resolve",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Resolve escalation" },
+        { "method": "GET",  "path": "/api/ai/transparency/dashboard",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time explainability dashboard" },
+        { "method": "GET",  "path": "/api/ai/transparency/flow/:workflowId",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Agentic flow visualization" },
+        { "method": "GET",  "path": "/api/ai/transparency/action-log",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Agentic action transparency log" },
+        { "method": "GET",  "path": "/api/ai/transparency/disclosure",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "AI use disclosure and mode labeling" },
+        { "method": "GET",  "path": "/api/ai/quality/metrics",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Explainability quality metrics" },
+        { "method": "GET",  "path": "/api/ai/data-provenance",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Data provenance and training registry" },
+        { "method": "GET",  "path": "/api/ai/data-provenance/:modelId",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Training data sources for model" },
+        { "method": "GET",  "path": "/api/ai/consent/training",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Training data consent records" },
+        { "method": "POST", "path": "/api/ai/counterfactual/:candidateId",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Counterfactual rejection analysis" },
+        { "method": "POST", "path": "/api/ai/copilot/assist",                          "in_spec": true,  "in_api_client": true,  "spec_desc": "Recruiter co-pilot assistance" },
+        { "method": "GET",  "path": "/api/ai/copilot/suggestions/:reqId",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Co-pilot suggestions for requisition" },
+        { "method": "POST", "path": "/api/ai/attribute-redaction/process",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Redact protected attributes before inference" },
+        { "method": "GET",  "path": "/api/ai/human-checkpoints",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Mandatory HITL checkpoint config" },
+        { "method": "PUT",  "path": "/api/ai/human-checkpoints",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Update HITL checkpoints" },
+        { "method": "GET",  "path": "/api/ai/human-approval/queue",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "High-risk agent approval queue" },
+        { "method": "POST", "path": "/api/ai/human-approval/:id/approve",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Approve high-risk agent action" },
+        { "method": "POST", "path": "/api/ai/human-approval/:id/reject",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Reject high-risk agent action" }
+      ]
+    },
+    {
+      "engine_id": "analytics-engine",
+      "base_path": "/api/analytics",
+      "spec_endpoints": 17,
+      "implemented_routes": 17,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "CRITICAL",
+          "method": "GET",
+          "path": "/overrides",
+          "found_in": ["analytics/routes.ts:568", "compliance-governance/routes.ts:828", "explainability/routes.ts:1032"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "GET",  "path": "/api/analytics/event-ledger",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Event-sourced hiring ledger" },
+        { "method": "GET",  "path": "/api/analytics/event-ledger/:eventId",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Get specific event detail" },
+        { "method": "GET",  "path": "/api/analytics/dashboard/org-health",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Org-wide hiring health dashboard" },
+        { "method": "GET",  "path": "/api/analytics/dashboard/pipeline",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time pipeline health" },
+        { "method": "GET",  "path": "/api/analytics/dashboard/process-telemetry",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time process telemetry" },
+        { "method": "GET",  "path": "/api/analytics/dashboard/cross-functional",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Cross-functional dashboards" },
+        { "method": "GET",  "path": "/api/analytics/fairness/benchmarks",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Fairness metrics benchmarking" },
+        { "method": "GET",  "path": "/api/analytics/fairness/cross-system",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Cross-system decision correlation" },
+        { "method": "GET",  "path": "/api/analytics/fairness/adverse-impact-by-stage", "in_spec": true,  "in_api_client": true,  "spec_desc": "Adverse impact by stage" },
+        { "method": "GET",  "path": "/api/analytics/bottlenecks",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Current bottlenecks" },
+        { "method": "GET",  "path": "/api/analytics/bottlenecks/velocity",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Requisition velocity monitoring" },
+        { "method": "GET",  "path": "/api/analytics/bottlenecks/recovery",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Dynamic bottleneck recovery" },
+        { "method": "GET",  "path": "/api/analytics/requisition-health/:reqId",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Requisition health score" },
+        { "method": "GET",  "path": "/api/analytics/requisition-health/playbooks",     "in_spec": true,  "in_api_client": true,  "spec_desc": "Intervention playbooks" },
+        { "method": "GET",  "path": "/api/analytics/audit-logs/immutable",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Immutable tamper-evident audit logs" },
+        { "method": "GET",  "path": "/api/analytics/bias-audit/schedule",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Automated bias audit schedule" },
+        { "method": "GET",  "path": "/api/analytics/overrides",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Override and justification log" }
+      ]
+    },
+    {
+      "engine_id": "candidate-hub",
+      "base_path": "/api/candidates",
+      "spec_endpoints": 31,
+      "implemented_routes": 31,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/referrals",
+          "found_in": ["candidate-hub/routes.ts:3720", "sourcing/routes.ts:1589"],
+          "type": "cross-engine"
+        },
+        {
+          "severity": "CRITICAL",
+          "method": "POST",
+          "path": "/referrals/submit",
+          "found_in": ["candidate-hub/routes.ts:3730", "sourcing/routes.ts:1631"],
+          "type": "cross-engine"
+        },
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/silver-medalists",
+          "found_in": ["candidate-hub/routes.ts:3631", "sourcing/routes.ts:293"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "GET",  "path": "/api/candidates",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "List candidates" },
+        { "method": "POST", "path": "/api/candidates",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Create candidate" },
+        { "method": "GET",  "path": "/api/candidates/:id",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Get candidate profile" },
+        { "method": "PUT",  "path": "/api/candidates/:id",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Update candidate" },
+        { "method": "POST", "path": "/api/candidates/concierge/chat",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Conversational concierge" },
+        { "method": "GET",  "path": "/api/candidates/concierge/history/:candidateId",  "in_spec": true,  "in_api_client": true,  "spec_desc": "Chat history" },
+        { "method": "POST", "path": "/api/candidates/concierge/multilingual",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Multi-lingual concierge" },
+        { "method": "GET",  "path": "/api/candidates/:id/status",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Application status tracker" },
+        { "method": "GET",  "path": "/api/candidates/:id/timeline",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Timeline with predictions" },
+        { "method": "POST", "path": "/api/candidates/:id/apply",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Adaptive application submission" },
+        { "method": "POST", "path": "/api/candidates/:id/apply/conversational",        "in_spec": true,  "in_api_client": true,  "spec_desc": "Conversational application" },
+        { "method": "GET",  "path": "/api/candidates/:id/ai-passport",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "AI use passport for candidate" },
+        { "method": "GET",  "path": "/api/candidates/:id/ai-transparency",             "in_spec": true,  "in_api_client": true,  "spec_desc": "AI transparency notice" },
+        { "method": "POST", "path": "/api/candidates/:id/appeal",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit appeal" },
+        { "method": "GET",  "path": "/api/candidates/:id/appeal/:appealId",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Appeal status" },
+        { "method": "POST", "path": "/api/candidates/:id/appeal/human-review",         "in_spec": true,  "in_api_client": true,  "spec_desc": "One-click appeal to human" },
+        { "method": "GET",  "path": "/api/candidates/:id/explanation",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Explanation center" },
+        { "method": "GET",  "path": "/api/candidates/:id/rejection-report",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Why was I rejected report" },
+        { "method": "GET",  "path": "/api/candidates/:id/rights-portal",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Candidate rights fulfillment" },
+        { "method": "GET",  "path": "/api/candidates/:id/data-access",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Data access and correction portal" },
+        { "method": "POST", "path": "/api/candidates/:id/data-correction",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Request data correction" },
+        { "method": "GET",  "path": "/api/candidates/:id/data-export",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Export personal data" },
+        { "method": "POST", "path": "/api/candidates/:id/feedback",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit feedback on experience" },
+        { "method": "GET",  "path": "/api/candidates/:id/transparency/interview",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Interview transparency info" },
+        { "method": "POST", "path": "/api/candidates/:id/communication/send",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Send candidate communication" },
+        { "method": "GET",  "path": "/api/candidates/:id/communication/history",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Communication history" },
+        { "method": "POST", "path": "/api/candidates/:id/communication/multi-channel", "in_spec": true,  "in_api_client": true,  "spec_desc": "Multi-channel engagement" },
+        { "method": "POST", "path": "/api/candidates/notifications/requisition-closed","in_spec": true,  "in_api_client": true,  "spec_desc": "Notify requisition closure" },
+        { "method": "POST", "path": "/api/candidates/:id/right-to-reply",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit right-to-reply" },
+        { "method": "GET",  "path": "/api/candidates/:id/scheduling/preferences",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Candidate scheduling preferences" },
+        { "method": "PUT",  "path": "/api/candidates/:id/scheduling/preferences",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Update scheduling preferences" }
+      ]
+    },
+    {
+      "engine_id": "interview-system",
+      "base_path": "/api/interviews",
+      "spec_endpoints": 20,
+      "implemented_routes": 20,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "GET",  "path": "/api/interviews",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "List interviews" },
+        { "method": "POST", "path": "/api/interviews",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Create interview" },
+        { "method": "GET",  "path": "/api/interviews/:id",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Get interview detail" },
+        { "method": "PUT",  "path": "/api/interviews/:id",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Update interview" },
+        { "method": "POST", "path": "/api/interviews/structured/generate",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate structured interview + BARS" },
+        { "method": "GET",  "path": "/api/interviews/:id/guide",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Get interview guide" },
+        { "method": "POST", "path": "/api/interviews/:id/debrief",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit debrief feedback" },
+        { "method": "GET",  "path": "/api/interviews/:id/debrief/summary",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Panel debrief orchestration summary" },
+        { "method": "POST", "path": "/api/interviews/:id/signals/capture",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Capture interview signals" },
+        { "method": "GET",  "path": "/api/interviews/:id/signals/summary",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Signal capture summary" },
+        { "method": "POST", "path": "/api/interviews/:id/signals/behavioral",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Structured behavioral signal extraction" },
+        { "method": "GET",  "path": "/api/interviews/:id/scorecard",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Get interview scorecard" },
+        { "method": "POST", "path": "/api/interviews/:id/scorecard",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit scorecard" },
+        { "method": "POST", "path": "/api/interviews/panel/auto-coordinate",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Auto-coordinate panel" },
+        { "method": "GET",  "path": "/api/interviews/panel/:reqId",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Get panel for requisition" },
+        { "method": "POST", "path": "/api/interviews/panel/assemble",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Intelligently assemble panel" },
+        { "method": "POST", "path": "/api/interviews/pack/generate",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Auto-generate interview pack" },
+        { "method": "POST", "path": "/api/interviews/transcript/extract",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Extract evidence from transcript" },
+        { "method": "POST", "path": "/api/interviews/recording/transcribe",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Record and transcribe interview" },
+        { "method": "GET",  "path": "/api/interviews/:id/transcript",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Get interview transcript" }
+      ]
+    },
+    {
+      "engine_id": "screening-engine",
+      "base_path": "/api/screening",
+      "spec_endpoints": 15,
+      "implemented_routes": 15,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "POST", "path": "/api/screening/intake",                           "in_spec": true,  "in_api_client": true,  "spec_desc": "AI-powered intake processing" },
+        { "method": "POST", "path": "/api/screening/evaluate/technical",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Technical/work-sample evaluation" },
+        { "method": "POST", "path": "/api/screening/match/skills-first",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Skills-first matching with bias dampeners" },
+        { "method": "POST", "path": "/api/screening/blind/apply",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Apply blind screening" },
+        { "method": "POST", "path": "/api/screening/anonymize",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Dynamic resume anonymization" },
+        { "method": "POST", "path": "/api/screening/rank/skills-only",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Skill-based ranking only" },
+        { "method": "POST", "path": "/api/screening/rubric/enforce",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Real-time rubric enforcement" },
+        { "method": "POST", "path": "/api/screening/redact/demographic-proxy",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Demographic proxy redaction" },
+        { "method": "POST", "path": "/api/screening/scorecard/generate",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Generate competency scorecard" },
+        { "method": "POST", "path": "/api/screening/blind/automate",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Automated blind screening" },
+        { "method": "POST", "path": "/api/screening/blind/structured-review",          "in_spec": true,  "in_api_client": true,  "spec_desc": "Structured blind review" },
+        { "method": "POST", "path": "/api/screening/match/semantic",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Skills matching beyond keywords" },
+        { "method": "POST", "path": "/api/screening/autonomous-screen",                "in_spec": true,  "in_api_client": true,  "spec_desc": "24/7 autonomous screening" },
+        { "method": "POST", "path": "/api/screening/background-check/orchestrate",     "in_spec": true,  "in_api_client": true,  "spec_desc": "Background check orchestration" },
+        { "method": "GET",  "path": "/api/screening/background-check/:id",             "in_spec": true,  "in_api_client": true,  "spec_desc": "Background check status" }
+      ]
+    },
+    {
+      "engine_id": "sourcing-engine",
+      "base_path": "/api/sourcing",
+      "spec_endpoints": 5,
+      "implemented_routes": 5,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/referrals",
+          "found_in": ["sourcing/routes.ts:1589", "candidate-hub/routes.ts:3720"],
+          "type": "cross-engine"
+        },
+        {
+          "severity": "CRITICAL",
+          "method": "POST",
+          "path": "/referrals/submit",
+          "found_in": ["sourcing/routes.ts:1631", "candidate-hub/routes.ts:3730"],
+          "type": "cross-engine"
+        },
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/silver-medalists",
+          "found_in": ["sourcing/routes.ts:293", "candidate-hub/routes.ts:3631"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "POST", "path": "/api/sourcing/boolean/generate",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Auto-generate Boolean search queries" },
+        { "method": "POST", "path": "/api/sourcing/shortlist",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Intelligent sourcing and shortlisting" },
+        { "method": "GET",  "path": "/api/sourcing/talent-pools",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "List talent pools" },
+        { "method": "POST", "path": "/api/sourcing/talent-pools",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Create talent pool" },
+        { "method": "POST", "path": "/api/sourcing/search",                            "in_spec": true,  "in_api_client": true,  "spec_desc": "Search for candidates" }
+      ]
+    },
+    {
+      "engine_id": "decision-engine",
+      "base_path": "/api/decisions",
+      "spec_endpoints": 16,
+      "implemented_routes": 16,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "HIGH",
+          "method": "GET",
+          "path": "/decisions/:id",
+          "found_in": ["decision/routes.ts:197", "explainability/routes.ts:801"],
+          "type": "cross-engine"
+        }
+      ],
+      "routes": [
+        { "method": "POST", "path": "/api/decisions/final-review",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Final selection supervisor review" },
+        { "method": "POST", "path": "/api/decisions/synthesize",                       "in_spec": true,  "in_api_client": true,  "spec_desc": "Holistic decision synthesis" },
+        { "method": "GET",  "path": "/api/decisions/:id",                              "in_spec": true,  "in_api_client": true,  "spec_desc": "Get decision detail" },
+        { "method": "GET",  "path": "/api/decisions/:reqId/consensus",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Consensus analysis" },
+        { "method": "POST", "path": "/api/decisions/:reqId/consensus/build",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Build consensus across stakeholders" },
+        { "method": "GET",  "path": "/api/decisions/:reqId/comparison",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Side-by-side candidate comparison" },
+        { "method": "POST", "path": "/api/decisions/copilot/insights",                 "in_spec": true,  "in_api_client": true,  "spec_desc": "AI copilot insights for HM" },
+        { "method": "POST", "path": "/api/offers",                                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Create offer" },
+        { "method": "GET",  "path": "/api/offers/:id",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Get offer details" },
+        { "method": "PUT",  "path": "/api/offers/:id",                                 "in_spec": true,  "in_api_client": true,  "spec_desc": "Update offer" },
+        { "method": "POST", "path": "/api/offers/:id/compliance-check",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Offer compliance check" },
+        { "method": "GET",  "path": "/api/offers/compensation/benchmark",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Market salary benchmark" },
+        { "method": "POST", "path": "/api/offers/compensation/recommend",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Compensation recommendation" },
+        { "method": "POST", "path": "/api/offers/:id/retract",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Handle offer retraction" },
+        { "method": "POST", "path": "/api/decisions/reference-check/orchestrate",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Orchestrate reference checks" },
+        { "method": "GET",  "path": "/api/decisions/reference-check/:id",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Reference check results" }
+      ]
+    },
+    {
+      "engine_id": "integration-hub",
+      "base_path": "/api/integrations",
+      "spec_endpoints": 27,
+      "implemented_routes": 27,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "GET",  "path": "/api/integrations/status",                        "in_spec": true,  "in_api_client": true,  "spec_desc": "Integration status overview" },
+        { "method": "POST", "path": "/api/integrations/api/register",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Register API integration" },
+        { "method": "GET",  "path": "/api/integrations/api/catalog",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "API integration catalog" },
+        { "method": "POST", "path": "/api/integrations/hris/sync",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Bidirectional HRIS sync" },
+        { "method": "GET",  "path": "/api/integrations/hris/conflicts",                "in_spec": true,  "in_api_client": true,  "spec_desc": "HRIS conflict resolution" },
+        { "method": "POST", "path": "/api/integrations/verification/orchestrate",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Automated verification orchestration" },
+        { "method": "GET",  "path": "/api/integrations/verification/:id",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Verification status" },
+        { "method": "GET",  "path": "/api/integrations/workflows/prioritization",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Cross-req prioritization" },
+        { "method": "POST", "path": "/api/integrations/copilot/high-volume",           "in_spec": true,  "in_api_client": true,  "spec_desc": "High-volume recruiter copilot" },
+        { "method": "GET",  "path": "/api/integrations/third-party/attestations",      "in_spec": true,  "in_api_client": true,  "spec_desc": "Third-party AI attestation hub" },
+        { "method": "POST", "path": "/api/integrations/third-party/audit-hooks",       "in_spec": true,  "in_api_client": true,  "spec_desc": "Third-party audit integration" },
+        { "method": "POST", "path": "/api/integrations/events/publish",                "in_spec": true,  "in_api_client": true,  "spec_desc": "Publish hiring event to HR stack" },
+        { "method": "GET",  "path": "/api/integrations/events/log",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Event integration log" },
+        { "method": "POST", "path": "/api/integrations/approval/design",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Design approval workflow" },
+        { "method": "GET",  "path": "/api/integrations/approval/workflows",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Active approval workflows" },
+        { "method": "POST", "path": "/api/integrations/approval/:id/submit",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Submit for approval" },
+        { "method": "GET",  "path": "/api/integrations/explainability-api",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Explainability API for auditors" },
+        { "method": "GET",  "path": "/api/integrations/fairness-api",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Fairness metrics API" },
+        { "method": "GET",  "path": "/api/integrations/escalation/rules",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Human review escalation rules" },
+        { "method": "POST", "path": "/api/integrations/escalation/trigger",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Trigger escalation" },
+        { "method": "POST", "path": "/api/integrations/hitl/workflow/build",           "in_spec": true,  "in_api_client": true,  "spec_desc": "Build HITL workflow" },
+        { "method": "GET",  "path": "/api/integrations/pipeline/:reqId",               "in_spec": true,  "in_api_client": true,  "spec_desc": "Embedded pipeline visibility" },
+        { "method": "POST", "path": "/api/integrations/requisition/sync",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Cross-system requisition sync" },
+        { "method": "POST", "path": "/api/integrations/background-check/multi-vendor", "in_spec": true,  "in_api_client": true,  "spec_desc": "Multi-vendor background check" },
+        { "method": "POST", "path": "/api/integrations/provisioning/new-hire",         "in_spec": true,  "in_api_client": true,  "spec_desc": "Multi-system IT/HR provisioning" },
+        { "method": "GET",  "path": "/api/integrations/workload/balance",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Recruiter workload balance" },
+        { "method": "POST", "path": "/api/integrations/workload/rebalance",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Rebalance recruiter workload" }
+      ]
+    },
+    {
+      "engine_id": "scheduling-engine",
+      "base_path": "/api/scheduling",
+      "spec_endpoints": 8,
+      "implemented_routes": 8,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "POST", "path": "/api/scheduling/auto-schedule",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "AI-driven scheduling" },
+        { "method": "POST", "path": "/api/scheduling/reschedule",                      "in_spec": true,  "in_api_client": true,  "spec_desc": "Smart rescheduling" },
+        { "method": "GET",  "path": "/api/scheduling/availability",                    "in_spec": true,  "in_api_client": true,  "spec_desc": "Check availability" },
+        { "method": "POST", "path": "/api/scheduling/accessibility",                   "in_spec": true,  "in_api_client": true,  "spec_desc": "Schedule with accessibility options" },
+        { "method": "POST", "path": "/api/scheduling/multi-timezone",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Cross-timezone scheduling" },
+        { "method": "POST", "path": "/api/scheduling/multi-party",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Multi-party interview scheduling" },
+        { "method": "GET",  "path": "/api/scheduling/no-show/prevention",              "in_spec": true,  "in_api_client": true,  "spec_desc": "No-show prevention status" },
+        { "method": "POST", "path": "/api/scheduling/no-show/remind",                  "in_spec": true,  "in_api_client": true,  "spec_desc": "Send reminders" }
+      ]
+    },
+    {
+      "engine_id": "mobility-engine",
+      "base_path": "/api/mobility",
+      "spec_endpoints": 3,
+      "implemented_routes": 3,
+      "coverage_pct": 100,
+      "duplicates": [
+        {
+          "severity": "CRITICAL",
+          "method": "GET",
+          "path": "/api/mobility/flight-risk",
+          "found_in": ["mobility/routes.ts:1693", "mobility/routes.ts:2445"],
+          "type": "intra-engine"
+        }
+      ],
+      "routes": [
+        { "method": "GET",  "path": "/api/mobility/opportunities",                     "in_spec": true,  "in_api_client": true,  "spec_desc": "Internal opportunities" },
+        { "method": "POST", "path": "/api/mobility/match",                             "in_spec": true,  "in_api_client": true,  "spec_desc": "Match employee to internal role" },
+        { "method": "GET",  "path": "/api/mobility/profiles/:employeeId",              "in_spec": true,  "in_api_client": true,  "spec_desc": "Employee mobility profile" }
+      ]
+    },
+    {
+      "engine_id": "onboarding-engine",
+      "base_path": "/api/onboarding",
+      "spec_endpoints": 3,
+      "implemented_routes": 3,
+      "coverage_pct": 100,
+      "duplicates": [],
+      "routes": [
+        { "method": "POST", "path": "/api/onboarding/handoff",                         "in_spec": true,  "in_api_client": true,  "spec_desc": "Seamless onboarding handoff" },
+        { "method": "GET",  "path": "/api/onboarding/handoff/:candidateId",            "in_spec": true,  "in_api_client": true,  "spec_desc": "Get handoff context" },
+        { "method": "GET",  "path": "/api/onboarding/handoff/:candidateId/context",    "in_spec": true,  "in_api_client": true,  "spec_desc": "Full hiring context for onboarding" }
+      ]
+    }
+  ],
+  "duplicates": [
+    {
+      "severity": "CRITICAL",
+      "method": "GET",
+      "path": "/api/overrides",
+      "found_in": [
+        "analytics/routes.ts:568",
+        "compliance-governance/routes.ts:828",
+        "explainability/routes.ts:1032"
+      ],
+      "type": "cross-engine",
+      "resolution": "Each engine serves /overrides at its own base path (/api/analytics/overrides, /api/compliance/overrides, /api/ai/overrides) — paths are unique at the router level but the relative slug collides conceptually. Recommend aliasing to fully-qualified paths and deprecating slug shorthand.",
+      "impact": "Ambiguous routing if a shared express app mounts engines without base-path prefixes"
+    },
+    {
+      "severity": "CRITICAL",
+      "method": "POST",
+      "path": "/api/referrals/submit",
+      "found_in": [
+        "candidate-hub/routes.ts:3730 (/candidates/referrals/submit)",
+        "sourcing/routes.ts:1631 (/sourcing/referrals/submit)"
+      ],
+      "type": "cross-engine",
+      "resolution": "Two separate base paths — functionally duplicated business logic. Sourcing engine owns submission; candidate-hub duplicates. Consolidate to sourcing-engine and add a thin proxy in candidate-hub.",
+      "impact": "Data may be written twice; referral counts inflated"
+    },
+    {
+      "severity": "CRITICAL",
+      "method": "GET",
+      "path": "/api/mobility/flight-risk",
+      "found_in": [
+        "mobility/routes.ts:1693",
+        "mobility/routes.ts:2445"
+      ],
+      "type": "intra-engine",
+      "resolution": "Exact same route defined twice within mobility/routes.ts. The second definition at line 2445 silently shadows the first. Remove the duplicate at line 2445.",
+      "impact": "Express uses first-match routing — line 2445 handler is unreachable dead code"
+    },
+    {
+      "severity": "HIGH",
+      "method": "GET",
+      "path": "/api/referrals",
+      "found_in": [
+        "candidate-hub/routes.ts:3720 (/candidates/referrals)",
+        "sourcing/routes.ts:1589 (/sourcing/referrals)"
+      ],
+      "type": "cross-engine",
+      "resolution": "Sourcing engine is the canonical source. Candidate-hub endpoint should proxy or be removed.",
+      "impact": "Inconsistent data if both endpoints query different tables"
+    },
+    {
+      "severity": "HIGH",
+      "method": "GET",
+      "path": "/api/silver-medalists",
+      "found_in": [
+        "candidate-hub/routes.ts:3631 (/candidates/silver-medalists)",
+        "sourcing/routes.ts:293 (/sourcing/silver-medalists)"
+      ],
+      "type": "cross-engine",
+      "resolution": "Sourcing engine is the canonical owner. Candidate-hub endpoint should be a view/proxy.",
+      "impact": "Silver medalist tagging logic split across engines risks divergence"
+    },
+    {
+      "severity": "HIGH",
+      "method": "GET",
+      "path": "/api/decisions/:id",
+      "found_in": [
+        "decision/routes.ts:197 (/decisions/:id)",
+        "explainability/routes.ts:801 (/decisions/:id)"
+      ],
+      "type": "cross-engine",
+      "resolution": "Decision engine owns the resource; explainability engine duplicates for convenience. Explainability engine should call decision engine internally or use a shared service.",
+      "impact": "Possible divergent payloads returned for the same decision ID"
+    }
+  ],
+  "missing_from_api_client": [
+    {
+      "method": "DELETE",
+      "path": "/api/requisitions/:id",
+      "engine": "platform-core",
+      "spec_desc": "Archive requisition — implemented in routes.ts:256, present in spec, but api-client only exposes archiveRequisition via del() which appears as a stub referencing the same path in the platform section. Verify the del() call is wired up; if not, add: archiveRequisition: (id) => del(`/requisitions/${id}`)"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/security/consent/:candidateId",
+      "engine": "security-framework",
+      "spec_desc": "Revoke consent — implemented in security-framework/routes.ts:162, in spec, but del() call not present in api.security object. Add: revokeConsent: (candidateId) => del(`/security/consent/${candidateId}`)"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/security/vault/:id",
+      "engine": "security-framework",
+      "spec_desc": "Purge vault entry — implemented in security-framework/routes.ts:455, in spec, but del() call not present in api.security object. Add: purgeVaultEntry: (id) => del(`/security/vault/${id}`)"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/compliance/legal-hold/:id",
+      "engine": "compliance-governance-engine",
+      "spec_desc": "Release legal hold — implemented in compliance-governance/routes.ts:303, in spec, but del() call not present in api.compliance object. Add: releaseLegalHold: (id) => del(`/compliance/legal-hold/${id}`)"
+    }
+  ],
+  "missing_from_backend": [],
+  "ui_route_coverage": {
+    "total_spec_features": 372,
+    "pages_found": 358,
+    "pages_missing": 14,
+    "notes": "build_spec.json reports 358 fully_functional + 14 engine_level features. Engine-level features do not map to individual UI routes — they are surfaced via their parent engine dashboards. All 358 fully_functional features have ui_route entries in the spec.",
+    "missing_pages": [
+      {
+        "feature_name": "Internal Mobility Engine (engine-level)",
+        "expected_ui_route": "/mobility/internal-mobility-workforce-planning",
+        "issue": "engine-level feature — no dedicated UI page, surfaces via /mobility/* sub-routes"
+      },
+      {
+        "feature_name": "Onboarding Engine (engine-level)",
+        "expected_ui_route": "/onboarding/onboarding-post-hire",
+        "issue": "engine-level feature — no dedicated UI page, surfaces via /onboarding/* sub-routes"
+      },
+      {
+        "feature_name": "Platform Core (engine-level)",
+        "expected_ui_route": "/platform/core-platform-architecture",
+        "issue": "engine-level feature — no dedicated UI page"
+      },
+      {
+        "feature_name": "Unified ATS + CRM + scheduling + analytics on a single data model",
+        "expected_ui_route": "/platform/unified-ats-crm-scheduling-analytics",
+        "issue": "slug_mismatch — spec generates /platform/unified-ats-+-crm-+-scheduling-+-analytics-on-a-single-data- (truncated slug with special chars)"
+      },
+      {
+        "feature_name": "candidate-journey-analytics-with-drop-off-point-identification",
+        "expected_ui_route": "/analytics/candidate-journey-analytics-with-drop-off-point-identification",
+        "issue": "slug_mismatch — backend route truncates to /analytics/candidate-journey-analytics-with-drop-off-point-identificati (64-char Express segment limit)"
+      },
+      {
+        "feature_name": "hiring-manager-satisfaction-prediction-with-quality-indicators",
+        "expected_ui_route": "/analytics/hiring-manager-satisfaction-prediction-with-quality-indicators",
+        "issue": "slug_mismatch — backend route truncated to /analytics/hiring-manager-satisfaction-prediction-with-quality-indicato"
+      },
+      {
+        "feature_name": "automated-recruiter-performance-analytics-with-coaching-recommendations",
+        "expected_ui_route": "/analytics/automated-recruiter-performance-analytics-with-coaching-recommendations",
+        "issue": "slug_mismatch — backend route truncated to /analytics/automated-recruiter-performance-analytics-with-coaching-reco"
+      },
+      {
+        "feature_name": "intelligent-source-attribution-with-multi-touch-credit-assignment",
+        "expected_ui_route": "/analytics/intelligent-source-attribution-with-multi-touch-credit-assignment",
+        "issue": "slug_mismatch — backend route truncated to /analytics/intelligent-source-attribution-with-multi-touch-credit-assig"
+      },
+      {
+        "feature_name": "autonomous-job-description-analysis-and-requirement-extraction",
+        "expected_ui_route": "/sourcing/autonomous-job-description-analysis-and-requirement-extraction",
+        "issue": "slug_mismatch — sourcing/routes.ts truncates to /sourcing/autonomous-job-description-analysis-and-requirement-extracti"
+      },
+      {
+        "feature_name": "silver-medalist-and-alumni-rediscovery-with-intelligent-re-engagement",
+        "expected_ui_route": "/sourcing/silver-medalist-and-alumni-rediscovery-with-intelligent-re-engagement",
+        "issue": "slug_mismatch — sourcing/routes.ts uses /sourcing/silver-medalist-and-alumni-rediscovery-with-intelligent-re-e (truncated)"
+      },
+      {
+        "feature_name": "autonomous-sourcing-agent-with-passive-talent-discovery-outreach",
+        "expected_ui_route": "/sourcing/autonomous-sourcing-agent-with-passive-talent-discovery-outreach",
+        "issue": "slug_mismatch — route truncated to /sourcing/autonomous-sourcing-agent-with-passive-talent-discovery-outr"
+      },
+      {
+        "feature_name": "automated-employer-brand-sentiment-monitoring-from-external-sources",
+        "expected_ui_route": "/sourcing/automated-employer-brand-sentiment-monitoring-from-external-sources",
+        "issue": "slug_mismatch — route truncated to /sourcing/automated-employer-brand-sentiment-monitoring-from-external"
+      },
+      {
+        "feature_name": "quality-of-hire-closed-loop-measurement-connecting-hiring-data",
+        "expected_ui_route": "/analytics/quality-of-hire-closed-loop-measurement-connecting-hiring-data",
+        "issue": "slug_mismatch — route truncated to /analytics/quality-of-hire-closed-loop-measurement-connecting-hiring-da"
+      },
+      {
+        "feature_name": "continuous-learning-from-hiring-outcomes-closed-loop-intelligence",
+        "expected_ui_route": "/analytics/continuous-learning-from-hiring-outcomes-closed-loop-intelligence",
+        "issue": "slug_mismatch — route truncated to /analytics/continuous-learning-from-hiring-outcomes-closed-loop-intelli"
+      }
+    ]
+  }
+}

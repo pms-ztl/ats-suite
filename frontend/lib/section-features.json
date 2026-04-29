@@ -1,0 +1,3746 @@
+{
+  "ai": [
+    {
+      "title": "Agent and Model Governance Console",
+      "route": "/ai/agent-and-model-governance-console"
+    },
+    {
+      "title": "Agentic Action Transparency Log",
+      "route": "/ai/agentic-action-transparency-log"
+    },
+    {
+      "title": "Agentic Candidate CRM with Opt-Out Recognition",
+      "route": "/ai/agentic-candidate-relationship-management-crm-with-opt-out-r"
+    },
+    {
+      "title": "Agentic Candidate Relationship Management (CRM) with Opt-Out Recognition",
+      "route": "/ai/agentic-candidate-relationship-management-crm-with-opt-out-recognition"
+    },
+    {
+      "title": "Agentic Decision Rationale Engine",
+      "route": "/ai/agentic-decision-rationale-engine"
+    },
+    {
+      "title": "Agentic Feedback Loop (The Flywheel) (USP 24)",
+      "route": "/ai/agentic-feedback-loop-the-flywheel-usp-24"
+    },
+    {
+      "title": "Agentic Model Governance & Explainability",
+      "route": "/ai/agentic-model-governance-and-explainability"
+    },
+    {
+      "title": "Agentic Onboarding with Background Check Integration",
+      "route": "/ai/agentic-onboarding-with-background-check-integration"
+    },
+    {
+      "title": "Agentic Sourcing with Compliance Filter",
+      "route": "/ai/agentic-sourcing-with-compliance-filter"
+    },
+    {
+      "title": "AI Coaching for Recruiter Decisions (Non-Binding)",
+      "route": "/ai/ai-coaching-for-recruiter-decisions-non-binding"
+    },
+    {
+      "title": "AI Coaching For Recruiter Decisions (Non\u2011Binding)",
+      "route": "/ai/ai-coaching-for-recruiter-decisions-nonbinding"
+    },
+    {
+      "title": "AI Confidence Banding with Uncertainty Display",
+      "route": "/ai/ai-confidence-banding-with-uncertainty-display"
+    },
+    {
+      "title": "AI Decision Override & Learning Loop",
+      "route": "/ai/ai-decision-override-learning-loop"
+    },
+    {
+      "title": "AI Model Versioning and Rollback",
+      "route": "/ai/ai-model-versioning-and-rollback"
+    },
+    {
+      "title": "AI Override with Accountability Trail",
+      "route": "/ai/ai-override-with-accountability-trail"
+    },
+    {
+      "title": "AI Use Disclosure and Mode Labeling",
+      "route": "/ai/ai-use-disclosure-and-mode-labeling"
+    },
+    {
+      "title": "Approved-Model Control Plane",
+      "route": "/ai/approved-model-control-plane"
+    },
+    {
+      "title": "Audit-Ready Model Versioning",
+      "route": "/ai/audit-ready-model-versioning"
+    },
+    {
+      "title": "Bias-Aware Model Training",
+      "route": "/ai/bias-aware-model-training"
+    },
+    {
+      "title": "Bias-Resilient Feature Engineering Toolkit",
+      "route": "/ai/bias-resilient-feature-engineering-toolkit"
+    },
+    {
+      "title": "Bias Simulation and Scenario Testing",
+      "route": "/ai/bias-simulation-and-scenario-testing"
+    },
+    {
+      "title": "Candidate-Level Explanation Packets",
+      "route": "/ai/candidate-level-explanation-packets"
+    },
+    {
+      "title": "Candidate\u2011Level Explanation Packets",
+      "route": "/ai/candidatelevel-explanation-packets"
+    },
+    {
+      "title": "Chain-of-Thought (CoT) Confidence Scorer",
+      "route": "/ai/chain-of-thought-cot-confidence-scorer"
+    },
+    {
+      "title": "Concurrent Multi-Agent Candidate Ranker",
+      "route": "/ai/concurrent-multi-agent-candidate-ranker"
+    },
+    {
+      "title": "Conditional Agent Permissions",
+      "route": "/ai/conditional-agent-permissions"
+    },
+    {
+      "title": "Confidence Score Thresholding for Automation",
+      "route": "/ai/confidence-score-thresholding-for-automation"
+    },
+    {
+      "title": "Configurable Fairness Constraints",
+      "route": "/ai/configurable-fairness-constraints"
+    },
+    {
+      "title": "Configurable Risk-Threshold Human Approval Gates",
+      "route": "/ai/configurable-risk-threshold-human-approval-gates"
+    },
+    {
+      "title": "Consent-Based AI Model Training",
+      "route": "/ai/consent-based-ai-model-training"
+    },
+    {
+      "title": "Continuous Model Drift Monitoring",
+      "route": "/ai/continuous-model-drift-monitoring"
+    },
+    {
+      "title": "Counterfactual Candidate Simulator",
+      "route": "/ai/counterfactual-candidate-simulator"
+    },
+    {
+      "title": "Counterfactual Rejection Analyzer",
+      "route": "/ai/counterfactual-rejection-analyzer"
+    },
+    {
+      "title": "Cross-Functional Stakeholder Alignment Agent",
+      "route": "/ai/cross-functional-stakeholder-alignment-agent"
+    },
+    {
+      "title": "Data Provenance And Training Set Registry",
+      "route": "/ai/data-provenance-and-training-set-registry"
+    },
+    {
+      "title": "Decision Confidence Throttling",
+      "route": "/ai/decision-confidence-throttling"
+    },
+    {
+      "title": "Decision-Level Explainability Cards",
+      "route": "/ai/decision-level-explainability-cards"
+    },
+    {
+      "title": "Embedded Model and Prompt Cards",
+      "route": "/ai/embedded-model-and-prompt-cards"
+    },
+    {
+      "title": "Escalation-Required Edge Cases",
+      "route": "/ai/escalation-required-edge-cases"
+    },
+    {
+      "title": "Explainability-First Agent Builder",
+      "route": "/ai/explainability-first-agent-builder"
+    },
+    {
+      "title": "Explainability Ledger for Every AI Suggestion",
+      "route": "/ai/explainability-ledger-for-every-ai-suggestion"
+    },
+    {
+      "title": "Explainability Quality Metrics Dashboard",
+      "route": "/ai/explainability-quality-metrics-dashboard"
+    },
+    {
+      "title": "Explainability Widget for Recruiters",
+      "route": "/ai/explainability-widget-for-recruiters"
+    },
+    {
+      "title": "Explainable AI Ranking",
+      "route": "/ai/explainable-ai-ranking"
+    },
+    {
+      "title": "Explainable AI Ranking with Post-Hoc Justifications",
+      "route": "/ai/explainable-ai-ranking-with-post-hoc-justifications"
+    },
+    {
+      "title": "Explainable AI with transparent reasoning chains for every recommendation",
+      "route": "/ai/explainable-ai-with-transparent-reasoning-chains-for-every-r"
+    },
+    {
+      "title": "Explainable candidate ranking & rationale cards",
+      "route": "/ai/explainable-candidate-ranking-rationale-cards"
+    },
+    {
+      "title": "Explainable Decision Surfaces",
+      "route": "/ai/explainable-decision-surfaces"
+    },
+    {
+      "title": "Explainable Feature Attribution",
+      "route": "/ai/explainable-feature-attribution"
+    },
+    {
+      "title": "Explainable Hiring Decisions Layer",
+      "route": "/ai/explainable-hiring-decisions-layer"
+    },
+    {
+      "title": "Fairness Fine-Tuning Sandbox with Human Feedback Loop",
+      "route": "/ai/fairness-fine-tuning-sandbox-with-human-feedback-loop"
+    },
+    {
+      "title": "Governance\u2011Bound Change Management For Models",
+      "route": "/ai/governance\u2011bound-change-management-for-models"
+    },
+    {
+      "title": "Hallucination Cross-Verifier Engine",
+      "route": "/ai/hallucination-cross-verifier-engine"
+    },
+    {
+      "title": "Hiring AI Model Registry",
+      "route": "/ai/hiring-ai-model-registry"
+    },
+    {
+      "title": "Hiring Manager Autonomous Co-Pilot",
+      "route": "/ai/hiring-manager-autonomous-co-pilot"
+    },
+    {
+      "title": "Human Decision Feedback to AI",
+      "route": "/ai/human-decision-feedback-to-ai"
+    },
+    {
+      "title": "Human-in-the-Loop Re-Ranking",
+      "route": "/ai/human-in-the-loop-re-ranking"
+    },
+    {
+      "title": "Human-Readable AI Narrative Summaries",
+      "route": "/ai/human-readable-ai-narrative-summaries"
+    },
+    {
+      "title": "Human-Readable Decision Summaries",
+      "route": "/ai/human-readable-decision-summaries"
+    },
+    {
+      "title": "Interview Predictability Auditor",
+      "route": "/ai/interview-predictability-auditor"
+    },
+    {
+      "title": "Interview Scheduling Agent with Consent Check",
+      "route": "/ai/interview-scheduling-agent-with-consent-check"
+    },
+    {
+      "title": "Job-Criterion Trace Map",
+      "route": "/ai/job-criterion-trace-map"
+    },
+    {
+      "title": "Knowledge Graph Construction from All Hiring Events",
+      "route": "/ai/knowledge-graph-construction-from-all-hiring-events"
+    },
+    {
+      "title": "LIME/SHAP-Based Candidate Explanations",
+      "route": "/ai/lime-shap-based-candidate-explanations"
+    },
+    {
+      "title": "LIME/SHAP-Based Candidate Explanations",
+      "route": "/ai/limeshap-based-candidate-explanations"
+    },
+    {
+      "title": "Mandatory Human-in-the-Loop Checkpoints",
+      "route": "/ai/mandatory-human-in-the-loop-checkpoints"
+    },
+    {
+      "title": "Model Card + Versioned Prompt Registry",
+      "route": "/ai/model-card-+-versioned-prompt-registry"
+    },
+    {
+      "title": "Model Card Automation",
+      "route": "/ai/model-card-automation"
+    },
+    {
+      "title": "Model Card Generation and Disclosure",
+      "route": "/ai/model-card-generation-and-disclosure"
+    },
+    {
+      "title": "Model-Integrated Natural Language Explanations",
+      "route": "/ai/model-integrated-natural-language-explanations"
+    },
+    {
+      "title": "Model Rollback and Emergency Freeze Controls",
+      "route": "/ai/model-rollback-and-emergency-freeze-controls"
+    },
+    {
+      "title": "Model Version Snapshot Binding",
+      "route": "/ai/model-version-snapshot-binding"
+    },
+    {
+      "title": "Multi-Agent Candidate Assistant (Guidance)",
+      "route": "/ai/multi-agent-candidate-assistant-guidance-not-screening"
+    },
+    {
+      "title": "Multi-Agent Candidate Evaluation Debate System",
+      "route": "/ai/multi-agent-candidate-evaluation-debate-system"
+    },
+    {
+      "title": "Multi-Agent Explanation Assistant",
+      "route": "/ai/multi-agent-explanation-assistant"
+    },
+    {
+      "title": "Multi\u2011Agent Candidate Assistant (Guidance Not Screening)",
+      "route": "/ai/multiagent-candidate-assistant-guidance-not-screening"
+    },
+    {
+      "title": "Multimodal Context Synthesizer",
+      "route": "/ai/multimodal-context-synthesizer"
+    },
+    {
+      "title": "Natural-Language AI Decision Summary for Recruiters",
+      "route": "/ai/natural-language-ai-decision-summary-for-recruiters"
+    },
+    {
+      "title": "Natural Language Decision Justification",
+      "route": "/ai/natural-language-decision-justification"
+    },
+    {
+      "title": "Negotiation Agent with Pre-Approved Bands",
+      "route": "/ai/negotiation-agent-with-pre-approved-bands"
+    },
+    {
+      "title": "Outcome-driven model retraining loop",
+      "route": "/ai/outcome-driven-model-retraining-loop"
+    },
+    {
+      "title": "Per-Decision Agent Chain-of-Thought Log",
+      "route": "/ai/per-decision-agent-chain-of-thought-log"
+    },
+    {
+      "title": "Per-decision explainable rationale",
+      "route": "/ai/per-decision-explainable-rationale"
+    },
+    {
+      "title": "Personal Recruiter Avatar Agent",
+      "route": "/ai/personal-recruiter-avatar-agent"
+    },
+    {
+      "title": "Playbook Autotuning from Cross Role Patterns",
+      "route": "/ai/playbook-autotuning-from-cross-role-patterns"
+    },
+    {
+      "title": "Policy-Bound Model Catalog",
+      "route": "/ai/policy-bound-model-catalog"
+    },
+    {
+      "title": "Pre-Deployment Bias Testing Suite",
+      "route": "/ai/pre-deployment-bias-testing-suite"
+    },
+    {
+      "title": "Prompt-Level Human Approval Gate for High-Risk Agents",
+      "route": "/ai/prompt-level-human-approval-gate-for-high-risk-agents"
+    },
+    {
+      "title": "Prompt-to-Action Transparency Panel",
+      "route": "/ai/prompt-to-action-transparency-panel"
+    },
+    {
+      "title": "Protected-Attribute Redaction Engine Before Inference",
+      "route": "/ai/protected-attribute-redaction-engine-before-inference"
+    },
+    {
+      "title": "Real-Time Explainability Dashboard (Agentic Flow Visualization)",
+      "route": "/ai/real-time-explainability-dashboard-agentic-flow-visualizatio"
+    },
+    {
+      "title": "Reason-Code Compiler",
+      "route": "/ai/reason-code-compiler"
+    },
+    {
+      "title": "Recruiter Agentic Co-Pilot",
+      "route": "/ai/recruiter-agentic-co-pilot"
+    },
+    {
+      "title": "Recruiter Copilot with Contextual Reasoning",
+      "route": "/ai/recruiter-copilot-with-contextual-reasoning"
+    },
+    {
+      "title": "Recursive Self-Improvement Workflow Optimizer",
+      "route": "/ai/recursive-self-improvement-workflow-optimizer"
+    },
+    {
+      "title": "Reinforcement Learning Optimization Agent",
+      "route": "/ai/reinforcement-learning-optimization-agent-category-defining"
+    },
+    {
+      "title": "Reinforcement Learning Optimization Agent (Category-defining bet)",
+      "route": "/ai/reinforcement-learning-optimization-agent-category-defining-bet"
+    },
+    {
+      "title": "Requisition Intake Agent \u2014 Decision-Ready Scorecard",
+      "route": "/ai/requisition-intake-agent-that-produces-a-decision-ready-scor"
+    },
+    {
+      "title": "Requisition Intake Agent that Produces a Decision Ready Scorecard",
+      "route": "/ai/requisition-intake-agent-that-produces-a-decision-ready-scorecard"
+    },
+    {
+      "title": "Role-Adaptive Explainability Views",
+      "route": "/ai/role-adaptive-explainability-views"
+    },
+    {
+      "title": "Role-Based AI Trust Levels",
+      "route": "/ai/role-based-ai-trust-levels"
+    },
+    {
+      "title": "Secure Shadow Evaluation Before Release",
+      "route": "/ai/secure-shadow-evaluation-before-release"
+    },
+    {
+      "title": "Self-Evolving Hiring OS (meta-agent improves all others)",
+      "route": "/ai/self-evolving-hiring-os-meta-agent-improves-all-others"
+    },
+    {
+      "title": "Self-Tuning Matching Algorithms via Feedback Loops",
+      "route": "/ai/self-tuning-matching-algorithms-via-feedback-loops"
+    },
+    {
+      "title": "Semantic Skill Adjacency Explainer",
+      "route": "/ai/semantic-skill-adjacency-explainer"
+    },
+    {
+      "title": "Uncertainty Quantification",
+      "route": "/ai/uncertainty-quantification"
+    },
+    {
+      "title": "USP: Recruiter Digital Twin",
+      "route": "/ai/usp-recruiter-digital-twin"
+    }
+  ],
+  "analytics": [
+    {
+      "title": "12-Month Performance Recalibrator",
+      "route": "/analytics/12-month-performance-recalibrator"
+    },
+    {
+      "title": "Actionable Telemetry Data Exporter",
+      "route": "/analytics/actionable-telemetry-data-exporter"
+    },
+    {
+      "title": "Adverse Impact Analysis by Stage",
+      "route": "/analytics/adverse-impact-analysis-by-stage"
+    },
+    {
+      "title": "Agentic Candidate Drop-Off Predictor",
+      "route": "/analytics/agentic-candidate-drop-off-predictor"
+    },
+    {
+      "title": "Agentic Candidate Experience Benchmarking",
+      "route": "/analytics/agentic-candidate-experience-benchmarking"
+    },
+    {
+      "title": "Agentic Candidate Net Promoter Score (cNPS)",
+      "route": "/analytics/agentic-candidate-net-promoter-score-cnps"
+    },
+    {
+      "title": "Agentic Interviewer Performance Analytics",
+      "route": "/analytics/agentic-interviewer-performance-analytics"
+    },
+    {
+      "title": "Agentic SLA Breach Predictor",
+      "route": "/analytics/agentic-sla-breach-predictor"
+    },
+    {
+      "title": "Agentic Talent Intelligence Dashboard",
+      "route": "/analytics/agentic-talent-intelligence-dashboard"
+    },
+    {
+      "title": "Approval SLA Tracking and Alerts",
+      "route": "/analytics/approval-sla-tracking-and-alerts"
+    },
+    {
+      "title": "Attrition Root-Cause Analyzer",
+      "route": "/analytics/attrition-root-cause-analyzer"
+    },
+    {
+      "title": "Automated Bias Audit Scheduling",
+      "route": "/analytics/automated-bias-audit-scheduling"
+    },
+    {
+      "title": "Automated Job-Family Market-Trend Scanner",
+      "route": "/analytics/automated-job-family-market-trend-scanner"
+    },
+    {
+      "title": "Automated Recruiter Performance Analytics with Coaching Recommendations",
+      "route": "/analytics/automated-recruiter-performance-analytics-with-coaching-reco"
+    },
+    {
+      "title": "Automated Recruiter Performance Analytics with Coaching Recommendations",
+      "route": "/analytics/automated-recruiter-performance-analytics-with-coaching-recommendations"
+    },
+    {
+      "title": "Automated Requisition Health Scoring with Intervention Playbooks",
+      "route": "/analytics/automated-requisition-health-scoring-with-intervention-playb"
+    },
+    {
+      "title": "Automated Requisition Velocity Monitoring with Bottleneck Detection",
+      "route": "/analytics/automated-requisition-velocity-monitoring-with-bottleneck-de"
+    },
+    {
+      "title": "Bias-Impact Attribution per Feature",
+      "route": "/analytics/bias-impact-attribution-per-feature"
+    },
+    {
+      "title": "Bottleneck Prediction & Escalation Agent",
+      "route": "/analytics/bottleneck-prediction-escalation-agent"
+    },
+    {
+      "title": "Burnout Risk Monitor for Recruiters",
+      "route": "/analytics/burnout-risk-monitor-for-recruiters"
+    },
+    {
+      "title": "Candidate Flight-Risk Predictor",
+      "route": "/analytics/candidate-flight-risk-predictor"
+    },
+    {
+      "title": "Candidate Journey Analytics with Drop-Off Point Identification",
+      "route": "/analytics/candidate-journey-analytics-with-drop-off-point-identificati"
+    },
+    {
+      "title": "Candidate Journey Analytics with Drop-Off Point Identification",
+      "route": "/analytics/candidate-journey-analytics-with-drop-off-point-identification"
+    },
+    {
+      "title": "Candidate Journey Visualizer with Prescriptive Fixes",
+      "route": "/analytics/candidate-journey-visualizer-with-prescriptive-fixes"
+    },
+    {
+      "title": "Candidate Trust Analytics and Redress SLAs",
+      "route": "/analytics/candidate-trust-analytics-and-redress-slas"
+    },
+    {
+      "title": "Closed-Loop Quality of Hire (QoH) Synthesizer",
+      "route": "/analytics/closed-loop-quality-of-hire-qoh-synthesizer"
+    },
+    {
+      "title": "Continuous Learning from Hiring Outcomes (Closed-Loop Intelligence)",
+      "route": "/analytics/continuous-learning-from-hiring-outcomes-closed-loop-intelli"
+    },
+    {
+      "title": "Continuous learning from hiring outcomes (closed-loop intelligence)",
+      "route": "/analytics/continuous-learning-from-hiring-outcomes-closed-loop-intelligence"
+    },
+    {
+      "title": "Continuous Workflow Experimentation System",
+      "route": "/analytics/continuous-workflow-experimentation-system"
+    },
+    {
+      "title": "Contract-to-Hire Conversion Monitoring",
+      "route": "/analytics/contract-to-hire-conversion-monitoring"
+    },
+    {
+      "title": "Cost-of-Delay & Talent-Loss Analytics",
+      "route": "/analytics/cost-of-delay-talent-loss-analytics"
+    },
+    {
+      "title": "Cross-functional analytics dashboards for finance, executives, and TA ops",
+      "route": "/analytics/cross-functional-analytics-dashboards-for-finance,-executive"
+    },
+    {
+      "title": "Cross-System Decision Correlation",
+      "route": "/analytics/cross-system-decision-correlation"
+    },
+    {
+      "title": "Culture-Add Trajectory Simulator",
+      "route": "/analytics/culture-add-trajectory-simulator"
+    },
+    {
+      "title": "Dynamic Bottleneck Detection & Recovery",
+      "route": "/analytics/dynamic-bottleneck-detection-and-recovery"
+    },
+    {
+      "title": "End-to-End Workflow Replay",
+      "route": "/analytics/end-to-end-workflow-replay"
+    },
+    {
+      "title": "Enterprise Hiring Intelligence Flywheel",
+      "route": "/analytics/enterprise-hiring-intelligence-flywheel"
+    },
+    {
+      "title": "Event Sourced Hiring Ledger",
+      "route": "/analytics/event-sourced-hiring-ledger"
+    },
+    {
+      "title": "Exception-Only Review Mode",
+      "route": "/analytics/exception-only-review-mode"
+    },
+    {
+      "title": "Experiment-as-a-service for recruiting flows",
+      "route": "/analytics/experiment-as-a-service-for-recruiting-flows"
+    },
+    {
+      "title": "Fairness Drift Detection",
+      "route": "/analytics/fairness-drift-detection"
+    },
+    {
+      "title": "Fairness Metrics Benchmarking",
+      "route": "/analytics/fairness-metrics-benchmarking"
+    },
+    {
+      "title": "Feature Importance Stability Monitoring",
+      "route": "/analytics/feature-importance-stability-monitoring"
+    },
+    {
+      "title": "Hiring Experimentation Framework",
+      "route": "/analytics/hiring-experimentation-framework"
+    },
+    {
+      "title": "Hiring forecast & capacity planner",
+      "route": "/analytics/hiring-forecast-capacity-planner"
+    },
+    {
+      "title": "Hiring Funnel Leakage Auto-Diagnoser",
+      "route": "/analytics/hiring-funnel-leakage-auto-diagnoser"
+    },
+    {
+      "title": "Hiring Manager Satisfaction Prediction with Quality Indicators",
+      "route": "/analytics/hiring-manager-satisfaction-prediction-with-quality-indicato"
+    },
+    {
+      "title": "Hiring Manager Satisfaction Prediction with Quality Indicators",
+      "route": "/analytics/hiring-manager-satisfaction-prediction-with-quality-indicators"
+    },
+    {
+      "title": "Hiring Velocity Benchmark vs. Market Agent",
+      "route": "/analytics/hiring-velocity-benchmark-vs-market-agent"
+    },
+    {
+      "title": "Human Override Analytics",
+      "route": "/analytics/human-override-analytics"
+    },
+    {
+      "title": "Immutable, Tamper-Evident Audit Logs",
+      "route": "/analytics/immutable,-tamper-evident-audit-logs"
+    },
+    {
+      "title": "Intelligent Source Attribution with Multi-Touch Credit Assignment",
+      "route": "/analytics/intelligent-source-attribution-with-multi-touch-credit-assig"
+    },
+    {
+      "title": "Intelligent Source Attribution with Multi-Touch Credit Assignment",
+      "route": "/analytics/intelligent-source-attribution-with-multi-touch-credit-assignment"
+    },
+    {
+      "title": "Interview Performance Analytics with Pattern Recognition",
+      "route": "/analytics/interview-performance-analytics-with-pattern-recognition"
+    },
+    {
+      "title": "Multi-Objective Hiring Optimizer (Speed / Quality / DEI / Cost)",
+      "route": "/analytics/multi-objective-hiring-optimizer-speed-quality-dei-cost"
+    },
+    {
+      "title": "Offer Acceptance Probability Forecaster",
+      "route": "/analytics/offer-acceptance-probability-forecaster"
+    },
+    {
+      "title": "Org-Wide Hiring Health Dashboard (Agent-Curated)",
+      "route": "/analytics/org-wide-hiring-health-dashboard-agent-curated"
+    },
+    {
+      "title": "Override and Justification Logging",
+      "route": "/analytics/override-and-justification-logging"
+    },
+    {
+      "title": "Pipeline bottleneck resolver",
+      "route": "/analytics/pipeline-bottleneck-resolver"
+    },
+    {
+      "title": "Post-Decision Learning Agent",
+      "route": "/analytics/post-decision-learning-agent"
+    },
+    {
+      "title": "Post-Hire Performance Correlation Agent",
+      "route": "/analytics/post-hire-performance-correlation-agent"
+    },
+    {
+      "title": "Predictive Headcount vs. Revenue Modeler",
+      "route": "/analytics/predictive-headcount-vs-revenue-modeler"
+    },
+    {
+      "title": "Predictive Hiring Analytics Agent",
+      "route": "/analytics/predictive-hiring-analytics-agent"
+    },
+    {
+      "title": "Predictive pipeline forecasting with confidence intervals",
+      "route": "/analytics/predictive-pipeline-forecasting-with-confidence-intervals"
+    },
+    {
+      "title": "Predictive Quality-of-Hire Modeling with Success Indicators",
+      "route": "/analytics/predictive-quality-of-hire-modeling-with-success-indicators"
+    },
+    {
+      "title": "Predictive Sourcing Channel ROI with Budget Optimization",
+      "route": "/analytics/predictive-sourcing-channel-roi-with-budget-optimization"
+    },
+    {
+      "title": "Predictive Talent Risk Forecaster",
+      "route": "/analytics/predictive-talent-risk-forecaster"
+    },
+    {
+      "title": "Predictive Time-to-Fill Estimation with Confidence Intervals",
+      "route": "/analytics/predictive-time-to-fill-estimation-with-confidence-intervals"
+    },
+    {
+      "title": "Quality-of-Hire Closed-Loop Measurement Connecting Hiring Data to Business Outcomes",
+      "route": "/analytics/quality-of-hire-closed-loop-measurement-connecting-hiring-da"
+    },
+    {
+      "title": "Quality-of-hire closed-loop measurement connecting hiring data to business outcomes",
+      "route": "/analytics/quality-of-hire-closed-loop-measurement-connecting-hiring-data-to-business-outcomes"
+    },
+    {
+      "title": "Quality-of-hire feedback loop integrator",
+      "route": "/analytics/quality-of-hire-feedback-loop-integrator"
+    },
+    {
+      "title": "Quality of Hire Outcome Learning Loop",
+      "route": "/analytics/quality-of-hire-outcome-learning-loop"
+    },
+    {
+      "title": "Quality of Hire Prediction",
+      "route": "/analytics/quality-of-hire-prediction"
+    },
+    {
+      "title": "Real-Time Cost-per-Hire Optimizer",
+      "route": "/analytics/real-time-cost-per-hire-optimizer"
+    },
+    {
+      "title": "Real-Time Demographic Parity Monitor + Alert",
+      "route": "/analytics/real-time-demographic-parity-monitor-alert"
+    },
+    {
+      "title": "Real-Time Hiring-ROI Calculator",
+      "route": "/analytics/real-time-hiring-roi-calculator"
+    },
+    {
+      "title": "Real-Time Labor Market Intelligence Integrated into Sourcing Strategy",
+      "route": "/analytics/real-time-labor-market-intelligence-integrated-into-sourcing"
+    },
+    {
+      "title": "Real-time labor market intelligence integrated into sourcing strategy",
+      "route": "/analytics/real-time-labor-market-intelligence-integrated-into-sourcing-strategy"
+    },
+    {
+      "title": "Real-Time Pipeline Health Dashboard",
+      "route": "/analytics/real-time-pipeline-health-dashboard"
+    },
+    {
+      "title": "Real-Time Pipeline Health Self-Healer",
+      "route": "/analytics/real-time-pipeline-health-self-healer"
+    },
+    {
+      "title": "Real-Time Process Telemetry Dashboard",
+      "route": "/analytics/real-time-process-telemetry-dashboard"
+    },
+    {
+      "title": "Recruiter Action Attribution Engine",
+      "route": "/analytics/recruiter-action-attribution-engine"
+    },
+    {
+      "title": "Recruiter Burnout Early-Warning System",
+      "route": "/analytics/recruiter-burnout-early-warning-system"
+    },
+    {
+      "title": "Recruiter capacity optimization and workload intelligence",
+      "route": "/analytics/recruiter-capacity-optimization-and-workload-intelligence"
+    },
+    {
+      "title": "Requisition Budget Impact Simulator",
+      "route": "/analytics/requisition-budget-impact-simulator"
+    },
+    {
+      "title": "Requisition-to-Hire ROI Forecaster",
+      "route": "/analytics/requisition-to-hire-roi-forecaster"
+    },
+    {
+      "title": "Role-outcome simulation engine",
+      "route": "/analytics/role-outcome-simulation-engine"
+    },
+    {
+      "title": "Role Portfolio Risk Radar",
+      "route": "/analytics/role-portfolio-risk-radar"
+    },
+    {
+      "title": "Root Cause Analysis (RCA) Agent",
+      "route": "/analytics/root-cause-analysis-rca-agent"
+    },
+    {
+      "title": "Source to Outcome Attribution Engine",
+      "route": "/analytics/source-to-outcome-attribution-engine"
+    },
+    {
+      "title": "Sourcing Channel ROI Allocation Agent",
+      "route": "/analytics/sourcing-channel-roi-allocation-agent"
+    },
+    {
+      "title": "Talent Pool Attrition Predictor",
+      "route": "/analytics/talent-pool-attrition-predictor"
+    },
+    {
+      "title": "Talent Pool Health & Decay Analyzer",
+      "route": "/analytics/talent-pool-health-decay-analyzer"
+    },
+    {
+      "title": "USP: Predictive Success Modeling",
+      "route": "/analytics/usp-predictive-success-modeling"
+    },
+    {
+      "title": "USP: Recruitment Marketing ROI Agent",
+      "route": "/analytics/usp-recruitment-marketing-roi-agent"
+    },
+    {
+      "title": "USP: Reporting Agent (NLP to Dashboard)",
+      "route": "/analytics/usp-reporting-agent-nlp-to-dashboard"
+    },
+    {
+      "title": "USP: Scenario Planning Simulator",
+      "route": "/analytics/usp-scenario-planning-simulator"
+    }
+  ],
+  "candidates": [
+    {
+      "title": "24/7 Hyper-Personalized Concierge",
+      "route": "/candidates/24-7-hyper-personalized-concierge"
+    },
+    {
+      "title": "24/7 Hyper-Personalized Concierge",
+      "route": "/candidates/247-hyper-personalized-concierge"
+    },
+    {
+      "title": "USP: 24/7 Concierge Agent",
+      "route": "/candidates/7-concierge-agent"
+    },
+    {
+      "title": "Adaptive Application Experience",
+      "route": "/candidates/adaptive-application-experience"
+    },
+    {
+      "title": "Agentic Candidate FAQ & Support",
+      "route": "/candidates/agentic-candidate-faq-support"
+    },
+    {
+      "title": "Agentic Candidate Status Transparency",
+      "route": "/candidates/agentic-candidate-status-transparency"
+    },
+    {
+      "title": "AI Feedback Loop for Candidates",
+      "route": "/candidates/ai-feedback-loop-for-candidates"
+    },
+    {
+      "title": "AI Usage Dashboard for Candidates",
+      "route": "/candidates/ai-usage-dashboard-for-candidates"
+    },
+    {
+      "title": "Appeal-to-human button (improves candidate NPS)",
+      "route": "/candidates/appeal-to-human-button-improves-candidate-nps"
+    },
+    {
+      "title": "Automated Candidate Re-Engagement for Past Applicants",
+      "route": "/candidates/automated-candidate-re-engagement-for-past-applicants"
+    },
+    {
+      "title": "Automated Outreach Personalization Agent",
+      "route": "/candidates/automated-outreach-personalization-agent"
+    },
+    {
+      "title": "Automated Requisition-Closure Notifier",
+      "route": "/candidates/automated-requisition-closure-notifier"
+    },
+    {
+      "title": "Candidacy Journey Guardian Agent",
+      "route": "/candidates/candidacy-journey-guardian-agent"
+    },
+    {
+      "title": "Candidate AI-Influence Transparency Portal",
+      "route": "/candidates/candidate-ai-influence-transparency-portal"
+    },
+    {
+      "title": "Candidate AI Transparency Notice Engine",
+      "route": "/candidates/candidate-ai-transparency-notice-engine"
+    },
+    {
+      "title": "Candidate AI Use Passport",
+      "route": "/candidates/candidate-ai-use-passport"
+    },
+    {
+      "title": "Candidate Appeal Workflow",
+      "route": "/candidates/candidate-appeal-workflow"
+    },
+    {
+      "title": "Candidate Career Trajectory Co-Pilot",
+      "route": "/candidates/candidate-career-trajectory-co-pilot"
+    },
+    {
+      "title": "Candidate-centric scheduling that optimizes their experience, not just internal efficiency",
+      "route": "/candidates/candidate-centric-scheduling-that-optimizes-their-experience"
+    },
+    {
+      "title": "Candidate Communication Cadence Optimization",
+      "route": "/candidates/candidate-communication-cadence-optimization"
+    },
+    {
+      "title": "Candidate Communication Equity Monitor",
+      "route": "/candidates/candidate-communication-equity-monitor"
+    },
+    {
+      "title": "Candidate Data Access and Redress Portal",
+      "route": "/candidates/candidate-data-access-and-redress-portal"
+    },
+    {
+      "title": "Candidate Experience Journey Orchestration",
+      "route": "/candidates/candidate-experience-journey-orchestration-with-touchpoint-o"
+    },
+    {
+      "title": "Candidate Experience Journey Orchestration with Touchpoint Optimization",
+      "route": "/candidates/candidate-experience-journey-orchestration-with-touchpoint-optimization"
+    },
+    {
+      "title": "Candidate Experience Orchestrator",
+      "route": "/candidates/candidate-experience-orchestrator"
+    },
+    {
+      "title": "Candidate Experience Sentiment Analysis",
+      "route": "/candidates/candidate-experience-sentiment-analysis"
+    },
+    {
+      "title": "Candidate Explanation and Appeal Center",
+      "route": "/candidates/candidate-explanation-and-appeal-center"
+    },
+    {
+      "title": "Candidate-Facing Process Map with AI Touchpoints",
+      "route": "/candidates/candidate-facing-process-map-with-ai-touchpoints"
+    },
+    {
+      "title": "Candidate Feedback And Appeal Channel",
+      "route": "/candidates/candidate-feedback-and-appeal-channel"
+    },
+    {
+      "title": "Candidate Feedback and Growth Agent",
+      "route": "/candidates/candidate-feedback-and-growth-agent"
+    },
+    {
+      "title": "Candidate Interview Preparation Coach",
+      "route": "/candidates/candidate-interview-preparation-coach"
+    },
+    {
+      "title": "Candidate Journey Personalization Agent",
+      "route": "/candidates/candidate-journey-personalization-agent"
+    },
+    {
+      "title": "Candidate Journey Sentiment Analyzer & Improver",
+      "route": "/candidates/candidate-journey-sentiment-analyzer-improver"
+    },
+    {
+      "title": "Candidate Q&A Agent with Verified Answers and Guardrails",
+      "route": "/candidates/candidate-q-a-agent-with-verified-answers-and-guardrails"
+    },
+    {
+      "title": "Candidate Q&A Agent with Verified Answers and Guardrails",
+      "route": "/candidates/candidate-qa-agent-with-verified-answers-and-guardrails"
+    },
+    {
+      "title": "Candidate Right-to-Reply Portal",
+      "route": "/candidates/candidate-right-to-reply-portal"
+    },
+    {
+      "title": "Candidate Rights Fulfillment Portal",
+      "route": "/candidates/candidate-rights-fulfillment-portal"
+    },
+    {
+      "title": "Candidate Self-Service Explanation Portal",
+      "route": "/candidates/candidate-self-service-explanation-portal"
+    },
+    {
+      "title": "Candidate Sentiment Analysis from Application Journey",
+      "route": "/candidates/candidate-sentiment-analysis-from-application-journey"
+    },
+    {
+      "title": "Candidate-Sentiment Monitoring Agent",
+      "route": "/candidates/candidate-sentiment-monitoring-agent"
+    },
+    {
+      "title": "Candidate Skill-Gap Explainable Feedback",
+      "route": "/candidates/candidate-skill-gap-explainable-feedback"
+    },
+    {
+      "title": "Candidate Trust Concierge with Predictable Timelines",
+      "route": "/candidates/candidate-trust-concierge-with-predictable-timelines"
+    },
+    {
+      "title": "Candidate Trust Score and Employer Fairness Seal",
+      "route": "/candidates/candidate-trust-score-and-employer-fairness-seal"
+    },
+    {
+      "title": "Candidate Trust Score and Transparency Metrics",
+      "route": "/candidates/candidate-trust-score-and-transparency-metrics"
+    },
+    {
+      "title": "Candidate\u2011Facing Process Map With AI Touchpoints",
+      "route": "/candidates/candidatefacing-process-map-with-ai-touchpoints"
+    },
+    {
+      "title": "Constructive, personalized feedback for every candidate",
+      "route": "/candidates/constructive-personalized-feedback-for-every-candidate"
+    },
+    {
+      "title": "Conversational Application Support Bot",
+      "route": "/candidates/conversational-application-support-bot"
+    },
+    {
+      "title": "Conversational application that eliminates forms entirely for appropriate roles",
+      "route": "/candidates/conversational-application-that-eliminates-forms-entirely-fo"
+    },
+    {
+      "title": "Conversational Candidate Concierge (Core feature)",
+      "route": "/candidates/conversational-candidate-concierge-core-feature"
+    },
+    {
+      "title": "Empathic Contextual Interview Adapter",
+      "route": "/candidates/empathic-contextual-interview-adapter"
+    },
+    {
+      "title": "End-to-end candidate concierge agent",
+      "route": "/candidates/end-to-end-candidate-concierge-agent"
+    },
+    {
+      "title": "Estimated Wait Time with AI Status",
+      "route": "/candidates/estimated-wait-time-with-ai-status"
+    },
+    {
+      "title": "Explainable Rejection Feedback",
+      "route": "/candidates/explainable-rejection-feedback-turns-rejections-into-talent"
+    },
+    {
+      "title": "Explainable rejection feedback (turns rejections into talent pipeline)",
+      "route": "/candidates/explainable-rejection-feedback-turns-rejections-into-talent-pipeline"
+    },
+    {
+      "title": "Ghosting Prevention & Recovery Agent",
+      "route": "/candidates/ghosting-prevention-recovery-agent"
+    },
+    {
+      "title": "Manager Mobile Companion (Frontline)",
+      "route": "/candidates/manager-mobile-companion-frontline"
+    },
+    {
+      "title": "Multi-channel autonomous outreach with deep personalization",
+      "route": "/candidates/multi-channel-autonomous-outreach-with-deep-personalization"
+    },
+    {
+      "title": "Multi-Language Cultural Adapter Agent",
+      "route": "/candidates/multi-language-cultural-adapter-agent"
+    },
+    {
+      "title": "Multi-Language Legal Disclaimer Engine",
+      "route": "/candidates/multi-language-legal-disclaimer-engine"
+    },
+    {
+      "title": "Multi-Language Legal UX for Candidates",
+      "route": "/candidates/multi-language-legal-ux-for-candidates"
+    },
+    {
+      "title": "Multi-Lingual, Region-Aware Candidate Agent",
+      "route": "/candidates/multi-lingual,-region-aware-candidate-agent"
+    },
+    {
+      "title": "Multi-Lingual Nuance Translation Agent",
+      "route": "/candidates/multi-lingual-nuance-translation-agent"
+    },
+    {
+      "title": "Multi\u2011Language Legal UX For Candidates",
+      "route": "/candidates/multilanguage-legal-ux-for-candidates"
+    },
+    {
+      "title": "Multilingual Experience Agent (Premium differentiator)",
+      "route": "/candidates/multilingual-experience-agent-premium-differentiator"
+    },
+    {
+      "title": "One-Click Appeal to Human Reviewer",
+      "route": "/candidates/one-click-appeal-to-human-reviewer"
+    },
+    {
+      "title": "Personalized, multi-channel candidate engagement throughout the lifecycle",
+      "route": "/candidates/personalized,-multi-channel-candidate-engagement-throughout-"
+    },
+    {
+      "title": "Personalized, Actionable Feedback For Candidates",
+      "route": "/candidates/personalized-actionable-feedback-for-candidates"
+    },
+    {
+      "title": "Personalized Candidate Messaging Based on Profile Analysis",
+      "route": "/candidates/personalized-candidate-messaging-based-on-profile-analysis"
+    },
+    {
+      "title": "Personalized Interview Prep Agent",
+      "route": "/candidates/personalized-interview-prep-agent"
+    },
+    {
+      "title": "Personalized Skill Gap Feedback Agent",
+      "route": "/candidates/personalized-skill-gap-feedback-agent"
+    },
+    {
+      "title": "Predictive Candidate Ghosting Prevention",
+      "route": "/candidates/predictive-candidate-ghosting-prevention"
+    },
+    {
+      "title": "Real-Time Candidate Experience Personalizer",
+      "route": "/candidates/real-time-candidate-experience-personalizer"
+    },
+    {
+      "title": "Real-Time Interview Prep Coach",
+      "route": "/candidates/real-time-interview-prep-coach"
+    },
+    {
+      "title": "Real-time transparent status tracking with timeline predictions",
+      "route": "/candidates/real-time-transparent-status-tracking-with-timeline-predicti"
+    },
+    {
+      "title": "Rejection Empathy and Redirection Agent",
+      "route": "/candidates/rejection-empathy-and-redirection-agent"
+    },
+    {
+      "title": "Sentiment-Responsive Candidate Concierge",
+      "route": "/candidates/sentiment-responsive-candidate-concierge"
+    },
+    {
+      "title": "Stakeholder Experience Personalization Engine",
+      "route": "/candidates/stakeholder-experience-personalization-engine"
+    },
+    {
+      "title": "Transparency-by-Default Interviewing",
+      "route": "/candidates/transparency-by-default-interviewing"
+    },
+    {
+      "title": "Transparent Application Progress Tracker",
+      "route": "/candidates/transparent-application-progress-tracker"
+    },
+    {
+      "title": "Trust-Building Transparency Agent",
+      "route": "/candidates/trust-building-transparency-agent"
+    },
+    {
+      "title": "Trust Score Reporter for Candidates",
+      "route": "/candidates/trust-score-reporter-for-candidates"
+    },
+    {
+      "title": "Usp 247 Concierge Agent",
+      "route": "/candidates/usp-247-concierge-agent"
+    },
+    {
+      "title": "USP: Candidate ",
+      "route": "/candidates/usp-candidate-black-hole-eliminator"
+    },
+    {
+      "title": "USP: Candidate Re-engagement Agent",
+      "route": "/candidates/usp-candidate-re-engagement-agent"
+    },
+    {
+      "title": "USP: Post-Rejection Engagement",
+      "route": "/candidates/usp-post-rejection-engagement"
+    },
+    {
+      "title": "Why Was I Rejected Candidate Report",
+      "route": "/candidates/why-was-i-rejected-candidate-report"
+    }
+  ],
+  "compliance": [
+    {
+      "title": "Accommodation-Safe Alternative Flow Engine",
+      "route": "/compliance/accommodation-safe-alternative-flow-engine"
+    },
+    {
+      "title": "Adaptive Bias Monitoring With Drift Detection",
+      "route": "/compliance/adaptive-bias-monitoring-with-drift-detection"
+    },
+    {
+      "title": "Adaptive Compliance Guardrails",
+      "route": "/compliance/adaptive-compliance-guardrails"
+    },
+    {
+      "title": "Agent policy & guardrail engine",
+      "route": "/compliance/agent-policy-guardrail-engine"
+    },
+    {
+      "title": "Agent System of Record for governance, auditability, and oversight",
+      "route": "/compliance/agent-system-of-record-for-governance,-auditability,-and-ove"
+    },
+    {
+      "title": "Agentic Compliance Co-Pilot For Audits",
+      "route": "/compliance/agentic-compliance-co-pilot-for-audits"
+    },
+    {
+      "title": "AI Accommodation Request Router",
+      "route": "/compliance/ai-accommodation-request-router"
+    },
+    {
+      "title": "AI Audit Readiness Scorecard",
+      "route": "/compliance/ai-audit-readiness-scorecard"
+    },
+    {
+      "title": "AI Change Impact Diff",
+      "route": "/compliance/ai-change-impact-diff"
+    },
+    {
+      "title": "AI Interaction Audit Logs (Not Just User Logs)",
+      "route": "/compliance/ai-interaction-audit-logs-not-just-user-logs"
+    },
+    {
+      "title": "AI Literacy Certification Tracker",
+      "route": "/compliance/ai-literacy-certification-tracker"
+    },
+    {
+      "title": "AI Recommendation Discrepancy Alert",
+      "route": "/compliance/ai-recommendation-discrepancy-alert"
+    },
+    {
+      "title": "AI Recommendation Quarantine Queue",
+      "route": "/compliance/ai-recommendation-quarantine-queue"
+    },
+    {
+      "title": "Algorithmic Impact Assessments",
+      "route": "/compliance/algorithmic-impact-assessments"
+    },
+    {
+      "title": "Algorithmic Override Annotator",
+      "route": "/compliance/algorithmic-override-annotator"
+    },
+    {
+      "title": "Aligned-Criteria Library (Job-Relatedness Guardrails)",
+      "route": "/compliance/aligned-criteria-library-job-relatedness-guardrails"
+    },
+    {
+      "title": "Annual bias-audit automation",
+      "route": "/compliance/annual-bias-audit-automation"
+    },
+    {
+      "title": "Anonymous Shortlisting",
+      "route": "/compliance/anonymous-shortlisting"
+    },
+    {
+      "title": "Applicant Fraud and Identity Verification Neutralizer",
+      "route": "/compliance/applicant-fraud-and-identity-verification-neutralizer"
+    },
+    {
+      "title": "Audit Pack Generator for Decisions",
+      "route": "/compliance/audit-pack-generator-for-decisions"
+    },
+    {
+      "title": "Audit Replay Mode",
+      "route": "/compliance/audit-replay-mode"
+    },
+    {
+      "title": "Audit Trail Generation Engine",
+      "route": "/compliance/audit-trail-generation-engine"
+    },
+    {
+      "title": "Auto-Registration & Conformity Assessment for EU AI Act",
+      "route": "/compliance/auto-registration-and-conformity-assessment-for-eu-ai-act"
+    },
+    {
+      "title": "Automated Compliance Documentation",
+      "route": "/compliance/automated-compliance-documentation"
+    },
+    {
+      "title": "Automated Compliance Training Trigger",
+      "route": "/compliance/automated-compliance-training-trigger"
+    },
+    {
+      "title": "Automated Diversity Pipeline Analytics with Intervention Recommendations",
+      "route": "/compliance/automated-diversity-pipeline-analytics-with-intervention-rec"
+    },
+    {
+      "title": "Automated Diversity-Slate Generator",
+      "route": "/compliance/automated-diversity-slate-generator"
+    },
+    {
+      "title": "Automated EEO-1 and OFCCP Reconciliation Engine",
+      "route": "/compliance/automated-eeo-1-and-ofccp-reconciliation-engine"
+    },
+    {
+      "title": "Automated EEO-Report Generator",
+      "route": "/compliance/automated-eeo-report-generator"
+    },
+    {
+      "title": "Automated Evidence Pack Generation",
+      "route": "/compliance/automated-evidence-pack-generation"
+    },
+    {
+      "title": "Automated Legal Hold Application",
+      "route": "/compliance/automated-legal-hold-application"
+    },
+    {
+      "title": "Automated Legal Risk Flagging for Job Descriptions and Communications",
+      "route": "/compliance/automated-legal-risk-flagging-for-job-descriptions-and-commu"
+    },
+    {
+      "title": "Automated OFCCP Reporting Suite",
+      "route": "/compliance/automated-ofccp-reporting-suite"
+    },
+    {
+      "title": "Automated Regulatory Reporting",
+      "route": "/compliance/automated-regulatory-reporting"
+    },
+    {
+      "title": "Automated SLA Enforcement for Human Review",
+      "route": "/compliance/automated-sla-enforcement-for-human-review"
+    },
+    {
+      "title": "Autonomous Audit-Ready Reporting Agent",
+      "route": "/compliance/autonomous-audit-ready-reporting-agent"
+    },
+    {
+      "title": "Autonomous Candidate Fraud Detector",
+      "route": "/compliance/autonomous-candidate-fraud-detector"
+    },
+    {
+      "title": "Bias & Drift Monitor for Models and Workflows",
+      "route": "/compliance/bias-and-drift-monitor-for-models-and-workflows"
+    },
+    {
+      "title": "Bias and Sentiment Extractor",
+      "route": "/compliance/bias-and-sentiment-extractor"
+    },
+    {
+      "title": "DEI/Bias Audit Agent",
+      "route": "/compliance/bias-audit-agent"
+    },
+    {
+      "title": "Bias Audit Dashboard for Stakeholders",
+      "route": "/compliance/bias-audit-dashboard-for-stakeholders"
+    },
+    {
+      "title": "Bias-Audited Rubric Generator",
+      "route": "/compliance/bias-audited-rubric-generator"
+    },
+    {
+      "title": "Bias Bounty Program Integration",
+      "route": "/compliance/bias-bounty-program-integration"
+    },
+    {
+      "title": "Bias Drift Detector",
+      "route": "/compliance/bias-drift-detector"
+    },
+    {
+      "title": "Bias Mitigation Agent",
+      "route": "/compliance/bias-mitigation-agent"
+    },
+    {
+      "title": "Bias-Mitigation & Explainable Scoring Layer",
+      "route": "/compliance/bias-mitigation-and-explainable-scoring-layer"
+    },
+    {
+      "title": "Real-Time Diversity/Bias Monitoring",
+      "route": "/compliance/bias-monitoring"
+    },
+    {
+      "title": "Real-Time Diversity/Bias Monitoring with Corrective Action Loops",
+      "route": "/compliance/bias-monitoring-with-corrective-action-l"
+    },
+    {
+      "title": "Bias Remediation Workflow Engine",
+      "route": "/compliance/bias-remediation-workflow-engine"
+    },
+    {
+      "title": "Built-In DPIA and Impact Assessment Workspace",
+      "route": "/compliance/built-in-dpia-and-impact-assessment-workspace"
+    },
+    {
+      "title": "Candidate Demographic Voluntariness And Segregated Use",
+      "route": "/compliance/candidate-demographic-voluntariness-and-segregated-use"
+    },
+    {
+      "title": "Candidate-Facing AI Use Notices",
+      "route": "/compliance/candidate-facing-ai-use-notices"
+    },
+    {
+      "title": "Candidate-Facing Data Source Receipt",
+      "route": "/compliance/candidate-facing-data-source-receipt"
+    },
+    {
+      "title": "Candidate Opt-Out of AI Screening",
+      "route": "/compliance/candidate-opt-out-of-ai-screening"
+    },
+    {
+      "title": "Candidate-Side Fairness Explanations",
+      "route": "/compliance/candidate-side-fairness-explanations"
+    },
+    {
+      "title": "Candidate\u2011Side Fairness Explanations",
+      "route": "/compliance/candidateside-fairness-explanations"
+    },
+    {
+      "title": "Collaborative Hiring Fairness Agent",
+      "route": "/compliance/collaborative-hiring-fairness-agent"
+    },
+    {
+      "title": "Compliance Change Alerting And Simulation",
+      "route": "/compliance/compliance-change-alerting-and-simulation"
+    },
+    {
+      "title": "Compliance Document Auto-Generator",
+      "route": "/compliance/compliance-document-auto-generator"
+    },
+    {
+      "title": "Comprehensive, tamper-proof audit trails for every AI and human action",
+      "route": "/compliance/comprehensive,-tamper-proof-audit-trails-for-every-ai-and-hu"
+    },
+    {
+      "title": "Confidence-Driven Escalation Thresholds",
+      "route": "/compliance/confidence-driven-escalation-thresholds"
+    },
+    {
+      "title": "Configurable Fairness Objectives Per Role",
+      "route": "/compliance/configurable-fairness-objectives-per-role"
+    },
+    {
+      "title": "Configurable Human-in-the-Loop Triggers",
+      "route": "/compliance/configurable-human-in-the-loop-triggers"
+    },
+    {
+      "title": "Consent Management",
+      "route": "/compliance/consent-management"
+    },
+    {
+      "title": "Consent Versioning and Tracking",
+      "route": "/compliance/consent-versioning-and-tracking"
+    },
+    {
+      "title": "Continuous Bias and Drift Monitoring with Automated Alerts",
+      "route": "/compliance/continuous-bias-and-drift-monitoring-with-automated-alerts"
+    },
+    {
+      "title": "Continuous DEI Goal Alignment Engine",
+      "route": "/compliance/continuous-dei-goal-alignment-engine"
+    },
+    {
+      "title": "Continuous Fairness Monitoring",
+      "route": "/compliance/continuous-fairness-monitoring"
+    },
+    {
+      "title": "Continuous Impact Assessment Engine",
+      "route": "/compliance/continuous-impact-assessment-engine"
+    },
+    {
+      "title": "Counsel and Procurement Evidence Export",
+      "route": "/compliance/counsel-and-procurement-evidence-export"
+    },
+    {
+      "title": "Criteria Health Check for Job Relevance",
+      "route": "/compliance/criteria-health-check-for-job-relevance"
+    },
+    {
+      "title": "Criteria Transparency Registry",
+      "route": "/compliance/criteria-transparency-registry"
+    },
+    {
+      "title": "Cross-Border Audit Trail Segmentation",
+      "route": "/compliance/cross-border-audit-trail-segmentation"
+    },
+    {
+      "title": "Cross-Entity Global Compliance Guardian",
+      "route": "/compliance/cross-entity-global-compliance-guardian"
+    },
+    {
+      "title": "Decision Override Audit Trail",
+      "route": "/compliance/decision-override-audit-trail"
+    },
+    {
+      "title": "Decision Version Control",
+      "route": "/compliance/decision-version-control"
+    },
+    {
+      "title": "DEI Decision Auditor Agent",
+      "route": "/compliance/dei-decision-auditor-agent"
+    },
+    {
+      "title": "DEI Fairness Simulator & Auditor",
+      "route": "/compliance/dei-fairness-simulator-and-auditor"
+    },
+    {
+      "title": "Deibias Audit Agent",
+      "route": "/compliance/deibias-audit-agent"
+    },
+    {
+      "title": "Diversity & Inclusion Impact Tracker",
+      "route": "/compliance/diversity-and-inclusion-impact-tracker"
+    },
+    {
+      "title": "Diversity Goal Achievement Agent",
+      "route": "/compliance/diversity-goal-achievement-agent"
+    },
+    {
+      "title": "Diversity Impact Forecasting",
+      "route": "/compliance/diversity-impact-forecasting"
+    },
+    {
+      "title": "Diversity Pipeline Analytics",
+      "route": "/compliance/diversity-pipeline-analytics"
+    },
+    {
+      "title": "DPIA Pre-Filled Compliance Exporter",
+      "route": "/compliance/dpia-pre-filled-compliance-exporter"
+    },
+    {
+      "title": "Drift and Feedback-Loop Monitor",
+      "route": "/compliance/drift-and-feedback-loop-monitor"
+    },
+    {
+      "title": "Dynamic Geographic Posting Adapter",
+      "route": "/compliance/dynamic-geographic-posting-adapter"
+    },
+    {
+      "title": "Dynamic Human-in-the-loop Decisioning",
+      "route": "/compliance/dynamic-human-in-the-loop-decisioning"
+    },
+    {
+      "title": "Dynamic Human-in-the-loop Decisioning with Explainability Surfaces",
+      "route": "/compliance/dynamic-human-in-the-loop-decisioning-with-explainability-su"
+    },
+    {
+      "title": "Dynamic Jurisdiction Compliance Engine",
+      "route": "/compliance/dynamic-jurisdiction-compliance-engine"
+    },
+    {
+      "title": "Automated Compliance Documentation for OFCCP/EEO Audits",
+      "route": "/compliance/eeo-audits"
+    },
+    {
+      "title": "End-to-End AI Decision Audit Trail",
+      "route": "/compliance/end-to-end-ai-decision-audit-trail"
+    },
+    {
+      "title": "End-to-End Candidate Journey Audit Package",
+      "route": "/compliance/end-to-end-candidate-journey-audit-package"
+    },
+    {
+      "title": "End-to-End Hiring Evidence Vault",
+      "route": "/compliance/end-to-end-hiring-evidence-vault"
+    },
+    {
+      "title": "End-to-End Process Provenance",
+      "route": "/compliance/end-to-end-process-provenance"
+    },
+    {
+      "title": "Escalation Paths For High\u2011Risk Decisions",
+      "route": "/compliance/escalation-paths-for-high\u2011risk-decisions"
+    },
+    {
+      "title": "Escalation Trigger for Edge-Case Profiles",
+      "route": "/compliance/escalation-trigger-for-edge-case-profiles"
+    },
+    {
+      "title": "EU AI Act Annex III Risk Classifier",
+      "route": "/compliance/eu-ai-act-annex-iii-risk-classifier"
+    },
+    {
+      "title": "EU AI Act auto-conformity package",
+      "route": "/compliance/eu-ai-act-auto-conformity-package"
+    },
+    {
+      "title": "EU AI Act High-Risk System Compliance Package",
+      "route": "/compliance/eu-ai-act-high-risk-system-compliance-package"
+    },
+    {
+      "title": "EU AI Act Risk Tiering",
+      "route": "/compliance/eu-ai-act-risk-tiering"
+    },
+    {
+      "title": "Evidence Packaging for Legal Defense",
+      "route": "/compliance/evidence-packaging-for-legal-defense"
+    },
+    {
+      "title": "Explainable AI Compliance Agent (Category-defining bet)",
+      "route": "/compliance/explainable-ai-compliance-agent-category-defining-bet"
+    },
+    {
+      "title": "Explainable Bias-Mitigating Decision Agent",
+      "route": "/compliance/explainable-bias-mitigating-decision-agent"
+    },
+    {
+      "title": "Fairness and Adverse Impact Copilot with Counterfactual What If",
+      "route": "/compliance/fairness-and-adverse-impact-copilot-with-counterfactual-what"
+    },
+    {
+      "title": "Four-fifths automated impact report",
+      "route": "/compliance/four-fifths-automated-impact-report"
+    },
+    {
+      "title": "GDPR Article 22 ",
+      "route": "/compliance/gdpr-article-22-significant-decision-flagging"
+    },
+    {
+      "title": "Geopatriation Data Residency Router",
+      "route": "/compliance/geopatriation-data-residency-router"
+    },
+    {
+      "title": "Global Entity-Aware Compliance Engine",
+      "route": "/compliance/global-entity-aware-compliance-engine"
+    },
+    {
+      "title": "Global Multi Entity Hiring Rules Engine",
+      "route": "/compliance/global-multi-entity-hiring-rules-engine"
+    },
+    {
+      "title": "Global Offer Compliance Guardian",
+      "route": "/compliance/global-offer-compliance-guardian"
+    },
+    {
+      "title": "Global Pay Transparency Compliance Engine",
+      "route": "/compliance/global-pay-transparency-compliance-engine"
+    },
+    {
+      "title": "Granular, Per-Model Consent Management",
+      "route": "/compliance/granular,-per-model-consent-management"
+    },
+    {
+      "title": "Granular AI Feature Consent Management",
+      "route": "/compliance/granular-ai-feature-consent-management"
+    },
+    {
+      "title": "Hiring Manager Training & Best-Practice Coach",
+      "route": "/compliance/hiring-manager-training-best-practice-coach"
+    },
+    {
+      "title": "Historical Bias Disconnect Engine",
+      "route": "/compliance/historical-bias-disconnect-engine"
+    },
+    {
+      "title": "Human Decision Gate",
+      "route": "/compliance/human-decision-gate-on-all-consequential-actions"
+    },
+    {
+      "title": "Human-in-the-Loop Escalation & Override",
+      "route": "/compliance/human-in-the-loop-escalation-and-override"
+    },
+    {
+      "title": "Human-in-the-Loop (HITL) Forced Justification Prompt",
+      "route": "/compliance/human-in-the-loop-hitl-forced-justification-prompt"
+    },
+    {
+      "title": "Human Override Attribution",
+      "route": "/compliance/human-override-attribution"
+    },
+    {
+      "title": "Human Review Training and Certification",
+      "route": "/compliance/human-review-training-and-certification"
+    },
+    {
+      "title": "Human risk-threshold gates",
+      "route": "/compliance/human-risk-threshold-gates"
+    },
+    {
+      "title": "Human\u2011Final Decision Enforcement",
+      "route": "/compliance/human\u2011final-decision-enforcement"
+    },
+    {
+      "title": "Immutable ",
+      "route": "/compliance/immutable-decision-chain-of-custody"
+    },
+    {
+      "title": "Immutable Decision Timeline",
+      "route": "/compliance/immutable-decision-timeline"
+    },
+    {
+      "title": "Immutable Hiring Decision Ledger",
+      "route": "/compliance/immutable-hiring-decision-ledger"
+    },
+    {
+      "title": "Immutable Tool-Call Provenance Ledger",
+      "route": "/compliance/immutable-tool-call-provenance-ledger"
+    },
+    {
+      "title": "Immutable workflow replay",
+      "route": "/compliance/immutable-workflow-replay"
+    },
+    {
+      "title": "Inappropriate Question and Bias Guard",
+      "route": "/compliance/inappropriate-question-and-bias-guard"
+    },
+    {
+      "title": "Independent Bias Audit Integration",
+      "route": "/compliance/independent-bias-audit-integration"
+    },
+    {
+      "title": "Intersectional Bias Analyzer",
+      "route": "/compliance/intersectional-bias-analyzer"
+    },
+    {
+      "title": "Interview Consistency & Drift Monitor",
+      "route": "/compliance/interview-consistency-and-drift-monitor"
+    },
+    {
+      "title": "Interview Fairness Audit Trail",
+      "route": "/compliance/interview-fairness-audit-trail"
+    },
+    {
+      "title": "Interviewer Calibration & Drift Monitor",
+      "route": "/compliance/interviewer-calibration-and-drift-monitor"
+    },
+    {
+      "title": "Interviewer load & fairness balancer",
+      "route": "/compliance/interviewer-load-fairness-balancer"
+    },
+    {
+      "title": "Job Description Bias Screener",
+      "route": "/compliance/job-description-bias-screener"
+    },
+    {
+      "title": "Jurisdiction-aware compliance guardrails that adapt automatically",
+      "route": "/compliance/jurisdiction-aware-compliance-guardrails-that-adapt-automati"
+    },
+    {
+      "title": "Jurisdiction-Aware Consent Orchestration Engine",
+      "route": "/compliance/jurisdiction-aware-consent-orchestration-engine"
+    },
+    {
+      "title": "Jurisdiction-Aware Hiring Policy Engine",
+      "route": "/compliance/jurisdiction-aware-hiring-policy-engine"
+    },
+    {
+      "title": "Jurisdiction-Specific Rule Engine",
+      "route": "/compliance/jurisdiction-specific-rule-engine"
+    },
+    {
+      "title": "Jurisdiction-Specific Workflow Automation",
+      "route": "/compliance/jurisdiction-specific-workflow-automation"
+    },
+    {
+      "title": "Jurisdiction\u2011Aware Workflow Engine",
+      "route": "/compliance/jurisdiction\u2011aware-workflow-engine"
+    },
+    {
+      "title": "Knockout Filter Disparate Impact Simulator",
+      "route": "/compliance/knockout-filter-disparate-impact-simulator"
+    },
+    {
+      "title": "Litigation Hold for Hiring Records",
+      "route": "/compliance/litigation-hold-for-hiring-records"
+    },
+    {
+      "title": "Manager Calibration and Bias Drift Monitor",
+      "route": "/compliance/manager-calibration-and-bias-drift-monitor"
+    },
+    {
+      "title": "Mandatory Human Review Gate (MRG)",
+      "route": "/compliance/mandatory-human-review-gate-mrg"
+    },
+    {
+      "title": "Model Behavior Disclosure Document",
+      "route": "/compliance/model-behavior-disclosure-document"
+    },
+    {
+      "title": "Multi-Jurisdictional AI Notice Automator",
+      "route": "/compliance/multi-jurisdictional-ai-notice-automator"
+    },
+    {
+      "title": "Multilingual, Region-Aware Compliance Agent",
+      "route": "/compliance/multilingual-region-aware-compliance-agent"
+    },
+    {
+      "title": "NYC Local Law 144 Automated Compliance Suite",
+      "route": "/compliance/nyc-local-law-144-automated-compliance-suite"
+    },
+    {
+      "title": "NYC Local Law 144 Bias Auditor",
+      "route": "/compliance/nyc-local-law-144-bias-auditor"
+    },
+    {
+      "title": "One-Click EEOC Four-Fifths Impact Report",
+      "route": "/compliance/one-click-eeoc-four-fifths-impact-report"
+    },
+    {
+      "title": "Opt Out Of Ai Path",
+      "route": "/compliance/opt-out-of-ai-path"
+    },
+    {
+      "title": "Override Pattern Analysis",
+      "route": "/compliance/override-pattern-analysis"
+    },
+    {
+      "title": "Override with Mandatory Reason Capture",
+      "route": "/compliance/override-with-mandatory-reason-capture"
+    },
+    {
+      "title": "Oversight Workbench For Compliance And Legal",
+      "route": "/compliance/oversight-workbench-for-compliance-and-legal"
+    },
+    {
+      "title": "PII Redaction & Blind Hiring Enforcer",
+      "route": "/compliance/pii-redaction-and-blind-hiring-enforcer"
+    },
+    {
+      "title": "Plain-Language Algorithmic Transparency Portal",
+      "route": "/compliance/plain-language-algorithmic-transparency-portal"
+    },
+    {
+      "title": "Policy-as-Code for Hiring Workflows",
+      "route": "/compliance/policy-as-code-for-hiring-workflows"
+    },
+    {
+      "title": "Policy as Code Hiring Governance Layer",
+      "route": "/compliance/policy-as-code-hiring-governance-layer"
+    },
+    {
+      "title": "Policy-Aware Agent Boundaries",
+      "route": "/compliance/policy-aware-agent-boundaries"
+    },
+    {
+      "title": "Policy Evaluation Reconstructive Search",
+      "route": "/compliance/policy-evaluation-reconstructive-search"
+    },
+    {
+      "title": "Pre-Audit Simulation Mode",
+      "route": "/compliance/pre-audit-simulation-mode"
+    },
+    {
+      "title": "Pre-certified bias auditing that satisfies NYC LL144, EU AI Act, and emerging state regulations",
+      "route": "/compliance/pre-certified-bias-auditing-that-satisfies-nyc-ll144,-eu-ai-"
+    },
+    {
+      "title": "Pre-Deployment Bias Gate",
+      "route": "/compliance/pre-deployment-bias-gate"
+    },
+    {
+      "title": "Pre-Go-Live Fairness Gate",
+      "route": "/compliance/pre-go-live-fairness-gate"
+    },
+    {
+      "title": "Privacy Impact Assessment Automation",
+      "route": "/compliance/privacy-impact-assessment-automation"
+    },
+    {
+      "title": "Prohibited Question Firewall",
+      "route": "/compliance/prohibited-question-firewall"
+    },
+    {
+      "title": "Protected-Trait Proxy Detector",
+      "route": "/compliance/protected-trait-proxy-detector"
+    },
+    {
+      "title": "Proxy Feature Detection Engine",
+      "route": "/compliance/proxy-feature-detection-engine"
+    },
+    {
+      "title": "Sensitive Modality Governance (Video/Voice/Psychometrics)",
+      "route": "/compliance/psychometrics"
+    },
+    {
+      "title": "Purpose-Limited Data Processing",
+      "route": "/compliance/purpose-limited-data-processing"
+    },
+    {
+      "title": "Real-Time Adverse Impact Monitoring",
+      "route": "/compliance/real-time-adverse-impact-monitoring"
+    },
+    {
+      "title": "Real-time adverse impact monitoring at every pipeline stage",
+      "route": "/compliance/real-time-adverse-impact-monitoring-at-every-pipeline-stage"
+    },
+    {
+      "title": "Real-time Bias Detection Dashboard",
+      "route": "/compliance/real-time-bias-detection-dashboard"
+    },
+    {
+      "title": "Real-Time Disparate Impact Monitor",
+      "route": "/compliance/real-time-disparate-impact-monitor"
+    },
+    {
+      "title": "Real Time Diversitybias Monitoring",
+      "route": "/compliance/real-time-diversitybias-monitoring"
+    },
+    {
+      "title": "Regulation Template Library And Playbooks",
+      "route": "/compliance/regulation-template-library-and-playbooks"
+    },
+    {
+      "title": "Regulator-ready simulation sandbox",
+      "route": "/compliance/regulator-ready-simulation-sandbox"
+    },
+    {
+      "title": "Regulatory Change Adaptation Agent",
+      "route": "/compliance/regulatory-change-adaptation-agent"
+    },
+    {
+      "title": "Regulatory Response Readiness Score",
+      "route": "/compliance/regulatory-response-readiness-score"
+    },
+    {
+      "title": "Review Sampling Quality Control",
+      "route": "/compliance/review-sampling-quality-control"
+    },
+    {
+      "title": "Risk-Based Approval Chains for AI Automation",
+      "route": "/compliance/risk-based-approval-chains-for-ai-automation"
+    },
+    {
+      "title": "Role-Based Activity Reconstruction",
+      "route": "/compliance/role-based-activity-reconstruction"
+    },
+    {
+      "title": "Role-Based Hard Gate Interceptor",
+      "route": "/compliance/role-based-hard-gate-interceptor"
+    },
+    {
+      "title": "Sensitive Modality Governance (Video/Voice/Psychometrics)",
+      "route": "/compliance/sensitive-modality-governance-videovoicepsychometrics"
+    },
+    {
+      "title": "Shadow AI Governance Module",
+      "route": "/compliance/shadow-ai-governance-module"
+    },
+    {
+      "title": "Shadow Interview Detection",
+      "route": "/compliance/shadow-interview-detection"
+    },
+    {
+      "title": "Six-Year Retained Compliance Archive",
+      "route": "/compliance/six-year-retained-compliance-archive"
+    },
+    {
+      "title": "Soft-Gate Anomaly Notification Protocol",
+      "route": "/compliance/soft-gate-anomaly-notification-protocol"
+    },
+    {
+      "title": "Stage-Level Adverse Impact Monitor",
+      "route": "/compliance/stage-level-adverse-impact-monitor"
+    },
+    {
+      "title": "Standardized Audit Export Toolkit",
+      "route": "/compliance/standardized-audit-export-toolkit"
+    },
+    {
+      "title": "Structured Human Justification Capture",
+      "route": "/compliance/structured-human-justification-capture"
+    },
+    {
+      "title": "Subprocessor and Vendor DPA Management",
+      "route": "/compliance/subprocessor-and-vendor-dpa-management"
+    },
+    {
+      "title": "Tamper-Evident Retention Policies",
+      "route": "/compliance/tamper-evident-retention-policies"
+    },
+    {
+      "title": "Time-Bounded Decision Making",
+      "route": "/compliance/time-bounded-decision-making"
+    },
+    {
+      "title": "Time-Stamped Decision Boundary Snapshots",
+      "route": "/compliance/time-stamped-decision-boundary-snapshots"
+    },
+    {
+      "title": "Automated EEOC/Title VII Audit Extractor",
+      "route": "/compliance/title-vii-audit-extractor"
+    },
+    {
+      "title": "Two-Person Review for High-Risk Filters",
+      "route": "/compliance/two-person-review-for-high-risk-filters"
+    },
+    {
+      "title": "Two-Person Rule for Model Deployment",
+      "route": "/compliance/two-person-rule-for-model-deployment"
+    },
+    {
+      "title": "Vendor-Independent Audit Export Package",
+      "route": "/compliance/vendor-independent-audit-export-package"
+    },
+    {
+      "title": "Versioned Requisition Snapshotting",
+      "route": "/compliance/versioned-requisition-snapshotting"
+    },
+    {
+      "title": "What If Policy Impact Simulator",
+      "route": "/compliance/what-if-policy-impact-simulator"
+    },
+    {
+      "title": "Worker Council (Betriebsrat) Compliance Agent",
+      "route": "/compliance/worker-council-betriebsrat-compliance-agent"
+    },
+    {
+      "title": "Works Council and Consultation Packager",
+      "route": "/compliance/works-council-and-consultation-packager"
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Adaptive Offer Management Negotiation Agents",
+      "route": "/decisions/adaptive-offer-management-negotiation-agents"
+    },
+    {
+      "title": "Agent-to-Agent (A2A) Salary Negotiator",
+      "route": "/decisions/agent-to-agent-a2a-salary-negotiator"
+    },
+    {
+      "title": "Agentic Offer Workflow Compliance",
+      "route": "/decisions/agentic-offer-workflow-compliance"
+    },
+    {
+      "title": "AI hiring manager copilot that surfaces insights, not raw data",
+      "route": "/decisions/ai-hiring-manager-copilot-that-surfaces-insights,-not-raw-da"
+    },
+    {
+      "title": "Automated Offer-Retraction Handler",
+      "route": "/decisions/automated-offer-retraction-handler"
+    },
+    {
+      "title": "Automated Reference Check Orchestration with Insight Extraction",
+      "route": "/decisions/automated-reference-check-orchestration-with-insight-extract"
+    },
+    {
+      "title": "Autonomous Offer Management & Negotiation",
+      "route": "/decisions/autonomous-offer-management-negotiation"
+    },
+    {
+      "title": "Autonomous Offer Negotiator & Closer",
+      "route": "/decisions/autonomous-offer-negotiator-closer"
+    },
+    {
+      "title": "Autonomous Offer Revocation & Risk Engine",
+      "route": "/decisions/autonomous-offer-revocation-risk-engine"
+    },
+    {
+      "title": "Collaborative Hiring Decision Support with Consensus Analysis",
+      "route": "/decisions/collaborative-hiring-decision-support-with-consensus-analysi"
+    },
+    {
+      "title": "Compensation intelligence integrated into the offer workflow",
+      "route": "/decisions/compensation-intelligence-integrated-into-the-offer-workflow"
+    },
+    {
+      "title": "Compensation Market Agent",
+      "route": "/decisions/compensation-market-agent"
+    },
+    {
+      "title": "Consensus and Disagreement Detector",
+      "route": "/decisions/consensus-and-disagreement-detector"
+    },
+    {
+      "title": "Consensus Builder Across Stakeholders",
+      "route": "/decisions/consensus-builder-across-stakeholders"
+    },
+    {
+      "title": "Decision Card with Uncertainty and Evidence Gaps",
+      "route": "/decisions/decision-card-with-uncertainty-and-evidence-gaps"
+    },
+    {
+      "title": "Decision Room Agent",
+      "route": "/decisions/decision-room-agent"
+    },
+    {
+      "title": "Decision Support Agent (Core feature)",
+      "route": "/decisions/decision-support-agent-core-feature"
+    },
+    {
+      "title": "Dynamic Market Viability & Compensation Calibrator",
+      "route": "/decisions/dynamic-market-viability-compensation-calibrator"
+    },
+    {
+      "title": "Dynamic Salary Range Recommendations Based on Market Data",
+      "route": "/decisions/dynamic-salary-range-recommendations-based-on-market-data"
+    },
+    {
+      "title": "Equity & Total Rewards Customization Simulator",
+      "route": "/decisions/equity-total-rewards-customization-simulator"
+    },
+    {
+      "title": "Final Selection Supervisor Agent",
+      "route": "/decisions/final-selection-supervisor-agent"
+    },
+    {
+      "title": "Hiring decision briefing generator",
+      "route": "/decisions/hiring-decision-briefing-generator"
+    },
+    {
+      "title": "Hiring manager calibration co-pilot",
+      "route": "/decisions/hiring-manager-calibration-co-pilot"
+    },
+    {
+      "title": "Holistic Decision Synthesis Agent",
+      "route": "/decisions/holistic-decision-synthesis-agent"
+    },
+    {
+      "title": "Intelligent Offer Negotiation Strategist",
+      "route": "/decisions/intelligent-offer-negotiation-strategist"
+    },
+    {
+      "title": "Intelligent Offer Negotiation Support with Win Probability",
+      "route": "/decisions/intelligent-offer-negotiation-support-with-win-probability"
+    },
+    {
+      "title": "Legal Clause Negotiation Agent",
+      "route": "/decisions/legal-clause-negotiation-agent"
+    },
+    {
+      "title": "Manager Decision Consistency Checker",
+      "route": "/decisions/manager-decision-consistency-checker"
+    },
+    {
+      "title": "Market-Salary Benchmarking Agent",
+      "route": "/decisions/market-salary-benchmarking-agent"
+    },
+    {
+      "title": "Negotiation Preference Agent",
+      "route": "/decisions/negotiation-preference-agent"
+    },
+    {
+      "title": "Offer Acceptance and Drop Off Risk Forecaster",
+      "route": "/decisions/offer-acceptance-and-drop-off-risk-forecaster"
+    },
+    {
+      "title": "Offer and Preboarding Orchestration Agent",
+      "route": "/decisions/offer-and-preboarding-orchestration-agent"
+    },
+    {
+      "title": "Offer Approval Workflow Prediction",
+      "route": "/decisions/offer-approval-workflow-prediction"
+    },
+    {
+      "title": "Offer-Clause Adaptation Engine",
+      "route": "/decisions/offer-clause-adaptation-engine"
+    },
+    {
+      "title": "Offer expectation & negotiation assistant",
+      "route": "/decisions/offer-expectation-negotiation-assistant"
+    },
+    {
+      "title": "Offer Optimization Agent (Premium differentiator)",
+      "route": "/decisions/offer-optimization-agent-premium-differentiator"
+    },
+    {
+      "title": "Offer Outcome Simulation Engine",
+      "route": "/decisions/offer-outcome-simulation-engine"
+    },
+    {
+      "title": "Offer-Package Personalization Engine",
+      "route": "/decisions/offer-package-personalization-engine"
+    },
+    {
+      "title": "Offer-to-Start Retention Agent",
+      "route": "/decisions/offer-to-start-retention-agent"
+    },
+    {
+      "title": "On-Demand Market-Pricing Advisor",
+      "route": "/decisions/on-demand-market-pricing-advisor"
+    },
+    {
+      "title": "Predictive Offer Acceptance Modeler",
+      "route": "/decisions/predictive-offer-acceptance-modeler"
+    },
+    {
+      "title": "Predictive Offer Declination Modeling",
+      "route": "/decisions/predictive-offer-declination-modeling"
+    },
+    {
+      "title": "Predictive Offer Decline Risk with Intervention Triggers",
+      "route": "/decisions/predictive-offer-decline-risk-with-intervention-triggers"
+    },
+    {
+      "title": "Real-Time Offer-Counter-Scenario Simulator",
+      "route": "/decisions/real-time-offer-counter-scenario-simulator"
+    },
+    {
+      "title": "Side-by-side candidate comparison with weighted, aggregated scoring",
+      "route": "/decisions/side-by-side-candidate-comparison-with-weighted,-aggregated-"
+    },
+    {
+      "title": "Transparent Compensation Matcher",
+      "route": "/decisions/transparent-compensation-matcher"
+    },
+    {
+      "title": "USP: Automated Compensation Rationale",
+      "route": "/decisions/usp-automated-compensation-rationale"
+    },
+    {
+      "title": "USP: Automated Offer Approval Chaser",
+      "route": "/decisions/usp-automated-offer-approval-chaser"
+    },
+    {
+      "title": "USP: Reference Check Synthesizer",
+      "route": "/decisions/usp-reference-check-synthesizer"
+    }
+  ],
+  "integrations": [
+    {
+      "title": "72-Hour SLA Enforcer",
+      "route": "/integrations/72-hour-sla-enforcer"
+    },
+    {
+      "title": "Adaptive Workflow Blueprints by Job Family",
+      "route": "/integrations/adaptive-workflow-blueprints-by-job-family"
+    },
+    {
+      "title": "Adaptive Workflow Recovery & Escalation",
+      "route": "/integrations/adaptive-workflow-recovery-escalation"
+    },
+    {
+      "title": "Agentic Hiring Manager Engagement Agent",
+      "route": "/integrations/agentic-hiring-manager-engagement-agent"
+    },
+    {
+      "title": "Agentic integration fabric across HR stack",
+      "route": "/integrations/agentic-integration-fabric-across-hr-stack"
+    },
+    {
+      "title": "Approval Workflow Designer with Compliance Binding",
+      "route": "/integrations/approval-workflow-designer-with-compliance-binding"
+    },
+    {
+      "title": "Automated Verification Orchestrator",
+      "route": "/integrations/automated-verification-orchestrator"
+    },
+    {
+      "title": "Autopilot Recruiting (Human-in-the-Loop)",
+      "route": "/integrations/autopilot-recruiting-human-in-the-loop"
+    },
+    {
+      "title": "Background Check & Multi-Vendor Orchestrator",
+      "route": "/integrations/background-check-and-multi-vendor-orchestrator"
+    },
+    {
+      "title": "Bidirectional, real-time HRIS integration with intelligent conflict resolution",
+      "route": "/integrations/bidirectional,-real-time-hris-integration-with-intelligent-c"
+    },
+    {
+      "title": "Burnout-Preventing Workload Balancer Agent",
+      "route": "/integrations/burnout-preventing-workload-balancer-agent"
+    },
+    {
+      "title": "Cross-Requisition Prioritization Engine",
+      "route": "/integrations/cross-requisition-prioritization-engine"
+    },
+    {
+      "title": "Cross-role hiring knowledge base",
+      "route": "/integrations/cross-role-hiring-knowledge-base"
+    },
+    {
+      "title": "Cross-System Autonomous Data Integration Agents",
+      "route": "/integrations/cross-system-autonomous-data-integration-agents"
+    },
+    {
+      "title": "Cross-System Requisition Synchronizer",
+      "route": "/integrations/cross-system-requisition-synchronizer"
+    },
+    {
+      "title": "Decision Latency Enforcer with Escalation & Reprioritization",
+      "route": "/integrations/decision-latency-enforcer-with-escalation-and-reprioritization"
+    },
+    {
+      "title": "Embedded pipeline visibility in the tools hiring managers already use",
+      "route": "/integrations/embedded-pipeline-visibility-in-the-tools-hiring-managers-al"
+    },
+    {
+      "title": "Escalation Pathway Automation",
+      "route": "/integrations/escalation-pathway-automation"
+    },
+    {
+      "title": "Event-Driven ATS Integration with Enterprise HR Stacks",
+      "route": "/integrations/event-driven-ats-integration-with-enterprise-hr-stacks"
+    },
+    {
+      "title": "Explainability API for Third-Party Auditors",
+      "route": "/integrations/explainability-api-for-third-party-auditors"
+    },
+    {
+      "title": "Fairness Metrics API",
+      "route": "/integrations/fairness-metrics-api"
+    },
+    {
+      "title": "High-Volume Recruiter Copilot (Frontline)",
+      "route": "/integrations/high-volume-recruiter-copilot-frontline"
+    },
+    {
+      "title": "Hiring Manager Workload Balancing",
+      "route": "/integrations/hiring-manager-workload-balancing"
+    },
+    {
+      "title": "Multi-System IT/HR Provisioning Agent",
+      "route": "/integrations/hr-provisioning-agent"
+    },
+    {
+      "title": "Human-in-the-Loop Workflow Builder",
+      "route": "/integrations/human-in-the-loop-workflow-builder"
+    },
+    {
+      "title": "Human Review Escalation Rules",
+      "route": "/integrations/human-review-escalation-rules"
+    },
+    {
+      "title": "Multi-Role Approval Workflow Builder",
+      "route": "/integrations/multi-role-approval-workflow-builder"
+    },
+    {
+      "title": "Multi System Ithr Provisioning Agent",
+      "route": "/integrations/multi-system-ithr-provisioning-agent"
+    },
+    {
+      "title": "Natural Language Command Interface Embedded in Slack/Teams & ATS",
+      "route": "/integrations/natural-language-command-interface-embedded-in-slack-teams-and-email"
+    },
+    {
+      "title": "Proactive Pipeline Orchestration",
+      "route": "/integrations/proactive-pipeline-orchestration"
+    },
+    {
+      "title": "Recruiter Co-Pilot Escalation Minimizer",
+      "route": "/integrations/recruiter-co-pilot-escalation-minimizer"
+    },
+    {
+      "title": "Recruiter Focus Agent (Task & Inbox Triage)",
+      "route": "/integrations/recruiter-focus-agent-task-inbox-triage"
+    },
+    {
+      "title": "Recruiter Workload Balancer",
+      "route": "/integrations/recruiter-workload-balancer"
+    },
+    {
+      "title": "Role-Based Approval Workflows",
+      "route": "/integrations/role-based-approval-workflows"
+    },
+    {
+      "title": "Self-Healing Workflow Recovery Engine",
+      "route": "/integrations/self-healing-workflow-recovery-engine"
+    },
+    {
+      "title": "Self-Tuning Workflow Optimization Agents",
+      "route": "/integrations/self-tuning-workflow-optimization-agents"
+    },
+    {
+      "title": "SLA Aware Workflow Recovery Engine",
+      "route": "/integrations/sla-aware-workflow-recovery-engine"
+    },
+    {
+      "title": "SLA & Stakeholder Alignment Coach",
+      "route": "/integrations/sla-stakeholder-alignment-coach"
+    },
+    {
+      "title": "Stalled-candidate escalation agent",
+      "route": "/integrations/stalled-candidate-escalation-agent"
+    },
+    {
+      "title": "Third-Party AI Supply Chain Attestation Hub",
+      "route": "/integrations/third-party-ai-supply-chain-attestation-hub"
+    },
+    {
+      "title": "Third-Party Audit API",
+      "route": "/integrations/third-party-audit-api"
+    },
+    {
+      "title": "Third-Party Audit Integration Hooks",
+      "route": "/integrations/third-party-audit-integration-hooks"
+    },
+    {
+      "title": "Usp Api First Agent Integration",
+      "route": "/integrations/usp-api-first-agent-integration"
+    },
+    {
+      "title": "USP: Data Hygiene & CRM Mining Agent",
+      "route": "/integrations/usp-data-hygiene-crm-mining-agent"
+    },
+    {
+      "title": "Workflow Recovery Agent (Core feature)",
+      "route": "/integrations/workflow-recovery-agent-core-feature"
+    }
+  ],
+  "interviews": [
+    {
+      "title": "Agentic Interview Feedback Summarizer",
+      "route": "/interviews/agentic-interview-feedback-summarizer"
+    },
+    {
+      "title": "Agentic Interview Kit Generator",
+      "route": "/interviews/agentic-interview-kit-generator"
+    },
+    {
+      "title": "Agentic Interview Scheduling",
+      "route": "/interviews/agentic-interview-scheduling"
+    },
+    {
+      "title": "Agentic Interview Storytelling & Briefing Engine",
+      "route": "/interviews/agentic-interview-storytelling-briefing-engine"
+    },
+    {
+      "title": "Agentic Interviewer Training & Feedback",
+      "route": "/interviews/agentic-interviewer-training-feedback"
+    },
+    {
+      "title": "Asynchronous Interview Evaluator",
+      "route": "/interviews/asynchronous-interview-evaluator"
+    },
+    {
+      "title": "Automated Interview-Recording & Transcription Agent",
+      "route": "/interviews/automated-interview-recording-and-transcription-agent"
+    },
+    {
+      "title": "Automated Interview Signal Capture & Summarization",
+      "route": "/interviews/automated-interview-signal-capture-and-summarization"
+    },
+    {
+      "title": "Automated Panel Coordination Agent",
+      "route": "/interviews/automated-panel-coordination-agent"
+    },
+    {
+      "title": "Automated Panel-Feedback Synthesizer",
+      "route": "/interviews/automated-panel-feedback-synthesizer"
+    },
+    {
+      "title": "Autonomous Interview Feedback Chaser",
+      "route": "/interviews/autonomous-interview-feedback-chaser"
+    },
+    {
+      "title": "Bias-Aware Interview Conductor Agent",
+      "route": "/interviews/bias-aware-interview-conductor-agent"
+    },
+    {
+      "title": "Consensus Builder Agent",
+      "route": "/interviews/consensus-builder-agent"
+    },
+    {
+      "title": "Cross-Interview Signal Synthesizer",
+      "route": "/interviews/cross-interview-signal-synthesizer"
+    },
+    {
+      "title": "Dynamic Interview Guide Generator",
+      "route": "/interviews/dynamic-interview-guide-generator"
+    },
+    {
+      "title": "Dynamic Interview Orchestration Engine",
+      "route": "/interviews/dynamic-interview-orchestration-engine"
+    },
+    {
+      "title": "Dynamic Interview Panel Orchestrator",
+      "route": "/interviews/dynamic-interview-panel-orchestrator"
+    },
+    {
+      "title": "Dynamic Interview-Score Calibration Agent",
+      "route": "/interviews/dynamic-interview-score-calibration-agent"
+    },
+    {
+      "title": "Equalized Interview Pacing Modulator",
+      "route": "/interviews/equalized-interview-pacing-modulator"
+    },
+    {
+      "title": "Feedback Completeness & Quality Coach",
+      "route": "/interviews/feedback-completeness-quality-coach"
+    },
+    {
+      "title": "Generative Scorecard Drafting",
+      "route": "/interviews/generative-scorecard-drafting"
+    },
+    {
+      "title": "HM Decision Confidence Builder",
+      "route": "/interviews/hm-decision-confidence-builder"
+    },
+    {
+      "title": "HM Feedback Prediction & Nudge Agent",
+      "route": "/interviews/hm-feedback-prediction-nudge-agent"
+    },
+    {
+      "title": "Intelligent Interview Panel Assembly with Bias Mitigation",
+      "route": "/interviews/intelligent-interview-panel-assembly-with-bias-mitigation"
+    },
+    {
+      "title": "Intelligent interview panel composition and load balancing",
+      "route": "/interviews/intelligent-interview-panel-composition-and-load-balancing"
+    },
+    {
+      "title": "Intelligent Panel Formation",
+      "route": "/interviews/intelligent-panel-formation"
+    },
+    {
+      "title": "Interview pack auto-orchestrator",
+      "route": "/interviews/interview-pack-auto-orchestrator"
+    },
+    {
+      "title": "Interview Panel Assembler",
+      "route": "/interviews/interview-panel-assembler"
+    },
+    {
+      "title": "Interview Prep Coach for Hiring Managers",
+      "route": "/interviews/interview-prep-coach-for-hiring-managers"
+    },
+    {
+      "title": "Interview Question Effectiveness",
+      "route": "/interviews/interview-question-effectiveness"
+    },
+    {
+      "title": "Interview Question Effectiveness Analytics with Recommendations",
+      "route": "/interviews/interview-question-effectiveness-analytics-with-recommendations"
+    },
+    {
+      "title": "Interview Transcript Evidence Extractor",
+      "route": "/interviews/interview-transcript-evidence-extractor"
+    },
+    {
+      "title": "Interviewer Coaching Agent (real-time)",
+      "route": "/interviews/interviewer-coaching-agent-real-time"
+    },
+    {
+      "title": "Interviewer Coaching Loop with Calibration Feedback",
+      "route": "/interviews/interviewer-coaching-loop-with-calibration-feedback"
+    },
+    {
+      "title": "Interviewer Feedback Synthesizer & Gap Closer",
+      "route": "/interviews/interviewer-feedback-synthesizer-gap-closer"
+    },
+    {
+      "title": "Interviewer Skill Decay Prediction",
+      "route": "/interviews/interviewer-skill-decay-prediction"
+    },
+    {
+      "title": "Live Interview Note Capture and Structuring Agent",
+      "route": "/interviews/live-interview-note-capture-and-structuring-agent"
+    },
+    {
+      "title": "Multi-Agent Interview Panel Coordination & Debrief Automation",
+      "route": "/interviews/multi-agent-interview-panel-coordination-debrief-automation"
+    },
+    {
+      "title": "Panel Debrief Orchestrator",
+      "route": "/interviews/panel-debrief-orchestrator"
+    },
+    {
+      "title": "Panel design optimizer",
+      "route": "/interviews/panel-design-optimizer"
+    },
+    {
+      "title": "Post-Interview Debrief Orchestrator",
+      "route": "/interviews/post-interview-debrief-orchestrator"
+    },
+    {
+      "title": "Pre-Interview Context Briefing Agent",
+      "route": "/interviews/pre-interview-context-briefing-agent"
+    },
+    {
+      "title": "Real-Time Candidate Calibrator",
+      "route": "/interviews/real-time-candidate-calibrator"
+    },
+    {
+      "title": "Real-Time Interview Feedback Loop",
+      "route": "/interviews/real-time-interview-feedback-loop"
+    },
+    {
+      "title": "Real-Time Interview Note Structuring & Summarization",
+      "route": "/interviews/real-time-interview-note-structuring-summarization"
+    },
+    {
+      "title": "Real-Time Interview Quality Monitor",
+      "route": "/interviews/real-time-interview-quality-monitor"
+    },
+    {
+      "title": "Real-Time Interview Rubric Generator & Enforcer",
+      "route": "/interviews/real-time-interview-rubric-generator-enforcer"
+    },
+    {
+      "title": "Real-time interviewer co-pilot (guidance & anti-bias nudges)",
+      "route": "/interviews/real-time-interviewer-co-pilot-guidance-anti-bias-nudges"
+    },
+    {
+      "title": "Real-Time Transcription & Guardrail Agent",
+      "route": "/interviews/real-time-transcription-guardrail-agent"
+    },
+    {
+      "title": "Reviewer Expertise Matching",
+      "route": "/interviews/reviewer-expertise-matching"
+    },
+    {
+      "title": "Signal Capture & Synthesis Agent",
+      "route": "/interviews/signal-capture-synthesis-agent"
+    },
+    {
+      "title": "Structured Behavioral Signal Extraction",
+      "route": "/interviews/structured-behavioral-signal-extraction"
+    },
+    {
+      "title": "Structured Debrief Facilitator Agent",
+      "route": "/interviews/structured-debrief-facilitator-agent"
+    },
+    {
+      "title": "Structured Interview and BARS Builder Agent",
+      "route": "/interviews/structured-interview-and-bars-builder-agent"
+    },
+    {
+      "title": "USP: Automated Debrief Summarization & Insight",
+      "route": "/interviews/usp-automated-debrief-summarization-insight"
+    },
+    {
+      "title": "USP: Interview Scorecard Auto-Filler",
+      "route": "/interviews/usp-interview-scorecard-auto-filler"
+    },
+    {
+      "title": "USP: Multimodal Interview Agent",
+      "route": "/interviews/usp-multimodal-interview-agent"
+    },
+    {
+      "title": "USP: ",
+      "route": "/interviews/usp-super-processor-interview-analysis"
+    }
+  ],
+  "mobility": [
+    {
+      "title": "Adjacent-Skill Upskilling Recommender",
+      "route": "/mobility/adjacent-skill-upskilling-recommender"
+    },
+    {
+      "title": "Agentic Talent Rediscovery for Internal Mobility",
+      "route": "/mobility/agentic-talent-rediscovery-for-internal-mobility"
+    },
+    {
+      "title": "Build vs Buy vs Borrow Recommender",
+      "route": "/mobility/build-vs-buy-vs-borrow-recommender"
+    },
+    {
+      "title": "Candidate Skill Trajectory Prediction for Growth Potential",
+      "route": "/mobility/candidate-skill-trajectory-prediction-for-growth-potential"
+    },
+    {
+      "title": "Career Path Simulator Agent",
+      "route": "/mobility/career-path-simulator-agent"
+    },
+    {
+      "title": "Career Pathing & Talent Flow Visualizer",
+      "route": "/mobility/career-pathing-talent-flow-visualizer"
+    },
+    {
+      "title": "Career Pathway Recommendation Engine",
+      "route": "/mobility/career-pathway-recommendation-engine"
+    },
+    {
+      "title": "Contingent + Permanent Workforce Orchestrator",
+      "route": "/mobility/contingent-permanent-workforce-orchestrator"
+    },
+    {
+      "title": "Cross-Department Talent Hoarding Detector",
+      "route": "/mobility/cross-department-talent-hoarding-detector"
+    },
+    {
+      "title": "Cross-Functional Talent Marketplace with Internal Mobility Intelligence",
+      "route": "/mobility/cross-functional-talent-marketplace-with-internal-mobility-intelligence"
+    },
+    {
+      "title": "Deep-Context Talent Rediscovery Agent",
+      "route": "/mobility/deep-context-talent-rediscovery-agent"
+    },
+    {
+      "title": "Dynamic headcount & hiring plan orchestrator",
+      "route": "/mobility/dynamic-headcount-hiring-plan-orchestrator"
+    },
+    {
+      "title": "Enterprise-Wide Talent Mobility Marketplace Agent",
+      "route": "/mobility/enterprise-wide-talent-mobility-marketplace-agent"
+    },
+    {
+      "title": "Flight-Risk Retention Intervenor",
+      "route": "/mobility/flight-risk-retention-intervenor"
+    },
+    {
+      "title": "Frictionless internal mobility with pre-populated profiles and manager transparency",
+      "route": "/mobility/frictionless-internal-mobility-with-pre-populated-profiles-a"
+    },
+    {
+      "title": "Internal-First Talent Discovery Agent",
+      "route": "/mobility/internal-first-talent-discovery-agent"
+    },
+    {
+      "title": "Internal gig and project marketplace orchestrator",
+      "route": "/mobility/internal-gig-and-project-marketplace-orchestrator"
+    },
+    {
+      "title": "Internal Mobility Career-Path Planner",
+      "route": "/mobility/internal-mobility-career-path-planner"
+    },
+    {
+      "title": "Internal Mobility Match & Transition Agent",
+      "route": "/mobility/internal-mobility-match-transition-agent"
+    },
+    {
+      "title": "Internal Mobility Skill-Gap Recommender",
+      "route": "/mobility/internal-mobility-skill-gap-recommender"
+    },
+    {
+      "title": "Internal Opportunity Matching Agent",
+      "route": "/mobility/internal-opportunity-matching-agent"
+    },
+    {
+      "title": "Internal Talent Marketplace Agent (Premium differentiator)",
+      "route": "/mobility/internal-talent-marketplace-agent-premium-differentiator"
+    },
+    {
+      "title": "Org design & hiring strategy simulator",
+      "route": "/mobility/org-design-hiring-strategy-simulator"
+    },
+    {
+      "title": "Post-Mobility Success Tracker",
+      "route": "/mobility/post-mobility-success-tracker"
+    },
+    {
+      "title": "Predictive Attrition Risk Indicator",
+      "route": "/mobility/predictive-attrition-risk-indicator"
+    },
+    {
+      "title": "Predictive Workforce Planning Agent",
+      "route": "/mobility/predictive-workforce-planning-agent"
+    },
+    {
+      "title": "Proactive Internal Mobility Orchestration Agent",
+      "route": "/mobility/proactive-internal-mobility-orchestration-agent"
+    },
+    {
+      "title": "Project-Based Gig Allocator",
+      "route": "/mobility/project-based-gig-allocator"
+    },
+    {
+      "title": "Skill Gap Analysis for Workforce Planning",
+      "route": "/mobility/skill-gap-analysis-for-workforce-planning"
+    },
+    {
+      "title": "Skill Gap Heatmap Linked to External Hiring",
+      "route": "/mobility/skill-gap-heatmap-linked-to-external-hiring"
+    },
+    {
+      "title": "Skills-First Internal Mobility Marketplace",
+      "route": "/mobility/skills-first-internal-mobility-marketplace"
+    },
+    {
+      "title": "Skills Gap Bridge Agent",
+      "route": "/mobility/skills-gap-bridge-agent"
+    },
+    {
+      "title": "Skills Gap Forecasting Agent (Category-defining bet)",
+      "route": "/mobility/skills-gap-forecasting-agent-category-defining-bet"
+    },
+    {
+      "title": "Skills-Gap Prediction for Upskilling",
+      "route": "/mobility/skills-gap-prediction-for-upskilling"
+    },
+    {
+      "title": "Skills Inventory Mapping Across Enterprise",
+      "route": "/mobility/skills-inventory-mapping-across-enterprise"
+    },
+    {
+      "title": "Skills Passport for Candidates and Employees",
+      "route": "/mobility/skills-passport-for-candidates-and-employees"
+    },
+    {
+      "title": "Strategic Workforce Planning Demand Signal Agent",
+      "route": "/mobility/strategic-workforce-planning-demand-signal-agent"
+    },
+    {
+      "title": "Strategic Workforce Scenario Planner",
+      "route": "/mobility/strategic-workforce-scenario-planner"
+    },
+    {
+      "title": "Succession & Flight-Risk Gap Filler",
+      "route": "/mobility/succession-flight-risk-gap-filler"
+    },
+    {
+      "title": "Transferable Skills Pathway Mapper",
+      "route": "/mobility/transferable-skills-pathway-mapper"
+    },
+    {
+      "title": "USP: Project-Based Staffing Agent",
+      "route": "/mobility/usp-project-based-staffing-agent"
+    },
+    {
+      "title": "USP: Returnship Program Facilitator",
+      "route": "/mobility/usp-returnship-program-facilitator"
+    },
+    {
+      "title": "USP: Skills Gap Analysis Agent",
+      "route": "/mobility/usp-skills-gap-analysis-agent"
+    },
+    {
+      "title": "USP: Succession Risk Agent",
+      "route": "/mobility/usp-succession-risk-agent"
+    },
+    {
+      "title": "Workforce Planning Simulation",
+      "route": "/mobility/workforce-planning-simulation"
+    }
+  ],
+  "onboarding": [
+    {
+      "title": "Automated Onboarding Handoff with Context Preservation",
+      "route": "/onboarding/automated-onboarding-handoff-with-context-preservation"
+    },
+    {
+      "title": "Autonomous Pre-boarding Cultural Immersion Agent",
+      "route": "/onboarding/autonomous-pre-boarding-cultural-immersion-agent"
+    },
+    {
+      "title": "Onboarding Handoff Orchestration",
+      "route": "/onboarding/onboarding-handoff-orchestration"
+    },
+    {
+      "title": "Onboarding Handoff Orchestrator",
+      "route": "/onboarding/onboarding-handoff-orchestrator"
+    },
+    {
+      "title": "Onboarding Milestone Predictor & Nudger",
+      "route": "/onboarding/onboarding-milestone-predictor-nudger"
+    },
+    {
+      "title": "Post-Hire Feedback Loop Agent (Category-defining bet)",
+      "route": "/onboarding/post-hire-feedback-loop-agent-category-defining-bet"
+    },
+    {
+      "title": "Post-Offer Preboarding Personalizer",
+      "route": "/onboarding/post-offer-preboarding-personalizer"
+    },
+    {
+      "title": "Seamless onboarding handoff that preserves full hiring context",
+      "route": "/onboarding/seamless-onboarding-handoff-that-preserves-full-hiring-conte"
+    },
+    {
+      "title": "Skills-Gap Auto-Training Handoff Agent",
+      "route": "/onboarding/skills-gap-auto-training-handoff-agent"
+    },
+    {
+      "title": "USP: Visa & Relocation Assistant",
+      "route": "/onboarding/usp-visa-relocation-assistant"
+    }
+  ],
+  "platform": [
+    {
+      "title": "A/B Testing Framework for Workflow Changes",
+      "route": "/platform/a-b-testing-framework-for-workflow-changes"
+    },
+    {
+      "title": "A/B Testing Framework for Workflow Changes",
+      "route": "/platform/ab-testing-framework-for-workflow-changes"
+    },
+    {
+      "title": "Adaptive Process Personalization Engine",
+      "route": "/platform/adaptive-process-personalization-engine"
+    },
+    {
+      "title": "Agent-led requisition & intake designer",
+      "route": "/platform/agent-led-requisition-intake-designer"
+    },
+    {
+      "title": "Agentic Context Engineering (ACE) Memory Core",
+      "route": "/platform/agentic-context-engineering-ace-memory-core"
+    },
+    {
+      "title": "Automated intake and calibration that ensures recruiter-manager alignment",
+      "route": "/platform/automated-intake-and-calibration-that-ensures-recruiter-mana"
+    },
+    {
+      "title": "Autonomous high-volume hiring pods",
+      "route": "/platform/autonomous-high-volume-hiring-pods"
+    },
+    {
+      "title": "Autonomous Hiring Manager Intake Orchestrator",
+      "route": "/platform/autonomous-hiring-manager-intake-orchestrator"
+    },
+    {
+      "title": "Autonomous Workflow Orchestration (Category-defining bet)",
+      "route": "/platform/autonomous-workflow-orchestration-category-defining-bet"
+    },
+    {
+      "title": "Canonical Hiring Knowledge Graph",
+      "route": "/platform/canonical-hiring-knowledge-graph"
+    },
+    {
+      "title": "Centralized Agentic Supervisor (Control Tower)",
+      "route": "/platform/centralized-agentic-supervisor-control-tower"
+    },
+    {
+      "title": "Configurable autonomy with human-in-the-loop decisioning",
+      "route": "/platform/configurable-autonomy-with-human-in-the-loop-decisioning"
+    },
+    {
+      "title": "End-to-End Requisition Orchestration",
+      "route": "/platform/end-to-end-requisition-orchestration"
+    },
+    {
+      "title": "Enterprise-Wide Skills Ontology Auto-Evolver",
+      "route": "/platform/enterprise-wide-skills-ontology-auto-evolver"
+    },
+    {
+      "title": "Global Localization & Translation Orchestrator",
+      "route": "/platform/global-localization-and-translation-orchestrator"
+    },
+    {
+      "title": "Human-in-the-loop control center",
+      "route": "/platform/human-in-the-loop-control-center"
+    },
+    {
+      "title": "Intelligent Requisition Consolidation and Duplication Detection",
+      "route": "/platform/intelligent-requisition-consolidation-and-duplication-detect"
+    },
+    {
+      "title": "Intelligent requisition creation with market-calibrated job descriptions",
+      "route": "/platform/intelligent-requisition-creation-with-market-calibrated-job-"
+    },
+    {
+      "title": "Meta-Learning Agent for Process Playbooks",
+      "route": "/platform/meta-learning-agent-for-process-playbooks"
+    },
+    {
+      "title": "Multi-Agent Collaboration Layer",
+      "route": "/platform/multi-agent-collaboration-layer"
+    },
+    {
+      "title": "Persistent Contextual Memory Across Workflows",
+      "route": "/platform/persistent-contextual-memory-across-workflows"
+    },
+    {
+      "title": "Requisition Prioritization & Resource Allocator",
+      "route": "/platform/requisition-prioritization-resource-allocator"
+    },
+    {
+      "title": "Role Calibration Assistant",
+      "route": "/platform/role-calibration-assistant"
+    },
+    {
+      "title": "Seasonal / Volume Surge Self-Scaler",
+      "route": "/platform/seasonal-volume-surge-self-scaler"
+    },
+    {
+      "title": "Seasonal/Volume Surge Self-Scaler",
+      "route": "/platform/seasonalvolume-surge-self-scaler"
+    },
+    {
+      "title": "Skills Ontology Auto-Updater",
+      "route": "/platform/skills-ontology-auto-updater"
+    },
+    {
+      "title": "Skills & Outcome-Centric Talent Graph",
+      "route": "/platform/skills-outcome-centric-talent-graph"
+    },
+    {
+      "title": "Unified Ats",
+      "route": "/platform/unified-ats"
+    },
+    {
+      "title": "Unified Ats Crm Scheduling Analytics",
+      "route": "/platform/unified-ats-crm-scheduling-analytics"
+    },
+    {
+      "title": "Unified ATS + CRM + Scheduling + Analytics on a Single Data Model",
+      "route": "/platform/unified-ats-crm-scheduling-analytics-on-a-single-data-model"
+    },
+    {
+      "title": "USP: Manager Self-Service Sandbox",
+      "route": "/platform/usp-manager-self-service-sandbox"
+    },
+    {
+      "title": "USP: Unified Skills Ontology Engine",
+      "route": "/platform/usp-unified-skills-ontology-engine"
+    },
+    {
+      "title": "Workflow Recovery Agent for Stalled Pipelines",
+      "route": "/platform/workflow-recovery-agent-for-stalled-pipelines"
+    },
+    {
+      "title": "Zero-Touch Requisition-to-Pipeline Agent Swarm",
+      "route": "/platform/zero-touch-requisition-to-pipeline-agent-swarm"
+    }
+  ],
+  "scheduling": [
+    {
+      "title": "Agentic Interviewer Availability Predictor",
+      "route": "/scheduling/agentic-interviewer-availability-predictor"
+    },
+    {
+      "title": "AI-Driven Scheduling Agent (Core feature)",
+      "route": "/scheduling/ai-driven-scheduling-agent-core-feature"
+    },
+    {
+      "title": "Automated Interview Scheduling Optimization Across Time Zones",
+      "route": "/scheduling/automated-interview-scheduling-optimization-across-time-zone"
+    },
+    {
+      "title": "Autonomous Multi-Panel Scheduling Negotiator",
+      "route": "/scheduling/autonomous-multi-panel-scheduling-negotiator"
+    },
+    {
+      "title": "Autonomous multi-party interview scheduling with timezone intelligence",
+      "route": "/scheduling/autonomous-multi-party-interview-scheduling-with-timezone-in"
+    },
+    {
+      "title": "Candidate Scheduling Concierge with Accessibility First Options",
+      "route": "/scheduling/candidate-scheduling-concierge-with-accessibility-first-opti"
+    },
+    {
+      "title": "Conversational SMS Frontline Scheduler",
+      "route": "/scheduling/conversational-sms-frontline-scheduler"
+    },
+    {
+      "title": "Dynamic Interview Slot Negotiation",
+      "route": "/scheduling/dynamic-interview-slot-negotiation"
+    },
+    {
+      "title": "Interview Capacity & Forecasting Engine",
+      "route": "/scheduling/interview-capacity-forecasting-engine"
+    },
+    {
+      "title": "No-Show Autonomous Recovery",
+      "route": "/scheduling/no-show-autonomous-recovery"
+    },
+    {
+      "title": "Panelist Availability & Load Balancer",
+      "route": "/scheduling/panelist-availability-load-balancer"
+    },
+    {
+      "title": "Predictive Interviewer Burnout Balancer",
+      "route": "/scheduling/predictive-interviewer-burnout-balancer"
+    },
+    {
+      "title": "Proactive scheduling intelligence that prevents bottlenecks",
+      "route": "/scheduling/proactive-scheduling-intelligence-that-prevents-bottlenecks"
+    },
+    {
+      "title": "Real-Time Rescheduling & Fallback Orchestrator",
+      "route": "/scheduling/real-time-rescheduling-fallback-orchestrator"
+    },
+    {
+      "title": "Scheduling and Rescheduling Coordinator Agent with No Show Prevention",
+      "route": "/scheduling/scheduling-and-rescheduling-coordinator-agent-with-no-show-p"
+    },
+    {
+      "title": "Swarm-based interview scheduling orchestrator",
+      "route": "/scheduling/swarm-based-interview-scheduling-orchestrator"
+    }
+  ],
+  "screening": [
+    {
+      "title": "24/7 Autonomous Candidate Screening Agent",
+      "route": "/screening/7-autonomous-candidate-screening-agent"
+    },
+    {
+      "title": "Adaptive AI Screening Interviews",
+      "route": "/screening/adaptive-ai-screening-interviews-that-personalize-questions"
+    },
+    {
+      "title": "Adaptive AI screening interviews that personalize questions in real time",
+      "route": "/screening/adaptive-ai-screening-interviews-that-personalize-questions-in-real-time"
+    },
+    {
+      "title": "Adaptive Application Agent with Progressive Disclosure",
+      "route": "/screening/adaptive-application-agent-with-progressive-disclosure"
+    },
+    {
+      "title": "Adaptive Test Generation with Skill-Focused Assessments",
+      "route": "/screening/adaptive-test-generation-with-skill-focused-assessments"
+    },
+    {
+      "title": "Agentic Assessment Integration",
+      "route": "/screening/agentic-assessment-integration"
+    },
+    {
+      "title": "Agentic Candidate Assessment Coach",
+      "route": "/screening/agentic-candidate-assessment-coach"
+    },
+    {
+      "title": "AI-generated application fraud detection",
+      "route": "/screening/ai-generated-application-fraud-detection"
+    },
+    {
+      "title": "Alternative Assessment Routing Engine",
+      "route": "/screening/alternative-assessment-routing-engine"
+    },
+    {
+      "title": "Asynchronous Multi-Agent Human Review Deck",
+      "route": "/screening/asynchronous-multi-agent-human-review-deck"
+    },
+    {
+      "title": "Automated Background-Check Orchestrator",
+      "route": "/screening/automated-background-check-orchestrator"
+    },
+    {
+      "title": "Autonomous Multi-Agent Candidate Assessment Orchestration",
+      "route": "/screening/autonomous-multi-agent-candidate-assessment-orchestration"
+    },
+    {
+      "title": "Blind Predictive Competency Mapper",
+      "route": "/screening/blind-predictive-competency-mapper"
+    },
+    {
+      "title": "Blind Screening Automation",
+      "route": "/screening/blind-screening-automation"
+    },
+    {
+      "title": "Blind Screening by Design",
+      "route": "/screening/blind-screening-by-design"
+    },
+    {
+      "title": "Candidate Reference Checker Agent",
+      "route": "/screening/candidate-reference-checker-agent"
+    },
+    {
+      "title": "Candidate Trustworthiness Signal Generator",
+      "route": "/screening/candidate-trustworthiness-signal-generator"
+    },
+    {
+      "title": "Context-Aware Skills Ontology Agent",
+      "route": "/screening/context-aware-skills-ontology-agent"
+    },
+    {
+      "title": "Demographic Proxy Redactor",
+      "route": "/screening/demographic-proxy-redactor"
+    },
+    {
+      "title": "Deterministic Competency Scorecard Generator",
+      "route": "/screening/deterministic-competency-scorecard-generator"
+    },
+    {
+      "title": "Domain-Tuned Encoders for Industry-Specific Matching",
+      "route": "/screening/domain-tuned-encoders-for-industry-specific-matching"
+    },
+    {
+      "title": "Dynamic Resume Anonymization",
+      "route": "/screening/dynamic-resume-anonymization"
+    },
+    {
+      "title": "Dynamic Structured Question Generator",
+      "route": "/screening/dynamic-structured-question-generator"
+    },
+    {
+      "title": "Embedding-First Semantic Retrieval with Governance-by-Design",
+      "route": "/screening/embedding-first-semantic-retrieval-with-governance-by-design"
+    },
+    {
+      "title": "Explainable AI Shortlisting",
+      "route": "/screening/explainable-ai-shortlisting"
+    },
+    {
+      "title": "Fairness-Aware Candidate Matching",
+      "route": "/screening/fairness-aware-candidate-matching"
+    },
+    {
+      "title": "Fidelity-Preserving Resume Parsing with Layout Understanding",
+      "route": "/screening/fidelity-preserving-resume-parsing-with-layout-understanding"
+    },
+    {
+      "title": "Goal-aware multi-factor screening agent",
+      "route": "/screening/goal-aware-multi-factor-screening-agent"
+    },
+    {
+      "title": "High-Volume Asynchronous Screening & Work Sample Orchestration",
+      "route": "/screening/high-volume-asynchronous-screening-and-work-sample-orchestra"
+    },
+    {
+      "title": "High Volume Asynchronous Screening and Work Sample Orchestrator",
+      "route": "/screening/high-volume-asynchronous-screening-and-work-sample-orchestrator"
+    },
+    {
+      "title": "Human-in-the-Loop Re-Ranking with Recruiter Feedback Signals",
+      "route": "/screening/human-in-the-loop-re-ranking-with-recruiter-feedback-signals"
+    },
+    {
+      "title": "Intake Calibration Agent",
+      "route": "/screening/intake-calibration-agent"
+    },
+    {
+      "title": "Intelligent Talent Pool Segmentation with Engagement Strategies",
+      "route": "/screening/intelligent-talent-pool-segmentation-with-engagement-strateg"
+    },
+    {
+      "title": "Intelligent Talent Pool Segmentation with Engagement Strategies",
+      "route": "/screening/intelligent-talent-pool-segmentation-with-engagement-strategies"
+    },
+    {
+      "title": "Learning Potential Evaluator",
+      "route": "/screening/learning-potential-evaluator"
+    },
+    {
+      "title": "Multi-Language Resume Processing with Cultural Context",
+      "route": "/screening/multi-language-resume-processing-with-cultural-context"
+    },
+    {
+      "title": "Multimodal Soft-Skills Extraction Agent",
+      "route": "/screening/multimodal-soft-skills-extraction-agent"
+    },
+    {
+      "title": "Non-obvious candidate explorer",
+      "route": "/screening/non-obvious-candidate-explorer"
+    },
+    {
+      "title": "Orchestrated Skills Assessment with Intelligent Test Selection",
+      "route": "/screening/orchestrated-skills-assessment-with-intelligent-test-selecti"
+    },
+    {
+      "title": "Orchestrated skills assessment with intelligent test selection",
+      "route": "/screening/orchestrated-skills-assessment-with-intelligent-test-selection"
+    },
+    {
+      "title": "Potential-Based Scoring",
+      "route": "/screening/potential-based-scoring-that-evaluates-trajectory-not-just-c"
+    },
+    {
+      "title": "Potential-based scoring that evaluates trajectory, not just current state",
+      "route": "/screening/potential-based-scoring-that-evaluates-trajectory-not-just-current-state"
+    },
+    {
+      "title": "Real-Time Hiring Rubric Enforcer",
+      "route": "/screening/real-time-hiring-rubric-enforcer"
+    },
+    {
+      "title": "Risk Flagging for Bad Hires",
+      "route": "/screening/risk-flagging-for-bad-hires"
+    },
+    {
+      "title": "Role Success Simulator Agent",
+      "route": "/screening/role-success-simulator-agent"
+    },
+    {
+      "title": "Semantic resume understanding beyond keyword matching",
+      "route": "/screening/semantic-resume-understanding-beyond-keyword-matching"
+    },
+    {
+      "title": "Skill-Based Candidate Ranking Only",
+      "route": "/screening/skill-based-candidate-ranking-only"
+    },
+    {
+      "title": "Skill Graph Enrichment with Canonical Skill Mapping",
+      "route": "/screening/skill-graph-enrichment-with-canonical-skill-mapping"
+    },
+    {
+      "title": "Skill Signal Fusion Across Assessments",
+      "route": "/screening/skill-signal-fusion-across-assessments"
+    },
+    {
+      "title": "Skills-Based Matching (Beyond Keywords)",
+      "route": "/screening/skills-based-matching-beyond-keywords"
+    },
+    {
+      "title": "Skills-Based Matching with Adjacency & Transferability",
+      "route": "/screening/skills-based-matching-that-understands-adjacency-transferabi"
+    },
+    {
+      "title": "Skills-based matching that understands adjacency, transferability, and potential",
+      "route": "/screening/skills-based-matching-that-understands-adjacency-transferability-and-potential"
+    },
+    {
+      "title": "Skills-First Matching with Bias Dampeners",
+      "route": "/screening/skills-first-matching-with-bias-dampeners"
+    },
+    {
+      "title": "Skills-Verification via Project-Based Challenges",
+      "route": "/screening/skills-verification-via-project-based-challenges"
+    },
+    {
+      "title": "Structured Blind Review Mode",
+      "route": "/screening/structured-blind-review-mode"
+    },
+    {
+      "title": "Structured Signal Capture Agent (Premium differentiator)",
+      "route": "/screening/structured-signal-capture-agent-premium-differentiator"
+    },
+    {
+      "title": "Technical / Work-Sample Evaluator",
+      "route": "/screening/technical-work-sample-evaluator"
+    },
+    {
+      "title": "USP: AI-Powered Coding & Skills Assessment",
+      "route": "/screening/usp-ai-powered-coding-skills-assessment"
+    },
+    {
+      "title": "USP: AI-Powered Intake Orchestrator",
+      "route": "/screening/usp-ai-powered-intake-orchestrator"
+    },
+    {
+      "title": "USP: High-Volume ",
+      "route": "/screening/usp-high-volume-triage-agent"
+    }
+  ],
+  "security": [
+    {
+      "title": "Audit Log",
+      "route": "/security/audit-log"
+    },
+    {
+      "title": "Agentic Candidate Consent & Privacy Agent",
+      "route": "/security/agentic-candidate-consent-and-privacy-agent"
+    },
+    {
+      "title": "AI-Fake Detection and Integrity Agent (Category-defining bet)",
+      "route": "/security/ai-fake-detection-and-integrity-agent-category-defining-bet"
+    },
+    {
+      "title": "AI Prompt Injection and Adversarial Input Defense",
+      "route": "/security/ai-prompt-injection-and-adversarial-input-defense"
+    },
+    {
+      "title": "Api Level Data Residency And Tenant Isolation",
+      "route": "/security/api-level-data-residency-and-tenant-isolation"
+    },
+    {
+      "title": "Automated Data Subject Request (DSAR) Fulfillment",
+      "route": "/security/automated-data-subject-request-dsar-fulfillment"
+    },
+    {
+      "title": "Automatic Right-to-Be-Forgotten Workflow",
+      "route": "/security/automatic-right-to-be-forgotten-workflow"
+    },
+    {
+      "title": "Candidate Data Access And Correction Portal",
+      "route": "/security/candidate-data-access-and-correction-portal"
+    },
+    {
+      "title": "Candidate Data Correction Workflow",
+      "route": "/security/candidate-data-correction-workflow"
+    },
+    {
+      "title": "Candidate Data Minimization Engine",
+      "route": "/security/candidate-data-minimization-engine"
+    },
+    {
+      "title": "Candidate Data Portability & Consent Manager",
+      "route": "/security/candidate-data-portability-and-consent-manager"
+    },
+    {
+      "title": "Candidate Data Sovereignty Agent",
+      "route": "/security/candidate-data-sovereignty-agent"
+    },
+    {
+      "title": "Candidate Managed Credential and Identity Packet",
+      "route": "/security/candidate-managed-credential-and-identity-packet"
+    },
+    {
+      "title": "Data-Privacy Anonymization & Purge Agent (GDPR/CCPA)",
+      "route": "/security/ccpa"
+    },
+    {
+      "title": "USP: GDPR/CCPA Erasure Agent",
+      "route": "/security/ccpa-erasure-agent"
+    },
+    {
+      "title": "Consent and Notice Orchestrator",
+      "route": "/security/consent-and-notice-orchestrator"
+    },
+    {
+      "title": "Consent & Data Minimization",
+      "route": "/security/consent-data-minimization"
+    },
+    {
+      "title": "Consent-Driven Data Processing",
+      "route": "/security/consent-driven-data-processing"
+    },
+    {
+      "title": "Consent First Data Minimization Orchestrator",
+      "route": "/security/consent-first-data-minimization-orchestrator"
+    },
+    {
+      "title": "Cross-Border Data Boundary Enforcer",
+      "route": "/security/cross-border-data-boundary-enforcer"
+    },
+    {
+      "title": "Cross-Border Data Residency Router",
+      "route": "/security/cross-border-data-residency-router"
+    },
+    {
+      "title": "Data Minimization And Purpose Binding Engine",
+      "route": "/security/data-minimization-and-purpose-binding-engine"
+    },
+    {
+      "title": "Data-Privacy Anonymization & Purge Agent (GDPR/CCPA)",
+      "route": "/security/data-privacy-anonymization-and-purge-agent-gdpr-ccpa"
+    },
+    {
+      "title": "Data Residency Controls for AI Processing",
+      "route": "/security/data-residency-controls-for-ai-processing"
+    },
+    {
+      "title": "Data Residency & Tenant Isolation",
+      "route": "/security/data-residency-tenant-isolation"
+    },
+    {
+      "title": "Data Retention Schedules for AI Inputs",
+      "route": "/security/data-retention-schedules-for-ai-inputs"
+    },
+    {
+      "title": "Deepfake Video Injection Detector",
+      "route": "/security/deepfake-video-injection-detector"
+    },
+    {
+      "title": "Dynamic Data Minimization Filter",
+      "route": "/security/dynamic-data-minimization-filter"
+    },
+    {
+      "title": "Enterprise Grade Security Architecture With Zero Trust Design",
+      "route": "/security/enterprise-grade-security-architecture-with-zero-trust-design"
+    },
+    {
+      "title": "Fine Grained Access And Just In Time Review",
+      "route": "/security/fine-grained-access-and-just-in-time-review"
+    },
+    {
+      "title": "Fine-Grained Access & JIT Review",
+      "route": "/security/fine-grained-access-jit-review"
+    },
+    {
+      "title": "Fraud & Identity Detection Agent",
+      "route": "/security/fraud-and-identity-detection-agent"
+    },
+    {
+      "title": "Fraud Deepfake Detection Orchestrator",
+      "route": "/security/fraud-deepfake-detection-orchestrator"
+    },
+    {
+      "title": "GDPR Right-to-Erasure Automated Cascade",
+      "route": "/security/gdpr-right-to-erasure-automated-cascade"
+    },
+    {
+      "title": "Granular Consent Context Manager",
+      "route": "/security/granular-consent-context-manager"
+    },
+    {
+      "title": "Just-in-Time Agentic Access Revocation",
+      "route": "/security/just-in-time-agentic-access-revocation"
+    },
+    {
+      "title": "Model Access Control List (MACL) with Expiration",
+      "route": "/security/model-access-control-list-macl-with-expiration"
+    },
+    {
+      "title": "Model Access Tokens And Scoped Permissions",
+      "route": "/security/model-access-tokens-and-scoped-permissions"
+    },
+    {
+      "title": "Non-Human Identity RBAC Controller",
+      "route": "/security/non-human-identity-rbac-controller"
+    },
+    {
+      "title": "PII/PHI Real-Time Masking Layer",
+      "route": "/security/phi-real-time-masking-layer"
+    },
+    {
+      "title": "Privacy-Preserving Analytics (Differential Privacy)",
+      "route": "/security/privacy-preserving-analytics-differential-privacy"
+    },
+    {
+      "title": "Private Model Instance Deployment",
+      "route": "/security/private-model-instance-deployment"
+    },
+    {
+      "title": "Prompt Injection And Output Safety Firewall",
+      "route": "/security/prompt-injection-and-output-safety-firewall"
+    },
+    {
+      "title": "Prompt Injection Defense Shield",
+      "route": "/security/prompt-injection-defense-shield"
+    },
+    {
+      "title": "Prompt Injection Firewall",
+      "route": "/security/prompt-injection-firewall"
+    },
+    {
+      "title": "Purpose-Bound Data Use Controls",
+      "route": "/security/purpose-bound-data-use-controls"
+    },
+    {
+      "title": "Retention And Deletion Policy Automation",
+      "route": "/security/retention-and-deletion-policy-automation"
+    },
+    {
+      "title": "Retention & Deletion Orchestrator",
+      "route": "/security/retention-deletion-orchestrator"
+    },
+    {
+      "title": "Role-Based Access Control (RBAC) for AI Audit Logs",
+      "route": "/security/role-based-access-control-rbac-for-ai-audit-logs"
+    },
+    {
+      "title": "Role-Based Data Access with Need-to-Know Enforcement",
+      "route": "/security/role-based-data-access-with-need-to-know-enforcement"
+    },
+    {
+      "title": "Role\u2011Based Pseudonymization For Reviewers",
+      "route": "/security/role\u2011based-pseudonymization-for-reviewers"
+    },
+    {
+      "title": "Secure Data Sharing Framework",
+      "route": "/security/secure-data-sharing-framework"
+    },
+    {
+      "title": "Secure Tool Router",
+      "route": "/security/secure-tool-router"
+    },
+    {
+      "title": "Secure Tool Router With Safe Action Semantics",
+      "route": "/security/secure-tool-router-with-safe-action-semantics"
+    },
+    {
+      "title": "Segmented Model Runtime Environments",
+      "route": "/security/segmented-model-runtime-environments"
+    },
+    {
+      "title": "Sensitive Data Segregation Vault",
+      "route": "/security/sensitive-data-segregation-vault"
+    },
+    {
+      "title": "Sensitive Data Vault",
+      "route": "/security/sensitive-data-vault"
+    },
+    {
+      "title": "Sensitive Data Vault Encryption",
+      "route": "/security/sensitive-data-vault-encryption"
+    },
+    {
+      "title": "SOC 2 Type II for AI Services",
+      "route": "/security/soc-2-type-ii-for-ai-services"
+    },
+    {
+      "title": "Suspicious Tool-Call Auto-Quarantine",
+      "route": "/security/suspicious-tool-call-auto-quarantine"
+    },
+    {
+      "title": "Third-Party AI Component Registry",
+      "route": "/security/third-party-ai-component-registry"
+    },
+    {
+      "title": "Usp Confidential Search Masking",
+      "route": "/security/usp-confidential-search-masking"
+    },
+    {
+      "title": "Usp Gdprccpa Erasure Agent",
+      "route": "/security/usp-gdprccpa-erasure-agent"
+    },
+    {
+      "title": "Verifiable Credential & DID Authentication Agent",
+      "route": "/security/verifiable-credential-did-authentication-agent"
+    },
+    {
+      "title": "Zero-Trust Architecture",
+      "route": "/security/zero-trust-architecture"
+    },
+    {
+      "title": "Zero-Trust Model Pipeline Validator",
+      "route": "/security/zero-trust-model-pipeline-validator"
+    }
+  ],
+  "sourcing": [
+    {
+      "title": "Agentic Referral Program Automation",
+      "route": "/sourcing/agentic-referral-program-automation"
+    },
+    {
+      "title": "Agentic Talent Pool Nurture",
+      "route": "/sourcing/agentic-talent-pool-nurture"
+    },
+    {
+      "title": "Always-On Passive Sourcing Agent",
+      "route": "/sourcing/always-on-passive-sourcing-agent"
+    },
+    {
+      "title": "Automated Boolean & Query Synthesizer",
+      "route": "/sourcing/automated-boolean-and-query-synthesizer"
+    },
+    {
+      "title": "Automated Candidate Pool Refresh with Market Trend Alerts",
+      "route": "/sourcing/automated-candidate-pool-refresh-with-market-trend-alerts"
+    },
+    {
+      "title": "Automated Candidate Rediscovery from Unstructured Sources",
+      "route": "/sourcing/automated-candidate-rediscovery-from-unstructured-sources"
+    },
+    {
+      "title": "Automated Competitive Intelligence on Talent Wars",
+      "route": "/sourcing/automated-competitive-intelligence-on-talent-wars"
+    },
+    {
+      "title": "Automated Employer Brand Sentiment Monitoring from External Sources",
+      "route": "/sourcing/automated-employer-brand-sentiment-monitoring-from-external-sources"
+    },
+    {
+      "title": "Automated Talent-Rediscovery from Past Applicants",
+      "route": "/sourcing/automated-talent-rediscovery-from-past-applicants"
+    },
+    {
+      "title": "Autonomous Job Description Analysis & Requirement Extraction",
+      "route": "/sourcing/autonomous-job-description-analysis-and-requirement-extraction"
+    },
+    {
+      "title": "Autonomous Multi-Source Sourcing Orchestra",
+      "route": "/sourcing/autonomous-multi-source-sourcing-orchestra"
+    },
+    {
+      "title": "Autonomous Sourcing Agent",
+      "route": "/sourcing/autonomous-sourcing-agent"
+    },
+    {
+      "title": "Autonomous Sourcing Agent with Passive Talent Discovery & Outreach",
+      "route": "/sourcing/autonomous-sourcing-agent-with-passive-talent-discovery-outreach"
+    },
+    {
+      "title": "Campaign content & channel optimizer",
+      "route": "/sourcing/campaign-content-channel-optimizer"
+    },
+    {
+      "title": "Competitive Intelligence Sourcing",
+      "route": "/sourcing/competitive-intelligence-sourcing"
+    },
+    {
+      "title": "Competitor Exodus Capitalization Agent",
+      "route": "/sourcing/competitor-exodus-capitalization-agent"
+    },
+    {
+      "title": "Cross-Platform Social Footprint Synthesizer",
+      "route": "/sourcing/cross-platform-social-footprint-synthesizer"
+    },
+    {
+      "title": "Diversity-balanced sourcing planner",
+      "route": "/sourcing/diversity-balanced-sourcing-planner"
+    },
+    {
+      "title": "Dynamic Hyper-Personalized Employer Branding Agent",
+      "route": "/sourcing/dynamic-hyper-personalized-employer-branding-agent"
+    },
+    {
+      "title": "Dynamic Job Description Generator (Market-Adjusted)",
+      "route": "/sourcing/dynamic-job-description-generator-market-adjusted"
+    },
+    {
+      "title": "Dynamic Job Distribution Optimization Across Channels",
+      "route": "/sourcing/dynamic-job-distribution-optimization-across-channels"
+    },
+    {
+      "title": "Dynamic talent community curator",
+      "route": "/sourcing/dynamic-talent-community-curator"
+    },
+    {
+      "title": "Executive Search Sub-Agent Coordinator",
+      "route": "/sourcing/executive-search-sub-agent-coordinator"
+    },
+    {
+      "title": "External labor market intelligence agent",
+      "route": "/sourcing/external-labor-market-intelligence-agent"
+    },
+    {
+      "title": "Feedback Loop to Job Description Refiner",
+      "route": "/sourcing/feedback-loop-to-job-description-refiner"
+    },
+    {
+      "title": "Human-Voice Outreach Campaign Agent",
+      "route": "/sourcing/human-voice-outreach-campaign-agent"
+    },
+    {
+      "title": "Intelligent Sourcing & Shortlist Agent",
+      "route": "/sourcing/intelligent-sourcing-and-shortlist-agent"
+    },
+    {
+      "title": "Internal Referral Amplification Agent",
+      "route": "/sourcing/internal-referral-amplification-agent"
+    },
+    {
+      "title": "Multi-Agent Campaign Planner",
+      "route": "/sourcing/multi-agent-campaign-planner"
+    },
+    {
+      "title": "Multi-Channel Outreach Orchestrator",
+      "route": "/sourcing/multi-channel-outreach-orchestrator"
+    },
+    {
+      "title": "Multi-channel sourcing campaign agent",
+      "route": "/sourcing/multi-channel-sourcing-campaign-agent"
+    },
+    {
+      "title": "Network-Graph Referral Mining Agent",
+      "route": "/sourcing/network-graph-referral-mining-agent"
+    },
+    {
+      "title": "Outbound Outreach Experiment Agent",
+      "route": "/sourcing/outbound-outreach-experiment-agent"
+    },
+    {
+      "title": "Passive candidate engagement with optimal timing prediction",
+      "route": "/sourcing/passive-candidate-engagement-with-optimal-timing-prediction"
+    },
+    {
+      "title": "Passive Candidate Readiness Predictor",
+      "route": "/sourcing/passive-candidate-readiness-predictor"
+    },
+    {
+      "title": "Passive Candidate Warmth Maintainer",
+      "route": "/sourcing/passive-candidate-warmth-maintainer"
+    },
+    {
+      "title": "Passive Talent Nurture Agent",
+      "route": "/sourcing/passive-talent-nurture-agent"
+    },
+    {
+      "title": "Passive talent radar & rediscovery swarm",
+      "route": "/sourcing/passive-talent-radar-rediscovery-swarm"
+    },
+    {
+      "title": "Proactive Candidate Rediscovery Agent",
+      "route": "/sourcing/proactive-candidate-rediscovery-agent"
+    },
+    {
+      "title": "Proactive pipeline building before requisitions open",
+      "route": "/sourcing/proactive-pipeline-building-before-requisitions-open"
+    },
+    {
+      "title": "Proactive Talent-Scout Agent",
+      "route": "/sourcing/proactive-talent-scout-agent"
+    },
+    {
+      "title": "Referral intelligence & nurture agent",
+      "route": "/sourcing/referral-intelligence-nurture-agent"
+    },
+    {
+      "title": "Self-maintaining, self-curating talent pools",
+      "route": "/sourcing/self-maintaining-self-curating-talent-pools"
+    },
+    {
+      "title": "Silver Medalist & Alumni Rediscovery with Intelligent Re-engagement",
+      "route": "/sourcing/silver-medalist-and-alumni-rediscovery-with-intelligent-re-engagement"
+    },
+    {
+      "title": "Silver Medalist and Talent Rediscovery Agent",
+      "route": "/sourcing/silver-medalist-and-talent-rediscovery-agent"
+    },
+    {
+      "title": "Skill-Based Talent Pooling Agent",
+      "route": "/sourcing/skill-based-talent-pooling-agent"
+    },
+    {
+      "title": "Skills Portfolio Ingestion Agent",
+      "route": "/sourcing/skills-portfolio-ingestion-agent"
+    },
+    {
+      "title": "Sourcing Strategy Agent with Continuous Channel Optimization",
+      "route": "/sourcing/sourcing-strategy-agent-with-continuous-channel-optimization"
+    },
+    {
+      "title": "Third-Party Agency Management & ROI Evaluator",
+      "route": "/sourcing/third-party-agency-management-roi-evaluator"
+    },
+    {
+      "title": "USP: Boolean String Generator (Agentic)",
+      "route": "/sourcing/usp-boolean-string-generator-agentic"
+    },
+    {
+      "title": "USP: Dynamic Job Architecture Generator",
+      "route": "/sourcing/usp-dynamic-job-architecture-generator"
+    },
+    {
+      "title": "USP: Hyper-Personalized Outreach Agent",
+      "route": "/sourcing/usp-hyper-personalized-outreach-agent"
+    }
+  ]
+}

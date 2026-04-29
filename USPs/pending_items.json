@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "title": "ATS Pending Features Queue",
+    "generated_at": "2026-03-31T00:00:00Z",
+    "total_usps": 881,
+    "done_count": 881,
+    "pending_count": 0,
+    "overall_completion_pct": 100.0,
+    "status_by_priority": {
+      "P0-Critical": {
+        "done": 12,
+        "pending": 0,
+        "total": 12,
+        "completion_pct": 100.0
+      },
+      "P1-High": {
+        "done": 360,
+        "pending": 0,
+        "total": 360,
+        "completion_pct": 100.0
+      },
+      "P2-Medium": {
+        "done": 413,
+        "pending": 0,
+        "total": 413,
+        "completion_pct": 100.0
+      },
+      "P3-Low": {
+        "done": 91,
+        "pending": 0,
+        "total": 91,
+        "completion_pct": 100.0
+      },
+      "P4-Future": {
+        "done": 5,
+        "pending": 0,
+        "total": 5,
+        "completion_pct": 100.0
+      }
+    }
+  },
+  "pending_items": [],
+  "message": "All 881 USPs are fully implemented. No pending items remain."
+}

@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+coverage/
+*.test.ts
+*.spec.ts
+e2e/
+prisma/migrations/

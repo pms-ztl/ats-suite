@@ -1,0 +1,4131 @@
+{
+  "generated": "2026-03-31T04:35:12Z",
+  "summary": {
+    "total_routes": 821,
+    "routes_by_engine": {
+      "app": 2,
+      "platform-core": 38,
+      "security-framework": 61,
+      "bias-fairness": 64,
+      "compliance-governance": 112,
+      "explainability": 111,
+      "analytics": 60,
+      "candidate-hub": 83,
+      "interview-system": 48,
+      "screening": 32,
+      "sourcing": 46,
+      "decision": 45,
+      "integration-hub": 49,
+      "scheduling": 18,
+      "mobility": 38,
+      "onboarding": 14
+    }
+  },
+  "routes": [
+    {
+      "engine": "app",
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "engine": "app",
+      "method": "POST",
+      "path": "/api/auth/login"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/health"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/requisitions"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/duplicates"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/:id"
+    },
+    {
+      "engine": "platform-core",
+      "method": "PUT",
+      "path": "/api/requisitions/:id"
+    },
+    {
+      "engine": "platform-core",
+      "method": "DELETE",
+      "path": "/api/requisitions/:id"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/:id/snapshots"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/requisitions/:id/orchestrate"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/:id/status"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/requisitions/:id/consolidate"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/tenants"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/tenants"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/tenants/:id"
+    },
+    {
+      "engine": "platform-core",
+      "method": "PUT",
+      "path": "/api/tenants/:id/isolation"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/skills/ontology"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/skills/ontology"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/skills/ontology/search"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/requisitions/:id/intake"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/localization"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/platform/localization/translate"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/knowledge-graph"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/skills/unified-ontology"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/platform/sandbox/preview"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/talent-graph"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/stalled-pipelines"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/platform/stalled-pipelines/recover"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/:id/calibration"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/ab-tests"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/platform/ab-tests"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/personalization-engine"
+    },
+    {
+      "engine": "platform-core",
+      "method": "PUT",
+      "path": "/api/platform/personalization-engine"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/autonomy-config"
+    },
+    {
+      "engine": "platform-core",
+      "method": "PUT",
+      "path": "/api/platform/autonomy-config"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/control-center"
+    },
+    {
+      "engine": "platform-core",
+      "method": "POST",
+      "path": "/api/platform/control-center/review/:reviewId"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/requisitions/prioritization"
+    },
+    {
+      "engine": "platform-core",
+      "method": "GET",
+      "path": "/api/platform/surge-capacity"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/tool-router/validate"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/tool-router/audit"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/consent"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/consent/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/consent/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "DELETE",
+      "path": "/api/security/consent/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/consent/:candidateId/history"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/data-residency/config"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/data-residency/config"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/data-residency/route"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/data-residency/audit"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/vault"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/vault"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/vault/:id"
+    },
+    {
+      "engine": "security-framework",
+      "method": "DELETE",
+      "path": "/api/security/vault/:id"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/retention/evaluate"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/retention/purge"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/retention/schedule"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/retention/schedule"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/access/config"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/access/jit-review"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/access/audit"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/access/roles"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/prompt-firewall/scan"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/prompt-firewall/log"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/prompt-firewall/rules"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/zero-trust/status"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/zero-trust/verify"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/erasure/request"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/erasure/:requestId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/erasure/:requestId/execute"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/pii/mask"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/pii/redact"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/data-minimization/config"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/data-minimization/evaluate"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/dsar"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/dsar/:id"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/dsar/:id/fulfill"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/fraud/detect"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/fraud/deepfake"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/fraud/log"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/credentials/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/credentials/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/data-correction"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/data-portability/:candidateId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/private-models"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/private-models"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/private-models/:id/deploy"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/private-models/:id/retire"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/ai-registry"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/ai-registry"
+    },
+    {
+      "engine": "security-framework",
+      "method": "PUT",
+      "path": "/api/security/ai-registry/:id"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/ai-registry/:id/versions"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/dp-analytics/query"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/dp-analytics/budget"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/dp-analytics/log"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/macl"
+    },
+    {
+      "engine": "security-framework",
+      "method": "POST",
+      "path": "/api/security/macl"
+    },
+    {
+      "engine": "security-framework",
+      "method": "DELETE",
+      "path": "/api/security/macl/:entryId"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/macl/check"
+    },
+    {
+      "engine": "security-framework",
+      "method": "GET",
+      "path": "/api/security/macl/expiring"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/proxy-detect"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/proxy-detect/log"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/adverse-impact/analyze"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/by-stage"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/realtime"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/four-fifths"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/drift/check"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/drift/history"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/drift/alerts"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness/metrics"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness/by-role"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/fairness/simulate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness/benchmarks"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "PUT",
+      "path": "/api/bias/fairness/objectives"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/monitor/dashboard"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/monitor/diversity"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/monitor/intersectional"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/audit/run"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/audit/results"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/audit/schedule"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/audit/schedule"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/pre-deployment/test"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/pre-deployment/gate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/remediation/trigger"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/remediation/workflows"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/knockout-filter/simulate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/jd-screener/scan"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/interviewer-calibration/:userId"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/interviewer-calibration/drift"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/manager-calibration/:userId"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/demographic/segregate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/diversity/tracker"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/diversity/slate/:reqId"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/diversity/generate-slate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/feature-engineering/resilience-check"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/fairness-constraints/set"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness-constraints"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/simulation/scenario"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/feature-impact/attribution"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/demographic-parity/monitor"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/demographic-parity/alert"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/sentiment/feedback-scan"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/sentiment/feedback-scan"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/pre-audit/simulation"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/pre-audit/simulation"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/historical-bias/disconnect"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/anomaly/soft-gate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/anomaly/soft-gate"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/interviewer-load/balance"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/diversity-goals/progress"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "PUT",
+      "path": "/api/bias/diversity-goals"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/diversity-impact/forecast"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/manager-consistency/check"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/intersectional/deep-analysis"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/blind-screening/status"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/blind-screening/apply"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/sourcing/diversity-balance"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/sourcing/diversity-plan"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/communication-equity/monitor"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/communication-equity/scan"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/fairness-finetuning/feedback"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness-finetuning/feedback"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "GET",
+      "path": "/api/bias/fairness-aware-matching/report"
+    },
+    {
+      "engine": "bias-fairness",
+      "method": "POST",
+      "path": "/api/bias/fairness-aware-matching/evaluate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/audit-trail"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/:decisionId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/replay/:decisionId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/timeline/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/chain-of-custody/:id"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/evidence/generate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/evidence/:packId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/evidence/export"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/evidence/vault"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/legal-hold"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/legal-hold/active"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "DELETE",
+      "path": "/api/compliance/legal-hold/:id"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/policies"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/policies"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "PUT",
+      "path": "/api/compliance/policies/:id"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/policies/evaluate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/policies/impact-diff"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/jurisdiction/rules"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "PUT",
+      "path": "/api/compliance/jurisdiction/rules"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/jurisdiction/:country"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/jurisdiction/adapt"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/regulations/templates"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/regulations/change-alert"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/regulations/simulate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/human-review/queue"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/human-review/submit"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/human-review/gates"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "PUT",
+      "path": "/api/compliance/human-review/gates"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/human-review/escalate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/overrides"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/overrides"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/overrides/patterns"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/reports/eeoc"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/reports/ofccp"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/reports/eeo1"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/reports/eu-ai-act"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/reports/audit-readiness"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/reports/regulatory-readiness"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/reports/custom-export"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/dpia/generate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/dpia/:id"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/dpia/export"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/eu-ai-act/risk-tier"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/eu-ai-act/conformity"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/eu-ai-act/annex-iii"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/nyc-ll144/status"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/nyc-ll144/audit"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/gdpr/article22/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/gdpr/significant-decision"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/works-council/package"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/works-council/status"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/ai-notices/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/ai-notices/generate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/pay-transparency/:reqId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/pay-transparency/validate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/accommodation/request"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/accommodation/:id"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/consent/ai-features/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "PUT",
+      "path": "/api/compliance/consent/ai-features/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/opt-out/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/opt-out/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/criteria-library"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/criteria-library/validate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/retention/archive"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/retention/policies"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "PUT",
+      "path": "/api/compliance/retention/policies"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/oversight/workbench"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/justification/capture"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/justification/:decisionId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/inappropriate-question/check"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/prohibited-questions/rules"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/bias/extract"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/bias/feedback-report"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/pre-audit/simulate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/pre-audit/results"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/ai-discrepancy/alert"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/ai-discrepancy/history"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/sla/breaches"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/sla/enforce"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/what-if/simulate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/override-annotator/annotate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/override-annotator/categories"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/bias/historical-disconnect"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/hard-gate/intercept"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/hard-gate/config"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/soft-gate/check"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/escalation/edge-case"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/shadow-ai/inventory"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/shadow-ai/register"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/ai-literacy/status"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/ai-literacy/certify"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/review-training/status"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/review-training/certify"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/review-sampling/sample"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/review-sampling/qc-reports"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/interviewer-fairness/load"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/interviewer-fairness/rebalance"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/guardrails"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/guardrails"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/guardrails/check"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/regulator-sandbox/run"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/regulator-sandbox/scenarios"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/explainable-agent/decide"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/diversity-agent/progress"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/diversity-agent/recommend"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/hiring-coach/recommendations"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/hiring-coach/complete-module"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/audit-agent/generate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/fairness-explanation/:candidateId"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/fairness-explanation/request"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "POST",
+      "path": "/api/compliance/diversity-forecast/generate"
+    },
+    {
+      "engine": "compliance-governance",
+      "method": "GET",
+      "path": "/api/compliance/diversity-forecast/history"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models/:id"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/models/:id/status"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models/:id/card"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models/:id/card/generate"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models/:id/versions"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models/:id/rollback"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models/:id/freeze"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models/:id/shadow-eval"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models/:id/drift"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/models/:id/deployment"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/models/:id/deployment/approve"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/governance/console"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/governance/approved-models"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/governance/control-plane"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/governance/change-log"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/governance/change-request"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/prompts"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/prompts"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/prompts/:id/versions"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/explain/generate"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/human-readable"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/role/:role"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/trace"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/reason-codes"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/prompt-action"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/chain-of-thought"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions/:id"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/ledger"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/model-snapshot"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/confidence/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/confidence/thresholds"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/confidence/thresholds"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/override"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/overrides"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/overrides/:id"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/escalations"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/escalations/:id/resolve"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/transparency/dashboard"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/transparency/flow/:workflowId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/transparency/action-log"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/transparency/disclosure"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/quality/metrics"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/data-provenance"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/data-provenance/:modelId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/consent/training"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/counterfactual/:candidateId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/copilot/assist"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/copilot/suggestions/:reqId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/attribute-redaction/process"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/human-checkpoints"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/human-checkpoints"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/human-approval/queue"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/human-approval/:id/approve"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/human-approval/:id/reject"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/multi-agent/rank"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/multi-agent/rank/:requisitionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/interview-audit/questions"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/interview-audit/validate"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/counterfactual/simulate"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/multi-agent/explain"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/bias/feature-report"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/bias/feature-config/:modelId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/coaching/suggest"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/coaching/history"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/nl-summary"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/explain/nl-batch"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/confidence/automation-policy"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/confidence/automation-policy"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/confidence/evaluate"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/agent-permissions"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/agent-permissions"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/agent-permissions/check"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/cot/score/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/cot/log/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/skill-adjacency/explain"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/hallucination/verify"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/hallucination/report"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/rationale/generate"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/rationale/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/feedback"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/feedback/summary"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/post-hoc"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/widget"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/hitl/rerank"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/hitl/rerank-history/:requisitionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/trust-levels"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/trust-levels"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/shap"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/fairness/constraints"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/fairness/constraints"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/fairness/compliance-check"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/bias/simulate"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/bias/simulation-history"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/bias/training-config/:modelId"
+    },
+    {
+      "engine": "explainability",
+      "method": "PUT",
+      "path": "/api/ai/bias/training-config/:modelId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/uncertainty/:decisionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/uncertainty/model-summary/:modelId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/ranking-cards/:requisitionId"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/override/learn"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/override/learning-summary"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/explanation-packet/:candidateId"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/card"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/decisions/cards/bulk"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/confidence/throttle-queue"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/confidence/throttle"
+    },
+    {
+      "engine": "explainability",
+      "method": "GET",
+      "path": "/api/ai/fairness/sandbox"
+    },
+    {
+      "engine": "explainability",
+      "method": "POST",
+      "path": "/api/ai/fairness/sandbox"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/event-ledger"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/event-ledger/:eventId"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/dashboard/org-health"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/dashboard/pipeline"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/dashboard/process-telemetry"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/dashboard/cross-functional"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/fairness/benchmarks"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/fairness/cross-system"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/fairness/adverse-impact-by-stage"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks/velocity"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks/recovery"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/requisition-health/:reqId"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/requisition-health/playbooks"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/audit-logs/immutable"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/bias-audit/schedule"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/overrides"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/source-attribution"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/quality-of-hire"
+    },
+    {
+      "engine": "analytics",
+      "method": "POST",
+      "path": "/api/analytics/predictive-success"
+    },
+    {
+      "engine": "analytics",
+      "method": "POST",
+      "path": "/api/analytics/nl-query"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/attrition-risk"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/flight-risk"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/funnel-conversion"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/time-to-fill-trends"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/diversity-pipeline"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/recruiter-scorecard"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/offer-acceptance"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/interview-to-offer"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/drop-off-analysis"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/cost-per-hire"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/headcount-planning"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/sourcing-roi"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/pipeline-aging"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/approval-cycle-time"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/candidate-experience-scores"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/hiring-manager-effectiveness"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/department-hiring-health"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/realtime-metrics"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/competitive-offers"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/pipeline-health-score"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/workforce-forecast"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/skill-gap-analysis"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/application-velocity"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/rejection-reasons"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/passive-candidate-engagement"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/sla-compliance"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/internal-vs-external"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/ta-roi"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/benchmarks"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/geographic-distribution"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/interview-completion-rate"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/nurture-campaign-analytics"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/referral-analytics"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/seasonal-patterns"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/source-mix"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/executive-summary"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/cohort-retention"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/goal-tracking"
+    },
+    {
+      "engine": "analytics",
+      "method": "GET",
+      "path": "/api/analytics/talent-intelligence"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/concierge/history/:candidateId"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/concierge/chat"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/concierge/multilingual"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/notifications/requisition-closed"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "PUT",
+      "path": "/api/candidates/:id"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/status"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/timeline"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/apply"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/apply/conversational"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-passport"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-transparency"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/appeal"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/appeal/:appealId"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/appeal/human-review"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/explanation"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/rejection-report"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/rights-portal"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/data-access"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/data-correction"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/data-export"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/transparency/interview"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/communication/send"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/communication/history"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/communication/multi-channel"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/right-to-reply"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/scheduling/preferences"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "PUT",
+      "path": "/api/candidates/:id/scheduling/preferences"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-timeline"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/qa-agent"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/feedback-growth"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/reengagement/trigger"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/reengagement/inactive"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/post-rejection/engage"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/blackhole/at-risk"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/blackhole/rescue"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/concierge/personalized"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/rejection/empathic"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/journey-guardian"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-transparency"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/interview-prep"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/cultural-adapt"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-score"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/mobile-summary"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/interview-prep/realtime"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/experience/personalize"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/legal-ux"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/process-map"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback/actionable"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/legal-disclaimers"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-usage-dashboard"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/ai-feedback"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/interview/empathic-adapt"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/experience/orchestrator"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/reengagement/past-applicants"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/messaging/personalized"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/sentiment"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/communication/cadence"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/journey/touchpoints"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ghosting/risk"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/outreach/personalized-bulk"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/skill-gap"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/interview-prep/coach"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/support/chat"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/self-service/explanations"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/equity/communication-monitor"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/skill-gap/explainable"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-influence"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/outreach/multi-channel-deep"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback/constructive"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/concierge/end-to-end"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "PUT",
+      "path": "/api/candidates/:id/journey/personalize"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/faq"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/status/agentic"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/experience/sentiment-analysis"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/translation/nuanced"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/:id/experience/realtime-adjust"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/sentiment/journey"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "GET",
+      "path": "/api/candidates/:id/ghosting/prevention"
+    },
+    {
+      "engine": "candidate-hub",
+      "method": "POST",
+      "path": "/api/candidates/sentiment/monitor"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/structured/generate"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/panel/auto-coordinate"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/panel/:reqId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/panel/assemble"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/pack/generate"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/transcript/extract"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/recording/transcribe"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id"
+    },
+    {
+      "engine": "interview-system",
+      "method": "PUT",
+      "path": "/api/interviews/:id"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id/guide"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/:id/debrief"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id/debrief/summary"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/:id/signals/capture"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id/signals/summary"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/:id/signals/behavioral"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id/scorecard"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/:id/scorecard"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/:id/transcript"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/prep-coach/:applicationId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/debrief/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/debrief/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/notes/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/notes/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/interviewer-coaching/:interviewerId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/question-bank"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/question-bank"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/scorecard-templates"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/scorecard-templates"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/consensus/:applicationId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/virtual-setup"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/conflict-check"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/panel/:interviewId/members"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/feedback-summary/:applicationId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/async-video"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/async-video/:id/responses"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/calendar-sync"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/reminders/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/bias-alerts/:applicationId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/loop-optimizer/:requisitionId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/time-analytics"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/candidate-feedback/:interviewId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/re-interview-tracker"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/outcome-prediction/:applicationId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/availability"
+    },
+    {
+      "engine": "interview-system",
+      "method": "GET",
+      "path": "/api/interviews/availability/:userId"
+    },
+    {
+      "engine": "interview-system",
+      "method": "POST",
+      "path": "/api/interviews/guide-builder"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/intake"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/evaluate/technical"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/match/skills-first"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/blind/apply"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/anonymize"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/rank/skills-only"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/rubric/enforce"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/redact/demographic-proxy"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/scorecard/generate"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/blind/automate"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/blind/structured-review"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/match/semantic"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/autonomous-screen"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/background-check/orchestrate"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/background-check/:id"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/adaptive-application/:requisitionId"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/bulk-screen"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/signals/:applicationId"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/signals/:applicationId"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/knockout/:applicationId"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/resume-parse/:applicationId"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/queue"
+    },
+    {
+      "engine": "screening",
+      "method": "PATCH",
+      "path": "/api/screening/queue/:applicationId/assign"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/phone-screen"
+    },
+    {
+      "engine": "screening",
+      "method": "PATCH",
+      "path": "/api/screening/phone-screen/:id/complete"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/criteria/:requisitionId"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/criteria/:requisitionId"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/duplicates"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/skill-assessment"
+    },
+    {
+      "engine": "screening",
+      "method": "PATCH",
+      "path": "/api/screening/skill-assessment/:id/results"
+    },
+    {
+      "engine": "screening",
+      "method": "POST",
+      "path": "/api/screening/disposition/:applicationId"
+    },
+    {
+      "engine": "screening",
+      "method": "GET",
+      "path": "/api/screening/analytics"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/boolean/generate"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/shortlist"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/search"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/silver-medalists"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/silver-medalists/reengage"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/outreach/personalized"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/job-description/generate"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/job-description/analyze"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/passive-nurture/enroll"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/passive-nurture/candidates"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/outreach/multi-channel"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/outreach/campaigns"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/skills-portfolio/ingest"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/candidate-pool/refresh"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/rediscovery/unstructured"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/job-distribution"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/pipeline/proactive"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/passive-candidates/timing"
+    },
+    {
+      "engine": "sourcing",
+      "method": "PUT",
+      "path": "/api/sourcing/talent-pools/:poolId/self-curate"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/campaigns/multi-channel"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/talent-community"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/talent-community/add"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/campaigns/optimize"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/referrals"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/referrals/submit"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/market-intelligence"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/passive-sourcing/queue"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools/:poolId/nurture"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/competitive-intelligence"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/referrals/network-graph"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/passive-candidates/readiness"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/agencies"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/agencies/roi"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/talent-scout/queue"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools/skill-based"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/rediscovery/past-applicants"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/rediscovery/past-applicants/reengage"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/diversity/plan"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/searches"
+    },
+    {
+      "engine": "sourcing",
+      "method": "PUT",
+      "path": "/api/sourcing/talent-pools/:poolId"
+    },
+    {
+      "engine": "sourcing",
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools/:poolId/members"
+    },
+    {
+      "engine": "sourcing",
+      "method": "DELETE",
+      "path": "/api/sourcing/talent-pools/:poolId/members/:candidateId"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools/:poolId/members"
+    },
+    {
+      "engine": "sourcing",
+      "method": "GET",
+      "path": "/api/sourcing/job-description/feedback"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/final-review"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/synthesize"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:id"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:reqId/consensus"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/:reqId/consensus/build"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:reqId/comparison"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/copilot/insights"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id"
+    },
+    {
+      "engine": "decision",
+      "method": "PUT",
+      "path": "/api/offers/:id"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/compliance-check"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/compensation/benchmark"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/compensation/recommend"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/retract"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/reference-check/orchestrate"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/reference-check/:id"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/preboarding/orchestrate"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:reqId/:candidateId/decision-card"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:reqId/disagreements"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id/acceptance-risk"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:reqId/support"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/optimization/analyze"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/:reqId/decision-room"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/compensation-rationale"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/reference-check/:candidateId/synthesize"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/approvals/chase"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/compensation/transparent-match"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/negotiation/strategy"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id/negotiation-preferences"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/compensation/dynamic-salary-range"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/negotiation/win-probability"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id/decline-risk"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/decisions/:managerId/consistency"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/calibration/copilot"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id/expectation-analysis"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/decisions/:reqId/briefing"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/approvals/timeline-prediction"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/decline-modeling/factors"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/compensation/market-intelligence"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/compensation/dynamic-calibration"
+    },
+    {
+      "engine": "decision",
+      "method": "GET",
+      "path": "/api/offers/:id/acceptance-model"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/total-rewards-simulator"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/clause-adaptation"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/counter-scenario"
+    },
+    {
+      "engine": "decision",
+      "method": "POST",
+      "path": "/api/offers/:id/personalize-package"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/status"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/api/register"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/api/catalog"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/hris/sync"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/hris/conflicts"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/verification/orchestrate"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/verification/:id"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/workflows/prioritization"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/copilot/high-volume"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/third-party/attestations"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/third-party/audit-hooks"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/events/publish"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/events/log"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/approval/design"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/approval/workflows"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/approval/:id/submit"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/explainability-api"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/fairness-api"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/escalation/rules"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/escalation/trigger"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/hitl/workflow/build"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/pipeline/:reqId"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/requisition/sync"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/background-check/multi-vendor"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/provisioning/new-hire"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/workload/balance"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workload/rebalance"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workflows/sla/recover"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/workflows/blueprints"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workflows/blueprints"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/workflows/decision-latency"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workflows/decision-latency/escalate"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workflows/recovery/self-heal"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/crm/hygiene"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/crm/hygiene/enrich"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/sla/72hr/status"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/workload/burnout-risk"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/copilot/escalation-minimizer"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/workflows/recovery/adaptive"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/recruiter/focus"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/sla/alignment"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/pipeline/orchestrate"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/escalation/pathways/automate"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/nl/command"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/candidates/stalled"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/candidates/stalled/escalate"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/knowledge-base"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "POST",
+      "path": "/api/integrations/hiring-manager/engage"
+    },
+    {
+      "engine": "integration-hub",
+      "method": "GET",
+      "path": "/api/integrations/hiring-manager/workload"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/auto-schedule"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/reschedule"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/availability"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/accessibility"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/multi-timezone"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/multi-party"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/no-show/prevention"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/no-show/remind"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/sms-scheduler"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/capacity-forecast"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/bottlenecks"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/availability-prediction"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/slot-negotiation"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/no-show/recovery"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/multi-panel/negotiate"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/burnout-risk"
+    },
+    {
+      "engine": "scheduling",
+      "method": "POST",
+      "path": "/api/scheduling/fallback-orchestrate"
+    },
+    {
+      "engine": "scheduling",
+      "method": "GET",
+      "path": "/api/scheduling/load-balance"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/opportunities"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/match"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/profiles/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skills-passport/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "PUT",
+      "path": "/api/mobility/skills-passport/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/workforce-demand"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skills-gap-forecast"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/marketplace"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/project-staffing"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/succession-risk"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/skills-gap-analysis"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/workforce-scenarios"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/succession-candidates/:requisitionId"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/pathway-map/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/career-path-simulate"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/skills-gap-bridge"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/post-move-outcomes"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/internal-first/:requisitionId"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/talent-flow"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skill-gap-heatmap"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/workforce-composition"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/cross-functional"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/workforce-skill-gap"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skills-inventory"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/auto-match"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/career-recommendations/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/rediscover"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/deep-rediscover"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/flight-risk"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/flight-risk/intervene"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/transitions"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/transitions"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skills-first-marketplace"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/upskilling-predictions"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/career-plans"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/career-plans/:employeeId"
+    },
+    {
+      "engine": "mobility",
+      "method": "GET",
+      "path": "/api/mobility/skill-gap-recommendations"
+    },
+    {
+      "engine": "mobility",
+      "method": "POST",
+      "path": "/api/mobility/planning-simulation"
+    },
+    {
+      "engine": "onboarding",
+      "method": "POST",
+      "path": "/api/onboarding/handoff"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/handoff/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/handoff/:candidateId/context"
+    },
+    {
+      "engine": "onboarding",
+      "method": "POST",
+      "path": "/api/onboarding/feedback"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/feedback/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "POST",
+      "path": "/api/onboarding/visa-relocation"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/visa-relocation/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "PUT",
+      "path": "/api/onboarding/handoff/:handoffId/orchestrate"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/skills-gap/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/milestones/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "PUT",
+      "path": "/api/onboarding/task/:taskId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "POST",
+      "path": "/api/onboarding/preboarding"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/preboarding/:candidateId"
+    },
+    {
+      "engine": "onboarding",
+      "method": "GET",
+      "path": "/api/onboarding/dashboard"
+    }
+  ]
+}

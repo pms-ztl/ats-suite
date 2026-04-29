@@ -1,0 +1,223 @@
+{
+  "metadata": {
+    "title": "ATS Pending Features - 11 Items to Implement",
+    "generated_at": "2026-03-31T09:43:06.617953Z",
+    "total_pending": 11,
+    "breakdown": {
+      "P0_Critical": 5,
+      "P1_High": 6
+    },
+    "how_to_use": "Each item has a todo block with exact file paths. Implement one by one in rank order (lowest rank = highest priority)."
+  },
+  "pending_items": [
+    {
+      "item_number": 1,
+      "rank": 5,
+      "id": 6,
+      "name": "Secure Tool Router with Safe Action Semantics",
+      "priority": "P0-Critical",
+      "category": "Security & Privacy",
+      "description": "Routes candidate data securely through systems with strict controls, preventing unauthorized access or misuse of sensitive information.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "secure-tool-router-with-safe-action-semantics",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/secure-tool-router-with-safe-action-semantics/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 2,
+      "rank": 6,
+      "id": 42,
+      "name": "Consent First Data Minimization Orchestrator",
+      "priority": "P0-Critical",
+      "category": "Security & Privacy",
+      "description": "Ensures only necessary candidate information is collected and processed with explicit consent, minimizing data exposure.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "consent-first-data-minimization-orchestrator",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/consent-first-data-minimization-orchestrator/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 3,
+      "rank": 8,
+      "id": 261,
+      "name": "Sensitive Data Segregation Vault",
+      "priority": "P0-Critical",
+      "category": "Security & Privacy",
+      "description": "Stores highly sensitive data like SSNs and background check results in a separate secure vault with restricted access.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "sensitive-data-segregation-vault",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/sensitive-data-segregation-vault/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 4,
+      "rank": 11,
+      "id": 268,
+      "name": "Prompt Injection and Output Safety Firewall",
+      "priority": "P0-Critical",
+      "category": "Security & Privacy",
+      "description": "Protects against malicious attempts to manipulate AI decisions through prompt injection, ensuring AI integrity.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "prompt-injection-and-output-safety-firewall",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/prompt-injection-and-output-safety-firewall/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 5,
+      "rank": 12,
+      "id": 748,
+      "name": "Enterprise-grade security architecture with zero-trust design",
+      "priority": "P0-Critical",
+      "category": "Security & Privacy",
+      "description": "Implements defense-in-depth security architecture where every system is verified and nothing is assumed safe.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "enterprise-grade-security-architecture-with-zero-trust-design",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/enterprise-grade-security-architecture-with-zero-trust-design/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 6,
+      "rank": 74,
+      "id": 80,
+      "name": "USP: 24/7 Concierge Agent",
+      "priority": "P1-High",
+      "category": "Candidate Experience & Communication",
+      "description": "A round-the-clock AI concierge that answers candidate questions anytime, improving experience and reducing recruiter load.",
+      "frontend_section": "candidates",
+      "backend_engine": "candidate-hub",
+      "expected_slug": "usp-247-concierge-agent",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/candidates/usp-247-concierge-agent/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/candidate-hub/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/candidates/page.tsx"
+      }
+    },
+    {
+      "item_number": 7,
+      "rank": 199,
+      "id": 465,
+      "name": "Real-Time Diversity/Bias Monitoring",
+      "priority": "P1-High",
+      "category": "Compliance, Bias & Governance",
+      "description": "Tracks diversity and bias patterns across all stages of hiring to ensure fair candidate treatment.",
+      "frontend_section": "compliance",
+      "backend_engine": "compliance-governance",
+      "expected_slug": "real-time-diversitybias-monitoring",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/compliance/real-time-diversitybias-monitoring/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/compliance-governance/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/compliance/page.tsx"
+      }
+    },
+    {
+      "item_number": 8,
+      "rank": 202,
+      "id": 474,
+      "name": "DEI/Bias Audit Agent",
+      "priority": "P1-High",
+      "category": "Compliance, Bias & Governance",
+      "description": "An AI agent that audits the entire hiring process for diversity and bias issues automatically.",
+      "frontend_section": "compliance",
+      "backend_engine": "compliance-governance",
+      "expected_slug": "deibias-audit-agent",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/compliance/deibias-audit-agent/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/compliance-governance/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/compliance/page.tsx"
+      }
+    },
+    {
+      "item_number": 9,
+      "rank": 298,
+      "id": 879,
+      "name": "Multi-System IT/HR Provisioning Agent",
+      "priority": "P1-High",
+      "category": "Integration & Workflow",
+      "description": "Automates new hire provisioning across IT and HR systems, ensuring IT access and HR records are set up simultaneously.",
+      "frontend_section": "integrations",
+      "backend_engine": "integration-hub",
+      "expected_slug": "multi-system-ithr-provisioning-agent",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/integrations/multi-system-ithr-provisioning-agent/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/integration-hub/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/integrations/page.tsx"
+      }
+    },
+    {
+      "item_number": 10,
+      "rank": 333,
+      "id": 108,
+      "name": "USP: GDPR/CCPA Erasure Agent",
+      "priority": "P1-High",
+      "category": "Security & Privacy",
+      "description": "Automatically deletes candidate data on request to comply with GDPR and CCPA privacy regulations.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "usp-gdprccpa-erasure-agent",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/usp-gdprccpa-erasure-agent/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    },
+    {
+      "item_number": 11,
+      "rank": 369,
+      "id": 904,
+      "name": "Fraud & Deepfake Detection Orchestrator",
+      "priority": "P1-High",
+      "category": "Security & Privacy",
+      "description": "Detects fraudulent candidate submissions and deepfake video/audio submissions to prevent hiring deception.",
+      "frontend_section": "security",
+      "backend_engine": "security-framework",
+      "expected_slug": "fraud-deepfake-detection-orchestrator",
+      "status": "PENDING",
+      "todo": {
+        "create_frontend_page": "D:/CDC/ATS/frontend/app/(dashboard)/security/fraud-deepfake-detection-orchestrator/page.tsx",
+        "backend_engine_file": "D:/CDC/ATS/backend/src/engines/security-framework/routes.ts",
+        "add_api_client_method": "D:/CDC/ATS/frontend/lib/api-client.ts",
+        "update_section_index": "D:/CDC/ATS/frontend/app/(dashboard)/security/page.tsx"
+      }
+    }
+  ]
+}

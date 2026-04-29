@@ -1,0 +1,75 @@
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.production.local
+*.env
+!.env.example
+!.env.local.example
+
+# Claude AI / IDE config (excluded per push instruction)
+.claude/
+.cursor/
+.vscode/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# Test/coverage
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Backups (database dumps may contain PII)
+backups/
+*.sql.gz
+*.dump
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor swap files
+*.swp
+*.swo
+*~
+
+# Prisma generated client (regenerated on install)
+backend/node_modules/.prisma/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Temp / scratch
+tmp/
+temp/
+*.tmp
+
+# Output files from local audits
+audit_report.json
+api_audit_result.json
+*.audit.json
+
+# Cookies file (if accidentally created during local testing)
+cookies.txt

@@ -1,0 +1,1895 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 1: PLATFORM CORE — Tenants, Users, Requisitions, Skills
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Tenant {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  dataRegion      String   @default("us-east-1")
+  isolationConfig Json     @default("{}")
+  settings        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users          User[]
+  requisitions   Requisition[]
+  candidates     Candidate[]
+  auditTrail     AuditTrailEntry[]
+  policies       CompliancePolicy[]
+  aiModels       AIModel[]
+  pipelineStages PipelineStage[]
+  integrations   Integration[]
+  webhooks       Webhook[]
+  scheduleEvents ScheduleEvent[]
+  mobilityCases  MobilityCase[]
+  biasReports    BiasReport[]
+  aiJobs         AIJob[]
+  agentRuns      AgentRun[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole  @default(RECRUITER)
+  department   String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+  interviewFeedback    InterviewFeedback[]
+  decisionOverrides    DecisionOverride[]
+  auditActions         AuditTrailEntry[]   @relation("AuditActor")
+  humanReviews         HumanReviewItem[]   @relation("HumanReviewer")
+  assignedRequisitions Requisition[]       @relation("AssignedRecruiter")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+  COMPLIANCE_OFFICER
+  CANDIDATE
+  INTERVIEWER
+}
+
+model Requisition {
+  id              String            @id @default(uuid())
+  tenantId        String
+  title           String
+  department      String
+  location        String
+  country         String            @default("US")
+  jobFamily       String?
+  description     String?
+  requirements    Json              @default("[]")
+  salaryMin       Float?
+  salaryMax       Float?
+  salaryCurrency  String            @default("USD")
+  status          RequisitionStatus @default(DRAFT)
+  priority        Int               @default(3)
+  hiringManagerId String?
+  recruiterId     String?
+  headcount       Int               @default(1)
+  targetStartDate DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  closedAt        DateTime?
+
+  tenant          Tenant                 @relation(fields: [tenantId], references: [id])
+  recruiter       User?                  @relation("AssignedRecruiter", fields: [recruiterId], references: [id])
+  candidates      CandidateApplication[]
+  applications    Application[]
+  interviews      Interview[]
+  offers          Offer[]
+  snapshots       RequisitionSnapshot[]
+  pipelineMetrics PipelineMetric[]
+  biasAnalyses    BiasAnalysis[]
+  jobPostings     JobPosting[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, department])
+}
+
+enum RequisitionStatus {
+  DRAFT
+  OPEN
+  ON_HOLD
+  FILLED
+  CANCELLED
+  CLOSED
+}
+
+model RequisitionSnapshot {
+  id            String   @id @default(uuid())
+  requisitionId String
+  version       Int
+  snapshot      Json
+  changedBy     String?
+  changeReason  String?
+  createdAt     DateTime @default(now())
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+
+  @@unique([requisitionId, version])
+}
+
+model Skill {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  category  String?
+  aliases   String[] @default([])
+  parentId  String?
+  level     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  parent          Skill?           @relation("SkillHierarchy", fields: [parentId], references: [id])
+  children        Skill[]          @relation("SkillHierarchy")
+  candidateSkills CandidateSkill[]
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 2: SECURITY FRAMEWORK — Consent, Vault, Access, Erasure
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ConsentRecord {
+  id           String    @id @default(uuid())
+  candidateId  String
+  tenantId     String
+  consentType  String
+  purpose      String
+  granted      Boolean
+  version      Int       @default(1)
+  ipAddress    String?
+  jurisdiction String?
+  expiresAt    DateTime?
+  grantedAt    DateTime  @default(now())
+  revokedAt    DateTime?
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([candidateId])
+  @@index([tenantId])
+}
+
+model SensitiveDataVault {
+  id             String    @id @default(uuid())
+  tenantId       String
+  candidateId    String?
+  dataType       String
+  encryptedData  String
+  accessLevel    String    @default("RESTRICTED")
+  lastAccessedBy String?
+  lastAccessedAt DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([candidateId])
+}
+
+model AccessLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  resource  String
+  action    String
+  granted   Boolean
+  reason    String?
+  ipAddress String?
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, userId])
+  @@index([createdAt])
+}
+
+model DataRetentionPolicy {
+  id             String    @id @default(uuid())
+  tenantId       String
+  dataType       String
+  retentionDays  Int
+  jurisdiction   String?
+  autoDelete     Boolean   @default(true)
+  isActive       Boolean   @default(true)
+  lastExecutedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([tenantId, dataType, jurisdiction])
+}
+
+model ErasureRequest {
+  id          String        @id @default(uuid())
+  tenantId    String
+  candidateId String
+  requestType String        @default("GDPR_ERASURE")
+  status      ErasureStatus @default(PENDING)
+  requestedBy String
+  reason      String?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, status])
+}
+
+enum ErasureStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PARTIALLY_COMPLETED
+}
+
+model PromptFirewallLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  inputHash  String
+  threatType String?
+  blocked    Boolean
+  confidence Float
+  rawInput   String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+model DataSubjectRequest {
+  id           String    @id @default(uuid())
+  tenantId     String
+  candidateId  String
+  requestType  String
+  status       String    @default("PENDING")
+  responseData Json?
+  fulfilledAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 3: BIAS & FAIRNESS — Detection, Monitoring, Audits
+// ═══════════════════════════════════════════════════════════════════════════
+
+model BiasAnalysis {
+  id                 String           @id @default(uuid())
+  tenantId           String
+  requisitionId      String?
+  analysisType       BiasAnalysisType
+  stage              String?
+  protectedAttribute String?
+  selectionRate      Json?
+  adverseImpactRatio Float?
+  fourFifthsPass     Boolean?
+  findings           Json             @default("[]")
+  severity           String           @default("LOW")
+  status             String           @default("ACTIVE")
+  createdAt          DateTime         @default(now())
+
+  requisition Requisition? @relation(fields: [requisitionId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, analysisType])
+  @@index([tenantId, createdAt])
+}
+
+enum BiasAnalysisType {
+  PROXY_DETECTION
+  ADVERSE_IMPACT
+  DRIFT_CHECK
+  FAIRNESS_AUDIT
+  KNOCKOUT_SIMULATION
+  JD_SCREENING
+  INTERVIEWER_CALIBRATION
+  INTERSECTIONAL
+  PRE_DEPLOYMENT
+}
+
+model BiasDriftAlert {
+  id            String    @id @default(uuid())
+  tenantId      String
+  modelId       String?
+  driftType     String
+  metric        String
+  baselineValue Float
+  currentValue  Float
+  threshold     Float
+  severity      String
+  resolved      Boolean   @default(false)
+  resolvedAt    DateTime?
+  resolvedBy    String?
+  createdAt     DateTime  @default(now())
+
+  @@index([tenantId, resolved])
+}
+
+model FairnessMetric {
+  id              String   @id @default(uuid())
+  tenantId        String
+  requisitionId   String?
+  metricType      String
+  group1          String
+  group2          String
+  group1Rate      Float
+  group2Rate      Float
+  impactRatio     Float
+  passesThreshold Boolean
+  period          String
+  computedAt      DateTime @default(now())
+
+  @@index([tenantId, metricType])
+  @@index([tenantId, computedAt])
+}
+
+model BiasAuditSchedule {
+  id        String    @id @default(uuid())
+  tenantId  String
+  auditType String
+  frequency String    @default("QUARTERLY")
+  nextRunAt DateTime
+  lastRunAt DateTime?
+  isActive  Boolean   @default(true)
+  config    Json      @default("{}")
+  createdAt DateTime  @default(now())
+
+  @@index([tenantId])
+}
+
+model DiversityMetric {
+  id               String   @id @default(uuid())
+  tenantId         String
+  requisitionId    String?
+  stage            String
+  demographic      String
+  count            Int
+  percentage       Float
+  targetPercentage Float?
+  period           String
+  computedAt       DateTime @default(now())
+
+  @@index([tenantId, stage])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 4: COMPLIANCE & GOVERNANCE — Audit Trails, Policies, Jurisdiction
+// ═══════════════════════════════════════════════════════════════════════════
+
+model AuditTrailEntry {
+  id            String   @id @default(uuid())
+  tenantId      String
+  actorId       String?
+  actorType     String   @default("USER")
+  action        String
+  resourceType  String
+  resourceId    String
+  before        Json?
+  after         Json?
+  metadata      Json     @default("{}")
+  ipAddress     String?
+  immutableHash String?
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  actor  User?  @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([tenantId, resourceType, resourceId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, actorId])
+}
+
+model CompliancePolicy {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  policyType   String
+  rules        Json
+  jurisdiction String?
+  isActive     Boolean  @default(true)
+  version      Int      @default(1)
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, policyType])
+}
+
+model HumanReviewItem {
+  id            String       @id @default(uuid())
+  tenantId      String
+  reviewType    String
+  resourceType  String
+  resourceId    String
+  riskLevel     String       @default("MEDIUM")
+  status        ReviewStatus @default(PENDING)
+  assignedTo    String?
+  decision      String?
+  justification String?
+  slaDeadline   DateTime?
+  escalatedAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  reviewer User? @relation("HumanReviewer", fields: [assignedTo], references: [id])
+
+  @@index([tenantId, status])
+  @@index([tenantId, reviewType])
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  ESCALATED
+  EXPIRED
+}
+
+model DecisionOverride {
+  id               String   @id @default(uuid())
+  tenantId         String
+  userId           String
+  decisionId       String
+  originalDecision Json
+  newDecision      Json
+  justification    String
+  overrideType     String
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId])
+  @@index([tenantId, createdAt])
+}
+
+model EvidencePackage {
+  id           String   @id @default(uuid())
+  tenantId     String
+  packageType  String
+  resourceType String
+  resourceId   String
+  contents     Json
+  generatedBy  String?
+  exportFormat String   @default("PDF")
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, resourceType])
+}
+
+model LegalHold {
+  id           String    @id @default(uuid())
+  tenantId     String
+  reason       String
+  resourceType String
+  resourceIds  String[]
+  isActive     Boolean   @default(true)
+  appliedBy    String
+  releasedBy   String?
+  releasedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([tenantId, isActive])
+}
+
+model JurisdictionRule {
+  id        String   @id @default(uuid())
+  tenantId  String
+  country   String
+  region    String?
+  ruleType  String
+  rules     Json
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, country, region, ruleType])
+}
+
+model ComplianceReport {
+  id          String   @id @default(uuid())
+  tenantId    String
+  reportType  String
+  period      String
+  data        Json
+  status      String   @default("GENERATED")
+  generatedBy String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, reportType])
+}
+
+model AccommodationRequest {
+  id          String    @id @default(uuid())
+  tenantId    String
+  candidateId String
+  requestType String
+  description String
+  status      String    @default("PENDING")
+  assignedTo  String?
+  resolution  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 5: AI EXPLAINABILITY — Models, Decisions, Explanations
+// ═══════════════════════════════════════════════════════════════════════════
+
+model AIModel {
+  id         String        @id @default(uuid())
+  tenantId   String
+  name       String
+  provider   String
+  version    String
+  status     AIModelStatus @default(PENDING_APPROVAL)
+  riskTier   String        @default("MEDIUM")
+  modelCard  Json          @default("{}")
+  config     Json          @default("{}")
+  approvedBy String?
+  approvedAt DateTime?
+  deployedAt DateTime?
+  retiredAt  DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  decisions   AIDecision[]
+  driftAlerts ModelDriftAlert[]
+  versions    AIModelVersion[]
+  jobs        AIJob[]
+
+  @@index([tenantId, status])
+}
+
+enum AIModelStatus {
+  PENDING_APPROVAL
+  APPROVED
+  DEPLOYED
+  SHADOW_EVAL
+  FROZEN
+  RETIRED
+  REJECTED
+}
+
+model AIModelVersion {
+  id                 String   @id @default(uuid())
+  modelId            String
+  version            String
+  changes            Json
+  performanceMetrics Json     @default("{}")
+  approvedBy         String?
+  createdAt          DateTime @default(now())
+
+  model AIModel @relation(fields: [modelId], references: [id])
+
+  @@unique([modelId, version])
+}
+
+model ModelDriftAlert {
+  id              String   @id @default(uuid())
+  modelId         String
+  metric          String
+  baselineValue   Float
+  currentValue    Float
+  driftPercentage Float
+  severity        String
+  resolved        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  model AIModel @relation(fields: [modelId], references: [id])
+
+  @@index([modelId, resolved])
+}
+
+model AIDecision {
+  id              String   @id @default(uuid())
+  tenantId        String
+  modelId         String?
+  decisionType    String
+  resourceType    String
+  resourceId      String
+  input           Json
+  output          Json
+  confidence      Float
+  explanation     Json     @default("{}")
+  reasonCodes     Json     @default("[]")
+  traceMap        Json     @default("{}")
+  chainOfThought  Json     @default("[]")
+  humanOverridden Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  model    AIModel?            @relation(fields: [modelId], references: [id])
+  override AIDecisionOverride?
+
+  @@index([tenantId, decisionType])
+  @@index([tenantId, resourceType, resourceId])
+  @@index([tenantId, createdAt])
+}
+
+model AIDecisionOverride {
+  id         String   @id @default(uuid())
+  decisionId String   @unique
+  userId     String
+  reason     String
+  newOutput  Json
+  createdAt  DateTime @default(now())
+
+  decision AIDecision @relation(fields: [decisionId], references: [id])
+}
+
+model AIPrompt {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  template  String
+  version   Int      @default(1)
+  isActive  Boolean  @default(true)
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, name])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 6: ANALYTICS — Events, Pipeline Metrics, Dashboards
+// ═══════════════════════════════════════════════════════════════════════════
+
+model HiringEvent {
+  id            String   @id @default(uuid())
+  tenantId      String
+  eventType     String
+  resourceType  String
+  resourceId    String
+  actorId       String?
+  data          Json     @default("{}")
+  immutableHash String?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, eventType])
+  @@index([tenantId, resourceType, resourceId])
+  @@index([tenantId, createdAt])
+}
+
+model PipelineMetric {
+  id             String   @id @default(uuid())
+  tenantId       String
+  requisitionId  String?
+  stage          String
+  count          Int
+  avgDaysInStage Float?
+  conversionRate Float?
+  period         String
+  computedAt     DateTime @default(now())
+
+  requisition Requisition? @relation(fields: [requisitionId], references: [id])
+
+  @@index([tenantId, period])
+}
+
+model DashboardWidget {
+  id            String   @id @default(uuid())
+  tenantId      String
+  dashboardType String
+  widgetType    String
+  config        Json     @default("{}")
+  position      Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, dashboardType])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 7: CANDIDATE HUB — Candidates, Applications, Communication
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Candidate {
+  id           String   @id @default(uuid())
+  tenantId     String
+  email        String
+  firstName    String
+  lastName     String
+  phone        String?
+  location     String?
+  country      String?
+  resumeUrl    String?
+  linkedinUrl  String?
+  portfolioUrl String?
+  summary      String?
+  source       String?
+  tags         String[] @default([])
+  isAnonymized Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant            Tenant                   @relation(fields: [tenantId], references: [id])
+  applications      CandidateApplication[]
+  newApplications   Application[]
+  skills            CandidateSkill[]
+  communications    CandidateCommunication[]
+  consents          ConsentRecord[]
+  appeals           CandidateAppeal[]
+  erasureRequests   ErasureRequest[]
+  dsarRequests      DataSubjectRequest[]
+  accommodations    AccommodationRequest[]
+  screeningResults  ScreeningRecord[]
+  interviewFeedback InterviewFeedback[]
+  resume            Resume?
+  candidateNotes    CandidateNote[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([email])
+}
+
+model CandidateSkill {
+  id              String  @id @default(uuid())
+  candidateId     String
+  skillId         String
+  proficiency     String?
+  yearsExperience Float?
+  verified        Boolean @default(false)
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  skill     Skill     @relation(fields: [skillId], references: [id])
+
+  @@unique([candidateId, skillId])
+}
+
+// LEGACY: CandidateApplication is the original application model (Batch B1).
+// Application (line ~1384) is the newer model with richer relations.
+// Both coexist for backward compatibility. Frontend maps between them via
+// `c.applications ?? c.newApplications` in candidates/page.tsx:227.
+// TODO: Consolidate into a single Application model in a future migration.
+model CandidateApplication {
+  id              String            @id @default(uuid())
+  candidateId     String
+  requisitionId   String
+  stage           ApplicationStage  @default(APPLIED)
+  status          ApplicationStatus @default(ACTIVE)
+  appliedAt       DateTime          @default(now())
+  movedAt         DateTime          @default(now())
+  rejectedAt      DateTime?
+  rejectionReason String?
+  score           Float?
+  ranking         Int?
+  isBlindReview   Boolean           @default(false)
+  metadata        Json              @default("{}")
+
+  candidate   Candidate   @relation(fields: [candidateId], references: [id])
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+
+  @@unique([candidateId, requisitionId])
+  @@index([requisitionId, stage])
+}
+
+enum ApplicationStage {
+  APPLIED
+  SCREENED
+  PHONE_SCREEN
+  ASSESSMENT
+  INTERVIEW
+  FINAL_REVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ApplicationStatus {
+  ACTIVE
+  ON_HOLD
+  REJECTED
+  WITHDRAWN
+  HIRED
+}
+
+model CandidateCommunication {
+  id          String    @id @default(uuid())
+  tenantId    String
+  candidateId String
+  channel     String    @default("EMAIL")
+  direction   String    @default("OUTBOUND")
+  subject     String?
+  body        String
+  sentAt      DateTime  @default(now())
+  readAt      DateTime?
+  metadata    Json      @default("{}")
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([candidateId])
+  @@index([tenantId, sentAt])
+}
+
+model CandidateAppeal {
+  id            String    @id @default(uuid())
+  tenantId      String
+  candidateId   String
+  applicationId String?
+  appealType    String    @default("REJECTION")
+  reason        String
+  status        String    @default("SUBMITTED")
+  reviewedBy    String?
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 8: INTERVIEW SYSTEM — Interviews, Panels, Feedback, Scorecards
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Interview {
+  id            String          @id @default(uuid())
+  tenantId      String
+  requisitionId String
+  candidateId   String
+  applicationId String?
+  interviewType String          @default("PANEL")
+  type          InterviewType?
+  stage         String
+  status        InterviewStatus @default(SCHEDULED)
+  scheduledAt   DateTime?
+  duration      Int             @default(60)
+  location      String?
+  meetingUrl    String?
+  guideId       String?
+  transcriptUrl String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  requisition  Requisition            @relation(fields: [requisitionId], references: [id])
+  application  Application?           @relation(fields: [applicationId], references: [id])
+  panelMembers InterviewPanelMember[]
+  feedback     InterviewFeedback[]
+  scorecard    InterviewScorecard?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([requisitionId])
+  @@index([applicationId])
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+// ── B2: Process enums ─────────────────────────────────────────────────────────
+
+enum InterviewType {
+  PHONE_SCREEN
+  TECHNICAL
+  BEHAVIORAL
+  PANEL
+  FINAL
+}
+
+enum InterviewRecommendation {
+  STRONG_YES
+  YES
+  NEUTRAL
+  NO
+  STRONG_NO
+}
+
+enum ScreeningType {
+  AUTOMATED
+  MANUAL
+  AI_ASSISTED
+}
+
+enum ScreeningStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ScreeningOutcome {
+  PASS
+  FAIL
+  REVIEW
+}
+
+model InterviewPanelMember {
+  id          String  @id @default(uuid())
+  interviewId String
+  userId      String
+  role        String  @default("INTERVIEWER")
+  isRequired  Boolean @default(true)
+  confirmed   Boolean @default(false)
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+
+  @@unique([interviewId, userId])
+}
+
+model InterviewFeedback {
+  id                 String                   @id @default(uuid())
+  interviewId        String
+  interviewerId      String
+  candidateId        String
+  overallRating      Int
+  strengths          Json                     @default("[]")
+  concerns           Json                     @default("[]")
+  recommendation     String
+  recommendationEnum InterviewRecommendation?
+  notes              String?
+  signals            Json                     @default("[]")
+  submittedAt        DateTime                 @default(now())
+
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  interviewer User      @relation(fields: [interviewerId], references: [id])
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+
+  @@unique([interviewId, interviewerId])
+}
+
+model InterviewScorecard {
+  id           String   @id @default(uuid())
+  interviewId  String   @unique
+  criteria     Json
+  scores       Json
+  overallScore Float?
+  generatedBy  String   @default("MANUAL")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+}
+
+model InterviewGuide {
+  id            String   @id @default(uuid())
+  tenantId      String
+  requisitionId String?
+  title         String
+  questions     Json
+  rubric        Json     @default("{}")
+  interviewType String
+  generatedBy   String   @default("AI")
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 9: SCREENING — Matching, Assessments, Blind Review
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Renamed from ScreeningResult → ScreeningRecord to avoid collision with the ScreeningResult enum (added by B2)
+model ScreeningRecord {
+  id              String   @id @default(uuid())
+  tenantId        String
+  candidateId     String
+  requisitionId   String?
+  screeningType   String
+  score           Float?
+  matchPercentage Float?
+  signals         Json     @default("[]")
+  isBlind         Boolean  @default(false)
+  redactedFields  String[] @default([])
+  status          String   @default("COMPLETED")
+  createdAt       DateTime @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, screeningType])
+  @@index([candidateId])
+}
+
+model Assessment {
+  id             String   @id @default(uuid())
+  tenantId       String
+  title          String
+  assessmentType String
+  questions      Json
+  rubric         Json     @default("{}")
+  duration       Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  results AssessmentResult[]
+
+  @@index([tenantId, assessmentType])
+}
+
+model AssessmentResult {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("")
+  assessmentId   String?
+  screeningId    String?
+  candidateId    String
+  assessmentType String   @default("UNKNOWN")
+  answers        Json     @default("[]")
+  score          Float    @default(0)
+  maxScore       Float    @default(100)
+  percentile     Float?
+  completedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  assessment Assessment? @relation(fields: [assessmentId], references: [id])
+  screening  Screening?  @relation(fields: [screeningId], references: [id])
+
+  @@index([tenantId])
+  @@index([screeningId])
+  @@index([candidateId])
+}
+
+model BackgroundCheck {
+  id          String    @id @default(uuid())
+  tenantId    String
+  candidateId String
+  vendor      String
+  checkType   String
+  status      String    @default("PENDING")
+  result      Json?
+  initiatedAt DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 10: SOURCING — Talent Pools, Search, Outreach
+// ═══════════════════════════════════════════════════════════════════════════
+
+model TalentPool {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  criteria    Json     @default("{}")
+  memberCount Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members TalentPoolMember[]
+
+  @@index([tenantId])
+}
+
+model TalentPoolMember {
+  id          String   @id @default(uuid())
+  poolId      String
+  candidateId String
+  addedAt     DateTime @default(now())
+  source      String?
+
+  pool TalentPool @relation(fields: [poolId], references: [id])
+
+  @@unique([poolId, candidateId])
+}
+
+model SourcingSearch {
+  id            String   @id @default(uuid())
+  tenantId      String
+  query         String
+  booleanString String?
+  filters       Json     @default("{}")
+  resultCount   Int      @default(0)
+  createdBy     String?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 11: DECISION & OFFER — Decisions, Offers, Compensation
+// ═══════════════════════════════════════════════════════════════════════════
+
+model HiringDecision {
+  id             String    @id @default(uuid())
+  tenantId       String
+  requisitionId  String
+  candidateId    String
+  decisionType   String
+  recommendation String
+  confidence     Float?
+  rationale      Json      @default("{}")
+  panelConsensus Json      @default("{}")
+  status         String    @default("PENDING")
+  decidedBy      String?
+  decidedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId, status])
+  @@index([requisitionId])
+}
+
+model Offer {
+  id              String      @id @default(uuid())
+  tenantId        String
+  requisitionId   String
+  candidateId     String
+  applicationId   String?
+  salaryAmount    Float
+  salaryCurrency  String      @default("USD")
+  equity          Json?
+  benefits        Json?
+  startDate       DateTime?
+  expiresAt       DateTime?
+  status          OfferStatus @default(DRAFT)
+  complianceCheck Json        @default("{}")
+  approvalChain   Json        @default("[]")
+  sentAt          DateTime?
+  respondedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  requisition Requisition     @relation(fields: [requisitionId], references: [id])
+  application Application?    @relation(fields: [applicationId], references: [id])
+  approvals   OfferApproval[]
+
+  @@index([tenantId, status])
+  @@index([applicationId])
+}
+
+enum OfferStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  EXTENDED
+  SENT
+  ACCEPTED
+  DECLINED
+  RETRACTED
+  RESCINDED
+  EXPIRED
+  COUNTERED
+}
+
+model CompensationBenchmark {
+  id           String   @id @default(uuid())
+  tenantId     String
+  jobFamily    String
+  level        String
+  location     String
+  percentile25 Float
+  percentile50 Float
+  percentile75 Float
+  percentile90 Float
+  currency     String   @default("USD")
+  source       String?
+  validUntil   DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, jobFamily])
+}
+
+model ReferenceCheck {
+  id             String    @id @default(uuid())
+  tenantId       String
+  candidateId    String
+  referenceName  String
+  referenceEmail String?
+  relationship   String
+  status         String    @default("PENDING")
+  responses      Json?
+  insights       Json?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId, candidateId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 12: INTEGRATION HUB — Workflows, Approvals, Sync
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ApprovalWorkflow {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  workflowType String
+  steps        Json
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  instances ApprovalInstance[]
+
+  @@index([tenantId, workflowType])
+}
+
+model ApprovalInstance {
+  id           String   @id @default(uuid())
+  workflowId   String
+  resourceType String
+  resourceId   String
+  currentStep  Int      @default(0)
+  status       String   @default("PENDING")
+  history      Json     @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workflow ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+
+  @@index([status])
+}
+
+model IntegrationConfig {
+  id              String    @id @default(uuid())
+  tenantId        String
+  integrationType String
+  provider        String
+  config          Json      @default("{}")
+  status          String    @default("ACTIVE")
+  lastSyncAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([tenantId, integrationType, provider])
+}
+
+model IntegrationEvent {
+  id           String   @id @default(uuid())
+  tenantId     String
+  eventType    String
+  direction    String
+  payload      Json
+  status       String   @default("SUCCESS")
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, eventType])
+  @@index([tenantId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 13: SCHEDULING — Interviews, Availability, No-Shows
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ScheduleSlot {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String
+  date        DateTime
+  startTime   String
+  endTime     String
+  timezone    String   @default("UTC")
+  isAvailable Boolean  @default(true)
+  isBooked    Boolean  @default(false)
+  interviewId String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, userId, date])
+  @@index([tenantId, isAvailable])
+}
+
+model ScheduleRequest {
+  id                String    @id @default(uuid())
+  tenantId          String
+  interviewId       String?
+  candidateId       String
+  requiredPanelists String[]
+  duration          Int       @default(60)
+  timezone          String    @default("UTC")
+  preferredSlots    Json      @default("[]")
+  accessibility     Json      @default("{}")
+  status            String    @default("PENDING")
+  scheduledAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([tenantId, status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 14: INTERNAL MOBILITY — Opportunities, Skills Matching
+// ═══════════════════════════════════════════════════════════════════════════
+
+model InternalOpportunity {
+  id             String   @id @default(uuid())
+  tenantId       String
+  requisitionId  String?
+  title          String
+  department     String
+  requiredSkills Json     @default("[]")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  matches InternalMatch[]
+
+  @@index([tenantId, isActive])
+}
+
+model InternalMatch {
+  id            String   @id @default(uuid())
+  opportunityId String
+  employeeId    String
+  matchScore    Float
+  skillGaps     Json     @default("[]")
+  status        String   @default("SUGGESTED")
+  createdAt     DateTime @default(now())
+
+  opportunity InternalOpportunity @relation(fields: [opportunityId], references: [id])
+
+  @@unique([opportunityId, employeeId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENGINE 15: ONBOARDING — Handoff, Tasks, Context Preservation
+// ═══════════════════════════════════════════════════════════════════════════
+
+model OnboardingHandoff {
+  id             String    @id @default(uuid())
+  tenantId       String
+  candidateId    String
+  requisitionId  String?
+  hiringContext  Json
+  interviewNotes Json      @default("[]")
+  assessmentData Json      @default("{}")
+  assignedTo     String?
+  status         String    @default("PENDING")
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId, status])
+}
+
+model OnboardingTask {
+  id          String    @id @default(uuid())
+  tenantId    String
+  handoffId   String
+  title       String
+  taskType    String
+  assignedTo  String?
+  dueDate     DateTime?
+  status      String    @default("PENDING")
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([tenantId, handoffId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BATCH B1: CORE TALENT — Application, Pipeline, Resume, Notes
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Application {
+  id             String            @id @default(cuid())
+  tenantId       String
+  candidateId    String
+  candidate      Candidate         @relation(fields: [candidateId], references: [id])
+  requisitionId  String
+  requisition    Requisition       @relation(fields: [requisitionId], references: [id])
+  stage          ApplicationStage  @default(APPLIED)
+  status         ApplicationStatus @default(ACTIVE)
+  appliedAt      DateTime          @default(now())
+  stageUpdatedAt DateTime          @default(now())
+  notes          String?
+  interviews     Interview[]
+  screenings     Screening[]
+  offers         Offer[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, stage])
+  @@index([candidateId])
+  @@index([requisitionId])
+}
+
+model Screening {
+  id                String             @id @default(cuid())
+  tenantId          String
+  applicationId     String
+  application       Application        @relation(fields: [applicationId], references: [id])
+  type              ScreeningType      @default(MANUAL)
+  screeningType     String             @default("MANUAL")
+  status            ScreeningStatus    @default(PENDING)
+  result            ScreeningOutcome?
+  score             Float?
+  passThreshold     Float?
+  matchPercentage   Float?
+  questions         Json               @default("[]")
+  answers           Json               @default("[]")
+  signals           Json               @default("[]")
+  isBlind           Boolean            @default(false)
+  completedAt       DateTime?
+  assessmentResults AssessmentResult[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([tenantId])
+  @@index([applicationId])
+}
+
+model PipelineStage {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  name      String
+  order     Int
+  color     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Resume {
+  id               String    @id @default(cuid())
+  tenantId         String
+  candidateId      String    @unique
+  fileName         String
+  originalFilename String?
+  fileSize         Int
+  mimeType         String
+  storageKey       String    @default("")
+  extractedText    String?
+  parsedData       Json?
+  parseStatus      String    @default("PENDING")
+  parsedAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId])
+}
+
+model CandidateNote {
+  id          String    @id @default(cuid())
+  tenantId    String
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  authorId    String
+  content     String
+  isPrivate   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([candidateId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BATCH B4: OPS — Integration, Webhook, ScheduleEvent, MobilityCase
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  PENDING_SETUP
+}
+
+enum WebhookStatus {
+  ACTIVE
+  INACTIVE
+  FAILING
+}
+
+enum WebhookEventType {
+  CANDIDATE_CREATED
+  CANDIDATE_UPDATED
+  APPLICATION_STAGE_CHANGED
+  INTERVIEW_SCHEDULED
+  OFFER_EXTENDED
+  OFFER_ACCEPTED
+  REQUISITION_OPENED
+  REQUISITION_CLOSED
+  HIRE_COMPLETED
+}
+
+enum MobilityCaseStatus {
+  OPEN
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Integration {
+  id         String            @id @default(cuid())
+  tenantId   String
+  tenant     Tenant            @relation(fields: [tenantId], references: [id])
+  name       String
+  type       String
+  status     IntegrationStatus @default(PENDING_SETUP)
+  config     Json              @default("{}")
+  lastSyncAt DateTime?
+  errorCount Int               @default(0)
+  webhooks   Webhook[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([tenantId])
+}
+
+model Webhook {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  integrationId String?
+  integration   Integration?       @relation(fields: [integrationId], references: [id])
+  url           String
+  secret        String
+  status        WebhookStatus      @default(ACTIVE)
+  events        WebhookEventType[]
+  headers       Json               @default("{}")
+  retryCount    Int                @default(0)
+  lastDelivery  DateTime?
+  lastStatus    Int?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([tenantId])
+}
+
+model ScheduleEvent {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  title            String
+  description      String?
+  startAt          DateTime
+  endAt            DateTime
+  allDay           Boolean  @default(false)
+  location         String?
+  meetingLink      String?
+  attendeeIds      String[]
+  organizerId      String
+  resourceType     String?
+  resourceId       String?
+  externalId       String?
+  externalCalendar String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, startAt])
+  @@index([attendeeIds])
+}
+
+model MobilityCase {
+  id              String             @id @default(cuid())
+  tenantId        String
+  tenant          Tenant             @relation(fields: [tenantId], references: [id])
+  employeeId      String
+  currentRole     String
+  targetRole      String?
+  currentLocation String?
+  targetLocation  String?
+  status          MobilityCaseStatus @default(OPEN)
+  reason          String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([tenantId])
+  @@index([employeeId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BATCH B3: GOVERNANCE & AI JOBS
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+  APPROVE
+  REJECT
+}
+
+enum BiasRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AIJobType {
+  RESUME_PARSE
+  CANDIDATE_MATCH
+  BIAS_CHECK
+  SKILL_EXTRACT
+  JOB_DESCRIPTION_OPTIMIZE
+  INTERVIEW_ANALYSIS
+}
+
+enum AIJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ModelType {
+  MATCHING
+  BIAS_DETECTION
+  NLP
+  CLASSIFICATION
+  RANKING
+}
+
+enum ModelStatus {
+  ACTIVE
+  DEPRECATED
+  TESTING
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum DSARRequestType {
+  ACCESS
+  DELETION
+  CORRECTION
+  PORTABILITY
+}
+
+enum DSARStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  tenantId   String
+  actorId    String
+  actorRole  String
+  action     AuditAction
+  resource   String
+  resourceId String?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([actorId])
+  @@index([resource, resourceId])
+}
+
+model BiasReport {
+  id              String        @id @default(cuid())
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id])
+  requisitionId   String?
+  scope           String
+  dimensions      String[]
+  findings        Json
+  overallRisk     BiasRiskLevel
+  recommendations String[]
+  generatedAt     DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  @@index([tenantId])
+}
+
+model AIJob {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  type        AIJobType
+  status      AIJobStatus @default(QUEUED)
+  input       Json
+  output      Json?
+  error       String?
+  modelId     String?
+  model       AIModel?    @relation(fields: [modelId], references: [id])
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// AGENTIC PLATFORM MODELS (Batch 2)
+// ═══════════════════════════════════════════════════════════════════════
+
+enum AgentRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  BUDGET_EXCEEDED
+  HITL_PENDING
+  HITL_RESOLVED
+  REPAIR_FAILED
+  CANCELLED
+}
+
+enum HITLStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+model AgentRun {
+  id           String         @id @default(uuid())
+  tenantId     String
+  agentType    String
+  status       AgentRunStatus @default(RUNNING)
+  triggeredBy  String
+  inputHash    String
+  inputJson    Json?
+  outputJson   Json?
+  tokensIn     Int            @default(0)
+  tokensOut    Int            @default(0)
+  costUsd      Decimal        @default(0) @db.Decimal(10, 6)
+  latencyMs    Int            @default(0)
+  iterations   Int            @default(0)
+  modelName    String?
+  modelVersion String?
+  promptHash   String?
+  errorMessage String?
+  hitlStatus   HITLStatus     @default(NONE)
+  createdAt    DateTime       @default(now())
+  completedAt  DateTime?
+
+  traces AgentTrace[]
+  tenant Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, agentType])
+  @@index([tenantId, createdAt])
+  @@index([status])
+}
+
+model AgentTrace {
+  id           String   @id @default(uuid())
+  agentRunId   String
+  stepIndex    Int
+  stepType     String
+  modelName    String?
+  promptHash   String?
+  toolName     String?
+  toolInput    Json?
+  toolOutput   Json?
+  tokensIn     Int      @default(0)
+  tokensOut    Int      @default(0)
+  costUsd      Decimal  @default(0) @db.Decimal(10, 6)
+  latencyMs    Int      @default(0)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  agentRun AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+
+  @@index([agentRunId])
+  @@index([agentRunId, stepIndex])
+}
+
+model PromptVersion {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  agentType   String
+  version     Int
+  hash        String
+  content     String   @db.Text
+  modelTarget String
+  isActive    Boolean  @default(false)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  @@unique([agentType, version])
+  @@index([agentType, isActive])
+  @@index([hash])
+}
+
+model HITLCheckpoint {
+  id          String     @id @default(uuid())
+  tenantId    String
+  agentRunId  String
+  type        String
+  action      String
+  payload     Json
+  assignedTo  String?
+  status      HITLStatus @default(PENDING)
+  slaMinutes  Int        @default(240)
+  resolution  Json?
+  resolvedBy  String?
+  createdAt   DateTime   @default(now())
+  resolvedAt  DateTime?
+  escalatedAt DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([assignedTo, status])
+}
+
+model JobPosting {
+  id               String    @id @default(uuid())
+  tenantId         String
+  requisitionId    String
+  slug             String
+  title            String
+  description      String    @db.Text
+  requirements     String[]  @default([])
+  isPublished      Boolean   @default(false)
+  publishedAt      DateTime?
+  expiresAt        DateTime?
+  views            Int       @default(0)
+  applicationCount Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([tenantId, isPublished])
+}
+
+model OfferApproval {
+  id         String         @id @default(uuid())
+  tenantId   String
+  offerId    String
+  approverId String
+  status     ApprovalStatus @default(PENDING)
+  comments   String?
+  orderIndex Int
+  decidedAt  DateTime?
+  createdAt  DateTime       @default(now())
+
+  offer Offer @relation(fields: [offerId], references: [id])
+
+  @@index([tenantId])
+  @@index([offerId])
+}

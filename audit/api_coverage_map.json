@@ -1,0 +1,5617 @@
+{
+  "generated": "2026-03-31T05:01:26.273Z",
+  "summary": {
+    "spec_endpoints_total": 374,
+    "actual_routes_total": 821,
+    "spec_endpoints_matched": 374,
+    "spec_endpoints_missing": 0,
+    "actual_routes_in_spec": 374,
+    "actual_routes_orphaned": 447,
+    "coverage_percent": 100
+  },
+  "spec_to_actual": [
+    {
+      "method": "GET",
+      "path": "/api/platform/health",
+      "feature_id": 726,
+      "feature_name": "Intelligent requisition creation with market-calibrated job descriptions",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/platform/health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/requisitions",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/:id",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/requisitions/:id",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/requisitions/:id",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/:id/snapshots",
+      "feature_id": 241,
+      "feature_name": "Versioned Requisition Snapshotting",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id/snapshots"
+    },
+    {
+      "method": "POST",
+      "path": "/api/requisitions/:id/orchestrate",
+      "feature_id": 940,
+      "feature_name": "End-to-End Requisition Orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id/orchestrate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/:id/status",
+      "feature_id": null,
+      "feature_name": "Get orchestration status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/duplicates",
+      "feature_id": 512,
+      "feature_name": "Intelligent Requisition Consolidation and Duplication Detection",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/duplicates"
+    },
+    {
+      "method": "POST",
+      "path": "/api/requisitions/:id/consolidate",
+      "feature_id": null,
+      "feature_name": "Consolidate duplicate requisitions",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id/consolidate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/tenants",
+      "feature_id": null,
+      "feature_name": "List tenants",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/tenants"
+    },
+    {
+      "method": "POST",
+      "path": "/api/tenants",
+      "feature_id": null,
+      "feature_name": "Create tenant",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/tenants"
+    },
+    {
+      "method": "GET",
+      "path": "/api/tenants/:id",
+      "feature_id": null,
+      "feature_name": "Get tenant config",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/tenants/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/tenants/:id/isolation",
+      "feature_id": null,
+      "feature_name": "Configure tenant isolation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/tenants/:id/isolation"
+    },
+    {
+      "method": "GET",
+      "path": "/api/skills/ontology",
+      "feature_id": null,
+      "feature_name": "Get skills ontology",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/skills/ontology"
+    },
+    {
+      "method": "POST",
+      "path": "/api/skills/ontology",
+      "feature_id": null,
+      "feature_name": "Update skills ontology",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/skills/ontology"
+    },
+    {
+      "method": "GET",
+      "path": "/api/skills/ontology/search",
+      "feature_id": null,
+      "feature_name": "Search skills",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/skills/ontology/search"
+    },
+    {
+      "method": "POST",
+      "path": "/api/requisitions/:id/intake",
+      "feature_id": 729,
+      "feature_name": "Automated intake and calibration that ensures recruiter-manager alignment",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/requisitions/:id/intake"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/localization",
+      "feature_id": null,
+      "feature_name": "Get localization config",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/platform/localization"
+    },
+    {
+      "method": "POST",
+      "path": "/api/platform/localization/translate",
+      "feature_id": 910,
+      "feature_name": "Global Localization & Translation Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/platform/localization/translate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/tool-router/validate",
+      "feature_id": 6,
+      "feature_name": "Secure Tool Router with Safe Action Semantics",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/tool-router/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/tool-router/audit",
+      "feature_id": 6,
+      "feature_name": "Secure Tool Router with Safe Action Semantics",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/tool-router/audit"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/consent",
+      "feature_id": null,
+      "feature_name": "Record candidate consent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/consent"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/consent/:candidateId",
+      "feature_id": 42,
+      "feature_name": "Consent First Data Minimization Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/consent/:candidateId"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/consent/:candidateId",
+      "feature_id": 42,
+      "feature_name": "Consent First Data Minimization Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/consent/:candidateId"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/security/consent/:candidateId",
+      "feature_id": 42,
+      "feature_name": "Consent First Data Minimization Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/consent/:candidateId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/consent/:candidateId/history",
+      "feature_id": null,
+      "feature_name": "Consent version history",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/consent/:candidateId/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/data-residency/config",
+      "feature_id": 44,
+      "feature_name": "API Level Data Residency and Tenant Isolation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-residency/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/data-residency/config",
+      "feature_id": 44,
+      "feature_name": "API Level Data Residency and Tenant Isolation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-residency/config"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/data-residency/route",
+      "feature_id": 44,
+      "feature_name": "API Level Data Residency and Tenant Isolation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-residency/route"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/data-residency/audit",
+      "feature_id": null,
+      "feature_name": "Data residency audit log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-residency/audit"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/vault",
+      "feature_id": 261,
+      "feature_name": "Sensitive Data Segregation Vault",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/vault"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/vault",
+      "feature_id": 261,
+      "feature_name": "Sensitive Data Segregation Vault",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/vault"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/vault/:id",
+      "feature_id": 261,
+      "feature_name": "Sensitive Data Segregation Vault",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/vault/:id"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/security/vault/:id",
+      "feature_id": 261,
+      "feature_name": "Sensitive Data Segregation Vault",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/vault/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/retention/evaluate",
+      "feature_id": 264,
+      "feature_name": "Retention and Deletion Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/retention/evaluate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/retention/purge",
+      "feature_id": 264,
+      "feature_name": "Retention and Deletion Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/retention/purge"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/retention/schedule",
+      "feature_id": null,
+      "feature_name": "Get retention schedule",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/retention/schedule"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/retention/schedule",
+      "feature_id": null,
+      "feature_name": "Update retention schedule",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/retention/schedule"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/access/config",
+      "feature_id": 265,
+      "feature_name": "Fine-Grained Access and Just-in-Time Review",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/access/config"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/access/jit-review",
+      "feature_id": 265,
+      "feature_name": "Fine-Grained Access and Just-in-Time Review",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/access/jit-review"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/access/audit",
+      "feature_id": 126,
+      "feature_name": "Autonomous Candidate Fraud Detector",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/access/audit"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/access/roles",
+      "feature_id": null,
+      "feature_name": "Update RBAC roles",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/access/roles"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/prompt-firewall/scan",
+      "feature_id": 268,
+      "feature_name": "Prompt Injection and Output Safety Firewall",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/prompt-firewall/scan"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/prompt-firewall/log",
+      "feature_id": 268,
+      "feature_name": "Prompt Injection and Output Safety Firewall",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/prompt-firewall/log"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/prompt-firewall/rules",
+      "feature_id": null,
+      "feature_name": "Update firewall rules",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/prompt-firewall/rules"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/zero-trust/status",
+      "feature_id": 748,
+      "feature_name": "Enterprise-grade security architecture with zero-trust design",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/zero-trust/status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/zero-trust/verify",
+      "feature_id": 748,
+      "feature_name": "Enterprise-grade security architecture with zero-trust design",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/zero-trust/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/erasure/request",
+      "feature_id": 334,
+      "feature_name": "Dynamic Resume Anonymization",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/erasure/request"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/erasure/:requestId",
+      "feature_id": null,
+      "feature_name": "Erasure request status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/erasure/:requestId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/erasure/:requestId/execute",
+      "feature_id": 108,
+      "feature_name": "USP: GDPR/CCPA Erasure Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/erasure/:requestId/execute"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/pii/mask",
+      "feature_id": 674,
+      "feature_name": "Protected-Attribute Redaction Engine Before Inference",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/pii/mask"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/pii/redact",
+      "feature_id": 674,
+      "feature_name": "Protected-Attribute Redaction Engine Before Inference",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/pii/redact"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/data-minimization/config",
+      "feature_id": null,
+      "feature_name": "Data minimization config",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-minimization/config"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/data-minimization/evaluate",
+      "feature_id": 42,
+      "feature_name": "Consent First Data Minimization Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-minimization/evaluate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/dsar",
+      "feature_id": 343,
+      "feature_name": "Automated Data Subject Request (DSAR) Fulfillment",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/dsar"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/dsar/:id",
+      "feature_id": null,
+      "feature_name": "DSAR status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/dsar/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/dsar/:id/fulfill",
+      "feature_id": 343,
+      "feature_name": "Automated Data Subject Request (DSAR) Fulfillment",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/dsar/:id/fulfill"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/fraud/detect",
+      "feature_id": 150,
+      "feature_name": "Applicant Fraud and Identity Verification Neutralizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/fraud/detect"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/fraud/deepfake",
+      "feature_id": 150,
+      "feature_name": "Applicant Fraud and Identity Verification Neutralizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/fraud/deepfake"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/fraud/log",
+      "feature_id": null,
+      "feature_name": "Fraud detection log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/fraud/log"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/credentials/:candidateId",
+      "feature_id": 126,
+      "feature_name": "Autonomous Candidate Fraud Detector",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/credentials/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/credentials/:candidateId",
+      "feature_id": 126,
+      "feature_name": "Autonomous Candidate Fraud Detector",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/credentials/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/data-correction",
+      "feature_id": 263,
+      "feature_name": "Candidate Data Correction Workflow",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-correction"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/data-portability/:candidateId",
+      "feature_id": null,
+      "feature_name": "Export candidate data",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/security/data-portability/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/proxy-detect",
+      "feature_id": 247,
+      "feature_name": "Protected-Trait Proxy Detector",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/proxy-detect"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/proxy-detect/log",
+      "feature_id": 247,
+      "feature_name": "Protected-Trait Proxy Detector",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/proxy-detect/log"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/adverse-impact/analyze",
+      "feature_id": 638,
+      "feature_name": "Adverse Impact Analysis by Stage",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/adverse-impact/analyze"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/by-stage",
+      "feature_id": 638,
+      "feature_name": "Adverse Impact Analysis by Stage",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/adverse-impact/by-stage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/realtime",
+      "feature_id": 638,
+      "feature_name": "Adverse Impact Analysis by Stage",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/adverse-impact/realtime"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/adverse-impact/four-fifths",
+      "feature_id": 419,
+      "feature_name": "Four-fifths automated impact report",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/adverse-impact/four-fifths"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/drift/check",
+      "feature_id": 562,
+      "feature_name": "Continuous Model Drift Monitoring",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/drift/check"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/drift/history",
+      "feature_id": 562,
+      "feature_name": "Continuous Model Drift Monitoring",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/drift/history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/drift/alerts",
+      "feature_id": null,
+      "feature_name": "Active drift alerts",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/drift/alerts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness/metrics",
+      "feature_id": 443,
+      "feature_name": "Fairness Metrics Benchmarking",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/fairness/metrics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness/by-role",
+      "feature_id": 443,
+      "feature_name": "Fairness Metrics Benchmarking",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/fairness/by-role"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/fairness/simulate",
+      "feature_id": null,
+      "feature_name": "Simulate fairness impact",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/fairness/simulate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness/benchmarks",
+      "feature_id": null,
+      "feature_name": "Fairness benchmarks",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/fairness/benchmarks"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/bias/fairness/objectives",
+      "feature_id": null,
+      "feature_name": "Set fairness objectives",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/fairness/objectives"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/monitor/dashboard",
+      "feature_id": 68,
+      "feature_name": "Bias Mitigation Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/monitor/dashboard"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/monitor/diversity",
+      "feature_id": null,
+      "feature_name": "Diversity pipeline analytics",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/monitor/diversity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/monitor/intersectional",
+      "feature_id": 591,
+      "feature_name": "Intersectional Bias Analyzer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/monitor/intersectional"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/audit/run",
+      "feature_id": 436,
+      "feature_name": "Pre-Deployment Bias Testing Suite",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/audit/run"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/audit/results",
+      "feature_id": 436,
+      "feature_name": "Pre-Deployment Bias Testing Suite",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/audit/results"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/audit/schedule",
+      "feature_id": null,
+      "feature_name": "Audit schedule",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/audit/schedule"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/audit/schedule",
+      "feature_id": null,
+      "feature_name": "Schedule bias audit",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/audit/schedule"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/pre-deployment/test",
+      "feature_id": null,
+      "feature_name": "Pre-deployment bias test",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/pre-deployment/test"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/pre-deployment/gate",
+      "feature_id": null,
+      "feature_name": "Pre-go-live fairness gate status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/pre-deployment/gate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/remediation/trigger",
+      "feature_id": 68,
+      "feature_name": "Bias Mitigation Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/remediation/trigger"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/remediation/workflows",
+      "feature_id": null,
+      "feature_name": "Active remediation workflows",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/remediation/workflows"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/knockout-filter/simulate",
+      "feature_id": null,
+      "feature_name": "Simulate knockout filter impact",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/knockout-filter/simulate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/jd-screener/scan",
+      "feature_id": 594,
+      "feature_name": "Job Description Bias Screener",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/jd-screener/scan"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/interviewer-calibration/:userId",
+      "feature_id": null,
+      "feature_name": "Interviewer calibration score",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/interviewer-calibration/:userId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/interviewer-calibration/drift",
+      "feature_id": null,
+      "feature_name": "Interviewer drift monitoring",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/interviewer-calibration/drift"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/manager-calibration/:userId",
+      "feature_id": null,
+      "feature_name": "Manager calibration & drift",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/manager-calibration/:userId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/demographic/segregate",
+      "feature_id": 292,
+      "feature_name": "Continuous Impact Assessment Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/demographic/segregate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/diversity/tracker",
+      "feature_id": 177,
+      "feature_name": "DEI Decision Auditor Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/diversity/tracker"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/diversity/slate/:reqId",
+      "feature_id": null,
+      "feature_name": "Diversity slate for requisition",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/diversity/slate/:reqId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/diversity/generate-slate",
+      "feature_id": 177,
+      "feature_name": "DEI Decision Auditor Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/bias/diversity/generate-slate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/audit-trail",
+      "feature_id": 595,
+      "feature_name": "AI Override with Accountability Trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/audit-trail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/:decisionId",
+      "feature_id": 155,
+      "feature_name": "Cross-Entity Global Compliance Guardian",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/audit-trail/:decisionId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/replay/:decisionId",
+      "feature_id": 240,
+      "feature_name": "Audit Replay Mode",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/audit-trail/replay/:decisionId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/timeline/:candidateId",
+      "feature_id": null,
+      "feature_name": "Immutable decision timeline",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/audit-trail/timeline/:candidateId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/audit-trail/chain-of-custody/:id",
+      "feature_id": 3,
+      "feature_name": "Event Sourced Hiring Ledger",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/audit-trail/chain-of-custody/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/evidence/generate",
+      "feature_id": 628,
+      "feature_name": "Immutable, Tamper-Evident Audit Logs",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/evidence/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/evidence/:packId",
+      "feature_id": null,
+      "feature_name": "Get evidence package",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/evidence/:packId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/evidence/export",
+      "feature_id": null,
+      "feature_name": "Export for counsel/procurement",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/evidence/export"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/evidence/vault",
+      "feature_id": null,
+      "feature_name": "Evidence vault contents",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/evidence/vault"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/legal-hold",
+      "feature_id": 243,
+      "feature_name": "Litigation Hold for Hiring Records",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/legal-hold"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/legal-hold/active",
+      "feature_id": 243,
+      "feature_name": "Litigation Hold for Hiring Records",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/legal-hold/active"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/compliance/legal-hold/:id",
+      "feature_id": null,
+      "feature_name": "Release legal hold",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/legal-hold/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/policies",
+      "feature_id": 595,
+      "feature_name": "AI Override with Accountability Trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/policies"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/policies",
+      "feature_id": 595,
+      "feature_name": "AI Override with Accountability Trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/policies"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/compliance/policies/:id",
+      "feature_id": null,
+      "feature_name": "Update policy",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/policies/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/policies/evaluate",
+      "feature_id": 5,
+      "feature_name": "Policy as Code Hiring Governance Layer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/policies/evaluate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/policies/impact-diff",
+      "feature_id": 242,
+      "feature_name": "AI Change Impact Diff",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/policies/impact-diff"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/jurisdiction/rules",
+      "feature_id": 41,
+      "feature_name": "Global Multi Entity Hiring Rules Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/jurisdiction/rules"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/compliance/jurisdiction/rules",
+      "feature_id": 41,
+      "feature_name": "Global Multi Entity Hiring Rules Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/jurisdiction/rules"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/jurisdiction/:country",
+      "feature_id": 41,
+      "feature_name": "Global Multi Entity Hiring Rules Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/jurisdiction/:country"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/jurisdiction/adapt",
+      "feature_id": 457,
+      "feature_name": "Adaptive Compliance Guardrails",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/jurisdiction/adapt"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/regulations/templates",
+      "feature_id": 316,
+      "feature_name": "Regulation Template Library And Playbooks",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/regulations/templates"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/regulations/change-alert",
+      "feature_id": 316,
+      "feature_name": "Regulation Template Library And Playbooks",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/regulations/change-alert"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/regulations/simulate",
+      "feature_id": null,
+      "feature_name": "Simulate regulation change impact",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/regulations/simulate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/human-review/queue",
+      "feature_id": 253,
+      "feature_name": "Human Decision Gate on All Consequential Actions",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/human-review/queue"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/human-review/submit",
+      "feature_id": 253,
+      "feature_name": "Human Decision Gate on All Consequential Actions",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/human-review/submit"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/human-review/gates",
+      "feature_id": null,
+      "feature_name": "Configured review gates",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/human-review/gates"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/compliance/human-review/gates",
+      "feature_id": null,
+      "feature_name": "Configure review gates",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/human-review/gates"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/human-review/escalate",
+      "feature_id": 596,
+      "feature_name": "Escalation-Required Edge Cases",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/human-review/escalate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/overrides",
+      "feature_id": 595,
+      "feature_name": "AI Override with Accountability Trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/overrides"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/overrides",
+      "feature_id": 595,
+      "feature_name": "AI Override with Accountability Trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/overrides"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/overrides/patterns",
+      "feature_id": null,
+      "feature_name": "Override pattern analysis",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/overrides/patterns"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/reports/eeoc",
+      "feature_id": 380,
+      "feature_name": "Automated EEOC/Title VII Audit Extractor",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/eeoc"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/reports/ofccp",
+      "feature_id": 352,
+      "feature_name": "Automated OFCCP Reporting Suite",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/ofccp"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/reports/eeo1",
+      "feature_id": 380,
+      "feature_name": "Automated EEOC/Title VII Audit Extractor",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/eeo1"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/reports/eu-ai-act",
+      "feature_id": null,
+      "feature_name": "EU AI Act conformity report",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/eu-ai-act"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/reports/audit-readiness",
+      "feature_id": 289,
+      "feature_name": "AI Audit Readiness Scorecard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/audit-readiness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/reports/regulatory-readiness",
+      "feature_id": null,
+      "feature_name": "Regulatory readiness score",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/regulatory-readiness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/reports/custom-export",
+      "feature_id": 530,
+      "feature_name": "Automated Compliance Documentation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/reports/custom-export"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/dpia/generate",
+      "feature_id": 272,
+      "feature_name": "Built-In DPIA and Impact Assessment Workspace",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/dpia/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/dpia/:id",
+      "feature_id": null,
+      "feature_name": "Get DPIA result",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/dpia/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/dpia/export",
+      "feature_id": 272,
+      "feature_name": "Built-In DPIA and Impact Assessment Workspace",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/dpia/export"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/eu-ai-act/risk-tier",
+      "feature_id": 354,
+      "feature_name": "EU AI Act Risk Tiering",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/eu-ai-act/risk-tier"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/eu-ai-act/conformity",
+      "feature_id": 354,
+      "feature_name": "EU AI Act Risk Tiering",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/eu-ai-act/conformity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/eu-ai-act/annex-iii",
+      "feature_id": null,
+      "feature_name": "Annex III risk classification",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/eu-ai-act/annex-iii"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/nyc-ll144/status",
+      "feature_id": 612,
+      "feature_name": "NYC Local Law 144 Automated Compliance Suite",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/nyc-ll144/status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/nyc-ll144/audit",
+      "feature_id": 612,
+      "feature_name": "NYC Local Law 144 Automated Compliance Suite",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/nyc-ll144/audit"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/gdpr/article22/:candidateId",
+      "feature_id": 353,
+      "feature_name": "GDPR Article 22 \"Significant Decision\" Flagging",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/gdpr/article22/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/gdpr/significant-decision",
+      "feature_id": null,
+      "feature_name": "Flag significant decision",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/gdpr/significant-decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/works-council/package",
+      "feature_id": 145,
+      "feature_name": "Worker Council (Betriebsrat) Compliance Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/works-council/package"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/works-council/status",
+      "feature_id": null,
+      "feature_name": "Works council consultation status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/works-council/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/ai-notices/:candidateId",
+      "feature_id": null,
+      "feature_name": "AI use notices for candidate",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/ai-notices/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/ai-notices/generate",
+      "feature_id": 412,
+      "feature_name": "Candidate-Facing Data Source Receipt",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/ai-notices/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/pay-transparency/:reqId",
+      "feature_id": null,
+      "feature_name": "Pay transparency requirements",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/pay-transparency/:reqId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/pay-transparency/validate",
+      "feature_id": 614,
+      "feature_name": "Global Pay Transparency Compliance Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/pay-transparency/validate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/accommodation/request",
+      "feature_id": 252,
+      "feature_name": "Accommodation-Safe Alternative Flow Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/accommodation/request"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/accommodation/:id",
+      "feature_id": null,
+      "feature_name": "Accommodation request status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/accommodation/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/consent/ai-features/:candidateId",
+      "feature_id": null,
+      "feature_name": "AI feature consent status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/consent/ai-features/:candidateId"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/compliance/consent/ai-features/:candidateId",
+      "feature_id": null,
+      "feature_name": "Update AI feature consent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/consent/ai-features/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/opt-out/:candidateId",
+      "feature_id": 358,
+      "feature_name": "\"Opt-Out of AI\" Path",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/opt-out/:candidateId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/opt-out/:candidateId",
+      "feature_id": 358,
+      "feature_name": "\"Opt-Out of AI\" Path",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/opt-out/:candidateId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/criteria-library",
+      "feature_id": 248,
+      "feature_name": "Criteria Health Check for Job Relevance",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/criteria-library"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/criteria-library/validate",
+      "feature_id": 248,
+      "feature_name": "Criteria Health Check for Job Relevance",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/criteria-library/validate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/retention/archive",
+      "feature_id": null,
+      "feature_name": "Six-year compliance archive",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/retention/archive"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/retention/policies",
+      "feature_id": null,
+      "feature_name": "Retention policies",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/retention/policies"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/compliance/retention/policies",
+      "feature_id": null,
+      "feature_name": "Update retention policies",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/retention/policies"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/oversight/workbench",
+      "feature_id": 301,
+      "feature_name": "Oversight Workbench For Compliance And Legal",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/oversight/workbench"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/justification/capture",
+      "feature_id": 302,
+      "feature_name": "Structured Human Justification Capture",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/justification/capture"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/justification/:decisionId",
+      "feature_id": null,
+      "feature_name": "Get decision justification",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/justification/:decisionId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/inappropriate-question/check",
+      "feature_id": 28,
+      "feature_name": "Inappropriate Question and Bias Guard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/inappropriate-question/check"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/prohibited-questions/rules",
+      "feature_id": null,
+      "feature_name": "Prohibited question rules",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/compliance/prohibited-questions/rules"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models",
+      "feature_id": 43,
+      "feature_name": "Agent and Model Governance Console",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models",
+      "feature_id": 43,
+      "feature_name": "Agent and Model Governance Console",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models/:id",
+      "feature_id": 266,
+      "feature_name": "Hiring AI Model Registry",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/models/:id/status",
+      "feature_id": null,
+      "feature_name": "Update model approval status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models/:id/card",
+      "feature_id": 624,
+      "feature_name": "Model Card Generation and Disclosure",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/card"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models/:id/card/generate",
+      "feature_id": 624,
+      "feature_name": "Model Card Generation and Disclosure",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/card/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models/:id/versions",
+      "feature_id": 325,
+      "feature_name": "AI Model Versioning and Rollback",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/versions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models/:id/rollback",
+      "feature_id": 325,
+      "feature_name": "AI Model Versioning and Rollback",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/rollback"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models/:id/freeze",
+      "feature_id": null,
+      "feature_name": "Emergency freeze model",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/freeze"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models/:id/shadow-eval",
+      "feature_id": 270,
+      "feature_name": "Secure Shadow Evaluation Before Release",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/shadow-eval"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models/:id/drift",
+      "feature_id": null,
+      "feature_name": "Model drift metrics",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/drift"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/models/:id/deployment",
+      "feature_id": null,
+      "feature_name": "Deployment approval status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/deployment"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/models/:id/deployment/approve",
+      "feature_id": 255,
+      "feature_name": "Two-Person Review for High-Risk Filters",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/models/:id/deployment/approve"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/governance/console",
+      "feature_id": 43,
+      "feature_name": "Agent and Model Governance Console",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/governance/console"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/governance/approved-models",
+      "feature_id": 267,
+      "feature_name": "Approved-Model Control Plane",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/governance/approved-models"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/governance/control-plane",
+      "feature_id": 267,
+      "feature_name": "Approved-Model Control Plane",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/governance/control-plane"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/governance/change-log",
+      "feature_id": null,
+      "feature_name": "Governance change log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/governance/change-log"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/governance/change-request",
+      "feature_id": 304,
+      "feature_name": "Governance‑Bound Change Management For Models",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/governance/change-request"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/prompts",
+      "feature_id": 235,
+      "feature_name": "Embedded Model and Prompt Cards",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/prompts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/prompts",
+      "feature_id": 235,
+      "feature_name": "Embedded Model and Prompt Cards",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/prompts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/prompts/:id/versions",
+      "feature_id": null,
+      "feature_name": "Prompt version history",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/prompts/:id/versions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId",
+      "feature_id": 191,
+      "feature_name": "Explainable Hiring Decisions Layer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/explain/generate",
+      "feature_id": 191,
+      "feature_name": "Explainable Hiring Decisions Layer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/human-readable",
+      "feature_id": 280,
+      "feature_name": "Human-Readable Decision Summaries",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/human-readable"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/role/:role",
+      "feature_id": null,
+      "feature_name": "Role-adaptive explanation view",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/role/:role"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/trace",
+      "feature_id": 231,
+      "feature_name": "Job-Criterion Trace Map",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/trace"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/reason-codes",
+      "feature_id": 233,
+      "feature_name": "Reason-Code Compiler",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/reason-codes"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/prompt-action",
+      "feature_id": 234,
+      "feature_name": "Prompt-to-Action Transparency Panel",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/prompt-action"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/chain-of-thought",
+      "feature_id": null,
+      "feature_name": "Reasoning chain visualization",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/explain/:decisionId/chain-of-thought"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions",
+      "feature_id": 43,
+      "feature_name": "Agent and Model Governance Console",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/decisions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions/:id",
+      "feature_id": null,
+      "feature_name": "Get decision detail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/decisions/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/ledger",
+      "feature_id": null,
+      "feature_name": "Decision explainability ledger entry",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/decisions/:id/ledger"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/model-snapshot",
+      "feature_id": null,
+      "feature_name": "Model version snapshot for decision",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/decisions/:id/model-snapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/confidence/:decisionId",
+      "feature_id": 577,
+      "feature_name": "AI Confidence Banding with Uncertainty Display",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/confidence/:decisionId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/confidence/thresholds",
+      "feature_id": null,
+      "feature_name": "Escalation threshold config",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/confidence/thresholds"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/confidence/thresholds",
+      "feature_id": null,
+      "feature_name": "Update escalation thresholds",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/confidence/thresholds"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/override",
+      "feature_id": null,
+      "feature_name": "Override AI decision (with trail)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/override"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/overrides",
+      "feature_id": null,
+      "feature_name": "List overrides with accountability",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/overrides"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/overrides/:id",
+      "feature_id": null,
+      "feature_name": "Override detail and trail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/overrides/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/escalations",
+      "feature_id": null,
+      "feature_name": "Edge cases requiring escalation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/escalations"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/escalations/:id/resolve",
+      "feature_id": null,
+      "feature_name": "Resolve escalation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/escalations/:id/resolve"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/transparency/dashboard",
+      "feature_id": null,
+      "feature_name": "Real-time explainability dashboard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/transparency/dashboard"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/transparency/flow/:workflowId",
+      "feature_id": null,
+      "feature_name": "Agentic flow visualization",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/transparency/flow/:workflowId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/transparency/action-log",
+      "feature_id": 576,
+      "feature_name": "Agentic Action Transparency Log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/transparency/action-log"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/transparency/disclosure",
+      "feature_id": 285,
+      "feature_name": "AI Use Disclosure and Mode Labeling",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/transparency/disclosure"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/quality/metrics",
+      "feature_id": null,
+      "feature_name": "Explainability quality metrics",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/quality/metrics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/data-provenance",
+      "feature_id": 295,
+      "feature_name": "Data Provenance And Training Set Registry",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/data-provenance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/data-provenance/:modelId",
+      "feature_id": null,
+      "feature_name": "Training data sources for model",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/data-provenance/:modelId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/consent/training",
+      "feature_id": null,
+      "feature_name": "Training data consent records",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/consent/training"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/counterfactual/:candidateId",
+      "feature_id": 579,
+      "feature_name": "Counterfactual Rejection Analyzer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/counterfactual/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/copilot/assist",
+      "feature_id": 944,
+      "feature_name": "Recruiter Agentic Co-Pilot",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/copilot/assist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/copilot/suggestions/:reqId",
+      "feature_id": null,
+      "feature_name": "Co-pilot suggestions for requisition",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/copilot/suggestions/:reqId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/attribute-redaction/process",
+      "feature_id": null,
+      "feature_name": "Redact protected attributes before inference",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/attribute-redaction/process"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/human-checkpoints",
+      "feature_id": null,
+      "feature_name": "Mandatory HITL checkpoint config",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/human-checkpoints"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/human-checkpoints",
+      "feature_id": null,
+      "feature_name": "Update HITL checkpoints",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/human-checkpoints"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/human-approval/queue",
+      "feature_id": 669,
+      "feature_name": "Prompt-Level Human Approval Gate for High-Risk Agents",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/human-approval/queue"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/human-approval/:id/approve",
+      "feature_id": 669,
+      "feature_name": "Prompt-Level Human Approval Gate for High-Risk Agents",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/human-approval/:id/approve"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/human-approval/:id/reject",
+      "feature_id": null,
+      "feature_name": "Reject high-risk agent action",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/ai/human-approval/:id/reject"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/event-ledger",
+      "feature_id": null,
+      "feature_name": "Event-sourced hiring ledger",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/event-ledger"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/event-ledger/:eventId",
+      "feature_id": null,
+      "feature_name": "Get specific event detail",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/event-ledger/:eventId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard/org-health",
+      "feature_id": 221,
+      "feature_name": "Org-Wide Hiring Health Dashboard (Agent-Curated)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/dashboard/org-health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard/pipeline",
+      "feature_id": 221,
+      "feature_name": "Org-Wide Hiring Health Dashboard (Agent-Curated)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/dashboard/pipeline"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard/process-telemetry",
+      "feature_id": 542,
+      "feature_name": "Real-Time Process Telemetry Dashboard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/dashboard/process-telemetry"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/dashboard/cross-functional",
+      "feature_id": 744,
+      "feature_name": "Cross-functional analytics dashboards for finance, executives, and TA ops",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/dashboard/cross-functional"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/fairness/benchmarks",
+      "feature_id": null,
+      "feature_name": "Fairness metrics benchmarking",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/fairness/benchmarks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/fairness/cross-system",
+      "feature_id": 446,
+      "feature_name": "Cross-System Decision Correlation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/fairness/cross-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/fairness/adverse-impact-by-stage",
+      "feature_id": null,
+      "feature_name": "Adverse impact by stage",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/fairness/adverse-impact-by-stage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks",
+      "feature_id": 519,
+      "feature_name": "Automated Requisition Velocity Monitoring with Bottleneck Detection",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/bottlenecks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks/velocity",
+      "feature_id": 519,
+      "feature_name": "Automated Requisition Velocity Monitoring with Bottleneck Detection",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/bottlenecks/velocity"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/bottlenecks/recovery",
+      "feature_id": null,
+      "feature_name": "Dynamic bottleneck recovery",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/bottlenecks/recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/requisition-health/:reqId",
+      "feature_id": 527,
+      "feature_name": "Automated Requisition Health Scoring with Intervention Playbooks",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/requisition-health/:reqId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/requisition-health/playbooks",
+      "feature_id": null,
+      "feature_name": "Intervention playbooks",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/requisition-health/playbooks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/audit-logs/immutable",
+      "feature_id": null,
+      "feature_name": "Immutable tamper-evident audit logs",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/audit-logs/immutable"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/bias-audit/schedule",
+      "feature_id": null,
+      "feature_name": "Automated bias audit schedule",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/bias-audit/schedule"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/overrides",
+      "feature_id": null,
+      "feature_name": "Override and justification log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/analytics/overrides"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates",
+      "feature_id": 58,
+      "feature_name": "Conversational Candidate Concierge (Core feature)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates",
+      "feature_id": 58,
+      "feature_name": "Conversational Candidate Concierge (Core feature)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id",
+      "feature_id": 58,
+      "feature_name": "Conversational Candidate Concierge (Core feature)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/candidates/:id",
+      "feature_id": 58,
+      "feature_name": "Conversational Candidate Concierge (Core feature)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/concierge/chat",
+      "feature_id": 58,
+      "feature_name": "Conversational Candidate Concierge (Core feature)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/concierge/chat"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/concierge/history/:candidateId",
+      "feature_id": null,
+      "feature_name": "Chat history",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/concierge/history/:candidateId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/concierge/multilingual",
+      "feature_id": 64,
+      "feature_name": "Multilingual Experience Agent (Premium differentiator)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/concierge/multilingual"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/status",
+      "feature_id": 551,
+      "feature_name": "Transparent Application Progress Tracker",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/timeline",
+      "feature_id": 551,
+      "feature_name": "Transparent Application Progress Tracker",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/timeline"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/apply",
+      "feature_id": 206,
+      "feature_name": "Adaptive Application Experience",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/apply"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/apply/conversational",
+      "feature_id": 730,
+      "feature_name": "Conversational application that eliminates forms entirely for appropriate roles",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/apply/conversational"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-passport",
+      "feature_id": 275,
+      "feature_name": "Candidate AI Use Passport",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/ai-passport"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-transparency",
+      "feature_id": 616,
+      "feature_name": "Candidate AI Transparency Notice Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/ai-transparency"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/appeal",
+      "feature_id": 276,
+      "feature_name": "Candidate Explanation and Appeal Center",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/appeal"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/appeal/:appealId",
+      "feature_id": null,
+      "feature_name": "Appeal status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/appeal/:appealId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/appeal/human-review",
+      "feature_id": null,
+      "feature_name": "One-click appeal to human",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/appeal/human-review"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/explanation",
+      "feature_id": null,
+      "feature_name": "Explanation center",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/explanation"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/rejection-report",
+      "feature_id": 329,
+      "feature_name": "\"Why Was I Rejected?\" Candidate Report",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/rejection-report"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/rights-portal",
+      "feature_id": 601,
+      "feature_name": "Candidate Rights Fulfillment Portal",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/rights-portal"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/data-access",
+      "feature_id": 657,
+      "feature_name": "Candidate Data Access and Redress Portal",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/data-access"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/data-correction",
+      "feature_id": null,
+      "feature_name": "Request data correction",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/data-correction"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/data-export",
+      "feature_id": null,
+      "feature_name": "Export personal data",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/data-export"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback",
+      "feature_id": null,
+      "feature_name": "Submit feedback on experience",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/feedback"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/transparency/interview",
+      "feature_id": 277,
+      "feature_name": "Transparency-by-Default Interviewing",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/transparency/interview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/communication/send",
+      "feature_id": null,
+      "feature_name": "Send candidate communication",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/communication/send"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/communication/history",
+      "feature_id": null,
+      "feature_name": "Communication history",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/communication/history"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/communication/multi-channel",
+      "feature_id": 732,
+      "feature_name": "Personalized, multi-channel candidate engagement throughout the lifecycle",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/communication/multi-channel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/notifications/requisition-closed",
+      "feature_id": 954,
+      "feature_name": "Automated Requisition-Closure Notifier",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/notifications/requisition-closed"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/right-to-reply",
+      "feature_id": 276,
+      "feature_name": "Candidate Explanation and Appeal Center",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/right-to-reply"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/scheduling/preferences",
+      "feature_id": 724,
+      "feature_name": "Candidate-centric scheduling that optimizes their experience, not just internal efficiency",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/scheduling/preferences"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/candidates/:id/scheduling/preferences",
+      "feature_id": 724,
+      "feature_name": "Candidate-centric scheduling that optimizes their experience, not just internal efficiency",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/candidates/:id/scheduling/preferences"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews",
+      "feature_id": 26,
+      "feature_name": "Structured Interview and BARS Builder Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews",
+      "feature_id": 26,
+      "feature_name": "Structured Interview and BARS Builder Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id",
+      "feature_id": 26,
+      "feature_name": "Structured Interview and BARS Builder Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/interviews/:id",
+      "feature_id": 26,
+      "feature_name": "Structured Interview and BARS Builder Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/structured/generate",
+      "feature_id": 26,
+      "feature_name": "Structured Interview and BARS Builder Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/structured/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id/guide",
+      "feature_id": null,
+      "feature_name": "Get interview guide",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/guide"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/:id/debrief",
+      "feature_id": null,
+      "feature_name": "Submit debrief feedback",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/debrief"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id/debrief/summary",
+      "feature_id": 214,
+      "feature_name": "Panel Debrief Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/debrief/summary"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/:id/signals/capture",
+      "feature_id": 556,
+      "feature_name": "Automated Interview Signal Capture & Summarization",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/signals/capture"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id/signals/summary",
+      "feature_id": null,
+      "feature_name": "Signal capture summary",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/signals/summary"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/:id/signals/behavioral",
+      "feature_id": 559,
+      "feature_name": "Structured Behavioral Signal Extraction",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/signals/behavioral"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id/scorecard",
+      "feature_id": null,
+      "feature_name": "Get interview scorecard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/scorecard"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/:id/scorecard",
+      "feature_id": null,
+      "feature_name": "Submit scorecard",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/scorecard"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/panel/auto-coordinate",
+      "feature_id": 558,
+      "feature_name": "Automated Panel Coordination Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/panel/auto-coordinate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/panel/:reqId",
+      "feature_id": null,
+      "feature_name": "Get panel for requisition",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/panel/:reqId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/panel/assemble",
+      "feature_id": 975,
+      "feature_name": "Interview Panel Assembler",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/panel/assemble"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/pack/generate",
+      "feature_id": 761,
+      "feature_name": "Interview pack auto-orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/pack/generate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/transcript/extract",
+      "feature_id": 919,
+      "feature_name": "Interview Transcript Evidence Extractor",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/transcript/extract"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/recording/transcribe",
+      "feature_id": null,
+      "feature_name": "Record and transcribe interview",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/recording/transcribe"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/:id/transcript",
+      "feature_id": null,
+      "feature_name": "Get interview transcript",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/interviews/:id/transcript"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/intake",
+      "feature_id": 78,
+      "feature_name": "USP: AI-Powered Intake Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/intake"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/evaluate/technical",
+      "feature_id": 130,
+      "feature_name": "Technical / Work-Sample Evaluator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/evaluate/technical"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/match/skills-first",
+      "feature_id": 144,
+      "feature_name": "Automated Verification Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/match/skills-first"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/blind/apply",
+      "feature_id": 829,
+      "feature_name": "Anonymous Shortlisting",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/blind/apply"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/anonymize",
+      "feature_id": null,
+      "feature_name": "Dynamic resume anonymization",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/anonymize"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/rank/skills-only",
+      "feature_id": null,
+      "feature_name": "Skill-based ranking only",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/rank/skills-only"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/rubric/enforce",
+      "feature_id": null,
+      "feature_name": "Real-time rubric enforcement",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/rubric/enforce"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/redact/demographic-proxy",
+      "feature_id": null,
+      "feature_name": "Demographic proxy redaction",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/redact/demographic-proxy"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/scorecard/generate",
+      "feature_id": 414,
+      "feature_name": "Deterministic Competency Scorecard Generator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/scorecard/generate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/blind/automate",
+      "feature_id": null,
+      "feature_name": "Automated blind screening",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/blind/automate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/blind/structured-review",
+      "feature_id": null,
+      "feature_name": "Structured blind review",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/blind/structured-review"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/match/semantic",
+      "feature_id": 837,
+      "feature_name": "Skills-Based Matching (Beyond Keywords)",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/match/semantic"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/autonomous-screen",
+      "feature_id": null,
+      "feature_name": "24/7 autonomous screening",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/autonomous-screen"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/background-check/orchestrate",
+      "feature_id": 144,
+      "feature_name": "Automated Verification Orchestrator",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/background-check/orchestrate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/background-check/:id",
+      "feature_id": null,
+      "feature_name": "Background check status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/screening/background-check/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/boolean/generate",
+      "feature_id": 116,
+      "feature_name": "Automated Boolean & Query Synthesizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/sourcing/boolean/generate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/shortlist",
+      "feature_id": 195,
+      "feature_name": "Intelligent Sourcing & Shortlist Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/sourcing/shortlist"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools",
+      "feature_id": 116,
+      "feature_name": "Automated Boolean & Query Synthesizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/sourcing/talent-pools"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools",
+      "feature_id": 116,
+      "feature_name": "Automated Boolean & Query Synthesizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/sourcing/talent-pools"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/search",
+      "feature_id": 116,
+      "feature_name": "Automated Boolean & Query Synthesizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/sourcing/search"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/final-review",
+      "feature_id": 135,
+      "feature_name": "Final Selection Supervisor Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/final-review"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/synthesize",
+      "feature_id": 176,
+      "feature_name": "Holistic Decision Synthesis Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/synthesize"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:id",
+      "feature_id": 185,
+      "feature_name": "Global Offer Compliance Guardian",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:reqId/consensus",
+      "feature_id": null,
+      "feature_name": "Consensus analysis",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/:reqId/consensus"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/:reqId/consensus/build",
+      "feature_id": 510,
+      "feature_name": "Collaborative Hiring Decision Support with Consensus Analysis",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/:reqId/consensus/build"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:reqId/comparison",
+      "feature_id": 727,
+      "feature_name": "Side-by-side candidate comparison with weighted, aggregated scoring",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/:reqId/comparison"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/copilot/insights",
+      "feature_id": 725,
+      "feature_name": "AI hiring manager copilot that surfaces insights, not raw data",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/copilot/insights"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers",
+      "feature_id": 185,
+      "feature_name": "Global Offer Compliance Guardian",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id",
+      "feature_id": null,
+      "feature_name": "Get offer details",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/:id"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/offers/:id",
+      "feature_id": null,
+      "feature_name": "Update offer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/:id"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/compliance-check",
+      "feature_id": 185,
+      "feature_name": "Global Offer Compliance Guardian",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/:id/compliance-check"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/compensation/benchmark",
+      "feature_id": 947,
+      "feature_name": "Market-Salary Benchmarking Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/compensation/benchmark"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/compensation/recommend",
+      "feature_id": 947,
+      "feature_name": "Market-Salary Benchmarking Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/compensation/recommend"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/retract",
+      "feature_id": 962,
+      "feature_name": "Automated Offer-Retraction Handler",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/offers/:id/retract"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/reference-check/orchestrate",
+      "feature_id": 497,
+      "feature_name": "Automated Reference Check Orchestration with Insight Extraction",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/reference-check/orchestrate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/reference-check/:id",
+      "feature_id": null,
+      "feature_name": "Reference check results",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/decisions/reference-check/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/status",
+      "feature_id": 91,
+      "feature_name": "USP: API-First Agent Integration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/api/register",
+      "feature_id": 91,
+      "feature_name": "USP: API-First Agent Integration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/api/register"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/api/catalog",
+      "feature_id": null,
+      "feature_name": "API integration catalog",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/api/catalog"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/hris/sync",
+      "feature_id": null,
+      "feature_name": "Bidirectional HRIS sync",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/hris/sync"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/hris/conflicts",
+      "feature_id": null,
+      "feature_name": "HRIS conflict resolution",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/hris/conflicts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/verification/orchestrate",
+      "feature_id": null,
+      "feature_name": "Automated verification orchestration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/verification/orchestrate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/verification/:id",
+      "feature_id": null,
+      "feature_name": "Verification status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/verification/:id"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/workflows/prioritization",
+      "feature_id": 190,
+      "feature_name": "Cross-Requisition Prioritization Engine",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/workflows/prioritization"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/copilot/high-volume",
+      "feature_id": null,
+      "feature_name": "High-volume recruiter copilot",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/copilot/high-volume"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/third-party/attestations",
+      "feature_id": 659,
+      "feature_name": "Subprocessor and Vendor DPA Management",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/third-party/attestations"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/third-party/audit-hooks",
+      "feature_id": null,
+      "feature_name": "Third-party audit integration",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/third-party/audit-hooks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/events/publish",
+      "feature_id": null,
+      "feature_name": "Publish hiring event to HR stack",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/events/publish"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/events/log",
+      "feature_id": null,
+      "feature_name": "Event integration log",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/events/log"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/approval/design",
+      "feature_id": 598,
+      "feature_name": "Approval Workflow Designer with Compliance Binding",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/approval/design"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/approval/workflows",
+      "feature_id": null,
+      "feature_name": "Active approval workflows",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/approval/workflows"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/approval/:id/submit",
+      "feature_id": null,
+      "feature_name": "Submit for approval",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/approval/:id/submit"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/explainability-api",
+      "feature_id": null,
+      "feature_name": "Explainability API for auditors",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/explainability-api"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/fairness-api",
+      "feature_id": null,
+      "feature_name": "Fairness metrics API",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/fairness-api"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/escalation/rules",
+      "feature_id": null,
+      "feature_name": "Human review escalation rules",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/escalation/rules"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/escalation/trigger",
+      "feature_id": null,
+      "feature_name": "Trigger escalation",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/escalation/trigger"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/hitl/workflow/build",
+      "feature_id": 650,
+      "feature_name": "Human-in-the-Loop Workflow Builder",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/hitl/workflow/build"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/pipeline/:reqId",
+      "feature_id": 728,
+      "feature_name": "Embedded pipeline visibility in the tools hiring managers already use",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/pipeline/:reqId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/requisition/sync",
+      "feature_id": 849,
+      "feature_name": "Cross-System Requisition Synchronizer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/requisition/sync"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/background-check/multi-vendor",
+      "feature_id": null,
+      "feature_name": "Multi-vendor background check",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/background-check/multi-vendor"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/provisioning/new-hire",
+      "feature_id": 879,
+      "feature_name": "Multi-System IT/HR Provisioning Agent",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/provisioning/new-hire"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/workload/balance",
+      "feature_id": 976,
+      "feature_name": "Recruiter Workload Balancer",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/workload/balance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workload/rebalance",
+      "feature_id": null,
+      "feature_name": "Rebalance recruiter workload",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/integrations/workload/rebalance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/auto-schedule",
+      "feature_id": 745,
+      "feature_name": "Unified ATS + CRM + scheduling + analytics on a single data model",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/auto-schedule"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/reschedule",
+      "feature_id": 745,
+      "feature_name": "Unified ATS + CRM + scheduling + analytics on a single data model",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/reschedule"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/availability",
+      "feature_id": null,
+      "feature_name": "Check availability",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/availability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/accessibility",
+      "feature_id": null,
+      "feature_name": "Schedule with accessibility options",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/accessibility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/multi-timezone",
+      "feature_id": null,
+      "feature_name": "Cross-timezone scheduling",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/multi-timezone"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/multi-party",
+      "feature_id": null,
+      "feature_name": "Multi-party interview scheduling",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/multi-party"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/no-show/prevention",
+      "feature_id": null,
+      "feature_name": "No-show prevention status",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/no-show/prevention"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/no-show/remind",
+      "feature_id": null,
+      "feature_name": "Send reminders",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/scheduling/no-show/remind"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/opportunities",
+      "feature_id": 734,
+      "feature_name": "Frictionless internal mobility with pre-populated profiles and manager transparency",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/mobility/opportunities"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/match",
+      "feature_id": 734,
+      "feature_name": "Frictionless internal mobility with pre-populated profiles and manager transparency",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/mobility/match"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/profiles/:employeeId",
+      "feature_id": null,
+      "feature_name": "Employee mobility profile",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/mobility/profiles/:employeeId"
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding/handoff",
+      "feature_id": 747,
+      "feature_name": "Seamless onboarding handoff that preserves full hiring context",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/onboarding/handoff"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/handoff/:candidateId",
+      "feature_id": null,
+      "feature_name": "Get handoff context",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/onboarding/handoff/:candidateId"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/handoff/:candidateId/context",
+      "feature_id": null,
+      "feature_name": "Full hiring context for onboarding",
+      "priority": null,
+      "status": "MATCHED",
+      "actual_route": "/api/onboarding/handoff/:candidateId/context"
+    }
+  ],
+  "orphaned_routes": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "engine": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "engine": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/knowledge-graph",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/skills/unified-ontology",
+      "engine": "platform-core"
+    },
+    {
+      "method": "POST",
+      "path": "/api/platform/sandbox/preview",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/talent-graph",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/stalled-pipelines",
+      "engine": "platform-core"
+    },
+    {
+      "method": "POST",
+      "path": "/api/platform/stalled-pipelines/recover",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/:id/calibration",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/ab-tests",
+      "engine": "platform-core"
+    },
+    {
+      "method": "POST",
+      "path": "/api/platform/ab-tests",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/personalization-engine",
+      "engine": "platform-core"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/platform/personalization-engine",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/autonomy-config",
+      "engine": "platform-core"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/platform/autonomy-config",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/control-center",
+      "engine": "platform-core"
+    },
+    {
+      "method": "POST",
+      "path": "/api/platform/control-center/review/:reviewId",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/requisitions/prioritization",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/platform/surge-capacity",
+      "engine": "platform-core"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/private-models",
+      "engine": "security-framework"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/private-models",
+      "engine": "security-framework"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/private-models/:id/deploy",
+      "engine": "security-framework"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/private-models/:id/retire",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/ai-registry",
+      "engine": "security-framework"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/ai-registry",
+      "engine": "security-framework"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/security/ai-registry/:id",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/ai-registry/:id/versions",
+      "engine": "security-framework"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/dp-analytics/query",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/dp-analytics/budget",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/dp-analytics/log",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/macl",
+      "engine": "security-framework"
+    },
+    {
+      "method": "POST",
+      "path": "/api/security/macl",
+      "engine": "security-framework"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/security/macl/:entryId",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/macl/check",
+      "engine": "security-framework"
+    },
+    {
+      "method": "GET",
+      "path": "/api/security/macl/expiring",
+      "engine": "security-framework"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/feature-engineering/resilience-check",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/fairness-constraints/set",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness-constraints",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/simulation/scenario",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/feature-impact/attribution",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/demographic-parity/monitor",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/demographic-parity/alert",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/sentiment/feedback-scan",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/sentiment/feedback-scan",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/pre-audit/simulation",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/pre-audit/simulation",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/historical-bias/disconnect",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/anomaly/soft-gate",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/anomaly/soft-gate",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/interviewer-load/balance",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/diversity-goals/progress",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/bias/diversity-goals",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/diversity-impact/forecast",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/manager-consistency/check",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/intersectional/deep-analysis",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/blind-screening/status",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/blind-screening/apply",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/sourcing/diversity-balance",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/sourcing/diversity-plan",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/communication-equity/monitor",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/communication-equity/scan",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/fairness-finetuning/feedback",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness-finetuning/feedback",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bias/fairness-aware-matching/report",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/bias/fairness-aware-matching/evaluate",
+      "engine": "bias-fairness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/bias/extract",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/bias/feedback-report",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/pre-audit/simulate",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/pre-audit/results",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/ai-discrepancy/alert",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/ai-discrepancy/history",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/sla/breaches",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/sla/enforce",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/what-if/simulate",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/override-annotator/annotate",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/override-annotator/categories",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/bias/historical-disconnect",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/hard-gate/intercept",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/hard-gate/config",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/soft-gate/check",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/escalation/edge-case",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/shadow-ai/inventory",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/shadow-ai/register",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/ai-literacy/status",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/ai-literacy/certify",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/review-training/status",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/review-training/certify",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/review-sampling/sample",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/review-sampling/qc-reports",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/interviewer-fairness/load",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/interviewer-fairness/rebalance",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/guardrails",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/guardrails",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/guardrails/check",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/regulator-sandbox/run",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/regulator-sandbox/scenarios",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/explainable-agent/decide",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/diversity-agent/progress",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/diversity-agent/recommend",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/hiring-coach/recommendations",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/hiring-coach/complete-module",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/audit-agent/generate",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/fairness-explanation/:candidateId",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/fairness-explanation/request",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/compliance/diversity-forecast/generate",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/compliance/diversity-forecast/history",
+      "engine": "compliance-governance"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/multi-agent/rank",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/multi-agent/rank/:requisitionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/interview-audit/questions",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/interview-audit/validate",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/counterfactual/simulate",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/multi-agent/explain",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/bias/feature-report",
+      "engine": "explainability"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/bias/feature-config/:modelId",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/coaching/suggest",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/coaching/history",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/nl-summary",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/explain/nl-batch",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/confidence/automation-policy",
+      "engine": "explainability"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/confidence/automation-policy",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/confidence/evaluate",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/agent-permissions",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/agent-permissions",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/agent-permissions/check",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/cot/score/:decisionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/cot/log/:decisionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/skill-adjacency/explain",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/hallucination/verify",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/hallucination/report",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/rationale/generate",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/rationale/:decisionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/feedback",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/feedback/summary",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/post-hoc",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/widget",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/hitl/rerank",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/hitl/rerank-history/:requisitionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/trust-levels",
+      "engine": "explainability"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/trust-levels",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explain/:decisionId/shap",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/fairness/constraints",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/fairness/constraints",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/fairness/compliance-check",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/bias/simulate",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/bias/simulation-history",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/bias/training-config/:modelId",
+      "engine": "explainability"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/ai/bias/training-config/:modelId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/uncertainty/:decisionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/uncertainty/model-summary/:modelId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/ranking-cards/:requisitionId",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/override/learn",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/override/learning-summary",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/explanation-packet/:candidateId",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions/:id/card",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/decisions/cards/bulk",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/confidence/throttle-queue",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/confidence/throttle",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/ai/fairness/sandbox",
+      "engine": "explainability"
+    },
+    {
+      "method": "POST",
+      "path": "/api/ai/fairness/sandbox",
+      "engine": "explainability"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/source-attribution",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/quality-of-hire",
+      "engine": "analytics"
+    },
+    {
+      "method": "POST",
+      "path": "/api/analytics/predictive-success",
+      "engine": "analytics"
+    },
+    {
+      "method": "POST",
+      "path": "/api/analytics/nl-query",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/attrition-risk",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/flight-risk",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/funnel-conversion",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/time-to-fill-trends",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/diversity-pipeline",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/recruiter-scorecard",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/offer-acceptance",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/interview-to-offer",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/drop-off-analysis",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/cost-per-hire",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/headcount-planning",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/sourcing-roi",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/pipeline-aging",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/approval-cycle-time",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/candidate-experience-scores",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/hiring-manager-effectiveness",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/department-hiring-health",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/realtime-metrics",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/competitive-offers",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/pipeline-health-score",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/workforce-forecast",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/skill-gap-analysis",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/application-velocity",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/rejection-reasons",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/passive-candidate-engagement",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/sla-compliance",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/internal-vs-external",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/ta-roi",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/benchmarks",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/geographic-distribution",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/interview-completion-rate",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/nurture-campaign-analytics",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/referral-analytics",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/seasonal-patterns",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/source-mix",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/executive-summary",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/cohort-retention",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/goal-tracking",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/analytics/talent-intelligence",
+      "engine": "analytics"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-timeline",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/qa-agent",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/feedback-growth",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/reengagement/trigger",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/reengagement/inactive",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/post-rejection/engage",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/blackhole/at-risk",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/blackhole/rescue",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/concierge/personalized",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/rejection/empathic",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/journey-guardian",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-transparency",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/interview-prep",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/cultural-adapt",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/trust-score",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/mobile-summary",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/interview-prep/realtime",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/experience/personalize",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/legal-ux",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/process-map",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback/actionable",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/legal-disclaimers",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-usage-dashboard",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/ai-feedback",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/interview/empathic-adapt",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/experience/orchestrator",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/reengagement/past-applicants",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/messaging/personalized",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/sentiment",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/communication/cadence",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/journey/touchpoints",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ghosting/risk",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/outreach/personalized-bulk",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/skill-gap",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/interview-prep/coach",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/support/chat",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/self-service/explanations",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/equity/communication-monitor",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/skill-gap/explainable",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ai-influence",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/outreach/multi-channel-deep",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/feedback/constructive",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/concierge/end-to-end",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/candidates/:id/journey/personalize",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/faq",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/status/agentic",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/experience/sentiment-analysis",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/translation/nuanced",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/:id/experience/realtime-adjust",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/sentiment/journey",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/candidates/:id/ghosting/prevention",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/candidates/sentiment/monitor",
+      "engine": "candidate-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/prep-coach/:applicationId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/debrief/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/debrief/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/notes/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/notes/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/interviewer-coaching/:interviewerId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/question-bank",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/question-bank",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/scorecard-templates",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/scorecard-templates",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/consensus/:applicationId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/virtual-setup",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/conflict-check",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/panel/:interviewId/members",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/feedback-summary/:applicationId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/async-video",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/async-video/:id/responses",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/calendar-sync",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/reminders/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/bias-alerts/:applicationId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/loop-optimizer/:requisitionId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/time-analytics",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/candidate-feedback/:interviewId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/re-interview-tracker",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/outcome-prediction/:applicationId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/availability",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/interviews/availability/:userId",
+      "engine": "interview-system"
+    },
+    {
+      "method": "POST",
+      "path": "/api/interviews/guide-builder",
+      "engine": "interview-system"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/adaptive-application/:requisitionId",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/bulk-screen",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/signals/:applicationId",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/signals/:applicationId",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/knockout/:applicationId",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/resume-parse/:applicationId",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/queue",
+      "engine": "screening"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/screening/queue/:applicationId/assign",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/phone-screen",
+      "engine": "screening"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/screening/phone-screen/:id/complete",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/criteria/:requisitionId",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/criteria/:requisitionId",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/duplicates",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/skill-assessment",
+      "engine": "screening"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/screening/skill-assessment/:id/results",
+      "engine": "screening"
+    },
+    {
+      "method": "POST",
+      "path": "/api/screening/disposition/:applicationId",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/screening/analytics",
+      "engine": "screening"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/silver-medalists",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/silver-medalists/reengage",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/outreach/personalized",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/job-description/generate",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/job-description/analyze",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/passive-nurture/enroll",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/passive-nurture/candidates",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/outreach/multi-channel",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/outreach/campaigns",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/skills-portfolio/ingest",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/candidate-pool/refresh",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/rediscovery/unstructured",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/job-distribution",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/pipeline/proactive",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/passive-candidates/timing",
+      "engine": "sourcing"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/sourcing/talent-pools/:poolId/self-curate",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/campaigns/multi-channel",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/talent-community",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/talent-community/add",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/campaigns/optimize",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/referrals",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/referrals/submit",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/market-intelligence",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/passive-sourcing/queue",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools/:poolId/nurture",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/competitive-intelligence",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/referrals/network-graph",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/passive-candidates/readiness",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/agencies",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/agencies/roi",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/talent-scout/queue",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools/skill-based",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/rediscovery/past-applicants",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/rediscovery/past-applicants/reengage",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/diversity/plan",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/searches",
+      "engine": "sourcing"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/sourcing/talent-pools/:poolId",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sourcing/talent-pools/:poolId/members",
+      "engine": "sourcing"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sourcing/talent-pools/:poolId/members/:candidateId",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/talent-pools/:poolId/members",
+      "engine": "sourcing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sourcing/job-description/feedback",
+      "engine": "sourcing"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/preboarding/orchestrate",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:reqId/:candidateId/decision-card",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:reqId/disagreements",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id/acceptance-risk",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:reqId/support",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/optimization/analyze",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/:reqId/decision-room",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/compensation-rationale",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/reference-check/:candidateId/synthesize",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/approvals/chase",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/compensation/transparent-match",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/negotiation/strategy",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id/negotiation-preferences",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/compensation/dynamic-salary-range",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/negotiation/win-probability",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id/decline-risk",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/decisions/:managerId/consistency",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/calibration/copilot",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id/expectation-analysis",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/decisions/:reqId/briefing",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/approvals/timeline-prediction",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/decline-modeling/factors",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/compensation/market-intelligence",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/compensation/dynamic-calibration",
+      "engine": "decision"
+    },
+    {
+      "method": "GET",
+      "path": "/api/offers/:id/acceptance-model",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/total-rewards-simulator",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/clause-adaptation",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/counter-scenario",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/offers/:id/personalize-package",
+      "engine": "decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workflows/sla/recover",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/workflows/blueprints",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workflows/blueprints",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/workflows/decision-latency",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workflows/decision-latency/escalate",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workflows/recovery/self-heal",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/crm/hygiene",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/crm/hygiene/enrich",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/sla/72hr/status",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/workload/burnout-risk",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/copilot/escalation-minimizer",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/workflows/recovery/adaptive",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/recruiter/focus",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/sla/alignment",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/pipeline/orchestrate",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/escalation/pathways/automate",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/nl/command",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/candidates/stalled",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/candidates/stalled/escalate",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/knowledge-base",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/integrations/hiring-manager/engage",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/hiring-manager/workload",
+      "engine": "integration-hub"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/sms-scheduler",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/capacity-forecast",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/bottlenecks",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/availability-prediction",
+      "engine": "scheduling"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/slot-negotiation",
+      "engine": "scheduling"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/no-show/recovery",
+      "engine": "scheduling"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/multi-panel/negotiate",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/burnout-risk",
+      "engine": "scheduling"
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduling/fallback-orchestrate",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduling/load-balance",
+      "engine": "scheduling"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skills-passport/:employeeId",
+      "engine": "mobility"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/mobility/skills-passport/:employeeId",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/workforce-demand",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skills-gap-forecast",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/marketplace",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/project-staffing",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/succession-risk",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/skills-gap-analysis",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/workforce-scenarios",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/succession-candidates/:requisitionId",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/pathway-map/:employeeId",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/career-path-simulate",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/skills-gap-bridge",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/post-move-outcomes",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/internal-first/:requisitionId",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/talent-flow",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skill-gap-heatmap",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/workforce-composition",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/cross-functional",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/workforce-skill-gap",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skills-inventory",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/auto-match",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/career-recommendations/:employeeId",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/rediscover",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/deep-rediscover",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/flight-risk",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/flight-risk/intervene",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/transitions",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/transitions",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skills-first-marketplace",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/upskilling-predictions",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/career-plans",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/career-plans/:employeeId",
+      "engine": "mobility"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mobility/skill-gap-recommendations",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/mobility/planning-simulation",
+      "engine": "mobility"
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding/feedback",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/feedback/:candidateId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding/visa-relocation",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/visa-relocation/:candidateId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/onboarding/handoff/:handoffId/orchestrate",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/skills-gap/:candidateId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/milestones/:candidateId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/onboarding/task/:taskId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "POST",
+      "path": "/api/onboarding/preboarding",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/preboarding/:candidateId",
+      "engine": "onboarding"
+    },
+    {
+      "method": "GET",
+      "path": "/api/onboarding/dashboard",
+      "engine": "onboarding"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+================================================================================
+CROSS-REFERENCE ANALYSIS: build_spec.json vs frontend/app/(dashboard)
+================================================================================
+
+OVERVIEW
+--------
+Total Features in build_spec.json:  372
+Total Pages in frontend:             939
+Match Rate:                          93.8% (349 of 372 features have pages)
+
+BREAKDOWN
+---------
+EXISTS (exact match):               349 features
+MISSING (spec but no page):          23 features
+SLUG_MISMATCH (similar page name):   17 features
+EXTRA (page but not in spec):       590 pages
+
+
+DETAILED FINDINGS
+=================
+
+1. MISSING FROM FRONTEND (23 issues)
+   -----------------------------------------------
+   These features are defined in build_spec.json but have NO corresponding 
+   page.tsx in frontend/app/(dashboard).
+
+   HIGH PRIORITY (completely missing):
+   - /security/api-level-data-residency-and-tenant-isolation
+   - /security/fine-grained-access-and-just-in-time-review
+   - /security/fraud-and-deepfake-detection-orchestrator
+   - /security/retention-and-deletion-orchestrator
+   - /security/usp:-confidential-search-masking
+   - /candidates/why-was-i-rejected?-candidate-report
+   - /integrations/usp:-api-first-agent-integration
+   - /platform/unified-ats-+-crm-+-scheduling-+-analytics-on-a-single-data-
+
+   MEDIUM PRIORITY (has similar variant):
+   - /candidates/usp:-24/7-concierge-agent
+     (Found: /candidates/usp-247-concierge-agent)
+   - /compliance/automated-compliance-documentation-for-ofccp/eeo-audits
+     (Found: /compliance/eeo-audits)
+   - /compliance/automated-eeoc/title-vii-audit-extractor
+     (Found: /compliance/title-vii-audit-extractor)
+   - /compliance/dei/bias-audit-agent
+     (Found: /compliance/bias-audit-agent)
+   - /compliance/real-time-diversity/bias-monitoring
+     (Found: /compliance/bias-monitoring)
+   - /compliance/sensitive-modality-governance-video/voice/psychometrics
+     (Found: /compliance/psychometrics)
+   - /integrations/multi-system-it/hr-provisioning-agent
+     (Found: /integrations/hr-provisioning-agent)
+   - /screening/24/7-autonomous-candidate-screening-agent
+     (Found: /screening/7-autonomous-candidate-screening-agent)
+   - /screening/technical-/-work-sample-evaluator
+     (Found: /screening/technical-work-sample-evaluator)
+   - /security/data-privacy-anonymization-and-purge-agent-gdpr/ccpa
+     (Found: /security/data-privacy-anonymization-and-purge-agent-gdpr-ccpa)
+   - /security/enterprise-grade-security-architecture-with-zero-trust-desig
+     (Found: /security/enterprise-grade-security-architecture-with-zero-trust-design)
+   - /security/pii/phi-real-time-masking-layer
+     (Found: /security/phi-real-time-masking-layer)
+   - /security/usp:-gdpr/ccpa-erasure-agent
+     (Found: /security/usp-gdprccpa-erasure-agent)
+
+
+2. SLUG MISMATCH PATTERNS
+   -----------------------------------------------
+   Issues with path separators and special characters:
+
+   a) Forward Slash Handling:
+      - /compliance/dei/bias-audit-agent           -> /compliance/deibias-audit-agent
+      - /compliance/real-time-diversity/bias-monitoring -> /compliance/real-time-diversitybias-monitoring
+      - /compliance/sensitive-modality-governance-video/voice/psychometrics -> /compliance/sensitive-modality-governance-videovoicepsychometrics
+      - /security/pii/phi-real-time-masking-layer -> /security/phi-real-time-masking-layer
+
+   b) Special Character Handling (USP prefix):
+      - /candidates/usp:-24/7-concierge-agent     -> /candidates/usp-247-concierge-agent
+      - /integrations/usp:-api-first-agent-integration (NO MATCH)
+      - /screening/usp:-ai-powered-intake-orchestrator (NO MATCH)
+      - /security/usp:-confidential-search-masking (NO MATCH)
+      - /security/usp:-gdpr/ccpa-erasure-agent    -> /security/usp-gdprccpa-erasure-agent
+
+   c) Slash in Feature Name:
+      - /screening/technical-/-work-sample-evaluator -> /screening/technical-work-sample-evaluator
+
+   d) Special Chars in Feature Names (+ symbols):
+      - /platform/unified-ats-+-crm-+-scheduling-+-analytics-on-a-single-data- (INCOMPLETE)
+      - /ai/model-card-+-versioned-prompt-registry (FOUND)
+      - /platform/end-to-end-requisition-orchestration (FOUND)
+
+   e) Special Chars (question marks):
+      - /candidates/why-was-i-rejected?-candidate-report (INVALID FILE PATH)
+
+
+3. EXTRA PAGES IN FRONTEND (590 pages)
+   -----------------------------------------------
+   These pages exist in frontend but have NO entry in build_spec.json.
+   Sample extras include:
+   - /ai (dashboard root)
+   - /ai/agentic-candidate-relationship-management-crm-with-opt-out-*
+   - /ai/agentic-decision-rationale-engine
+   - /ai/ai-coaching-for-recruiter-decisions-*
+   - ... and 585 more pages
+
+
+KEY ISSUES TO ADDRESS
+=====================
+
+1. PATH ENCODING PROBLEMS (11-12 features)
+   - Forward slashes in URLs being collapsed/removed
+   - Special characters (:, /, ?) not properly escaped
+   - Leading to slug mismatches and path conflicts
+
+2. INCOMPLETE SLUGS IN SPEC (3 features)
+   - /ai/explainable-ai-with-transparent-reasoning-chains-for-every-r
+   - /ai/real-time-explainability-dashboard-agentic-flow-visualizatio
+   - /platform/unified-ats-+-crm-+-scheduling-+-analytics-on-a-single-data-
+   - These appear truncated in build_spec.json
+
+3. INVALID FILE PATH CHARACTERS (2 features)
+   - /candidates/why-was-i-rejected?-candidate-report (question mark)
+   - Cannot be valid filesystem paths on Windows/Unix
+
+4. SPEC FEATURES WITHOUT IMPLEMENTATION (8 features)
+   - Truly missing frontend pages (not slug variants)
+
+
+RECOMMENDATIONS
+===============
+
+1. URGENT: Fix path encoding in build_spec.json
+   - Review how ui_routes are being generated/normalized
+   - Preserve forward slashes vs collapsing them
+   - Handle special characters correctly
+
+2. Verify incomplete slugs are intentional or truncated
+
+3. Create missing frontend pages for the 8 truly missing features
+
+4. Review the 590 extra pages - are they:
+   - Legitimate features not yet in spec?
+   - Old/deprecated pages needing cleanup?
+   - Auto-generated from another source?
+
+5. Standardize slug generation rules across both systems
