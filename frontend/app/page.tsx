@@ -69,8 +69,7 @@ const systemHealthServices = [
   { name: "Background Checks", status: "degraded" },
 ];
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
+function getGreetingForHour(hour: number): string {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
@@ -93,6 +92,14 @@ export default function Home() {
   const [timeData, setTimeData] = useState<any[]>([]);
   const [pipelineData, setPipelineData] = useState<any[]>([]);
   const [diversityData, setDiversityData] = useState<any[]>([]);
+  // Greeting depends on the user's local hour, which differs from the
+  // server's. Initialize with a stable string so SSR + first client render
+  // match (no hydration mismatch), then update to the localized greeting
+  // once we're on the client.
+  const [greeting, setGreeting] = useState("Welcome");
+  useEffect(() => {
+    setGreeting(getGreetingForHour(new Date().getHours()));
+  }, []);
 
   useEffect(() => {
     // Hit the real backend (4000) via the absolute URL, send the JWT from
@@ -178,7 +185,7 @@ export default function Home() {
       <div className="space-y-6">
         <PageHeader
           title="Hiring Dashboard"
-          description={`${getGreeting()}, ${firstName}. Here's your organization's hiring overview.`}
+          description={`${greeting}, ${firstName}. Here's your organization's hiring overview.`}
           breadcrumbs={[{ label: "Dashboard" }]}
           actions={
             <div className="flex items-center gap-2">

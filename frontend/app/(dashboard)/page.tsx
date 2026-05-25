@@ -76,8 +76,7 @@ const healthServices: ServiceHealth[] = [
   { name: "Background Checks", status: "operational" },
 ];
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
+function getGreetingForHour(hour: number): string {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
@@ -106,6 +105,11 @@ export default function DashboardPage() {
   const [funnelCounts, setFunnelCounts] = useState<{ name: string; value: number; barClass: string }[]>([]);
   const [hitlPending, setHitlPending] = useState(0);
   const [hitlOverdue, setHitlOverdue] = useState(0);
+  // Stable greeting on SSR; localized after mount (avoids hydration mismatch).
+  const [greeting, setGreeting] = useState("Welcome");
+  useEffect(() => {
+    setGreeting(getGreetingForHour(new Date().getHours()));
+  }, []);
 
   useEffect(() => {
     setKpisLoading(true);
@@ -216,7 +220,7 @@ export default function DashboardPage() {
       {/* Page Header with Date Range Selector */}
       <PageHeader
         title="Hiring Dashboard"
-        description={`${getGreeting()}, ${firstName}. Here's your organization's hiring overview.`}
+        description={`${greeting}, ${firstName}. Here's your organization's hiring overview.`}
         breadcrumbs={[{ label: "Dashboard" }]}
         actions={
           <div className="flex items-center gap-2">
