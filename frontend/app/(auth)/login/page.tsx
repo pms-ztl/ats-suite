@@ -89,15 +89,15 @@ function LoginForm() {
   // ── Credentials form ───────────────────────────────────────────────────────
   if (step === "credentials") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-        <div className="w-full max-w-md flex flex-col items-center gap-4">
-          <Card className="w-full shadow-lg">
-            <CardHeader className="text-center">
-              <div className="mx-auto h-10 w-10 rounded-lg bg-primary flex items-center justify-center mb-4">
-                <span className="text-lg font-bold text-primary-foreground">C</span>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-md flex flex-col items-center gap-5">
+          <Card className="w-full">
+            <CardHeader className="text-center pt-8 pb-2">
+              <div className="mx-auto h-12 w-12 rounded-2xl bg-primary glow-primary flex items-center justify-center mb-5">
+                <span className="text-xl font-bold text-primary-foreground">C</span>
               </div>
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
-              <CardDescription>Sign in to CDC ATS</CardDescription>
+              <CardTitle className="text-2xl tracking-tight">Welcome Back</CardTitle>
+              <CardDescription className="mt-1">Sign in to <span className="text-foreground font-medium">CDC ATS</span></CardDescription>
             </CardHeader>
             <form onSubmit={handleCredentials}>
               <CardContent className="space-y-4">
@@ -154,7 +154,7 @@ function LoginForm() {
                 <p className="text-xs text-muted-foreground">
                   Fields marked <span className="text-destructive">*</span> are required.
                 </p>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full glow-primary h-10 font-semibold" disabled={loading}>
                   {loading ? "Signing in…" : "Sign In"}
                 </Button>
                 <p className="text-2xs text-muted-foreground text-center">

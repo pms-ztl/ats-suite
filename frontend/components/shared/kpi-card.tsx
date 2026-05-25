@@ -22,26 +22,42 @@ export function KPICard({ label, value, change, changeLabel, sparklineData, icon
   const isPositive = change !== undefined && change > 0;
   const isNegative = change !== undefined && change < 0;
 
+  // Emerald accent across the brand
+  const SPARK_COLOR = "hsl(160 84% 39%)";
   return (
-    <Card className={cn("cursor-default hover:shadow-md transition-shadow", onClick && "cursor-pointer", className)} onClick={onClick}>
+    <Card
+      className={cn(
+        "glass-hover gradient-card relative overflow-hidden",
+        onClick ? "cursor-pointer" : "cursor-default",
+        className,
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="text-3xl font-bold tracking-tight mt-1 text-foreground">{value}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="text-4xl font-bold tracking-tight mt-2 text-foreground tabular-nums">{value}</p>
             {change !== undefined && (
-              <div className="flex items-center gap-1 mt-1">
-                {isPositive && <TrendingUp className="h-3 w-3 text-emerald-600" />}
-                {isNegative && <TrendingDown className="h-3 w-3 text-red-600" />}
-                {!isPositive && !isNegative && <Minus className="h-3 w-3 text-slate-500" />}
-                <span className={cn("text-xs font-medium", isPositive ? "text-emerald-600" : isNegative ? "text-red-600" : "text-slate-500")}>
+              <div className="flex items-center gap-1 mt-2">
+                {isPositive && <TrendingUp className="h-3 w-3 text-emerald-500" />}
+                {isNegative && <TrendingDown className="h-3 w-3 text-red-500" />}
+                {!isPositive && !isNegative && <Minus className="h-3 w-3 text-muted-foreground" />}
+                <span className={cn("text-xs font-semibold", isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "text-muted-foreground")}>
                   {isPositive ? "+" : ""}{change}%
                 </span>
                 {changeLabel && <span className="text-xs text-muted-foreground">{changeLabel}</span>}
               </div>
             )}
+            {change === undefined && changeLabel && (
+              <p className="text-xs text-muted-foreground mt-2">{changeLabel}</p>
+            )}
           </div>
-          {icon && <div className="text-muted-foreground">{icon}</div>}
+          {icon && (
+            <div className="rounded-xl bg-primary/10 border border-primary/20 p-2 text-primary shrink-0">
+              {icon}
+            </div>
+          )}
         </div>
         {sparklineData && sparklineData.length > 0 && (
           <div className="h-10 mt-3 -mx-1">
@@ -49,17 +65,17 @@ export function KPICard({ label, value, change, changeLabel, sparklineData, icon
               <AreaChart data={sparklineData.map((v, i) => ({ i, v }))}>
                 <defs>
                   <linearGradient id={`spark_${gradientId}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
+                    <stop offset="0%" stopColor={SPARK_COLOR} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={SPARK_COLOR} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <YAxis hide domain={["dataMin - 5", "dataMax + 5"]} />
-                <Area type="monotone" dataKey="v" stroke="#4F46E5" strokeWidth={1.5} fill={`url(#spark_${gradientId})`} dot={false} />
+                <Area type="monotone" dataKey="v" stroke={SPARK_COLOR} strokeWidth={2} fill={`url(#spark_${gradientId})`} dot={false} />
                 <ReferenceDot
                   x={sparklineData.length - 1}
                   y={sparklineData[sparklineData.length - 1]}
                   r={3}
-                  fill="#4F46E5"
+                  fill={SPARK_COLOR}
                   stroke="white"
                   strokeWidth={1.5}
                 />

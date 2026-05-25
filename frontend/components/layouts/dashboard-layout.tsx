@@ -104,7 +104,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm"
@@ -115,7 +115,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <div className={cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-64")}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 glass-surface px-6">
           <div className="flex-1 flex items-center gap-4">
             <TooltipProvider>
               <Tooltip>

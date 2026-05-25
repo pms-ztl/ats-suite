@@ -1,8 +1,11 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+// Default Card uses the global glassmorphism surface so it composites over
+// the aurora backdrop. Callers can still override via `className` (e.g.
+// `bg-card` to opt out of the frosted look on dense data screens).
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props} />
+  <div ref={ref} className={cn("glass-card text-card-foreground", className)} {...props} />
 ))
 Card.displayName = "Card"
 

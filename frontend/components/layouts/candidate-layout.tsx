@@ -14,18 +14,16 @@ const candidateNav = [
 export function CandidateLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Use semantic theme tokens (bg-background, bg-card, text-foreground,
-  // border-border) so the candidate portal adapts to light/dark mode the
-  // same way the recruiter dashboard does. Previously hardcoded `bg-slate-50`
-  // / `bg-white` / `hover:bg-slate-100` ignored the `.dark` class on <html>,
-  // leaving the portal stuck in a half-light state when the system was dark.
+  // Glassmorphism: chrome surfaces composite over the global aurora backdrop
+  // applied in globals.css (body::before). All shades use semantic tokens so
+  // both light and dark mode look right.
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top Nav */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card shadow-sm">
-        <div className="max-w-5xl mx-auto flex h-14 items-center justify-between px-4">
+    <div className="min-h-screen text-foreground flex flex-col">
+      {/* Top Nav — glass */}
+      <header className="sticky top-0 z-30 border-b border-border/40 glass-surface">
+        <div className="max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/jobs" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="h-9 w-9 rounded-xl bg-primary glow-primary flex items-center justify-center">
               <Briefcase className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
@@ -65,7 +63,7 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
       <main className="max-w-5xl mx-auto w-full px-4 py-8 flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-auto">
+      <footer className="border-t border-border/40 glass-surface mt-auto">
         <div className="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>CDC ATS Career Portal</span>
           <div className="flex items-center gap-4">
