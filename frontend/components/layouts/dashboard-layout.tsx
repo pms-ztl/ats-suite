@@ -56,8 +56,26 @@ const ROLE_LABELS: Record<string, string> = {
   candidate: "Candidate",
 };
 
+const SIDEBAR_STORAGE_KEY = "ats-sidebar-collapsed";
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Start expanded so SSR + first client render match (no hydration mismatch),
+  // then hydrate the persisted value from localStorage right after mount.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage?.getItem(SIDEBAR_STORAGE_KEY);
+      if (saved === "1") setSidebarCollapsed(true);
+    } catch { /* localStorage may be blocked */ }
+  }, []);
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { window.localStorage?.setItem(SIDEBAR_STORAGE_KEY, next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
+
   const { user, isLoading: userLoading } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
@@ -111,7 +129,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         Skip to main content
       </a>
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
 
       <div className={cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-64")}>
         {/* Top Bar */}

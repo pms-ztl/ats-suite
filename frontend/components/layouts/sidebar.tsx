@@ -15,6 +15,7 @@ import {
   ClipboardCheck, Search, CheckCircle2, ArrowUpRight, Plug, Calendar,
   Rocket, Home, Settings, Bell, ExternalLink, FileText,
   PanelLeftClose, PanelLeft, Sparkles, ShieldCheck, DollarSign,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -74,10 +75,28 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen border-r border-border/40 glass-surface transition-all duration-300 flex flex-col",
+          "group/sidebar fixed left-0 top-0 z-40 h-screen border-r border-border/40 glass-surface transition-all duration-300 flex flex-col",
           collapsed ? "w-16" : "w-64"
         )}
       >
+        {/* Edge-rail toggle — floating chevron pinned to the sidebar's right edge.
+            Always visible on hover anywhere over the sidebar; clearer affordance
+            than the footer-only "Collapse" link. */}
+        <button
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "absolute top-16 right-0 translate-x-1/2 z-50",
+            "h-7 w-7 rounded-full border border-border/60 bg-background shadow-md",
+            "flex items-center justify-center",
+            "text-muted-foreground hover:text-primary hover:border-primary/50 hover:shadow-lg",
+            "opacity-0 group-hover/sidebar:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
+          )}
+        >
+          {collapsed
+            ? <ChevronRight className="h-3.5 w-3.5" />
+            : <ChevronLeft className="h-3.5 w-3.5" />}
+        </button>
         {/* Logo */}
         <div className="flex h-14 items-center border-b px-4">
           <Link href="/" className={cn("flex items-center gap-2", collapsed && "mx-auto")}>
