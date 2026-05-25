@@ -80,13 +80,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       >
         {/* ───── Premium edge-rail toggle ─────────────────────────────────
-            A full-height invisible hover zone on the sidebar's right edge.
-            On hover, an emerald vertical bar fades in along the edge AND a
-            pill toggle slides into view (centered vertically near the top).
-            Click anywhere on the bar OR the pill to toggle.
-            Pure CSS hover — no JS state — so it's instant.
+            Full-height hit zone hugging the sidebar's outer right edge.
+            Sits MOSTLY outside the sidebar (-mr-2.5 → 10px outside, 2px
+            inside) so it doesn't visually cover or intercept clicks on
+            the rightmost portion of NavItem rows (badges, etc.).
+            On hover an emerald vertical bar fades in + a pill toggle slides
+            in. Click anywhere on the rail to toggle.
             ───────────────────────────────────────────────────────────── */}
-        <div className="absolute top-0 right-0 h-full w-3 -mr-1.5 group/rail z-50">
+        <div className="absolute top-0 right-0 h-full w-3 -mr-2.5 group/rail z-50">
           {/* Invisible widened hit-target — makes the edge forgiving to grab */}
           <button
             type="button"
@@ -256,51 +257,51 @@ function NavItem({
   collapsed: boolean;
   urgent?: boolean;
 }) {
-  // `min-w-0` on the outer Link + `flex-1 min-w-0 truncate` on the label
-  // is the canonical recipe to make a flexbox child truncate cleanly without
-  // pushing siblings (the icon / badge) out of view.
+  // Grid layout: [icon] [label that truncates] [badge].
+  // Grid is more bulletproof than flex for "label must truncate and badge must
+  // stay visible" — the badge column is `auto` so it sizes to content and never
+  // collapses, the label column is `minmax(0, 1fr)` so it CAN shrink below
+  // content width (which is what makes text-overflow:ellipsis kick in), and
+  // the icon column is `auto` so it stays at its natural 16px.
   const content = (
     <Link
       href={href}
       title={label}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors min-w-0",
+        "grid items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
+        collapsed
+          ? "grid-cols-[auto] justify-center px-2"
+          : "grid-cols-[auto_minmax(0,1fr)_auto]",
         active
           ? "bg-primary/10 text-primary font-medium"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-        collapsed && "justify-center px-2"
       )}
     >
-      <span className="shrink-0">{icon}</span>
-      <span
-        className={cn(
-          "flex-1 min-w-0 truncate transition-all duration-200",
-          collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
-        )}
-      >
-        {label}
-      </span>
-      {badge !== undefined && (
-        <span
-          className={cn(
-            "shrink-0 overflow-hidden transition-all duration-200",
-            collapsed ? "opacity-0 w-0" : "opacity-100"
+      <span className="shrink-0 leading-none">{icon}</span>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 truncate">
+            {label}
+          </span>
+          {badge !== undefined ? (
+            <Badge
+              variant={urgent ? "destructive" : "secondary"}
+              className={cn(
+                "h-5 px-1.5 text-2xs min-w-[20px] justify-center tabular-nums shrink-0",
+                urgent
+                  ? "bg-rose-500 text-white border-transparent"
+                  : active
+                    ? "bg-primary/20 text-primary border-transparent"
+                    : "bg-muted text-muted-foreground border-transparent"
+              )}
+            >
+              {badge}
+            </Badge>
+          ) : (
+            // Empty cell so grid columns stay aligned across rows
+            <span aria-hidden="true" />
           )}
-        >
-          <Badge
-            variant={urgent ? "destructive" : "secondary"}
-            className={cn(
-              "text-2xs h-5 min-w-[20px] justify-center tabular-nums",
-              urgent
-                ? "bg-rose-500 text-white"
-                : active
-                  ? "bg-primary/20 text-primary"
-                  : "bg-muted text-muted-foreground"
-            )}
-          >
-            {badge}
-          </Badge>
-        </span>
+        </>
       )}
     </Link>
   );
