@@ -297,7 +297,7 @@ export default function ApplicationStatusPage() {
                                     isCurrent &&
                                       "bg-primary/10 text-primary ring-2 ring-primary",
                                     isUpcoming &&
-                                      "bg-slate-100 text-slate-400"
+                                      "bg-muted text-muted-foreground"
                                   )}
                                 >
                                   {isCompleted ? (
@@ -325,7 +325,7 @@ export default function ApplicationStatusPage() {
                                     "h-0.5 flex-1 -mt-5",
                                     i < currentIdx
                                       ? "bg-emerald-300"
-                                      : "bg-slate-200"
+                                      : "bg-border"
                                   )}
                                 />
                               )}

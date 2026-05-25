@@ -14,14 +14,19 @@ const candidateNav = [
 export function CandidateLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
+  // Use semantic theme tokens (bg-background, bg-card, text-foreground,
+  // border-border) so the candidate portal adapts to light/dark mode the
+  // same way the recruiter dashboard does. Previously hardcoded `bg-slate-50`
+  // / `bg-white` / `hover:bg-slate-100` ignored the `.dark` class on <html>,
+  // leaving the portal stuck in a half-light state when the system was dark.
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Nav */}
-      <header className="sticky top-0 z-30 border-b bg-white shadow-sm">
+      <header className="sticky top-0 z-30 border-b border-border bg-card shadow-sm">
         <div className="max-w-5xl mx-auto flex h-14 items-center justify-between px-4">
           <Link href="/jobs" className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <Briefcase className="h-4 w-4 text-white" />
+              <Briefcase className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-bold leading-tight">Career Portal</span>
@@ -44,7 +49,7 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
                     "flex items-center gap-1.5 px-3 py-2 text-sm rounded-md transition-colors",
                     isActive
                       ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-slate-100"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -60,7 +65,7 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
       <main className="max-w-5xl mx-auto w-full px-4 py-8 flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t bg-white mt-auto">
+      <footer className="border-t border-border bg-card mt-auto">
         <div className="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>CDC ATS Career Portal</span>
           <div className="flex items-center gap-4">

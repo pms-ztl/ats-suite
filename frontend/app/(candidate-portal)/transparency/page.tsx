@@ -74,7 +74,7 @@ export default function CandidateTransparencyPage() {
                 <span className="text-2xs text-muted-foreground">AI Confidence:</span>
                 <ConfidenceMeter value={usage.confidence} size="sm" className="w-32" />
               </div>
-              <div className="bg-slate-50 rounded p-3">
+              <div className="bg-muted/50 rounded p-3">
                 <p className="text-2xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
                   <Eye className="h-3 w-3" /> Why this decision:
                 </p>
