@@ -95,19 +95,36 @@ export default function Home() {
   const [diversityData, setDiversityData] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/platform/unified-overview", { headers: { "x-tenant-id": "default" } })
+    // Hit the real backend (4000) via the absolute URL, send the JWT from
+    // sessionStorage. The previous code hit "/api/..." on port 3000 (Next.js)
+    // which 404s, fell into the catch, and rendered fake hardcoded numbers.
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    const token = typeof window !== "undefined" ? window.sessionStorage?.getItem("ats-access-token") : null;
+
+    fetch(`${API_BASE}/platform/unified-overview`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
       .then((r) => r.json())
       .then((res) => {
         const d = res.data ?? res;
+        // Helper: show "—" when the backend returns null (real "no data yet")
+        const num = (v: unknown) => (v == null ? "—" : v);
+        const pct = (v: unknown) => (v == null ? "—" : `${v}%`);
+        const days = (v: unknown) => (v == null ? "—" : `${v}d`);
+        const dollars = (v: unknown) => (v == null ? "—" : `$${v}`);
         setKpis([
-          { label: "Open Requisitions", value: d.openRequisitions ?? 48, change: 5, changeLabel: "vs last month", sparklineData: [30, 35, 40, 42, 48] },
-          { label: "Active Candidates", value: d.activeCandidates ?? 1240, change: 12, changeLabel: "vs last month", sparklineData: [980, 1050, 1120, 1180, 1240] },
-          { label: "Time to Hire", value: `${d.avgTimeToHire ?? 28}d`, change: -3, changeLabel: "vs last month", sparklineData: [35, 33, 31, 30, 28] },
-          { label: "Offer Accept Rate", value: `${d.offerAcceptRate ?? 87}%`, change: 2, changeLabel: "vs last month", sparklineData: [82, 83, 85, 86, 87] },
-          { label: "AI Decisions Today", value: d.aiDecisionsToday ?? 64, change: 8, changeLabel: "vs yesterday", sparklineData: [45, 50, 55, 60, 64] },
-          { label: "Compliance Score", value: `${d.complianceScore ?? 94}%`, change: 1, changeLabel: "vs last month", sparklineData: [90, 91, 92, 93, 94] },
-          { label: "Diversity Index", value: d.diversityScore ?? 0.82, change: 0.03, changeLabel: "vs last quarter", sparklineData: [0.76, 0.78, 0.79, 0.81, 0.82] },
-          { label: "Cost per Hire", value: `$${d.costPerHire ?? 4200}`, change: -5, changeLabel: "vs last month", sparklineData: [4800, 4600, 4400, 4300, 4200] },
+          { label: "Open Requisitions",  value: num(d.openRequisitions),   changeLabel: "live", sparklineData: [] },
+          { label: "Active Candidates",  value: num(d.activeCandidates),   changeLabel: "live", sparklineData: [] },
+          { label: "Time to Hire",       value: days(d.avgTimeToHire),     changeLabel: d.avgTimeToHire == null ? "no hires yet" : "from hired apps", sparklineData: [] },
+          { label: "Offer Accept Rate",  value: pct(d.offerAcceptRate),    changeLabel: d.offerAcceptRate == null ? "no offers decided yet" : "from offer outcomes", sparklineData: [] },
+          { label: "AI Decisions Today", value: num(d.aiDecisionsToday),   changeLabel: "AgentRun count", sparklineData: [] },
+          { label: "Compliance Score",   value: pct(d.complianceScore),    changeLabel: "not yet computed", sparklineData: [] },
+          { label: "Diversity Index",    value: num(d.diversityScore),     changeLabel: "not yet computed", sparklineData: [] },
+          { label: "Cost per Hire",      value: dollars(d.costPerHire),    changeLabel: "not yet tracked", sparklineData: [] },
         ]);
         if (d.timeSeriesData) setTimeData(d.timeSeriesData);
         if (d.pipelineData) setPipelineData(d.pipelineData);
@@ -115,15 +132,16 @@ export default function Home() {
       })
       .catch((err) => {
         console.error("Failed to load dashboard data:", err);
+        // Show "—" honestly instead of inventing data
         setKpis([
-          { label: "Open Requisitions", value: 48, change: 5, changeLabel: "vs last month", sparklineData: [30, 35, 40, 42, 48] },
-          { label: "Active Candidates", value: 1240, change: 12, changeLabel: "vs last month", sparklineData: [980, 1050, 1120, 1180, 1240] },
-          { label: "Time to Hire", value: "28d", change: -3, changeLabel: "vs last month", sparklineData: [35, 33, 31, 30, 28] },
-          { label: "Offer Accept Rate", value: "87%", change: 2, changeLabel: "vs last month", sparklineData: [82, 83, 85, 86, 87] },
-          { label: "AI Decisions Today", value: 64, change: 8, changeLabel: "vs yesterday", sparklineData: [45, 50, 55, 60, 64] },
-          { label: "Compliance Score", value: "94%", change: 1, changeLabel: "vs last month", sparklineData: [90, 91, 92, 93, 94] },
-          { label: "Diversity Index", value: 0.82, change: 0.03, changeLabel: "vs last quarter", sparklineData: [0.76, 0.78, 0.79, 0.81, 0.82] },
-          { label: "Cost per Hire", value: "$4200", change: -5, changeLabel: "vs last month", sparklineData: [4800, 4600, 4400, 4300, 4200] },
+          { label: "Open Requisitions",  value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Active Candidates",  value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Time to Hire",       value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Offer Accept Rate",  value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "AI Decisions Today", value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Compliance Score",   value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Diversity Index",    value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Cost per Hire",      value: "—", changeLabel: "error loading", sparklineData: [] },
         ]);
       });
   }, []);

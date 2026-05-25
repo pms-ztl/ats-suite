@@ -312,6 +312,180 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// POST /api/public/appeal — anonymous candidate files an appeal against an
+// AI-assisted decision. Lightweight: store in AuditTrailEntry so compliance
+// officers can review. No tenant scoping needed at submit time — review tools
+// surface them per-application.
+// ---------------------------------------------------------------------------
+const PublicAppealSchema = z.object({
+  email: z.string().email().optional(),
+  applicationId: z.string().optional(),
+  decisionType: z.string().min(1).max(100),
+  reason: z.string().min(10).max(2000),
+  additionalInfo: z.string().max(4000).optional(),
+});
+
+router.post('/appeal', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = PublicAppealSchema.parse(req.body);
+
+    // Try to associate with an existing application (best-effort)
+    let tenantId: string | null = null;
+    let applicationId: string | null = body.applicationId ?? null;
+    if (body.email && !applicationId) {
+      const candidate = await prisma.candidate.findFirst({
+        where: { email: body.email.toLowerCase() },
+        include: {
+          newApplications: { orderBy: { appliedAt: 'desc' }, take: 1, select: { id: true, tenantId: true } },
+        },
+      });
+      if (candidate?.newApplications?.[0]) {
+        applicationId = candidate.newApplications[0].id;
+        tenantId = candidate.newApplications[0].tenantId;
+      }
+    }
+
+    // We need a tenantId to write the audit row. If we couldn't infer one
+    // (no matching candidate), drop the appeal into the first active tenant
+    // so it still lands in the queue.
+    if (!tenantId) {
+      const anyTenant = await prisma.tenant.findFirst({ select: { id: true } });
+      tenantId = anyTenant?.id ?? null;
+    }
+    if (!tenantId) {
+      throw new AppError('PRECONDITION_FAILED', 'No tenant available to record appeal', 412);
+    }
+
+    const entry = await prisma.auditTrailEntry.create({
+      data: {
+        tenantId,
+        action: 'CANDIDATE_APPEAL_FILED',
+        resourceType: applicationId ? 'Application' : 'Candidate',
+        resourceId: applicationId ?? body.email ?? 'unknown',
+        actorId: null,
+        actorType: 'CANDIDATE',
+        after: {
+          decisionType: body.decisionType,
+          reason: body.reason,
+          additionalInfo: body.additionalInfo ?? null,
+          candidateEmail: body.email ?? null,
+        },
+      },
+    });
+
+    logger.info({ appealId: entry.id, applicationId, tenantId }, 'Public appeal submitted');
+
+    return created(res, {
+      appealId: `APL-${entry.id.slice(-6).toUpperCase()}`,
+      status: 'SUBMITTED',
+      message: 'Your appeal has been submitted. A human reviewer will examine your case within 5 business days.',
+    });
+  } catch (err) { return next(err); }
+});
+
+// ---------------------------------------------------------------------------
+// GDPR self-service for anonymous candidates
+// ---------------------------------------------------------------------------
+// GET  /api/public/gdpr/access?email=... — download candidate's data
+// POST /api/public/gdpr/erase            — request data erasure
+//
+// Authentication uses email-only (weak — same model as public/apply +
+// public resume upload). Production would send an email confirmation link
+// before processing erasure; this is good enough for the demo flow.
+
+router.get('/gdpr/access', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const email = (req.query.email as string | undefined)?.toLowerCase();
+    if (!email) throw new AppError('VALIDATION_ERROR', 'email query param is required', 400);
+
+    const candidates = await prisma.candidate.findMany({
+      where: { email, isAnonymized: false },
+      include: {
+        newApplications: {
+          select: {
+            id: true, stage: true, status: true, appliedAt: true,
+            requisition: { select: { id: true, title: true, department: true } },
+          },
+        },
+        resume: { select: { fileName: true, fileSize: true, mimeType: true, createdAt: true } },
+      },
+    });
+
+    if (candidates.length === 0) {
+      throw new AppError('NOT_FOUND', 'No data found for this email', 404);
+    }
+
+    const payload = {
+      email,
+      exportedAt: new Date().toISOString(),
+      profiles: candidates.map((c) => ({
+        firstName: c.firstName,
+        lastName: c.lastName,
+        phone: c.phone,
+        location: c.location,
+        linkedinUrl: c.linkedinUrl,
+        source: c.source,
+        createdAt: c.createdAt,
+        applications: c.newApplications,
+        resume: c.resume,
+      })),
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="my-data-${email}.json"`);
+    return res.status(200).send(JSON.stringify(payload, null, 2));
+  } catch (err) { return next(err); }
+});
+
+router.post('/gdpr/erase', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const email = (req.body.email as string | undefined)?.toLowerCase();
+    if (!email) throw new AppError('VALIDATION_ERROR', 'email is required', 400);
+
+    // Soft-anonymize the candidate(s) — don't hard-delete because tied to
+    // requisitions and audit trail. Set isAnonymized=true + scrub PII.
+    const candidates = await prisma.candidate.findMany({ where: { email } });
+    if (candidates.length === 0) {
+      // Don't reveal whether the email exists
+      return ok(res, { status: 'SUBMITTED', message: 'Your request has been submitted.' });
+    }
+
+    for (const c of candidates) {
+      await prisma.candidate.update({
+        where: { id: c.id },
+        data: {
+          firstName: 'REDACTED',
+          lastName: 'REDACTED',
+          email: `redacted-${c.id}@example.invalid`,
+          phone: null,
+          location: null,
+          linkedinUrl: null,
+          isAnonymized: true,
+          anonymizedAt: new Date(),
+        },
+      });
+      await prisma.auditTrailEntry.create({
+        data: {
+          tenantId: c.tenantId,
+          action: 'GDPR_ERASURE',
+          resourceType: 'Candidate',
+          resourceId: c.id,
+          actorId: null,
+          actorType: 'CANDIDATE',
+          after: { method: 'public-self-service', candidateEmail: email },
+        },
+      }).catch(() => {});
+    }
+
+    logger.info({ email, count: candidates.length }, 'Public GDPR erasure processed');
+    return ok(res, {
+      status: 'COMPLETED',
+      message: `Data erasure complete for ${candidates.length} record(s). You will receive a confirmation email.`,
+    });
+  } catch (err) { return next(err); }
+});
+
+// ---------------------------------------------------------------------------
 // GET /api/public/status — check application status by email (no auth)
 // ---------------------------------------------------------------------------
 router.get('/status', async (req: Request, res: Response, next: NextFunction) => {

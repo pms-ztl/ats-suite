@@ -135,8 +135,9 @@ export default function CandidateProfilePage() {
   async function handleDownloadData() {
     setDownloading(true);
     try {
+      // Use the public self-service endpoint (anonymous candidate, no JWT).
       const res = await fetch(
-        `${API_BASE}/compliance/gdpr/access?email=${encodeURIComponent(email)}`,
+        `${API_BASE}/public/gdpr/access?email=${encodeURIComponent(email)}`,
         { headers: { "Content-Type": "application/json" } }
       );
       if (res.ok) {
@@ -161,7 +162,7 @@ export default function CandidateProfilePage() {
   async function handleDeleteRequest() {
     setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/compliance/gdpr/erase`, {
+      const res = await fetch(`${API_BASE}/public/gdpr/erase`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

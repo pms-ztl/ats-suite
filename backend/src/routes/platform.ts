@@ -69,19 +69,40 @@ router.patch("/tenants/current", requireRole("ADMIN"), async (req, res, next) =>
 });
 
 // GET /unified-overview — aggregated cross-module stats
+// The home dashboard consumes this. Returns both the legacy nested shape
+// AND a flat `kpis` block (openRequisitions, activeCandidates, avgTimeToHire,
+// offerAcceptRate, aiDecisionsToday, complianceScore, diversityScore,
+// costPerHire). Fields we cannot compute from the live schema are returned
+// as `null` so the frontend can render "—" instead of fake numbers.
 router.get("/unified-overview", async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     const [
       requisitions, candidates, interviews, applications,
-      scheduleEvents, hiresThisMonth
+      scheduleEvents, hiresThisMonth,
+      activeApplications,
+      hiredAppsForTTH,
+      offersGrouped,
+      aiDecisionsToday,
     ] = await Promise.all([
       prisma.requisition.groupBy({ by: ["status"], where: { tenantId }, _count: true }),
-      prisma.candidate.count({ where: { tenantId } }),
+      prisma.candidate.count({ where: { tenantId, isAnonymized: false } }),
       prisma.interview.groupBy({ by: ["status"], where: { tenantId }, _count: true }),
       prisma.application.groupBy({ by: ["stage"], where: { tenantId }, _count: true }),
       prisma.scheduleEvent.count({ where: { tenantId, startAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
-      prisma.application.count({ where: { tenantId, stage: "HIRED", updatedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
+      prisma.application.count({ where: { tenantId, stage: "HIRED", updatedAt: { gte: startOfMonth } } }),
+      prisma.application.count({ where: { tenantId, status: "ACTIVE" } }),
+      prisma.application.findMany({
+        where: { tenantId, stage: "HIRED" },
+        select: { appliedAt: true, stageUpdatedAt: true },
+        take: 200,
+      }),
+      prisma.offer.groupBy({ by: ["status"], where: { tenantId }, _count: true }),
+      prisma.agentRun.count({ where: { tenantId, createdAt: { gte: startOfDay } } }).catch(() => null),
     ]);
 
     type GroupRow = { _count: number; [key: string]: unknown };
@@ -89,13 +110,42 @@ router.get("/unified-overview", async (req, res, next) => {
     const totalReqs = (requisitions as GroupRow[]).reduce((s: number, r: GroupRow) => s + r._count, 0);
     const completedInterviews = ((interviews as GroupRow[]).find((i) => i.status === "COMPLETED")?._count ?? 0);
 
+    // Average days from applied → hired (only for apps with both timestamps).
+    let avgTimeToHire: number | null = null;
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const days = hiredAppsForTTH
+      .filter((a) => a.appliedAt && a.stageUpdatedAt)
+      .map((a) => (a.stageUpdatedAt!.getTime() - a.appliedAt!.getTime()) / MS_PER_DAY)
+      .filter((d) => d >= 0 && Number.isFinite(d));
+    if (days.length > 0) {
+      avgTimeToHire = Math.round(days.reduce((s, d) => s + d, 0) / days.length);
+    }
+
+    // Offer accept rate: ACCEPTED / (SENT + ACCEPTED + REJECTED + EXPIRED)
+    const offerCount = (s: string) =>
+      ((offersGrouped as GroupRow[]).find((o) => o.status === s)?._count ?? 0);
+    const accepted = offerCount("ACCEPTED");
+    const decided = accepted + offerCount("REJECTED") + offerCount("EXPIRED");
+    const offerAcceptRate = decided > 0 ? Math.round((accepted / decided) * 100) : null;
+
     return ok(res, {
+      // Legacy nested shape (kept for backward compatibility)
       requisitions: { total: totalReqs, byStatus: (requisitions as GroupRow[]).map((r: GroupRow) => ({ status: r.status, count: r._count })) },
       candidates: { total: candidates },
       interviews: { total: (interviews as GroupRow[]).reduce((s: number, i: GroupRow) => s + i._count, 0), completed: completedInterviews },
       pipeline: { stages: (applications as GroupRow[]).map((a: GroupRow) => ({ stage: a.stage, count: a._count })) },
       scheduling: { eventsThisWeek: scheduleEvents },
       analytics: { hiresThisMonth, openReqs },
+
+      // Flat KPI block consumed by the home dashboard
+      openRequisitions: openReqs,
+      activeCandidates: activeApplications,
+      avgTimeToHire,                                     // days, null if no hires yet
+      offerAcceptRate,                                   // %, null if no decided offers yet
+      aiDecisionsToday: aiDecisionsToday,                // null if AgentRun table not yet populated
+      complianceScore: null,                             // not yet derived from compliance checks
+      diversityScore: null,                              // not yet derived from demographics
+      costPerHire: null,                                 // not tracked
     });
   } catch (err) { return next(err); }
 });

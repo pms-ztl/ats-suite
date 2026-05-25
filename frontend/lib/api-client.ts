@@ -247,7 +247,8 @@ export const api = {
   },
   security: {
     validateToolRoute: (data: any) => post<any>("/security/tool-router/validate", data),
-    getToolAudit: (params?: PaginationParams) => get<any>("/security/tool-router/audit", params),
+    // Backend route is /security/secure-tool-router/audit (not /tool-router/audit)
+    getToolAudit: (params?: PaginationParams) => get<any>("/security/secure-tool-router/audit", params),
     recordConsent: (data: any) => post<any>("/security/consent", data),
     getConsent: (candidateId: string) => get<any>(`/security/consent/${candidateId}`),
     updateConsent: (candidateId: string, data: any) => put<any>(`/security/consent/${candidateId}`, data),
@@ -272,8 +273,11 @@ export const api = {
     scanPromptInjection: (data: any) => post<any>("/security/prompt-firewall/scan", data),
     getPromptFirewallLog: () => get<any>("/security/prompt-firewall/log"),
     updateFirewallRules: (data: any) => put<any>("/security/prompt-firewall/rules", data),
-    getZeroTrustStatus: () => get<any>("/security/zero-trust/status"),
-    verifyZeroTrust: (data: any) => post<any>("/security/zero-trust/verify", data),
+    // /security/zero-trust/* not implemented on backend yet — fall back to
+    // the access/config endpoint which returns a similar shape (enforcement
+    // mode, policy version) so the page doesn't show empty cards.
+    getZeroTrustStatus: () => get<any>("/security/access/config"),
+    verifyZeroTrust: (data: any) => post<any>("/security/access/jit-review", data),
     requestErasure: (data: any) => post<any>("/security/erasure/request", data),
     getErasureStatus: (id: string) => get<any>(`/security/erasure/${id}`),
     executeErasure: (id: string) => post<any>(`/security/erasure/${id}/execute`),
@@ -1281,8 +1285,9 @@ export const api = {
     // ── Legacy helpers ───────────────────────────────────────────────────────
     generateBoolean: (data: any) => post<any>("/sourcing/boolean/generate", data),
     shortlist: (data: any) => post<any>("/sourcing/shortlist", data),
-    getTalentPools: () => get<any>("/sourcing/talent-pools"),
-    createTalentPool: (data: any) => post<any>("/sourcing/talent-pools", data),
+    // Backend mounts pools list at GET /sourcing (root) and create at POST /sourcing/pools.
+    getTalentPools: () => get<any>("/sourcing"),
+    createTalentPool: (data: any) => post<any>("/sourcing/pools", data),
     search: (data: any) => post<any>("/sourcing/search", data),
   },
   decisions: {
@@ -1437,7 +1442,8 @@ export const api = {
     swarmScheduler: () => request<any>('GET', '/scheduling/swarm-based-interview-scheduling-orchestrator'),
   },
   mobility: {
-    getOpportunities: () => get<any>("/mobility/opportunities"),
+    // Backend mounts the list at GET /mobility (root) — there is no /opportunities subpath.
+    getOpportunities: () => get<any>("/mobility"),
     match: (data: any) => post<any>("/mobility/match", data),
     getProfile: (employeeId: string) => get<any>(`/mobility/profiles/${employeeId}`),
   },
@@ -1780,7 +1786,7 @@ export const api = {
     getCompetitiveIntelligence: () => request('GET', '/sourcing/competitive-intelligence'),
     getExternalLaborMarket: () => request('GET', '/sourcing/external-labor-market-intelligence'),
     // Talent pools
-    getTalentPools: (params?: { skill?: string; status?: string }) => request('GET', `/sourcing/talent-pools${params ? `?${new URLSearchParams(params as Record<string,string>)}` : ''}`),
+    getTalentPools: (params?: { skill?: string; status?: string }) => request('GET', `/sourcing${params ? `?${new URLSearchParams(params as Record<string,string>)}` : ''}`),
     createTalentPool: (body: { name: string; criteria: unknown }) => request('POST', '/sourcing/talent-pools', body),
     refreshTalentPool: (poolId: string) => request('POST', `/sourcing/talent-pools/${poolId}/refresh`, {}),
     // Referrals

@@ -28,15 +28,17 @@ export default function CandidateAppealPage() {
         return;
       }
 
-      const res = await fetch("/api/candidates/appeal", {
+      // Hit the public backend route — anonymous candidates have no JWT.
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const res = await fetch(`${API_BASE}/public/appeal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decisionType, reason, additionalInfo }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to submit appeal. Please try again.");
+      if (!res.ok || data.success === false || data.error) {
+        throw new Error(data.error?.message || data.message || "Failed to submit appeal. Please try again.");
       }
 
       setSubmitted(true);
@@ -52,13 +54,13 @@ export default function CandidateAppealPage() {
       alert("Draft saved.");
       return;
     }
+    // Draft persistence isn't yet implemented server-side; keep client-only.
     try {
-      await fetch("/api/candidates/appeal/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decisionType, reason, additionalInfo }),
-      });
-      alert("Draft saved.");
+      window.localStorage?.setItem(
+        "appeal-draft",
+        JSON.stringify({ decisionType, reason, additionalInfo, savedAt: new Date().toISOString() }),
+      );
+      alert("Draft saved locally.");
     } catch {
       alert("Failed to save draft. Please try again.");
     }
