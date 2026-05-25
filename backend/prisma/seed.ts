@@ -254,7 +254,7 @@ async function main(): Promise<void> {
       (prisma as any).candidateApplication.upsert({
         where:  { id: a.id },
         update: {},
-        create: { ...a, isBlindReview: false, metadata: {} },
+        create: { ...a, tenantId: TENANT_ID, isBlindReview: false, metadata: {} },
       }),
     ),
   );
@@ -1081,7 +1081,7 @@ async function main(): Promise<void> {
       (prisma as any).candidateApplication.upsert({
         where:  { id: a.id },
         update: {},
-        create: { ...a, isBlindReview: false, metadata: {} },
+        create: { ...a, tenantId: TENANT_ID, isBlindReview: false, metadata: {} },
       }),
     ),
   );

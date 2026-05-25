@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth, getTenantId } from '../middleware/auth';
+import { requireAuth, requireRole, getTenantId } from '../middleware/auth';
 import { ok, paginated } from '../lib/response';
 import { prisma } from '../utils/prisma';
 import { resolveHITLCheckpoint, getPendingCheckpoints } from '../agents/hitl';
@@ -69,7 +69,7 @@ const ResolveCheckpointSchema = z.object({
   comments: z.string().max(2000).optional(),
 });
 
-router.post('/hitl/:id/resolve', async (req, res, next) => {
+router.post('/hitl/:id/resolve', requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const { status, resolution } = ResolveCheckpointSchema.parse(req.body);

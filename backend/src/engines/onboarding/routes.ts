@@ -27,7 +27,7 @@ router.post('/onboarding/handoff', async (req: AuthRequest, res: Response) => {
     // Gather hiring context automatically
     const [application, feedback, screeningResults, offer] = await Promise.all([
       prisma.candidateApplication.findFirst({
-        where: { candidateId, requisitionId: requisitionId || undefined },
+        where: { tenantId, candidateId, requisitionId: requisitionId || undefined },
         orderBy: { appliedAt: 'desc' },
       }),
       prisma.interviewFeedback.findMany({
@@ -110,8 +110,8 @@ router.post('/onboarding/handoff', async (req: AuthRequest, res: Response) => {
 
     // Update the candidate application stage to HIRED
     if (application) {
-      await prisma.candidateApplication.update({
-        where: { id: application.id },
+      await prisma.candidateApplication.updateMany({
+        where: { id: application.id, tenantId },
         data: { stage: 'HIRED', status: 'HIRED' },
       });
     }

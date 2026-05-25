@@ -116,16 +116,63 @@ router.post(
         })
         .catch(() => {});
 
-      // 5. Enqueue auto-parse job (event-driven pipeline: upload -> parse -> screen)
+      // 5. Trigger auto-parse pipeline (upload -> parse -> screen)
+      // Preferred path: enqueue via BullMQ when Redis is configured (production).
+      // Fallback path: inline parse via setImmediate when no Redis (dev / single-instance).
+      // Either way, the response returns immediately — parsing happens async.
+      const userId = (req as any).user?.id || 'system';
+      let parseMode: 'queued' | 'inline' | 'skipped' = 'skipped';
+
       if (process.env.REDIS_URL) {
+        parseMode = 'queued';
         import('../lib/queue').then(({ enqueueResumeParse }) =>
-          enqueueResumeParse({
-            candidateId,
-            tenantId,
-            userId: (req as any).user?.id || 'system',
-            resumeId: resume.id,
-          })
+          enqueueResumeParse({ candidateId, tenantId, userId, resumeId: resume.id })
         ).catch(err => logger.error({ err, candidateId }, 'Failed to enqueue resume parse'));
+      } else if (process.env.ANTHROPIC_API_KEY) {
+        // No Redis but LLM is configured — fall back to inline async parse.
+        // Return response first, then process in background via setImmediate.
+        parseMode = 'inline';
+        setImmediate(async () => {
+          try {
+            const { parseResume } = await import('../agents/resume-parser');
+            const result = await parseResume({
+              candidateId,
+              tenantId,
+              userId,
+              resumeText: extractedText,
+            });
+            logger.info({ candidateId, runId: result.runId, mode: 'inline' }, 'Inline resume parse completed');
+
+            // Auto-trigger screening for active applications (mirrors worker behavior)
+            const { prisma: p } = await import('../utils/prisma');
+            const apps = await p.application.findMany({
+              where: { candidateId, tenantId, status: 'ACTIVE' },
+              select: { requisitionId: true },
+            }).catch(() => []);
+            for (const app of apps) {
+              try {
+                const { screenCandidate } = await import('../agents/screening-agent');
+                const updatedResume = await p.resume.findFirst({ where: { id: resume.id } });
+                if (updatedResume?.extractedText) {
+                  await screenCandidate({
+                    candidateId,
+                    requisitionId: app.requisitionId,
+                    tenantId,
+                    userId,
+                    resumeText: updatedResume.extractedText,
+                  });
+                }
+              } catch (err) {
+                logger.error({ err, candidateId, requisitionId: app.requisitionId }, 'Inline screening failed');
+              }
+            }
+          } catch (err) {
+            logger.error({ err, candidateId, resumeId: resume.id }, 'Inline resume parse failed');
+          }
+        });
+      } else {
+        logger.warn({ candidateId, resumeId: resume.id },
+          'Resume parse skipped: neither REDIS_URL (queue mode) nor ANTHROPIC_API_KEY (inline mode) is configured');
       }
 
       return created(res, {
@@ -134,6 +181,7 @@ router.post(
         filename: req.file.originalname,
         extractedTextLength: extractedText.length,
         parseStatus: 'EXTRACTED',
+        parseMode,
         embeddingStatus: process.env.OPENAI_API_KEY ? 'PROCESSING' : 'SKIPPED',
       });
     } catch (err) {

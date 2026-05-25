@@ -168,12 +168,36 @@ router.patch('/:id', requireRole('ADMIN', 'RECRUITER', 'HIRING_MANAGER'), async 
       }
     }
 
-    // If accepted, advance application to HIRED
+    // If accepted, advance application to HIRED — but ONLY if current stage allows it.
+    // Valid transitions to HIRED: from OFFER (normal flow) or FINAL_REVIEW (skip-OFFER edge case).
+    // Also enforce tenant isolation on the application lookup + update.
     if (body.status === 'ACCEPTED' && existing.applicationId) {
-      await prisma.application.update({
-        where: { id: existing.applicationId },
-        data: { stage: 'HIRED', status: 'HIRED', stageUpdatedAt: new Date() },
-      }).catch(() => {});
+      const app = await prisma.application.findFirst({
+        where: { id: existing.applicationId, tenantId },
+        select: { id: true, stage: true },
+      });
+      if (app && (app.stage === 'OFFER' || app.stage === 'FINAL_REVIEW')) {
+        await prisma.application.update({
+          where: { id: app.id },
+          data: { stage: 'HIRED', status: 'HIRED', stageUpdatedAt: new Date() },
+        }).catch((err) => logger.error({ err, applicationId: app.id }, 'Failed to advance to HIRED'));
+        // Audit the state transition
+        await prisma.auditTrailEntry.create({
+          data: {
+            tenantId,
+            action: 'STAGE_TRANSITION',
+            resourceType: 'Application',
+            resourceId: app.id,
+            actorId: (req as any).user?.id || null,
+            actorType: 'USER',
+            before: { stage: app.stage },
+            after: { stage: 'HIRED' },
+            metadata: { triggeredBy: 'OFFER_ACCEPTED', offerId: existing.id },
+          },
+        }).catch(() => {});
+      } else if (app) {
+        logger.warn({ applicationId: app.id, currentStage: app.stage }, 'Offer accepted but application not in OFFER/FINAL_REVIEW stage — skipping HIRED transition');
+      }
     }
 
     // Audit trail

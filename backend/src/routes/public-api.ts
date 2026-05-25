@@ -1,10 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma';
 import { ok, paginated, created } from '../lib/response';
 import { AppError } from '../middleware/errorHandler';
 import rateLimit from 'express-rate-limit';
 import logger from '../lib/logger';
+import { extractText } from '../lib/document-extractor';
 
 const router = Router();
 
@@ -213,6 +215,101 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
     });
   } catch (err) { return next(err); }
 });
+
+// ---------------------------------------------------------------------------
+// POST /api/public/applications/:applicationId/resume
+// ---------------------------------------------------------------------------
+// Anonymous resume upload tied to a freshly-created application. Used by the
+// candidate-portal apply page right after POST /public/apply succeeds.
+// Validates the application id + applicant email so an attacker can't attach
+// a resume to someone else's application.
+
+const publicResumeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/plain',
+    ];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
+
+router.post(
+  '/applications/:applicationId/resume',
+  publicResumeUpload.single('file'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const applicationId = req.params.applicationId as string;
+      const email = (req.body.email as string | undefined)?.toLowerCase();
+      if (!req.file) throw new AppError('VALIDATION_ERROR', 'Resume file is required', 400);
+      if (!email) throw new AppError('VALIDATION_ERROR', 'email is required to authorize upload', 400);
+
+      // Look up application + candidate; require email match (acts as a weak
+      // but sufficient anonymous proof — the email was just used to apply).
+      const application = await prisma.application.findFirst({
+        where: { id: applicationId },
+        include: { candidate: { select: { id: true, email: true, tenantId: true } } },
+      });
+      if (!application || !application.candidate) {
+        throw new AppError('NOT_FOUND', 'Application not found', 404);
+      }
+      if (application.candidate.email !== email) {
+        throw new AppError('FORBIDDEN', 'Email does not match this application', 403);
+      }
+
+      const candidateId = application.candidate.id;
+      const tenantId = application.candidate.tenantId;
+
+      const extractedText = await extractText(req.file.buffer, req.file.mimetype);
+      if (!extractedText || extractedText.length < 20) {
+        throw new AppError('EXTRACTION_FAILED', 'Could not extract text from resume', 400);
+      }
+
+      const resume = await prisma.resume.upsert({
+        where: { candidateId },
+        update: {
+          originalFilename: req.file.originalname,
+          fileName: req.file.originalname,
+          mimeType: req.file.mimetype,
+          fileSize: req.file.size,
+          extractedText,
+          parseStatus: 'EXTRACTED',
+          updatedAt: new Date(),
+        },
+        create: {
+          candidateId,
+          tenantId,
+          originalFilename: req.file.originalname,
+          fileName: req.file.originalname,
+          mimeType: req.file.mimetype,
+          fileSize: req.file.size,
+          extractedText,
+          parseStatus: 'EXTRACTED',
+        },
+      });
+
+      // Mark candidate.resumeUrl so the recruiter UI surfaces it.
+      await prisma.candidate
+        .update({ where: { id: candidateId }, data: { resumeUrl: `internal://resume/${resume.id}` } })
+        .catch(() => {});
+
+      logger.info({ candidateId, applicationId, resumeId: resume.id }, 'Public resume upload');
+
+      return created(res, {
+        resumeId: resume.id,
+        candidateId,
+        applicationId,
+        filename: req.file.originalname,
+        extractedTextLength: extractedText.length,
+      });
+    } catch (err) { return next(err); }
+  },
+);
 
 // ---------------------------------------------------------------------------
 // GET /api/public/status — check application status by email (no auth)

@@ -21,20 +21,21 @@ model Tenant {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  users          User[]
-  requisitions   Requisition[]
-  candidates     Candidate[]
-  auditTrail     AuditTrailEntry[]
-  policies       CompliancePolicy[]
-  aiModels       AIModel[]
-  pipelineStages PipelineStage[]
-  integrations   Integration[]
-  webhooks       Webhook[]
-  scheduleEvents ScheduleEvent[]
-  mobilityCases  MobilityCase[]
-  biasReports    BiasReport[]
-  aiJobs         AIJob[]
-  agentRuns      AgentRun[]
+  users                 User[]
+  requisitions          Requisition[]
+  candidates            Candidate[]
+  candidateApplications CandidateApplication[]
+  auditTrail            AuditTrailEntry[]
+  policies              CompliancePolicy[]
+  aiModels              AIModel[]
+  pipelineStages        PipelineStage[]
+  integrations          Integration[]
+  webhooks              Webhook[]
+  scheduleEvents        ScheduleEvent[]
+  mobilityCases         MobilityCase[]
+  biasReports           BiasReport[]
+  aiJobs                AIJob[]
+  agentRuns             AgentRun[]
 }
 
 model User {
@@ -774,6 +775,7 @@ model CandidateSkill {
 // TODO: Consolidate into a single Application model in a future migration.
 model CandidateApplication {
   id              String            @id @default(uuid())
+  tenantId        String
   candidateId     String
   requisitionId   String
   stage           ApplicationStage  @default(APPLIED)
@@ -787,11 +789,14 @@ model CandidateApplication {
   isBlindReview   Boolean           @default(false)
   metadata        Json              @default("{}")
 
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
   candidate   Candidate   @relation(fields: [candidateId], references: [id])
   requisition Requisition @relation(fields: [requisitionId], references: [id])
 
-  @@unique([candidateId, requisitionId])
+  @@unique([tenantId, candidateId, requisitionId])
   @@index([requisitionId, stage])
+  @@index([tenantId])
+  @@index([tenantId, stage])
 }
 
 enum ApplicationStage {

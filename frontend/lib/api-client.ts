@@ -4,9 +4,19 @@ const USE_MOCKS = false;
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
 function getToken(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
+  if (typeof window === 'undefined') return null;
+  // Primary store: AuthProvider in lib/auth-context.tsx writes to sessionStorage
+  // under "ats-access-token". Fallback to legacy cookie "ats-token" for backward
+  // compatibility (older sessions / SSR-set cookie).
+  try {
+    const fromSession = window.sessionStorage?.getItem('ats-access-token');
+    if (fromSession) return fromSession;
+  } catch { /* sessionStorage may be blocked */ }
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/);
+    if (match?.[1]) return decodeURIComponent(match[1]);
+  }
+  return null;
 }
 
 async function request<T>(method: string, path: string, body?: unknown, params?: PaginationParams): Promise<T> {

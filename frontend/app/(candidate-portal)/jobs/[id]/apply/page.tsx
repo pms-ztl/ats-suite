@@ -195,25 +195,33 @@ export default function ApplyPage() {
         );
       }
 
-      // If resume exists, attempt upload (best-effort)
+      // If resume exists, attempt upload (best-effort) via the public route
+      // so anonymous candidates can submit without an auth token.
       const result = await res.json();
       const candidateId = result.data?.candidateId;
+      const applicationId = result.data?.applicationId;
 
-      if (resume && candidateId) {
+      if (resume && applicationId) {
         try {
           const formData = new FormData();
           formData.append("file", resume);
-          formData.append("type", "RESUME");
+          formData.append("email", form.email.trim().toLowerCase());
 
-          await fetch(`${API_BASE}/candidates/${candidateId}/documents`, {
-            method: "POST",
-            body: formData,
-          });
+          const upRes = await fetch(
+            `${API_BASE}/public/applications/${applicationId}/resume`,
+            { method: "POST", body: formData },
+          );
+          if (!upRes.ok) {
+            const errBody = await upRes.json().catch(() => ({}));
+            console.warn("Resume upload failed:", errBody?.error?.message || upRes.status);
+          }
         } catch {
           // Resume upload failed but application was created -- not fatal
           console.warn("Resume upload failed, application was still created.");
         }
       }
+      // Avoid an unused-variable lint warning when candidateId isn't used elsewhere
+      void candidateId;
 
       setSubmitted(true);
       toast.success("Application submitted successfully!");

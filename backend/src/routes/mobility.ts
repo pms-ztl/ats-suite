@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth, getTenantId } from "../middleware/auth";
+import { requireAuth, requireRole, getTenantId } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../utils/prisma";
 import { ok, created, noContent, paginated } from "../lib/response";
@@ -9,11 +9,11 @@ const router = Router();
 router.use(requireAuth);
 
 // ── POST /:id/approve — approve a mobility case ───────────────────────────────
-router.post("/:id/approve", async (req, res, next) => {
+router.post("/:id/approve", requireRole("ADMIN", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const mc = await prisma.mobilityCase.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!mc) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
     if (["APPROVED", "REJECTED", "COMPLETED"].includes(mc.status)) {
@@ -23,13 +23,17 @@ router.post("/:id/approve", async (req, res, next) => {
         409
       );
     }
-    const updated = await prisma.mobilityCase.update({
-      where: { id: req.params.id },
+    const result = await prisma.mobilityCase.updateMany({
+      where: { id: req.params.id as string, tenantId },
       data: {
         status: "APPROVED",
         approvedBy: req.user?.id ?? "system",
         approvedAt: new Date(),
       },
+    });
+    if (result.count === 0) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
+    const updated = await prisma.mobilityCase.findFirst({
+      where: { id: req.params.id as string, tenantId },
     });
     return ok(res, updated);
   } catch (err) { return next(err); }
@@ -40,11 +44,11 @@ const RejectSchema = z.object({
   reason: z.string().optional(),
 });
 
-router.post("/:id/reject", async (req, res, next) => {
+router.post("/:id/reject", requireRole("ADMIN", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const mc = await prisma.mobilityCase.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!mc) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
     if (["APPROVED", "REJECTED", "COMPLETED"].includes(mc.status)) {
@@ -55,12 +59,16 @@ router.post("/:id/reject", async (req, res, next) => {
       );
     }
     const body = RejectSchema.parse(req.body);
-    const updated = await prisma.mobilityCase.update({
-      where: { id: req.params.id },
+    const result = await prisma.mobilityCase.updateMany({
+      where: { id: req.params.id as string, tenantId },
       data: {
         status: "REJECTED",
         ...(body.reason !== undefined ? { notes: body.reason } : {}),
       },
+    });
+    if (result.count === 0) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
+    const updated = await prisma.mobilityCase.findFirst({
+      where: { id: req.params.id as string, tenantId },
     });
     return ok(res, updated);
   } catch (err) { return next(err); }
@@ -124,7 +132,7 @@ const CreateMobilityCaseSchema = z.object({
   reason: z.string().optional(),
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireRole("ADMIN", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateMobilityCaseSchema.parse(req.body);
@@ -152,11 +160,11 @@ const UpdateMobilityCaseSchema = z.object({
   notes: z.string().optional(),
 });
 
-router.patch("/:id", async (req, res, next) => {
+router.patch("/:id", requireRole("ADMIN", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const existing = await prisma.mobilityCase.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
 
@@ -168,20 +176,24 @@ router.patch("/:id", async (req, res, next) => {
     if (body.status !== undefined) updateData.status = body.status;
     if (body.notes !== undefined) updateData.notes = body.notes;
 
-    const updated = await prisma.mobilityCase.update({
-      where: { id: req.params.id },
+    const result = await prisma.mobilityCase.updateMany({
+      where: { id: req.params.id as string, tenantId },
       data: updateData,
+    });
+    if (result.count === 0) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
+    const updated = await prisma.mobilityCase.findFirst({
+      where: { id: req.params.id as string, tenantId },
     });
     return ok(res, updated);
   } catch (err) { return next(err); }
 });
 
 // ── DELETE /:id — cancel/delete MobilityCase ─────────────────────────────────
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", requireRole("ADMIN", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const existing = await prisma.mobilityCase.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Mobility case not found", 404);
     if (["APPROVED", "COMPLETED"].includes(existing.status)) {
@@ -191,7 +203,7 @@ router.delete("/:id", async (req, res, next) => {
         409
       );
     }
-    await prisma.mobilityCase.delete({ where: { id: req.params.id } });
+    await prisma.mobilityCase.deleteMany({ where: { id: req.params.id as string, tenantId } });
     return noContent(res);
   } catch (err) { return next(err); }
 });

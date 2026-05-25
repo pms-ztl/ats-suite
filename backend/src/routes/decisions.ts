@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth, getTenantId } from "../middleware/auth";
+import { requireAuth, requireRole, getTenantId } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../utils/prisma";
 import { ok, paginated, created, noContent } from "../lib/response";
@@ -69,7 +69,7 @@ const CreateDecisionSchema = z.object({
   panelConsensus: z.record(z.string(), z.unknown()).optional(),
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateDecisionSchema.parse(req.body);
@@ -100,10 +100,10 @@ const UpdateDecisionSchema = z.object({
   decidedAt: z.string().datetime().optional(),
 });
 
-router.patch("/:id", async (req, res, next) => {
+router.patch("/:id", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
-    const existing = await prisma.hiringDecision.findFirst({ where: { id: req.params.id, tenantId } });
+    const existing = await prisma.hiringDecision.findFirst({ where: { id: req.params.id as string, tenantId } });
     if (!existing) throw new AppError("NOT_FOUND", "Decision not found", 404);
     const body = UpdateDecisionSchema.parse(req.body);
 
@@ -119,7 +119,9 @@ router.patch("/:id", async (req, res, next) => {
     if (body.decidedBy !== undefined) updateData.decidedBy = body.decidedBy;
     if (body.decidedAt !== undefined) updateData.decidedAt = new Date(body.decidedAt);
 
-    const decision = await prisma.hiringDecision.update({ where: { id: req.params.id }, data: updateData });
+    const result = await prisma.hiringDecision.updateMany({ where: { id: req.params.id as string, tenantId }, data: updateData });
+    if (result.count === 0) throw new AppError("NOT_FOUND", "Decision not found", 404);
+    const decision = await prisma.hiringDecision.findFirst({ where: { id: req.params.id as string, tenantId } });
     return ok(res, decision);
   } catch (err) { return next(err); }
 });
@@ -133,7 +135,7 @@ const GenerateOfferSchema = z.object({
   hiringManagerNotes: z.string().optional(),
 });
 
-router.post("/ai-offer", async (req, res, next) => {
+router.post("/ai-offer", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const userId = (req as any).user?.id || (req as any).userId;

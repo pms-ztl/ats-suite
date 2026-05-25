@@ -51,7 +51,8 @@ interface TimelineEntry {
   performedBy?: string;
 }
 
-const STAGE_ORDER = ["APPLIED", "SCREENING", "INTERVIEW", "OFFER", "HIRED"];
+// Must match backend ApplicationStage enum (see candidates-write.ts AdvanceStageSchema)
+const STAGE_ORDER = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED"];
 
 function getNextStages(current: string): string[] {
   const idx = STAGE_ORDER.indexOf(current);
@@ -117,21 +118,35 @@ export default function CandidateDetailPage() {
   async function handleAdvanceStage(applicationId: string, newStage: string) {
     setAdvancing(true);
     try {
-      await fetch(`/api/applications/${applicationId}/stage`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-tenant-id": "default" },
-        body: JSON.stringify({ stage: newStage }),
+      // Real backend endpoint: POST /api/candidates/:candidateId/stage with { stage, applicationId }
+      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const token = typeof document !== "undefined"
+        ? document.cookie.match(/ats-token=([^;]+)/)?.[1] ?? ""
+        : "";
+      const res = await fetch(`${API}/candidates/${id}/stage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ stage: newStage, applicationId }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Stage advance failed (HTTP ${res.status})`);
+      }
       toast.success(`Stage advanced to ${newStage}`);
       // Reload candidate data
-      const res = await api.candidates.get(id);
-      const data = (res as any)?.data ?? res;
+      const reload = await api.candidates.get(id);
+      const data = (reload as any)?.data ?? reload;
       if (data.applications === undefined && data.newApplications) {
         data.applications = data.newApplications;
       }
       setCandidate(data);
-    } catch {
-      toast.error("Failed to advance stage.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to advance stage.";
+      toast.error(msg);
     } finally {
       setAdvancing(false);
     }

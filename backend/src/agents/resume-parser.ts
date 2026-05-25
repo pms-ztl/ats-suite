@@ -132,8 +132,8 @@ export async function parseResume(input: ParseResumeInput): Promise<ParseResumeR
 
   // 4. Update candidate record with extracted info
   const parsed = result.output;
-  await prisma.candidate.update({
-    where: { id: input.candidateId },
+  await prisma.candidate.updateMany({
+    where: { id: input.candidateId, tenantId: input.tenantId },
     data: {
       ...(parsed.location ? { location: parsed.location } : {}),
       ...(parsed.summary ? { summary: parsed.summary } : {}),

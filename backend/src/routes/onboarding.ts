@@ -106,7 +106,7 @@ router.patch("/tasks/:id", async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const existing = await prisma.onboardingTask.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Onboarding task not found", 404);
 
@@ -122,9 +122,13 @@ router.patch("/tasks/:id", async (req, res, next) => {
       }
     }
 
-    const updated = await prisma.onboardingTask.update({
-      where: { id: req.params.id },
+    const result = await prisma.onboardingTask.updateMany({
+      where: { id: req.params.id as string, tenantId },
       data: updateData,
+    });
+    if (result.count === 0) throw new AppError("NOT_FOUND", "Onboarding task not found", 404);
+    const updated = await prisma.onboardingTask.findFirst({
+      where: { id: req.params.id as string, tenantId },
     });
     return ok(res, updated);
   } catch (err) { return next(err); }
@@ -135,10 +139,10 @@ router.delete("/tasks/:id", async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const existing = await prisma.onboardingTask.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Onboarding task not found", 404);
-    await prisma.onboardingTask.delete({ where: { id: req.params.id } });
+    await prisma.onboardingTask.deleteMany({ where: { id: req.params.id as string, tenantId } });
     return noContent(res);
   } catch (err) { return next(err); }
 });

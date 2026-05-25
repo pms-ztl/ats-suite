@@ -36,9 +36,25 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, loading, disabled, children, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
+  // Radix Slot uses React.Children.only — it requires EXACTLY one element child.
+  // When `asChild` is true we must pass `children` straight through; we cannot
+  // emit `{loading && <Loader2/>}` next to `{children}` because that yields
+  // `[false, <Link/>]` which throws "React.Children.only expected to receive
+  // a single React element child."
+  if (asChild) {
+    return (
+      <Slot
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {children}
+      </Slot>
+    )
+  }
   return (
-    <Comp
+    <button
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
       disabled={disabled || loading}
@@ -46,7 +62,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, va
     >
       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {children}
-    </Comp>
+    </button>
   )
 })
 Button.displayName = "Button"

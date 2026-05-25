@@ -14,9 +14,11 @@ let workersStarted = false;
 export function startWorkers(): void {
   if (workersStarted) return;
 
-  // Only start workers if Redis is configured
-  if (!process.env.REDIS_URL && process.env.NODE_ENV === 'test') {
-    logger.info('Redis not configured — workers disabled (test mode)');
+  // Only start workers if Redis is configured.
+  // BullMQ workers will crash with ECONNREFUSED otherwise.
+  // Inline fallbacks (resume parse via setImmediate) handle the dev/no-Redis path.
+  if (!process.env.REDIS_URL) {
+    logger.info('REDIS_URL not set — background workers disabled (using inline fallbacks)');
     return;
   }
 

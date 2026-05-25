@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth, getTenantId } from "../middleware/auth";
+import { requireAuth, requireRole, getTenantId } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../utils/prisma";
 import { ok, paginated, created, noContent } from "../lib/response";
@@ -44,7 +44,7 @@ const CreateDSARSchema = z.object({
   status: z.string().optional(),
 });
 
-router.post("/dsar", async (req, res, next) => {
+router.post("/dsar", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateDSARSchema.parse(req.body);
@@ -78,10 +78,10 @@ const UpdateDSARSchema = z.object({
   responseData: z.record(z.string(), z.unknown()).optional(),
 });
 
-router.patch("/dsar/:id", async (req, res, next) => {
+router.patch("/dsar/:id", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
-    const existing = await prisma.dataSubjectRequest.findFirst({ where: { id: req.params.id, tenantId } });
+    const existing = await prisma.dataSubjectRequest.findFirst({ where: { id: req.params.id as string, tenantId } });
     if (!existing) throw new AppError("NOT_FOUND", "DSAR not found", 404);
     const body = UpdateDSARSchema.parse(req.body);
 
@@ -92,7 +92,7 @@ router.patch("/dsar/:id", async (req, res, next) => {
     }
     if (body.responseData !== undefined) updateData.responseData = body.responseData;
 
-    const dsar = await prisma.dataSubjectRequest.update({ where: { id: req.params.id }, data: updateData });
+    const dsar = await prisma.dataSubjectRequest.update({ where: { id: req.params.id as string }, data: updateData });
     return ok(res, dsar);
   } catch (err) { return next(err); }
 });
@@ -128,7 +128,7 @@ const CreateConsentSchema = z.object({
   ipAddress: z.string().optional(),
 });
 
-router.post("/consent", async (req, res, next) => {
+router.post("/consent", requireRole("ADMIN", "COMPLIANCE_OFFICER", "RECRUITER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateConsentSchema.parse(req.body);
@@ -185,7 +185,7 @@ const CreateRetentionSchema = z.object({
   autoDelete: z.boolean().optional(),
 });
 
-router.post("/retention", async (req, res, next) => {
+router.post("/retention", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateRetentionSchema.parse(req.body);
@@ -226,17 +226,17 @@ const UpdateRetentionSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-router.patch("/retention/:id", async (req, res, next) => {
+router.patch("/retention/:id", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
-    const existing = await prisma.dataRetentionPolicy.findFirst({ where: { id: req.params.id, tenantId } });
+    const existing = await prisma.dataRetentionPolicy.findFirst({ where: { id: req.params.id as string, tenantId } });
     if (!existing) throw new AppError("NOT_FOUND", "Retention policy not found", 404);
     const body = UpdateRetentionSchema.parse(req.body);
     const updateData: Record<string, unknown> = {};
     if (body.retentionDays !== undefined) updateData.retentionDays = body.retentionDays;
     if (body.autoDelete !== undefined) updateData.autoDelete = body.autoDelete;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
-    const policy = await prisma.dataRetentionPolicy.update({ where: { id: req.params.id }, data: updateData });
+    const policy = await prisma.dataRetentionPolicy.update({ where: { id: req.params.id as string }, data: updateData });
     return ok(res, policy);
   } catch (err) { return next(err); }
 });
@@ -306,7 +306,7 @@ const CreateHumanReviewSchema = z.object({
   slaDeadline: z.string().datetime().optional(),
 });
 
-router.post("/human-review/submit", async (req, res, next) => {
+router.post("/human-review/submit", requireRole("ADMIN", "COMPLIANCE_OFFICER", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateHumanReviewSchema.parse(req.body);
@@ -342,10 +342,10 @@ const UpdateHumanReviewSchema = z.object({
   justification: z.string().optional(),
 });
 
-router.patch("/human-review/:id", async (req, res, next) => {
+router.patch("/human-review/:id", requireRole("ADMIN", "COMPLIANCE_OFFICER", "HIRING_MANAGER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
-    const existing = await prisma.humanReviewItem.findFirst({ where: { id: req.params.id, tenantId } });
+    const existing = await prisma.humanReviewItem.findFirst({ where: { id: req.params.id as string, tenantId } });
     if (!existing) throw new AppError("NOT_FOUND", "Human review item not found", 404);
     const body = UpdateHumanReviewSchema.parse(req.body);
 
@@ -354,7 +354,7 @@ router.patch("/human-review/:id", async (req, res, next) => {
       updateData.completedAt = new Date();
     }
 
-    const item = await prisma.humanReviewItem.update({ where: { id: req.params.id }, data: updateData });
+    const item = await prisma.humanReviewItem.update({ where: { id: req.params.id as string }, data: updateData });
     return ok(res, item);
   } catch (err) { return next(err); }
 });
@@ -362,7 +362,7 @@ router.patch("/human-review/:id", async (req, res, next) => {
 // ── GDPR Data Subject Rights ─────────────────────────────────────────────────
 
 // POST /api/compliance/gdpr/access — export candidate data
-router.post("/gdpr/access", async (req, res, next) => {
+router.post("/gdpr/access", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const { candidateId } = req.body;
@@ -373,7 +373,7 @@ router.post("/gdpr/access", async (req, res, next) => {
 });
 
 // POST /api/compliance/gdpr/erase — delete candidate data + embeddings
-router.post("/gdpr/erase", async (req, res, next) => {
+router.post("/gdpr/erase", requireRole("ADMIN"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const userId = (req as any).user?.id || null;
@@ -385,7 +385,7 @@ router.post("/gdpr/erase", async (req, res, next) => {
 });
 
 // POST /api/compliance/gdpr/rectify — update candidate PII
-router.post("/gdpr/rectify", async (req, res, next) => {
+router.post("/gdpr/rectify", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const { candidateId, updates } = req.body;
@@ -409,7 +409,7 @@ router.get("/gdpr/export/:candidateId", async (req, res, next) => {
 // ── EEOC Adverse Impact Analysis ────────────────────────────────────────────
 
 // POST /api/compliance/adverse-impact — compute adverse impact analysis
-router.post("/adverse-impact", async (req, res, next) => {
+router.post("/adverse-impact", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const { protectedAttribute, stage, startDate, endDate } = req.body;
@@ -427,7 +427,7 @@ router.post("/adverse-impact", async (req, res, next) => {
 });
 
 // POST /api/compliance/report — generate full compliance report
-router.post("/report", async (req, res, next) => {
+router.post("/report", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const { attributes, stages, startDate, endDate } = req.body;
@@ -471,7 +471,7 @@ const AiAuditSchema = z.object({
   endDate: z.string().datetime().optional(),
 });
 
-router.post("/ai-audit", async (req, res, next) => {
+router.post("/ai-audit", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const userId = (req as any).user?.id || 'unknown';

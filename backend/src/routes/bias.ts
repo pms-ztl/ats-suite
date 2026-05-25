@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { requireAuth, getTenantId } from "../middleware/auth";
+import { requireAuth, requireRole, getTenantId } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../utils/prisma";
 import { ok, paginated, created, noContent } from "../lib/response";
@@ -85,7 +85,7 @@ const GenerateBiasReportSchema = z.object({
   recommendations: z.array(z.string()),
 });
 
-router.post("/generate", async (req, res, next) => {
+router.post("/generate", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = GenerateBiasReportSchema.parse(req.body);
@@ -142,7 +142,7 @@ router.get("/analyses", async (req, res, next) => {
 });
 
 // POST /analyses/run — create a new BiasAnalysis record
-router.post("/analyses/run", async (req, res, next) => {
+router.post("/analyses/run", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const body = RunBiasAnalysisSchema.parse(req.body);
@@ -181,15 +181,15 @@ router.get("/analyses/:id", async (req, res, next) => {
 });
 
 // ── DELETE /:id — delete a bias report ───────────────────────────────────────
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req, res, next) => {
   try {
     const tenantId = getTenantId(req);
     const existing = await prisma.biasReport.findFirst({
-      where: { id: req.params.id, tenantId },
+      where: { id: req.params.id as string, tenantId },
     });
     if (!existing) throw new AppError("NOT_FOUND", "Bias report not found", 404);
 
-    await prisma.biasReport.delete({ where: { id: req.params.id } });
+    await prisma.biasReport.deleteMany({ where: { id: req.params.id as string, tenantId } });
     return noContent(res);
   } catch (err) {
     return next(err);

@@ -68,6 +68,8 @@ export default function RequisitionDetailPage() {
   const [requisition, setRequisition] = useState<RequisitionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [isPublished, setIsPublished] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -77,12 +79,48 @@ export default function RequisitionDetailPage() {
       .then((res: any) => {
         const data = res?.data ?? res;
         setRequisition(data);
+        // Check if a JobPosting exists for this requisition.
+        // Backend may return either the historical singular `jobPosting` shape
+        // or the new `jobPostings` array (the schema relation is 1:N).
+        const posting = data?.jobPostings?.[0] ?? data?.jobPosting;
+        setIsPublished(Boolean(posting?.isPublished));
       })
       .catch((err: any) => {
         setError(err instanceof Error ? err.message : "Failed to load requisition.");
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function handlePublishToggle() {
+    if (!id) return;
+    setPublishing(true);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const token = typeof document !== "undefined"
+        ? document.cookie.match(/ats-token=([^;]+)/)?.[1] ?? ""
+        : "";
+      const action = isPublished ? "unpublish" : "publish";
+      const res = await fetch(`${API}/requisitions/${id}/${action}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody?.error?.message || `${action} failed (HTTP ${res.status})`);
+      }
+      setIsPublished(!isPublished);
+      toast.success(isPublished ? "Requisition unpublished" : "Requisition published to job board");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Publish action failed.");
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -141,6 +179,16 @@ export default function RequisitionDetailPage() {
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
               </Link>
             </Button>
+            {requisition.status === "OPEN" && (
+              <Button
+                size="sm"
+                variant={isPublished ? "outline" : "default"}
+                onClick={handlePublishToggle}
+                disabled={publishing}
+              >
+                {publishing ? "..." : isPublished ? "Unpublish" : "Publish to Job Board"}
+              </Button>
+            )}
           </div>
         }
       />

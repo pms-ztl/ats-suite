@@ -707,3 +707,13 @@ CREATE POLICY tenant_isolation_embedding ON "Embedding"
 CREATE POLICY admin_bypass_embedding ON "Embedding"
   USING (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '');
 
+-- ── CandidateApplication (added via F-024 fix) ────────────────────────────
+ALTER TABLE "CandidateApplication" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CandidateApplication" FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_candidateapplication ON "CandidateApplication"
+  USING ("tenantId" = current_setting('app.tenant_id', true)::text);
+
+CREATE POLICY admin_bypass_candidateapplication ON "CandidateApplication"
+  USING (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '');
+
