@@ -23,7 +23,8 @@ Health check anytime: http://localhost:4000/api/health
 
 Other seeded accounts (same password `Password123!`):
 - `recruiter@acme.com` — RECRUITER role
-- `hiring.manager@acme.com` — HIRING_MANAGER role
+- `hiring-manager@acme.com` — HIRING_MANAGER role (note the hyphen, not dot)
+- `interviewer@acme.com` — INTERVIEWER role
 - `compliance@acme.com` — COMPLIANCE_OFFICER
 
 ## The end-to-end flow to demo
