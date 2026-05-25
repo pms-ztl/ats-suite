@@ -28,7 +28,7 @@ export function PermissionMatrix({ roles, resources, permissions, className }: P
         </thead>
         <tbody>
           {resources.map(resource => (
-            <tr key={resource} className="border-b hover:bg-slate-50/50">
+            <tr key={resource} className="border-b hover:bg-muted/50">
               <td className="p-2 font-medium">{resource}</td>
               {roles.map(role => (
                 <td key={role} className="text-center p-2">

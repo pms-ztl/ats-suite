@@ -74,7 +74,7 @@ function getTypeBadgeColor(type: string): string {
     case "approval": return "bg-emerald-50 text-emerald-700";
     case "offer_approval": return "bg-violet-50 text-violet-700";
     case "scheduling_review": return "bg-blue-50 text-blue-700";
-    default: return "bg-slate-100 text-slate-700";
+    default: return "bg-muted text-muted-foreground";
   }
 }
 

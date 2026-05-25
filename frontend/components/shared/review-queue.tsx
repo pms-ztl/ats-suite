@@ -36,7 +36,7 @@ export function ReviewQueue({ items, onApprove, onReject, onEscalate, className 
             <button
               key={item.id}
               onClick={() => setSelectedId(item.id)}
-              className={cn("w-full text-left p-3 hover:bg-slate-50 transition-colors", selectedId === item.id && "bg-indigo-50 border-l-2 border-l-indigo-500")}
+              className={cn("w-full text-left p-3 hover:bg-accent transition-colors", selectedId === item.id && "bg-primary/10 border-l-2 border-l-primary")}
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium truncate">{item.candidateName}</span>

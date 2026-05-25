@@ -19,7 +19,7 @@ export function FlowDiagram({ stages, className }: FlowDiagramProps) {
   const statusStyles = {
     complete: { bg: "bg-emerald-50 border-emerald-200", icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />, text: "text-emerald-700" },
     active: { bg: "bg-indigo-50 border-indigo-200 ring-2 ring-indigo-300", icon: <Clock className="h-4 w-4 text-indigo-600 animate-pulse" />, text: "text-indigo-700" },
-    pending: { bg: "bg-slate-50 border-slate-200", icon: <Clock className="h-4 w-4 text-slate-400" />, text: "text-slate-500" },
+    pending: { bg: "bg-muted/40 border-border", icon: <Clock className="h-4 w-4 text-muted-foreground" />, text: "text-muted-foreground" },
     error: { bg: "bg-rose-50 border-rose-200", icon: <AlertTriangle className="h-4 w-4 text-rose-600" />, text: "text-rose-700" },
   };
 

@@ -419,7 +419,7 @@ export default function ApplyPage() {
                     ? "border-destructive/50 bg-destructive/5"
                     : resume
                       ? "border-emerald-300 bg-emerald-50/50"
-                      : "border-slate-200 hover:border-primary/50"
+                      : "border-border hover:border-primary/50"
                 }`}
               >
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />

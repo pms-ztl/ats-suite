@@ -184,7 +184,7 @@ export function DataTable<TData, TValue>({ columns, data, loading = false, pageS
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className="bg-slate-50/50">
+              <TableRow key={headerGroup.id} className="bg-muted/50">
                 {headerGroup.headers.map(header => (
                   <TableHead key={header.id} className="text-2xs font-semibold uppercase tracking-wider">
                     {header.isPlaceholder ? null : (

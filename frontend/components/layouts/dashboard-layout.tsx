@@ -32,13 +32,13 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   RECRUITER: "bg-blue-100 text-blue-700 border-blue-200",
   HIRING_MANAGER: "bg-emerald-100 text-emerald-700 border-emerald-200",
   COMPLIANCE_OFFICER: "bg-amber-100 text-amber-700 border-amber-200",
-  CANDIDATE: "bg-slate-100 text-slate-600 border-slate-200",
+  CANDIDATE: "bg-muted text-muted-foreground border-border",
   // lowercase (legacy mock fallback)
   admin: "bg-violet-100 text-violet-700 border-violet-200",
   recruiter: "bg-blue-100 text-blue-700 border-blue-200",
   hiring_manager: "bg-emerald-100 text-emerald-700 border-emerald-200",
   compliance_officer: "bg-amber-100 text-amber-700 border-amber-200",
-  candidate: "bg-slate-100 text-slate-600 border-slate-200",
+  candidate: "bg-muted text-muted-foreground border-border",
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -124,7 +124,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search features…"
-                      className="pl-9 h-8 bg-slate-50 border-slate-200 cursor-pointer"
+                      className="pl-9 h-8 bg-muted/50 border-border cursor-pointer"
                       onClick={() =>
                         document.dispatchEvent(
                           new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
@@ -178,7 +178,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <>
                       <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
                       <span
-                        className={`hidden sm:inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium ${ROLE_BADGE_COLORS[user.role] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
+                        className={`hidden sm:inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium ${ROLE_BADGE_COLORS[user.role] ?? "bg-muted text-muted-foreground border-border"}`}
                       >
                         {ROLE_LABELS[user.role] ?? user.role}
                       </span>

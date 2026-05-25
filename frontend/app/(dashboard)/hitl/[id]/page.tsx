@@ -276,7 +276,7 @@ export default function HITLCheckpointDetailPage() {
               checkpoint.type === "rejection_review" ? "bg-rose-50 text-rose-700" :
               checkpoint.type === "offer_approval" ? "bg-violet-50 text-violet-700" :
               checkpoint.type === "scheduling_review" ? "bg-blue-50 text-blue-700" :
-              "bg-slate-100 text-slate-700"
+              "bg-muted text-muted-foreground"
             )}>
               {checkpoint.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </span>

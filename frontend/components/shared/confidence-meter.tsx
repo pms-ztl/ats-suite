@@ -16,7 +16,7 @@ export function ConfidenceMeter({ value, showLabel = true, size = "md", classNam
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className={cn("flex-1 bg-slate-100 rounded-full overflow-hidden", heights[size])}>
+      <div className={cn("flex-1 bg-muted rounded-full overflow-hidden", heights[size])}>
         <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${percentage}%` }} />
       </div>
       {showLabel && <span className={cn("text-2xs font-semibold tabular-nums", textColor)}>{percentage}%</span>}
