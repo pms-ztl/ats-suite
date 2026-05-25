@@ -102,11 +102,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Hit the real backend (4000) via the absolute URL, send the JWT from
-    // sessionStorage. The previous code hit "/api/..." on port 3000 (Next.js)
-    // which 404s, fell into the catch, and rendered fake hardcoded numbers.
+    // Hit the real backend (4000) via absolute URL with credentials.
+    // The previous code hit relative "/api/..." (which 404s on Next.js) and
+    // fell into the catch — rendering fake hardcoded 48/1240/etc.
+    //
+    // Auth: try sessionStorage first (set by AuthProvider after login in
+    // the SAME tab). If absent — e.g. dashboard opened in a fresh tab —
+    // the HttpOnly `ats-token` cookie set by /auth/login is auto-sent by
+    // `credentials: "include"`, and the backend's requireAuth middleware
+    // accepts it as a fallback.
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-    const token = typeof window !== "undefined" ? window.sessionStorage?.getItem("ats-access-token") : null;
+    let token: string | null = null;
+    if (typeof window !== "undefined") {
+      try { token = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
+    }
 
     fetch(`${API_BASE}/platform/unified-overview`, {
       credentials: "include",

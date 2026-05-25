@@ -114,7 +114,20 @@ export default function DashboardPage() {
   useEffect(() => {
     setKpisLoading(true);
     setKpisError(false);
-    fetch("/api/platform/unified-overview", { headers: { "x-tenant-id": "default" } })
+    // Absolute backend URL + credentials. sessionStorage for same-tab login,
+    // HttpOnly cookie fallback (auto-sent via credentials:'include').
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let _token: string | null = null;
+    if (typeof window !== "undefined") {
+      try { _token = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
+    }
+    fetch(`${API_BASE}/platform/unified-overview`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(_token ? { Authorization: `Bearer ${_token}` } : {}),
+      },
+    })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
