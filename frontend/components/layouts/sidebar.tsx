@@ -46,8 +46,23 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [hitlPendingCount, setHitlPendingCount] = useState(0);
 
   useEffect(() => {
-    fetch("/api/agents/hitl", { headers: { "x-tenant-id": "default" } })
-      .then((r) => (r.ok ? r.json() : []))
+    // Use absolute backend URL + JWT (sessionStorage primary, HttpOnly cookie
+    // fallback via credentials:"include"). Previously hit relative "/api/..."
+    // on port 3000 with a fake "x-tenant-id" header — always 401, retried
+    // on every layout mount, added perceptible click latency.
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let token: string | null = null;
+    if (typeof window !== "undefined") {
+      try { token = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
+    }
+    fetch(`${API_BASE}/agents/hitl`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((res) => {
         const data = Array.isArray(res) ? res : res.data ?? [];
         setHitlPendingCount(data.filter((c: { status: string }) => c.status === "PENDING").length);

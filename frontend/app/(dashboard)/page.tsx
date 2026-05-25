@@ -168,7 +168,18 @@ export default function DashboardPage() {
   // Fetch real pipeline funnel data from candidates API
   useEffect(() => {
     setFunnelLoading(true);
-    fetch("/api/analytics/pipeline", { headers: { "x-tenant-id": "default" } })
+    const _API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let _tok: string | null = null;
+    if (typeof window !== "undefined") {
+      try { _tok = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
+    }
+    fetch(`${_API}/analytics/pipeline`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(_tok ? { Authorization: `Bearer ${_tok}` } : {}),
+      },
+    })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -196,8 +207,19 @@ export default function DashboardPage() {
 
   // Fetch HITL queue summary
   useEffect(() => {
-    fetch("/api/agents/hitl", { headers: { "x-tenant-id": "default" } })
-      .then((r) => (r.ok ? r.json() : []))
+    const _API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let _tok: string | null = null;
+    if (typeof window !== "undefined") {
+      try { _tok = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
+    }
+    fetch(`${_API}/agents/hitl`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(_tok ? { Authorization: `Bearer ${_tok}` } : {}),
+      },
+    })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((res) => {
         const data = Array.isArray(res) ? res : res.data ?? [];
         const pendingItems = data.filter((c: { status: string }) => c.status === "PENDING");
