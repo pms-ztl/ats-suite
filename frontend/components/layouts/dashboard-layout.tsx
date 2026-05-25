@@ -194,9 +194,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   </Avatar>
                   {user && (
                     <>
-                      <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+                      <span className="text-sm font-medium hidden sm:inline max-w-[160px] truncate" title={user.name}>{user.name}</span>
                       <span
-                        className={`hidden sm:inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium ${ROLE_BADGE_COLORS[user.role] ?? "bg-muted text-muted-foreground border-border"}`}
+                        className={`hidden sm:inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium whitespace-nowrap ${ROLE_BADGE_COLORS[user.role] ?? "bg-muted text-muted-foreground border-border"}`}
                       >
                         {ROLE_LABELS[user.role] ?? user.role}
                       </span>

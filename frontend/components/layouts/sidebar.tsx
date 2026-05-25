@@ -79,38 +79,64 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           collapsed ? "w-16" : "w-64"
         )}
       >
-        {/* Edge-rail toggle — floating chevron pinned to the sidebar's right edge.
-            Always visible on hover anywhere over the sidebar; clearer affordance
-            than the footer-only "Collapse" link. */}
-        <button
-          onClick={onToggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "absolute top-16 right-0 translate-x-1/2 z-50",
-            "h-7 w-7 rounded-full border border-border/60 bg-background shadow-md",
-            "flex items-center justify-center",
-            "text-muted-foreground hover:text-primary hover:border-primary/50 hover:shadow-lg",
-            "opacity-0 group-hover/sidebar:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
-          )}
-        >
-          {collapsed
-            ? <ChevronRight className="h-3.5 w-3.5" />
-            : <ChevronLeft className="h-3.5 w-3.5" />}
-        </button>
+        {/* ───── Premium edge-rail toggle ─────────────────────────────────
+            A full-height invisible hover zone on the sidebar's right edge.
+            On hover, an emerald vertical bar fades in along the edge AND a
+            pill toggle slides into view (centered vertically near the top).
+            Click anywhere on the bar OR the pill to toggle.
+            Pure CSS hover — no JS state — so it's instant.
+            ───────────────────────────────────────────────────────────── */}
+        <div className="absolute top-0 right-0 h-full w-3 -mr-1.5 group/rail z-50">
+          {/* Invisible widened hit-target — makes the edge forgiving to grab */}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="absolute inset-0 cursor-pointer"
+          />
+          {/* Animated emerald rail that lights up on hover */}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-full w-px",
+              "bg-gradient-to-b from-transparent via-primary/0 to-transparent",
+              "group-hover/rail:via-primary/70 transition-all duration-300"
+            )}
+          />
+          {/* Floating pill toggle — premium look with glow on hover */}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute top-20 left-1/2 -translate-x-1/2",
+              "h-10 w-6 rounded-full border border-border/60",
+              "bg-background/90 backdrop-blur-md shadow-md",
+              "flex items-center justify-center",
+              "text-muted-foreground",
+              "opacity-0 -translate-x-1 group-hover/rail:opacity-100 group-hover/rail:translate-x-1/2",
+              "group-hover/rail:border-primary/60 group-hover/rail:text-primary",
+              "group-hover/rail:shadow-[0_0_0_3px_hsl(var(--primary)/0.15),0_8px_20px_-6px_hsl(var(--primary)/0.45)]",
+              "transition-all duration-200 ease-out"
+            )}
+          >
+            {collapsed
+              ? <ChevronRight className="h-3.5 w-3.5" />
+              : <ChevronLeft className="h-3.5 w-3.5" />}
+          </span>
+        </div>
         {/* Logo */}
-        <div className="flex h-14 items-center border-b px-4">
-          <Link href="/" className={cn("flex items-center gap-2", collapsed && "mx-auto")}>
-            <div className="h-8 w-8 shrink-0 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-white">C</span>
+        <div className="flex h-14 items-center border-b border-border/40 px-4">
+          <Link href="/" className={cn("flex items-center gap-2 min-w-0", collapsed && "mx-auto")}>
+            <div className="h-8 w-8 shrink-0 rounded-lg bg-primary glow-primary flex items-center justify-center">
+              <span className="text-sm font-bold text-primary-foreground">C</span>
             </div>
             <div
               className={cn(
-                "overflow-hidden transition-all duration-200",
+                "min-w-0 overflow-hidden transition-all duration-200",
                 collapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
               )}
             >
-              <span className="text-sm font-bold text-foreground whitespace-nowrap">CDC ATS</span>
-              <p className="text-2xs text-muted-foreground whitespace-nowrap">AI-Powered Hiring</p>
+              <span className="block text-sm font-bold text-foreground truncate">CDC ATS</span>
+              <p className="text-2xs text-muted-foreground truncate">AI-Powered Hiring</p>
             </div>
           </Link>
         </div>
@@ -162,23 +188,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <NavItem href="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" collapsed={collapsed} />
           <Link
             href="/platform"
+            title="What's New"
             className={cn(
-              "flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors",
+              "flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors min-w-0",
               collapsed && "justify-center"
             )}
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span
               className={cn(
-                "overflow-hidden transition-all duration-200 whitespace-nowrap",
-                collapsed ? "opacity-0 w-0" : "opacity-100"
+                "flex-1 min-w-0 truncate transition-all duration-200",
+                collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
               )}
             >
-              What's New
+              What&apos;s New
             </span>
             <span
               className={cn(
-                "ml-auto overflow-hidden transition-all duration-200 bg-primary text-primary-foreground text-2xs px-1.5 py-0.5 rounded-full whitespace-nowrap",
+                "shrink-0 overflow-hidden transition-all duration-200 bg-primary text-primary-foreground text-2xs px-1.5 py-0.5 rounded-full whitespace-nowrap",
                 collapsed ? "opacity-0 w-0 px-0" : "opacity-100"
               )}
             >
@@ -190,15 +217,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             onClick={onToggle}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
-              "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
+              "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors min-w-0",
               collapsed && "justify-center"
             )}
           >
-            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4 shrink-0" />}
+            {collapsed
+              ? <PanelLeft className="h-4 w-4 shrink-0" />
+              : <PanelLeftClose className="h-4 w-4 shrink-0" />}
             <span
               className={cn(
-                "overflow-hidden transition-all duration-200 whitespace-nowrap",
-                collapsed ? "opacity-0 w-0" : "opacity-100"
+                "flex-1 min-w-0 truncate text-left transition-all duration-200",
+                collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
               )}
             >
               Collapse
@@ -227,11 +256,15 @@ function NavItem({
   collapsed: boolean;
   urgent?: boolean;
 }) {
+  // `min-w-0` on the outer Link + `flex-1 min-w-0 truncate` on the label
+  // is the canonical recipe to make a flexbox child truncate cleanly without
+  // pushing siblings (the icon / badge) out of view.
   const content = (
     <Link
       href={href}
+      title={label}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors min-w-0",
         active
           ? "bg-primary/10 text-primary font-medium"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
@@ -241,7 +274,7 @@ function NavItem({
       <span className="shrink-0">{icon}</span>
       <span
         className={cn(
-          "flex-1 truncate transition-all duration-200",
+          "flex-1 min-w-0 truncate transition-all duration-200",
           collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
         )}
       >
@@ -250,14 +283,14 @@ function NavItem({
       {badge !== undefined && (
         <span
           className={cn(
-            "overflow-hidden transition-all duration-200",
+            "shrink-0 overflow-hidden transition-all duration-200",
             collapsed ? "opacity-0 w-0" : "opacity-100"
           )}
         >
           <Badge
             variant={urgent ? "destructive" : "secondary"}
             className={cn(
-              "text-2xs h-5 min-w-[20px] justify-center",
+              "text-2xs h-5 min-w-[20px] justify-center tabular-nums",
               urgent
                 ? "bg-rose-500 text-white"
                 : active
