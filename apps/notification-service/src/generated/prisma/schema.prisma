@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NOTIFICATION_DATABASE_URL")
+}
+
+enum NotificationType {
+  PLAN_CHANGE_REQUESTED
+  PLAN_CHANGE_APPROVED
+  PLAN_CHANGE_REJECTED
+  NEW_TENANT_SIGNUP
+  BULK_UPLOAD_COMPLETED
+  SEAT_LIMIT_REACHED
+  INTERVIEW_FEEDBACK_NEW
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  // tenantId NULL = platform-wide (super-admin only sees these)
+  tenantId  String?
+  // userId NULL = broadcast to all users in tenant (or all super-admins if tenantId null)
+  userId    String?
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  metadata  Json             @default("{}")
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+  @@index([tenantId, createdAt])
+  @@index([createdAt])
+}

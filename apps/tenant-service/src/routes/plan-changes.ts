@@ -53,6 +53,23 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         status: "PENDING",
       },
     });
+
+    // Emit tenant.{id}.plan-change.requested → notification-service notifies super-admins
+    publishEvent({
+      subject: tenantSubject(body.tenantId, "plan-change", "requested"),
+      type: "plan-change.requested",
+      tenantId: body.tenantId,
+      payload: {
+        tenantId: body.tenantId,
+        tenantName: tenant.name,
+        requestId: request.id,
+        fromPlan: tenant.plan,
+        toPlan: body.toPlan,
+        reason: body.reason ?? null,
+        requestedByUserId: body.requestedByUserId,
+      },
+    }).catch(() => { /* non-fatal */ });
+
     created(res, request);
   } catch (err) {
     next(err);

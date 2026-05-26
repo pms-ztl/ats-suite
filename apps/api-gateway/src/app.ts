@@ -108,6 +108,7 @@ export function createApp(logger: Logger): Express {
   const interviewUrl = process.env["INTERVIEW_SERVICE_URL"] ?? "http://localhost:4006";
   const resumeUrl = process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007";
   const screeningUrl = process.env["SCREENING_SERVICE_URL"] ?? "http://localhost:4008";
+  const notificationUrl = process.env["NOTIFICATION_SERVICE_URL"] ?? "http://localhost:4009";
 
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
@@ -130,6 +131,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/screening", gatewayAuth(), forwardHeaders(screeningUrl, "/internal/screening"));
   app.use("/api/interviews", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interviews"));
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
+  app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
 
   // /api/tenants/plan-change-request (in-process — wraps tenant-service)
   app.post(
