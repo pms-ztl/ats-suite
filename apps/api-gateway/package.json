@@ -14,6 +14,8 @@
   "dependencies": {
     "@cdc-ats/common": "*",
     "@cdc-ats/contracts": "*",
+    "@cdc-ats/ai-engine": "*",
+    "@cdc-ats/nats-client": "*",
     "express": "^4.21.2",
     "http-proxy-middleware": "^3.0.3",
     "jose": "^5.9.6",

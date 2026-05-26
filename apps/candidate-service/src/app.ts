@@ -7,6 +7,9 @@ import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import candidatesRouter from "./routes/candidates.js";
 import applicationsRouter from "./routes/applications.js";
+import sourcingRouter from "./routes/agent-sourcing.js";
+import offerRouter from "./routes/agent-offer.js";
+import experienceRouter from "./routes/agent-experience.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -30,6 +33,9 @@ export function createApp(logger: Logger): Express {
 
   app.use("/internal/candidates", readAuthHeaders(), candidatesRouter);
   app.use("/internal/applications", readAuthHeaders(), applicationsRouter);
+  app.use("/internal/sourcing", readAuthHeaders(), sourcingRouter);
+  app.use("/internal/offer", readAuthHeaders(), offerRouter);
+  app.use("/internal/candidate-experience", readAuthHeaders(), experienceRouter);
 
   app.use(notFoundHandler());
   app.use(createErrorHandler(logger));
