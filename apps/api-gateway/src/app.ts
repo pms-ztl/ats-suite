@@ -30,6 +30,7 @@ import { gatewayAuth } from "./lib/auth-middleware.js";
 import authRouter from "./routes/auth.js";
 import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
+import { aggregatorRouter } from "./routes/aggregators.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -148,8 +149,15 @@ export function createApp(logger: Logger): Express {
   // Platform aggregator — fans out to job + candidate + billing in parallel
   app.use("/api/platform", gatewayAuth(), platformRouter(logger));
 
-  // Single-service agent routes (proxies — MUST come before the gateway-hosted
-  // /api mount below, because express.json() in that mount would consume the
+  // Cross-service read aggregators (analytics/pipeline, /agents/hitl,
+  // /sourcing/talent-pools, etc.). MUST come BEFORE the single-service
+  // proxies below so specific GET routes like /api/sourcing/talent-pools
+  // don't get caught by the /api/sourcing proxy.
+  app.use("/api", gatewayAuth(), aggregatorRouter(logger));
+
+  // Single-service agent routes (POST proxies — MUST come before the
+  // gateway-hosted /api mount above for the same path, because the
+  // gateway-hosted handlers use express.json() which would consume the
   // body before http-proxy-middleware could forward it).
   app.use("/api/sourcing", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/sourcing"));
   app.use("/api/offer", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/offer"));
@@ -159,6 +167,8 @@ export function createApp(logger: Logger): Express {
 
   // Gateway-hosted agent routes (analytics, bias-auditor, copilot) — each
   // mounted at its own path with body parsing scoped to just that path.
+  // NOTE: aggregatorRouter above handles GET /api/analytics/pipeline etc.,
+  // these handle POST /api/analytics for the agent. Express routes by method.
   app.use("/api/analytics", gatewayAuth(), express.json({ limit: "1mb" }), analyticsAgentRouter(logger));
   app.use("/api/bias-auditor", gatewayAuth(), express.json({ limit: "1mb" }), biasAuditorRouter(logger));
   app.use("/api/copilot", gatewayAuth(), express.json({ limit: "1mb" }), copilotRouter(logger));
