@@ -16,7 +16,8 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, created, Errors } from "@cdc-ats/common";
-import { TenantPlanSchema, PlanChangeStatusSchema } from "@cdc-ats/contracts";
+import { TenantPlanSchema, PlanChangeStatusSchema, tenantSubject } from "@cdc-ats/contracts";
+import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -145,6 +146,22 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
       }
       return updated;
     });
+
+    // Emit tenant.plan-changed → billing-service updates cache + disables agents
+    if (body.action === "APPROVE") {
+      publishEvent({
+        subject: tenantSubject(request.tenantId, "tenant", "plan-changed"),
+        type: "tenant.plan-changed",
+        tenantId: request.tenantId,
+        payload: {
+          tenantId: request.tenantId,
+          fromPlan: request.fromPlan,
+          toPlan: request.toPlan,
+          changedByUserId: body.reviewedByUserId,
+          requestId: id,
+        },
+      }).catch(() => { /* non-fatal */ });
+    }
 
     ok(res, result);
   } catch (err) {

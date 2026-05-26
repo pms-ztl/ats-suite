@@ -72,14 +72,15 @@ export function createApp(logger: Logger): Express {
   app.use("/api/auth", express.json({ limit: "1mb" }), authLimiter, authRouter);
 
   // ── Proxy helper that forwards X-User-* headers ────────────────────
-  const forwardHeaders = (
-    proxyTarget: string,
-    pathRewrite: ProxyOptions["pathRewrite"]
-  ) =>
+  // `targetPrefix` is PREPENDED to the request path (which has already had
+  // the express mount path stripped by app.use). So mounting at /api/billing
+  // with targetPrefix /internal/billing turns GET /api/billing/agents into
+  // GET <billingUrl>/internal/billing/agents.
+  const forwardHeaders = (proxyTarget: string, targetPrefix: string) =>
     createProxyMiddleware({
       target: proxyTarget,
       changeOrigin: true,
-      pathRewrite,
+      pathRewrite: (path) => `${targetPrefix}${path}`,
       logger,
       on: {
         proxyReq: (proxyReq, rawReq) => {
@@ -101,13 +102,27 @@ export function createApp(logger: Logger): Express {
 
   const identityUrl = process.env["IDENTITY_SERVICE_URL"] ?? "http://localhost:4001";
   const tenantUrl = process.env["TENANT_SERVICE_URL"] ?? "http://localhost:4002";
+  const billingUrl = process.env["BILLING_SERVICE_URL"] ?? "http://localhost:4003";
+  const jobUrl = process.env["JOB_SERVICE_URL"] ?? "http://localhost:4004";
+  const candidateUrl = process.env["CANDIDATE_SERVICE_URL"] ?? "http://localhost:4005";
 
-  // /api/users/* → identity-service /internal/users/*
+  // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
-    "/api/users",
-    gatewayAuth(),
-    forwardHeaders(identityUrl, { "^/api/users": "/internal/users" })
+    "/api/public",
+    createProxyMiddleware({
+      target: jobUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/public${path}`,
+      logger,
+    })
   );
+
+  app.use("/api/users", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users"));
+  app.use("/api/billing", gatewayAuth(), forwardHeaders(billingUrl, "/internal/billing"));
+  app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
+  app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
+  app.use("/api/candidates", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidates"));
+  app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
 
   // /api/tenants/plan-change-request (in-process — wraps tenant-service)
   app.post(
@@ -155,14 +170,8 @@ export function createApp(logger: Logger): Express {
     }
   );
 
-  // /api/tenants/:id → tenant-service /internal/tenants/:id
-  app.use(
-    "/api/tenants",
-    gatewayAuth(),
-    forwardHeaders(tenantUrl, { "^/api/tenants": "/internal/tenants" })
-  );
+  app.use("/api/tenants", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/tenants"));
 
-  // /api/super-admin/* — SUPER_ADMIN-only proxies
   const requireSuperAdmin = (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user || req.user.role !== "SUPER_ADMIN") {
       return next(Errors.forbidden("SUPER_ADMIN role required"));
@@ -170,19 +179,8 @@ export function createApp(logger: Logger): Express {
     next();
   };
 
-  app.use(
-    "/api/super-admin/tenants",
-    gatewayAuth(),
-    requireSuperAdmin,
-    forwardHeaders(tenantUrl, { "^/api/super-admin/tenants": "/internal/tenants" })
-  );
-
-  app.use(
-    "/api/super-admin/plan-change-requests",
-    gatewayAuth(),
-    requireSuperAdmin,
-    forwardHeaders(tenantUrl, { "^/api/super-admin/plan-change-requests": "/internal/plan-changes" })
-  );
+  app.use("/api/super-admin/tenants", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/tenants"));
+  app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
 
   app.use(notFoundHandler());
   app.use(createErrorHandler(logger));

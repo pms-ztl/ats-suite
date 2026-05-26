@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CANDIDATE_DATABASE_URL")
+}
+
+enum ApplicationStage {
+  APPLIED
+  SCREENED
+  PHONE_SCREEN
+  ASSESSMENT
+  INTERVIEW
+  FINAL_REVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ApplicationStatus {
+  ACTIVE
+  ON_HOLD
+  REJECTED
+  WITHDRAWN
+  HIRED
+}
+
+model Candidate {
+  id           String   @id @default(uuid())
+  tenantId     String
+  email        String
+  firstName    String
+  lastName     String
+  phone        String?
+  location     String?
+  country      String?
+  resumeUrl    String? // pointer to resume-service (internal://resume/{id})
+  linkedinUrl  String?
+  portfolioUrl String?
+  summary      String?
+  source       String?
+  tags         String[] @default([])
+  isAnonymized Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications Application[]
+  notes        CandidateNote[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Application {
+  id             String            @id @default(cuid())
+  tenantId       String
+  candidateId    String
+  requisitionId  String // FK to job-service Requisition (no Prisma relation, cross-service)
+  stage          ApplicationStage  @default(APPLIED)
+  status         ApplicationStatus @default(ACTIVE)
+  appliedAt      DateTime          @default(now())
+  stageUpdatedAt DateTime          @default(now())
+  notes          String?
+  formResponses  Json? // custom form submissions
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  candidate   Candidate               @relation(fields: [candidateId], references: [id])
+  attachments ApplicationAttachment[]
+
+  @@index([tenantId])
+  @@index([tenantId, stage])
+  @@index([candidateId])
+  @@index([requisitionId])
+}
+
+model ApplicationAttachment {
+  id            String   @id @default(uuid())
+  tenantId      String
+  applicationId String
+  fieldId       String
+  fileName      String
+  originalName  String
+  fileSize      Int
+  mimeType      String
+  storageKey    String
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@index([tenantId])
+  @@index([applicationId])
+}
+
+model CandidateNote {
+  id           String   @id @default(uuid())
+  tenantId     String
+  candidateId  String
+  authorUserId String // FK to identity-service User
+  content      String
+  isPrivate    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId])
+  @@index([candidateId])
+}

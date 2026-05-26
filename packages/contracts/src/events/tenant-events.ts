@@ -8,7 +8,9 @@ export const TenantCreatedPayloadSchema = z.object({
   plan: TenantPlanSchema,
   industry: z.string().nullable(),
   companySize: z.string().nullable(),
-  createdByUserId: z.string().uuid(),
+  // Nullable because self-serve signups create the tenant BEFORE any user
+  // exists — first user is created after as part of the same saga.
+  createdByUserId: z.string().uuid().nullable(),
 });
 export type TenantCreatedPayload = z.infer<typeof TenantCreatedPayloadSchema>;
 

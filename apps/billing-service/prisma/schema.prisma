@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("BILLING_DATABASE_URL")
+}
+
+// Tenant.plan is mirrored here so we can gate without a sync HTTP call to
+// tenant-service. tenant-service publishes tenant.plan.changed via NATS and
+// our subscriber keeps this in sync.
+model TenantPlanCache {
+  tenantId  String   @id
+  plan      String   // mirrors TenantPlan enum
+  updatedAt DateTime @updatedAt
+}
+
+// Per-tenant agent kill-switches (tenant admin can toggle agents off even
+// if their plan allows them).
+model AgentKillSwitch {
+  id        String   @id @default(uuid())
+  tenantId  String
+  agentType String   // "resume-parser", "candidate-screener", ...
+  disabled  Boolean  @default(false)
+  reason    String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, agentType])
+  @@index([tenantId])
+}
+
+// Per-tenant agent execution log — denormalized for fast cost queries.
+// Source-of-truth still lives in each agent-running service; this is a
+// projection populated by NATS agent.completed subscriber.
+model AgentRunCost {
+  id            String   @id @default(uuid())
+  tenantId      String
+  agentRunId    String   @unique
+  agentType     String
+  status        String
+  tokensIn      Int
+  tokensOut     Int
+  costUsd       Decimal  @db.Decimal(10, 6)
+  latencyMs     Int
+  triggeredByUserId String?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, agentType])
+}
+
+// Per-tenant feature flags (separate from plan-based gating — used for
+// gradual rollouts).
+model FeatureFlag {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  enabled   Boolean  @default(false)
+  metadata  Json     @default("{}")
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}

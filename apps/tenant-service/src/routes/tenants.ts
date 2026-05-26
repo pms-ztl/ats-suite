@@ -4,7 +4,8 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, created, Errors } from "@cdc-ats/common";
-import { CreateTenantInputSchema, TenantPlanSchema, TenantStatusSchema } from "@cdc-ats/contracts";
+import { CreateTenantInputSchema, TenantPlanSchema, TenantStatusSchema, tenantSubject } from "@cdc-ats/contracts";
+import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -32,6 +33,24 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         website: body.website,
       },
     });
+
+    // Emit platform.tenant.created → billing-service seeds plan cache
+    const xUserId = req.headers["x-user-id"];
+    const createdByUserId =
+      typeof xUserId === "string" && /^[0-9a-f-]{36}$/i.test(xUserId) ? xUserId : null;
+    publishEvent({
+      subject: "platform.tenant.created",
+      type: "tenant.created",
+      tenantId: null,
+      payload: {
+        tenantId: tenant.id,
+        name: tenant.name,
+        plan: tenant.plan,
+        industry: tenant.industry,
+        companySize: tenant.companySize,
+        createdByUserId,
+      },
+    }).catch(() => { /* non-fatal */ });
 
     created(res, tenant);
   } catch (err) {
