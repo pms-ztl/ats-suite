@@ -1,8 +1,11 @@
 /**
- * Port of monolith's round-progression.ts — shared by HTTP advance-round
- * endpoint AND the feedback-advance worker (Batch 6 logic).
+ * Round progression — shared by HTTP advance-round endpoint AND the
+ * feedback-advance flow. When the round has defaultPanelistRole, calls
+ * identity-service to find active users with that role and round-robin
+ * assigns ONE of them as panelist (least-recently-assigned wins).
  */
 import { prisma } from "./prisma.js";
+import { fetchActiveUsersByRole } from "./service-client.js";
 
 export type AdvanceTriggeredBy = "user" | "auto";
 
@@ -22,6 +25,7 @@ export async function advanceApplicationToNextRound(args: {
 }): Promise<AdvanceResult> {
   const { applicationId, candidateId, requisitionId, tenantId } = args;
 
+  // Find latest round for this application
   const lastInterview = await prisma.interview.findFirst({
     where: { applicationId, tenantId, roundId: { not: null } },
     orderBy: [{ roundNumber: "desc" }, { createdAt: "desc" }],
@@ -36,6 +40,7 @@ export async function advanceApplicationToNextRound(args: {
     return { interview: null, round: null, assignedPanelistId: null, reason: "no_more_rounds" };
   }
 
+  // Create stub interview for the next round
   const interview = await prisma.interview.create({
     data: {
       tenantId, requisitionId, candidateId, applicationId,
@@ -48,13 +53,50 @@ export async function advanceApplicationToNextRound(args: {
     },
   });
 
-  // Phase 3 stub: skip cross-service user lookup. In Phase 3.5 we'd call
-  // identity-service /internal/users?tenantId=&role= to find candidates.
-  // For now, panelist auto-assign is a no-op + emits "no_panelist_available".
-  return {
-    interview,
-    round: nextRound,
-    assignedPanelistId: null,
-    reason: nextRound.defaultPanelistRole ? "no_panelist_available" : "scheduled",
-  };
+  // ── Phase 6b: round-robin panelist auto-assign ──────────────────────
+  let assignedPanelistId: string | null = null;
+  let reason: AdvanceResult["reason"] = "scheduled";
+
+  if (nextRound.defaultPanelistRole) {
+    const candidates = await fetchActiveUsersByRole(tenantId, nextRound.defaultPanelistRole);
+
+    if (candidates.length === 0) {
+      reason = "no_panelist_available";
+    } else {
+      // Round-robin: pick user whose most recent assignment is oldest.
+      // Tracked via InterviewPanelMember.interview.createdAt.
+      const lastAssignments = await prisma.interviewPanelMember.findMany({
+        where: { userId: { in: candidates.map((c) => c.id) } },
+        include: { interview: { select: { createdAt: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const lastTsByUser = new Map<string, Date>();
+      for (const a of lastAssignments) {
+        if (!lastTsByUser.has(a.userId)) {
+          lastTsByUser.set(a.userId, a.interview.createdAt);
+        }
+      }
+
+      // Users with no prior assignment go first (epoch=0), then sort ASC by lastTs
+      const sorted = candidates
+        .map((c) => ({ userId: c.id, lastTs: lastTsByUser.get(c.id) ?? new Date(0) }))
+        .sort((a, b) => a.lastTs.getTime() - b.lastTs.getTime());
+
+      const picked = sorted[0]!.userId;
+
+      await prisma.interviewPanelMember.create({
+        data: {
+          interviewId: interview.id,
+          userId: picked,
+          role: nextRound.defaultPanelistRole,
+          isRequired: true,
+          confirmed: false,
+        },
+      });
+      assignedPanelistId = picked;
+    }
+  }
+
+  return { interview, round: nextRound, assignedPanelistId, reason };
 }

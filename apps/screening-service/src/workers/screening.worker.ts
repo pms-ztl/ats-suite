@@ -9,6 +9,7 @@ import { tenantSubject } from "@cdc-ats/contracts";
 import { runAgent } from "@cdc-ats/ai-engine";
 import type { ScreeningInput, ScreeningOutput } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
+import { fetchResume, fetchRequisition } from "../lib/service-client.js";
 import type { ScreeningJob } from "../lib/queue.js";
 import type { Logger } from "pino";
 
@@ -31,15 +32,29 @@ export function startScreeningWorker(logger: Logger) {
         },
       });
 
+      // ── Phase 6b: fetch real cross-service data ──────────────────────
+      const [resume, requisition] = await Promise.all([
+        fetchResume(candidateId, tenantId),
+        fetchRequisition(requisitionId, tenantId),
+      ]);
+
+      const resumeText = resume?.extractedText ?? "(no resume text available)";
+      const resumeSkills = (resume?.parsedData?.skills ?? []) as string[];
+      const jobRequirements = Array.isArray(requisition?.requirements)
+        ? (requisition.requirements as string[])
+        : ["general experience"];   // fallback when requirements JSON isn't an array
+      const jobTitle = requisition?.title ?? "Unknown Role";
+
+      logger.info({
+        candidateId, requisitionId,
+        resumeFetched: !!resume, requisitionFetched: !!requisition,
+        skillsCount: resumeSkills.length, requirementsCount: jobRequirements.length,
+      }, "Fetched cross-service context for screening");
+
       try {
         const result = await runAgent<ScreeningInput, ScreeningOutput>({
           agentType: "candidate-screener",
-          input: {
-            resumeText: `Resume for candidate ${candidateId} (Phase 3 stub — full fetch in 3.5)`,
-            resumeSkills: [],
-            jobRequirements: ["TypeScript", "Node.js", "SQL"],
-            jobTitle: "Engineer",
-          },
+          input: { resumeText, resumeSkills, jobRequirements, jobTitle },
           context: {
             tenantId, userId,
             persistRun: async (run) => {
@@ -59,22 +74,27 @@ export function startScreeningWorker(logger: Logger) {
                   errorMessage: run.errorMessage ?? null,
                 },
               });
-              await publishEvent({
-                subject: tenantSubject(run.tenantId, "agent", "completed"),
-                type: "agent.completed",
-                tenantId: run.tenantId,
-                payload: {
+              try {
+                await publishEvent({
+                  subject: tenantSubject(run.tenantId, "agent", "completed"),
+                  type: "agent.completed",
                   tenantId: run.tenantId,
-                  agentRunId: run.agentRunId,
-                  agentType: run.agentType,
-                  status: run.status,
-                  tokensIn: run.tokensIn,
-                  tokensOut: run.tokensOut,
-                  costUsd: run.costUsd,
-                  latencyMs: run.latencyMs,
-                  triggeredByUserId: run.userId,
-                },
-              }).catch(() => {});
+                  payload: {
+                    tenantId: run.tenantId,
+                    agentRunId: run.agentRunId,
+                    agentType: run.agentType,
+                    status: run.status,
+                    tokensIn: run.tokensIn,
+                    tokensOut: run.tokensOut,
+                    costUsd: run.costUsd,
+                    latencyMs: run.latencyMs,
+                    triggeredByUserId: run.userId,
+                  },
+                });
+                logger.info({ agentRunId: run.agentRunId }, "Published agent.completed");
+              } catch (err) {
+                logger.error({ err, agentRunId: run.agentRunId }, "Failed to publish agent.completed");
+              }
             },
           },
         });

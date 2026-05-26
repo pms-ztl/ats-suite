@@ -15,6 +15,7 @@ import { z } from "zod";
 import { ok, created, Errors, getTenantId, getUserId } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { enqueueResumeParse } from "../lib/queue.js";
+import { upsertCandidate } from "../lib/service-client.js";
 
 const router = Router();
 
@@ -118,23 +119,40 @@ router.post(
         },
       });
 
-      // Fan out — create placeholder Candidate IDs (gateway/caller will resolve)
-      // For now we accept candidateIds via a header; simpler version: create
-      // resume rows tagged with bulkUploadId and let the worker resolve later.
+      // Phase 6b: for each file, create a REAL candidate via candidate-service
+      // /upsert-from-application. Email + name are derived from the filename
+      // as a deterministic placeholder until the parsed resume can backfill.
+      // (Real flow: file upload → parse → resume-parser agent extracts email →
+      // a follow-up event updates candidate row with parsed details.)
       let enqueued = 0, failed = 0;
       const errors: Array<{ filename: string; error: string }> = [];
       for (const file of files) {
         try {
           const buf = await fs.readFile(file.path);
           const extractedText = buf.toString("utf-8").slice(0, 50000);
-          // No candidate yet — caller of bulk upload is expected to use the
-          // public apply endpoint or pre-create candidates. For Phase 3
-          // we accept a "placeholder" candidate per file via a UUID we mint.
-          const placeholderCandidateId = `bulk-${bulk.id.slice(0, 8)}-${enqueued}`;
+
+          // Derive placeholder candidate details from filename
+          const baseName = file.originalname.replace(/\.(pdf|docx?|txt)$/i, "")
+            .replace(/[-_]+/g, " ").trim();
+          const firstName = baseName.split(" ")[0] || "Pending";
+          const lastName = baseName.split(" ").slice(1).join(" ") || `Bulk ${enqueued + 1}`;
+          const placeholderEmail = `bulk-${bulk.id.slice(0, 8)}-${enqueued}@pending.placeholder`;
+
+          // Upsert real candidate via candidate-service (idempotent on tenant+email)
+          const candidate = await upsertCandidate(
+            { email: placeholderEmail, firstName, lastName, source: "BULK_UPLOAD" },
+            tenantId,
+            userId
+          );
+
+          if (!candidate) {
+            throw new Error("candidate-service unreachable — could not create candidate");
+          }
+
           const resume = await prisma.resume.create({
             data: {
               tenantId,
-              candidateId: placeholderCandidateId,
+              candidateId: candidate.id,
               fileName: file.originalname,
               originalFilename: file.originalname,
               fileSize: file.size,
@@ -145,7 +163,7 @@ router.post(
             },
           });
           await enqueueResumeParse({
-            candidateId: placeholderCandidateId,
+            candidateId: candidate.id,
             tenantId, userId,
             resumeId: resume.id,
             bulkUploadId: bulk.id,

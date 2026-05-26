@@ -9,6 +9,9 @@ export const AgentRunCompletedPayloadSchema = z.object({
   tokensOut: z.number().int(),
   costUsd: z.number(),
   latencyMs: z.number().int(),
-  triggeredByUserId: z.string().uuid().nullable(),
+  // Nullable + lax string: accepts UUIDs from user-triggered runs AND
+  // sentinel values like "system" / "public" for event-driven runs that
+  // weren't initiated by an authenticated user.
+  triggeredByUserId: z.string().nullable(),
 });
 export type AgentRunCompletedPayload = z.infer<typeof AgentRunCompletedPayloadSchema>;
