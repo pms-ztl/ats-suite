@@ -35,8 +35,24 @@ export function createApp(logger: Logger): Express {
 
   app.use(requestId());
   app.use(helmet());
+  // CORS — accept a comma-separated list in CORS_ORIGIN, or fall back to all
+  // localhost ports in development. In prod set CORS_ORIGIN explicitly.
+  const corsOriginEnv = process.env["CORS_ORIGIN"];
+  const allowedOrigins = corsOriginEnv
+    ? corsOriginEnv.split(",").map((s) => s.trim()).filter(Boolean)
+    : null;
   app.use(cors({
-    origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // server-to-server, curl, etc.
+      if (allowedOrigins) {
+        return callback(null, allowedOrigins.includes(origin));
+      }
+      // Dev fallback: any localhost / 127.0.0.1 port
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
   }));
   app.use(compression());
