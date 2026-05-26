@@ -28,6 +28,7 @@ import type { Logger } from "pino";
 import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import { gatewayAuth } from "./lib/auth-middleware.js";
 import authRouter from "./routes/auth.js";
+import { platformRouter } from "./routes/platform.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -142,6 +143,9 @@ export function createApp(logger: Logger): Express {
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
   app.use("/api/jd-author", gatewayAuth(), forwardHeaders(jobUrl, "/internal/jd-author"));
+
+  // Platform aggregator — fans out to job + candidate + billing in parallel
+  app.use("/api/platform", gatewayAuth(), platformRouter(logger));
   app.use("/api/candidates", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidates"));
   app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
   app.use("/api/resume", gatewayAuth(), forwardHeaders(resumeUrl, "/internal/resume"));

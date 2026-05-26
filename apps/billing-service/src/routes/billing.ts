@@ -28,6 +28,37 @@ router.get("/plan-limits", async (_req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 });
 
+/**
+ * Lightweight tenant overview — AI agent counters used by the dashboard.
+ * Reads from the denormalized agentRunCost table fed by NATS subscribers.
+ */
+router.get("/overview", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [runsToday, totals] = await Promise.all([
+      prisma.agentRunCost.count({
+        where: { tenantId, createdAt: { gte: startOfToday } },
+      }),
+      prisma.agentRunCost.aggregate({
+        where: { tenantId },
+        _count: { _all: true },
+        _sum: { tokensIn: true, tokensOut: true, costUsd: true },
+      }),
+    ]);
+
+    ok(res, {
+      aiDecisionsToday: runsToday,
+      totalAgentRuns: totals._count._all,
+      totalTokensIn: totals._sum.tokensIn ?? 0,
+      totalTokensOut: totals._sum.tokensOut ?? 0,
+      totalCostUsd: Number(totals._sum.costUsd ?? 0),
+    });
+  } catch (err) { next(err); }
+});
+
 // GET /internal/usage?days=30
 router.get("/usage", async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -36,6 +36,29 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
+/**
+ * Lightweight tenant overview — counts requisitions by status.
+ * Used by gateway's /api/platform/unified-overview aggregator.
+ */
+router.get("/overview", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const grouped = await prisma.requisition.groupBy({
+      by: ["status"],
+      where: { tenantId },
+      _count: { _all: true },
+    });
+    const byStatus: Record<string, number> = {};
+    for (const row of grouped) byStatus[row.status] = row._count._all;
+    const openRequisitions =
+      (byStatus["OPEN"] ?? 0) +
+      (byStatus["INTERVIEWING"] ?? 0) +
+      (byStatus["DRAFT"] ?? 0);
+    const totalRequisitions = grouped.reduce((s, r) => s + r._count._all, 0);
+    ok(res, { openRequisitions, totalRequisitions, byStatus });
+  } catch (err) { next(err); }
+});
+
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);

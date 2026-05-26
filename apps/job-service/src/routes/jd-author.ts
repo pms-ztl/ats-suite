@@ -9,9 +9,13 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, getTenantId, getUserId, createLogger } from "@cdc-ats/common";
 import { runAgent, type JDAuthorInput, type JDAuthorOutput } from "@cdc-ats/ai-engine";
+import { publishEvent } from "@cdc-ats/nats-client";
+import { tenantSubject } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
+
+const logger = createLogger({ serviceName: "job-service:jd-author" });
 
 const router = Router();
 
@@ -41,6 +45,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         tenantId,
         userId,
         persistRun: async (snapshot) => {
+          // 1. Persist AgentRun row in job_db (denormalized per-service telemetry)
           await prisma.agentRun
             .create({
               data: {
@@ -61,9 +66,31 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
                 completedAt: snapshot.completedAt,
               },
             })
-            .catch(() => {
-              /* AgentRun is denormalized telemetry — best effort */
+            .catch((err) => {
+              logger.warn({ err, agentRunId: snapshot.agentRunId }, "AgentRun persist failed");
             });
+
+          // 2. Publish agent.completed → billing-service aggregates cost for /api/billing/*
+          try {
+            await publishEvent({
+              subject: tenantSubject(snapshot.tenantId, "agent", "completed"),
+              type: "agent.completed",
+              tenantId: snapshot.tenantId,
+              payload: {
+                tenantId: snapshot.tenantId,
+                agentRunId: snapshot.agentRunId,
+                agentType: snapshot.agentType,
+                status: snapshot.status,
+                tokensIn: snapshot.tokensIn,
+                tokensOut: snapshot.tokensOut,
+                costUsd: snapshot.costUsd,
+                latencyMs: snapshot.latencyMs,
+                triggeredByUserId: snapshot.userId,
+              },
+            });
+          } catch (err) {
+            logger.warn({ err, agentRunId: snapshot.agentRunId }, "agent.completed publish failed");
+          }
         },
       },
     });

@@ -47,6 +47,36 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
+/**
+ * Lightweight tenant overview — total candidates + active applications.
+ * Used by gateway's /api/platform/unified-overview aggregator.
+ */
+router.get("/overview", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const [totalCandidates, activeApplications, hiredApplications, applicationsByStage] =
+      await Promise.all([
+        prisma.candidate.count({ where: { tenantId } }),
+        prisma.application.count({ where: { tenantId, status: "ACTIVE" } }),
+        prisma.application.count({ where: { tenantId, status: "HIRED" } }),
+        prisma.application.groupBy({
+          by: ["stage"],
+          where: { tenantId },
+          _count: { _all: true },
+        }),
+      ]);
+    const byStage: Record<string, number> = {};
+    for (const row of applicationsByStage) byStage[row.stage] = row._count._all;
+    ok(res, {
+      totalCandidates,
+      activeCandidates: activeApplications, // alias for dashboard
+      activeApplications,
+      hiredApplications,
+      applicationsByStage: byStage,
+    });
+  } catch (err) { next(err); }
+});
+
 // POST /internal/candidates
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
