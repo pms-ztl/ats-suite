@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdc-ats-common
+  labels:
+    app.kubernetes.io/name: cdc-ats
+    app.kubernetes.io/part-of: cdc-ats
+data:
+  NODE_ENV: production
+  # Use the in-cluster bitnami services by default. When using managed Postgres
+  # / Redis, override DATABASE_URLs in the secret and these for the broker.
+  NATS_URL: nats://{{ .Release.Name }}-nats:4222
+  REDIS_URL: redis://{{ .Release.Name }}-redis-master:6379
+  CORS_ORIGIN: https://app.cdc-ats.example.com,https://api.cdc-ats.example.com
+  JAEGER_ENDPOINT: ""
+  # Service URLs — k8s DNS based
+  IDENTITY_SERVICE_URL: http://identity-service:4001
+  TENANT_SERVICE_URL: http://tenant-service:4002
+  BILLING_SERVICE_URL: http://billing-service:4003
+  JOB_SERVICE_URL: http://job-service:4004
+  CANDIDATE_SERVICE_URL: http://candidate-service:4005
+  INTERVIEW_SERVICE_URL: http://interview-service:4006
+  RESUME_SERVICE_URL: http://resume-service:4007
+  SCREENING_SERVICE_URL: http://screening-service:4008
+  NOTIFICATION_SERVICE_URL: http://notification-service:4009

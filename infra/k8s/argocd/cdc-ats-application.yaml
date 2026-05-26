@@ -1,0 +1,42 @@
+# ArgoCD Application — points at this repo's umbrella Helm chart.
+# Apply once to bootstrap GitOps:
+#   kubectl apply -f infra/k8s/argocd/cdc-ats-application.yaml
+#
+# After this, every push to main that updates the chart values or service
+# images triggers an automatic sync (or manual via argocd UI).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cdc-ats
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CDC-ATS/ATS-microservices.git
+    targetRevision: main
+    path: infra/k8s/charts/cdc-ats
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-production.yaml
+      # Image tags are set by CI via `argocd app set` after image push.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cdc-ats
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m

@@ -1,0 +1,181 @@
+{{- range $name, $svcOverrides := .Values.services }}
+{{- $spec := merge (deepCopy $svcOverrides) (deepCopy $.Values.defaults) }}
+{{- $port := default 4000 $spec.port }}
+{{- $tag := default $.Values.global.imageTag $spec.image.tag }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: {{ if $spec.autoscaling.enabled }}{{ $spec.autoscaling.minReplicas }}{{ else }}{{ $spec.replicaCount }}{{ end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ $port | quote }}
+        prometheus.io/path: /metrics
+    spec:
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: "{{ $spec.image.repository }}:{{ $tag }}"
+          imagePullPolicy: {{ default $.Values.global.imagePullPolicy $spec.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $port }}
+              protocol: TCP
+          env:
+            - name: PORT
+              value: {{ $port | quote }}
+            - name: SERVICE_NAME
+              value: {{ $name | quote }}
+            - name: NATS_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: NATS_URL } }
+            - name: REDIS_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: REDIS_URL } }
+            - name: CORS_ORIGIN
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: CORS_ORIGIN, optional: true } }
+            - name: NODE_ENV
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: NODE_ENV } }
+            - name: JAEGER_ENDPOINT
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: JAEGER_ENDPOINT, optional: true } }
+            - name: IDENTITY_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: IDENTITY_SERVICE_URL } }
+            - name: TENANT_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: TENANT_SERVICE_URL } }
+            - name: BILLING_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: BILLING_SERVICE_URL } }
+            - name: JOB_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: JOB_SERVICE_URL } }
+            - name: CANDIDATE_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: CANDIDATE_SERVICE_URL } }
+            - name: INTERVIEW_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: INTERVIEW_SERVICE_URL } }
+            - name: RESUME_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: RESUME_SERVICE_URL } }
+            - name: SCREENING_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: SCREENING_SERVICE_URL } }
+            - name: NOTIFICATION_SERVICE_URL
+              valueFrom: { configMapKeyRef: { name: cdc-ats-common, key: NOTIFICATION_SERVICE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            {{- range $spec.extraEnvFromSecrets }}
+            - name: {{ .name }}
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: {{ .secretKey }} } }
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ $spec.healthcheck.startup.path }}
+              port: http
+            initialDelaySeconds: {{ $spec.healthcheck.startup.initialDelaySeconds }}
+            periodSeconds: {{ $spec.healthcheck.startup.periodSeconds }}
+            failureThreshold: {{ $spec.healthcheck.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ $spec.healthcheck.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ $spec.healthcheck.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $spec.healthcheck.liveness.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ $spec.healthcheck.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ $spec.healthcheck.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $spec.healthcheck.readiness.periodSeconds }}
+          resources: {{- toYaml $spec.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+{{- if and $spec.ingress $spec.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/part-of: cdc-ats
+  annotations:
+    {{- if eq $spec.ingress.className "nginx" }}
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    {{- end }}
+spec:
+  ingressClassName: {{ $spec.ingress.className }}
+  {{- if $spec.ingress.tlsSecret }}
+  tls:
+    - hosts: [{{ $spec.ingress.host | quote }}]
+      secretName: {{ $spec.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ $spec.ingress.host | quote }}
+      http:
+        paths:
+          - path: {{ $spec.ingress.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port: { number: {{ $port }} }
+{{- end }}
+{{- if $spec.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ $spec.autoscaling.minReplicas }}
+  maxReplicas: {{ $spec.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $spec.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

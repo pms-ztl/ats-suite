@@ -1,0 +1,133 @@
+# Umbrella values — one entry per service in `services`. Templates iterate
+# this list to produce Deployment + Service + (optional Ingress + HPA) per item.
+#
+# IMAGE TAGS: override per-deploy from CI:
+#   helm upgrade cdc-ats ./infra/k8s/charts/cdc-ats \
+#     --set services.api-gateway.image.tag=$GITHUB_SHA ...
+
+global:
+  imageRegistry: ghcr.io/cdc-ats
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  # Optional: imagePullSecrets:
+  #   - name: ghcr-creds
+
+# Defaults applied to every service unless overridden in the service block.
+defaults:
+  port: 4000
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 1000m, memory: 1Gi }
+  healthcheck:
+    liveness:  { path: /livez,  initialDelaySeconds: 20, periodSeconds: 10 }
+    readiness: { path: /readyz, initialDelaySeconds: 5,  periodSeconds: 5  }
+    startup:   { path: /healthz, initialDelaySeconds: 5, periodSeconds: 5, failureThreshold: 30 }
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+services:
+  api-gateway:
+    image: { repository: ghcr.io/cdc-ats/api-gateway }
+    port: 4000
+    replicaCount: 2
+    ingress:
+      enabled: true
+      className: nginx
+      host: api.cdc-ats.example.com
+      path: /
+      tlsSecret: cdc-ats-api-tls
+    autoscaling: { enabled: true, minReplicas: 2, maxReplicas: 6, targetCPUUtilizationPercentage: 70 }
+    resources:
+      requests: { cpu: 200m, memory: 384Mi }
+      limits:   { cpu: 1000m, memory: 1Gi }
+    extraEnvFromSecrets: []
+
+  identity-service:
+    image: { repository: ghcr.io/cdc-ats/identity-service }
+    port: 4001
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: IDENTITY_DATABASE_URL
+
+  tenant-service:
+    image: { repository: ghcr.io/cdc-ats/tenant-service }
+    port: 4002
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: TENANT_DATABASE_URL
+
+  billing-service:
+    image: { repository: ghcr.io/cdc-ats/billing-service }
+    port: 4003
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: BILLING_DATABASE_URL
+
+  job-service:
+    image: { repository: ghcr.io/cdc-ats/job-service }
+    port: 4004
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: JOB_DATABASE_URL
+
+  candidate-service:
+    image: { repository: ghcr.io/cdc-ats/candidate-service }
+    port: 4005
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: CANDIDATE_DATABASE_URL
+
+  interview-service:
+    image: { repository: ghcr.io/cdc-ats/interview-service }
+    port: 4006
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: INTERVIEW_DATABASE_URL
+
+  resume-service:
+    image: { repository: ghcr.io/cdc-ats/resume-service }
+    port: 4007
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: RESUME_DATABASE_URL
+
+  screening-service:
+    image: { repository: ghcr.io/cdc-ats/screening-service }
+    port: 4008
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: SCREENING_DATABASE_URL
+
+  notification-service:
+    image: { repository: ghcr.io/cdc-ats/notification-service }
+    port: 4009
+    extraEnvFromSecrets:
+      - name: DATABASE_URL
+        secretKey: NOTIFICATION_DATABASE_URL
+
+  frontend:
+    image: { repository: ghcr.io/cdc-ats/frontend }
+    port: 3000
+    replicaCount: 2
+    ingress:
+      enabled: true
+      className: nginx
+      host: app.cdc-ats.example.com
+      path: /
+      tlsSecret: cdc-ats-app-tls
+    # Frontend doesn't expose /healthz; use / for all probes.
+    healthcheck:
+      liveness:  { path: /, initialDelaySeconds: 30, periodSeconds: 15 }
+      readiness: { path: /, initialDelaySeconds: 10, periodSeconds: 5  }
+      startup:   { path: /, initialDelaySeconds: 10, periodSeconds: 5, failureThreshold: 60 }
+    autoscaling: { enabled: true, minReplicas: 2, maxReplicas: 6, targetCPUUtilizationPercentage: 70 }
+    extraEnvFromSecrets: []
+
+# Infrastructure (Postgres, Redis, NATS) is installed separately —
+# see infra/k8s/README.md for the recommended commands. This keeps the
+# application chart minimal and lets you choose between managed services
+# (RDS / ElastiCache) and self-hosted bitnami charts.

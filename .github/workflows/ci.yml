@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Stage 1: lint + typecheck the whole monorepo (cached) ──────────────────
+  typecheck:
+    name: Typecheck & lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx turbo run typecheck
+
+  # ── Stage 2: build + push docker images per app (matrix) ───────────────────
+  # Only runs on push to main. Pushes :sha and :latest tags to GHCR.
+  build-and-push:
+    name: Build & push ${{ matrix.app }}
+    needs: typecheck
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { app: api-gateway,          dockerfile: infra/Dockerfile.service }
+          - { app: identity-service,     dockerfile: infra/Dockerfile.service }
+          - { app: tenant-service,       dockerfile: infra/Dockerfile.service }
+          - { app: billing-service,      dockerfile: infra/Dockerfile.service }
+          - { app: job-service,          dockerfile: infra/Dockerfile.service }
+          - { app: candidate-service,    dockerfile: infra/Dockerfile.service }
+          - { app: interview-service,    dockerfile: infra/Dockerfile.service }
+          - { app: resume-service,       dockerfile: infra/Dockerfile.service }
+          - { app: screening-service,    dockerfile: infra/Dockerfile.service }
+          - { app: notification-service, dockerfile: infra/Dockerfile.service }
+          - { app: frontend,             dockerfile: infra/Dockerfile.frontend }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          build-args: |
+            ${{ matrix.app != 'frontend' && format('SERVICE={0}', matrix.app) || '' }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  # ── Stage 3: lint Helm charts (catches bad templates before deploy) ────────
+  helm-lint:
+    name: Lint Helm charts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - name: Lint cdc-ats chart
+        run: |
+          cd infra/k8s/charts/cdc-ats
+          helm lint . --values values.yaml
+          helm lint . --values values.yaml --values values-production.yaml
+      - name: Template render (catches template syntax errors)
+        run: |
+          cd infra/k8s/charts/cdc-ats
+          helm template cdc-ats . --values values.yaml > /tmp/rendered.yaml
+          echo "rendered $(wc -l < /tmp/rendered.yaml) lines"
+          echo "resources by kind:"
+          grep -c '^kind:' /tmp/rendered.yaml || true
+          grep '^kind:' /tmp/rendered.yaml | sort | uniq -c
+
+  # ── Stage 4: bump ArgoCD image tags + sync (only on main) ──────────────────
+  # Comment out if you don't run ArgoCD yet. The build-and-push above
+  # publishes images regardless.
+  deploy-prod:
+    name: Trigger ArgoCD sync
+    needs: [build-and-push, helm-lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump image tags via argocd CLI
+        # Requires ARGOCD_SERVER + ARGOCD_AUTH_TOKEN secrets to be set.
+        # Skips silently if either is missing (so the workflow doesn't fail
+        # for repos that haven't wired ArgoCD yet).
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          if [ -z "$ARGOCD_SERVER" ] || [ -z "$ARGOCD_AUTH_TOKEN" ]; then
+            echo "ArgoCD secrets not configured — skipping deploy. Set ARGOCD_SERVER + ARGOCD_AUTH_TOKEN to enable."
+            exit 0
+          fi
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+          SHA="sha-$GITHUB_SHA"
+          for app in api-gateway identity-service tenant-service billing-service \
+                     job-service candidate-service interview-service resume-service \
+                     screening-service notification-service frontend; do
+            argocd app set cdc-ats --helm-set ${app}.image.tag=$SHA
+          done
+          argocd app sync cdc-ats --prune

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: cdc-ats
+description: Umbrella chart for CDC ATS — 10 backend services + frontend.
+type: application
+version: 0.1.0
+appVersion: "0.0.1"
+
+# Application-only chart. Install infrastructure (Postgres, Redis, NATS)
+# separately as prerequisites — see infra/k8s/README.md for the
+# recommended bitnami / nats-io chart commands.

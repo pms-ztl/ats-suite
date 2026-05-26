@@ -27,3 +27,7 @@ infra/nats_data
 
 # Old reference monolith (NOT part of this build)
 ../ATS
+
+# Helm chart dependencies (pulled at deploy time)
+infra/k8s/charts/*/charts
+infra/k8s/charts/*/Chart.lock
