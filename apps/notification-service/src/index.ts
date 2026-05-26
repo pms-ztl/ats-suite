@@ -1,8 +1,9 @@
-import { initOpenTelemetry, createLogger } from "@cdc-ats/common";
+import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
 initOpenTelemetry({ serviceName: "notification-service" });
+initSentry({ serviceName: "notification-service" });
 
 import { createApp } from "./app.js";
-import { connectNats, ensureStreams } from "@cdc-ats/nats-client";
+import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startNotificationSubscribers } from "./lib/subscribers.js";
 
 const logger = createLogger({ serviceName: "notification-service" });
@@ -14,6 +15,7 @@ async function main() {
       await connectNats({ serviceName: "notification-service" });
       await ensureStreams();
       await startNotificationSubscribers(logger);
+      logger.info("NATS connected + subscribers started");
     } catch (err) {
       logger.warn({ err }, "NATS setup failed — running without event subscribers");
     }
@@ -22,7 +24,13 @@ async function main() {
   }
 
   const app = createApp(logger);
-  app.listen(PORT, () => logger.info({ port: PORT }, "notification-service listening"));
+  const server = app.listen(PORT, () => logger.info({ port: PORT }, "notification-service listening"));
+
+  registerGracefulShutdown({
+    logger,
+    server,
+    onShutdown: [async () => { await closeNats().catch(() => {}); }],
+  });
 }
 
 main().catch((err) => {

@@ -1,8 +1,9 @@
-import { initOpenTelemetry, createLogger } from "@cdc-ats/common";
+import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
 initOpenTelemetry({ serviceName: "job-service" });
+initSentry({ serviceName: "job-service" });
 
 import { createApp } from "./app.js";
-import { connectNats, ensureStreams } from "@cdc-ats/nats-client";
+import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 
 const logger = createLogger({ serviceName: "job-service" });
 const PORT = Number(process.env["PORT"] ?? 4004);
@@ -18,7 +19,13 @@ async function main() {
     }
   }
   const app = createApp(logger);
-  app.listen(PORT, () => logger.info({ port: PORT }, "job-service listening"));
+  const server = app.listen(PORT, () => logger.info({ port: PORT }, "job-service listening"));
+
+  registerGracefulShutdown({
+    logger,
+    server,
+    onShutdown: [async () => { await closeNats().catch(() => {}); }],
+  });
 }
 
 main().catch((err) => {

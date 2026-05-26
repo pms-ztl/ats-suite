@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter,
   createMetrics,
-  createErrorHandler,
+  createErrorHandler, requestTimeout, sentryErrorHandler,
   notFoundHandler,
   requestId,
 } from "@cdc-ats/common";
@@ -15,7 +15,7 @@ export function createApp(logger: Logger): Express {
   const metrics = createMetrics("identity-service");
 
   app.use(requestId());
-  app.use(express.json({ limit: "1mb" }));
+  app.use(requestTimeout({ defaultMs: 30_000 }));  app.use(express.json({ limit: "1mb" }));
   app.use(metrics.middleware);
 
   // Health endpoints (k8s probes hit these)
@@ -45,6 +45,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/users", usersRouter);
 
   app.use(notFoundHandler());
+  app.use(sentryErrorHandler());
   app.use(createErrorHandler(logger));
   return app;
 }

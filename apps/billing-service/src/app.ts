@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
-  createHealthRouter, createMetrics, createErrorHandler,
+  createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
   notFoundHandler, requestId, readAuthHeaders,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
@@ -12,7 +12,7 @@ export function createApp(logger: Logger): Express {
   const metrics = createMetrics("billing-service");
 
   app.use(requestId());
-  app.use(express.json({ limit: "1mb" }));
+  app.use(requestTimeout({ defaultMs: 30_000 }));  app.use(express.json({ limit: "1mb" }));
   app.use(metrics.middleware);
 
   app.use(createHealthRouter({
@@ -32,6 +32,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/billing", readAuthHeaders(), billingRouter);
 
   app.use(notFoundHandler());
+  app.use(sentryErrorHandler());
   app.use(createErrorHandler(logger));
   return app;
 }

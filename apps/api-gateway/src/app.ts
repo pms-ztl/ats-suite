@@ -22,8 +22,12 @@ import {
   createErrorHandler,
   notFoundHandler,
   requestId,
+  requestTimeout,
+  tenantRateLimit,
+  sentryErrorHandler,
   Errors,
 } from "@cdc-ats/common";
+import { Redis } from "ioredis";
 import type { Logger } from "pino";
 import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import { gatewayAuth } from "./lib/auth-middleware.js";
@@ -32,11 +36,26 @@ import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
 import { aggregatorRouter } from "./routes/aggregators.js";
 
+// Lazy-connect Redis so tests / no-redis dev still work
+let redis: Redis | null = null;
+if (process.env["REDIS_URL"]) {
+  try {
+    redis = new Redis(process.env["REDIS_URL"], {
+      maxRetriesPerRequest: 3,
+      enableOfflineQueue: false,
+    });
+    redis.on("error", () => {/* swallow — middleware falls through on error */});
+  } catch {
+    redis = null;
+  }
+}
+
 export function createApp(logger: Logger): Express {
   const app = express();
   const metrics = createMetrics("api-gateway");
 
   app.use(requestId());
+  app.use(requestTimeout({ defaultMs: 30_000 }));
   app.use(helmet());
   // CORS — accept a comma-separated list in CORS_ORIGIN, or fall back to all
   // localhost ports in development. In prod set CORS_ORIGIN explicitly.
@@ -77,6 +96,13 @@ export function createApp(logger: Logger): Express {
     legacyHeaders: false,
   });
   app.use(generalLimiter);
+
+  // Per-tenant rate limit — kicks in after the gateway has resolved a
+  // tenant from JWT. Falls through silently when Redis is unavailable.
+  app.use("/api", tenantRateLimit({
+    redis,
+    requestsPerMinute: Number(process.env["TENANT_RATE_LIMIT_PER_MINUTE"] ?? 600),
+  }));
 
   // ── Health endpoints + metrics ──────────────────────────────────────
   app.use(createHealthRouter());
@@ -239,6 +265,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
 
   app.use(notFoundHandler());
+  app.use(sentryErrorHandler());      // capture into Sentry (no-op if SENTRY_DSN unset)
   app.use(createErrorHandler(logger));
   return app;
 }

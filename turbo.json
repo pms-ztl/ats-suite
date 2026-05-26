@@ -9,8 +9,7 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true,
-      "interactive": true
+      "persistent": true
     },
     "typecheck": {
       "dependsOn": ["^build"],

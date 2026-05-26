@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
-  createHealthRouter, createMetrics, createErrorHandler,
+  createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
   notFoundHandler, requestId, readAuthHeaders,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
@@ -12,7 +12,7 @@ export function createApp(logger: Logger): Express {
   const metrics = createMetrics("resume-service");
 
   app.use(requestId());
-  app.use(metrics.middleware);
+  app.use(requestTimeout({ defaultMs: 30_000 }));  app.use(metrics.middleware);
 
   app.use(createHealthRouter({
     dependencies: {
@@ -28,6 +28,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/resume", readAuthHeaders(), resumeRouter);
 
   app.use(notFoundHandler());
+  app.use(sentryErrorHandler());
   app.use(createErrorHandler(logger));
   return app;
 }

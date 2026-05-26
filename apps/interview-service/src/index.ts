@@ -1,8 +1,9 @@
-import { initOpenTelemetry, createLogger } from "@cdc-ats/common";
+import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
 initOpenTelemetry({ serviceName: "interview-service" });
+initSentry({ serviceName: "interview-service" });
 
 import { createApp } from "./app.js";
-import { connectNats, ensureStreams } from "@cdc-ats/nats-client";
+import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 
 const logger = createLogger({ serviceName: "interview-service" });
 const PORT = Number(process.env["PORT"] ?? 4006);
@@ -12,10 +13,17 @@ async function main() {
     try {
       await connectNats({ serviceName: "interview-service" });
       await ensureStreams();
+      logger.info("NATS connected");
     } catch (err) { logger.warn({ err }, "NATS setup failed"); }
   }
   const app = createApp(logger);
-  app.listen(PORT, () => logger.info({ port: PORT }, "interview-service listening"));
+  const server = app.listen(PORT, () => logger.info({ port: PORT }, "interview-service listening"));
+
+  registerGracefulShutdown({
+    logger,
+    server,
+    onShutdown: [async () => { await closeNats().catch(() => {}); }],
+  });
 }
 
 main().catch((err) => { logger.fatal({ err }, "interview-service failed"); process.exit(1); });

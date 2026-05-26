@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter,
   createMetrics,
-  createErrorHandler,
+  createErrorHandler, requestTimeout, sentryErrorHandler,
   notFoundHandler,
   requestId,
 } from "@cdc-ats/common";
@@ -16,7 +16,7 @@ export function createApp(logger: Logger): Express {
   const metrics = createMetrics("tenant-service");
 
   app.use(requestId());
-  app.use(express.json({ limit: "1mb" }));
+  app.use(requestTimeout({ defaultMs: 30_000 }));  app.use(express.json({ limit: "1mb" }));
   app.use(metrics.middleware);
 
   app.use(createHealthRouter({
@@ -41,6 +41,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/plan-changes", planChangesRouter);
 
   app.use(notFoundHandler());
+  app.use(sentryErrorHandler());
   app.use(createErrorHandler(logger));
   return app;
 }

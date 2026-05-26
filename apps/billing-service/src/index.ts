@@ -1,20 +1,21 @@
-import { initOpenTelemetry, createLogger } from "@cdc-ats/common";
+import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
 initOpenTelemetry({ serviceName: "billing-service" });
+initSentry({ serviceName: "billing-service" });
 
 import { createApp } from "./app.js";
-import { connectNats, ensureStreams } from "@cdc-ats/nats-client";
+import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startBillingSubscribers } from "./lib/subscribers.js";
 
 const logger = createLogger({ serviceName: "billing-service" });
 const PORT = Number(process.env["PORT"] ?? 4003);
 
 async function main() {
-  // Connect to NATS + ensure streams + start subscribers
   if (process.env["NATS_URL"]) {
     try {
       await connectNats({ serviceName: "billing-service" });
       await ensureStreams();
       await startBillingSubscribers(logger);
+      logger.info("NATS connected + subscribers started");
     } catch (err) {
       logger.warn({ err }, "NATS connect failed — running without event subscribers");
     }
@@ -23,8 +24,14 @@ async function main() {
   }
 
   const app = createApp(logger);
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info({ port: PORT }, "billing-service listening");
+  });
+
+  registerGracefulShutdown({
+    logger,
+    server,
+    onShutdown: [async () => { await closeNats().catch(() => {}); }],
   });
 }
 
