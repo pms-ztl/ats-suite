@@ -1,0 +1,148 @@
+# CDC ATS — Local development infrastructure (Phase 0)
+#
+# Brings up PostgreSQL (with 10 databases for service-per-DB isolation),
+# Redis (BullMQ + SSE pub/sub), NATS Jetstream (cross-service events),
+# Jaeger (distributed tracing), Prometheus + Grafana (metrics),
+# Loki + Promtail (logs).
+#
+# Usage:
+#   npm run infra:up      # boot
+#   npm run infra:logs    # follow logs
+#   npm run infra:down    # stop
+#
+# Service apps (api-gateway, identity-service, etc.) are NOT in this
+# compose file — they run via `turbo run dev` against this infra.
+name: cdc-ats-infra
+
+networks:
+  ats_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+services:
+  # ── PostgreSQL — one cluster, 10 databases (DB-per-service) ──────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ats-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5434:5432"           # 5434 on host (5432/5433 used by other dev containers); 5432 inside
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/00-create-dbs.sql:ro
+    networks:
+      - ats_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Redis — BullMQ queues + SSE pub/sub fan-out ──────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ats-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"           # 6381 on host (6379/6380 used by other dev containers)
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - ats_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── NATS Jetstream — persistent cross-service event bus ──────────────
+  nats:
+    image: nats:2.10-alpine
+    container_name: ats-nats
+    restart: unless-stopped
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "4222:4222"   # client
+      - "8222:8222"   # http monitoring
+    volumes:
+      - nats_data:/data
+    networks:
+      - ats_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8222/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Jaeger — distributed tracing (OpenTelemetry exporter target) ─────
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ats-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"  # web UI
+      - "14268:14268"  # Jaeger collector HTTP
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    networks:
+      - ats_net
+
+  # ── Prometheus — metrics scrape ──────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    container_name: ats-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "9090:9090"
+    networks:
+      - ats_net
+
+  # ── Grafana — dashboards for Prometheus + Loki + Jaeger ──────────────
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: ats-grafana
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/all.yml:ro
+    ports:
+      - "3001:3000"
+    networks:
+      - ats_net
+
+  # ── Loki — log aggregation ───────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: ats-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - ats_net
