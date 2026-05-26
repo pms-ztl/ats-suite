@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TenantPlanSchema } from "./tenant.js";
 
 export const UserRoleSchema = z.enum([
   "SUPER_ADMIN",
@@ -42,12 +43,10 @@ export const LoginInputSchema = z.object({
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 
 export const SeatInfoSchema = z.object({
-  plan: TenantPlanSchemaImport,
+  plan: TenantPlanSchema,
   used: z.number().int(),
   limit: z.number().int(),
   unlimited: z.boolean(),
   remaining: z.number().int().nullable(),
 });
 export type SeatInfo = z.infer<typeof SeatInfoSchema>;
-
-import { TenantPlanSchema as TenantPlanSchemaImport } from "./tenant.js";

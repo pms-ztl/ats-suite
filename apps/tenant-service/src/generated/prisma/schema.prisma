@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+}
+
+enum TenantPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum PlanChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Tenant {
+  id              String       @id @default(uuid())
+  name            String
+  slug            String       @unique
+  plan            TenantPlan   @default(FREE)
+  status          TenantStatus @default(TRIAL)
+  trialEndsAt     DateTime?
+  logoUrl         String?
+  website         String?
+  industry        String?
+  companySize     String?
+  dataRegion      String       @default("us-east-1")
+  isolationConfig Json         @default("{}")
+  settings        Json         @default("{}")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  planChangeRequests PlanChangeRequest[]
+
+  @@index([status])
+  @@index([plan])
+}
+
+model PlanChangeRequest {
+  id                String           @id @default(uuid())
+  tenantId          String
+  fromPlan          TenantPlan
+  toPlan            TenantPlan
+  status            PlanChangeStatus @default(PENDING)
+  reason            String?
+  requestedByUserId String
+  requestedAt       DateTime         @default(now())
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  decisionNote      String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([requestedAt])
+}

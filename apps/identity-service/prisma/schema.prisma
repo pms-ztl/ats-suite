@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("IDENTITY_DATABASE_URL")
+}
+
+// ── Identity-service local read model of UserRole.
+// Mirrors @cdc-ats/contracts UserRoleSchema. Single source of truth at
+// the Zod level — Prisma enum exists only so the column type is constrained.
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+  COMPLIANCE_OFFICER
+  INTERVIEWER
+  CANDIDATE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String   // FK semantically to tenant-service's Tenant.id, but NO Prisma relation (cross-service)
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole @default(RECRUITER)
+  department   String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inviteTokens InviteToken[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model InviteToken {
+  id        String    @id @default(uuid())
+  tenantId  String
+  email     String
+  role      UserRole  @default(RECRUITER)
+  token     String    @unique @default(uuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  invitedByUserId String
+  createdAt DateTime  @default(now())
+
+  invitedBy User @relation(fields: [invitedByUserId], references: [id])
+
+  @@index([tenantId])
+  @@index([token])
+}
+
+// Local audit trail for identity events (logins, role changes, invites).
+// Other services keep their own audit trails; the gateway can aggregate.
+model AuditEvent {
+  id           String   @id @default(uuid())
+  tenantId     String?
+  actorUserId  String?
+  action       String   // "USER_LOGIN", "USER_INVITED", "USER_ROLE_CHANGED", ...
+  resourceType String
+  resourceId   String
+  metadata     Json     @default("{}")
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([actorUserId])
+}

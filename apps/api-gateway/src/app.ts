@@ -1,13 +1,14 @@
 /**
- * Express app composition for api-gateway.
+ * Express app composition for api-gateway (Phase 1).
  *
- * Phase 0 scope:
- *   - GET /healthz, /readyz, /livez (via @cdc-ats/common health router)
- *   - GET /metrics (Prometheus)
- *   - GET /api/health-test/ping → proxied to health-test service to verify
- *     header forwarding works end-to-end
+ *   /api/auth/*                 → handled in-process (login, register, me, etc.)
+ *   /api/users/*                → proxied to identity-service with JWT verified
+ *   /api/tenants/*              → proxied to tenant-service
+ *   /api/super-admin/tenants/*  → proxied to tenant-service (SUPER_ADMIN only)
  *
- * Auth / login / saga endpoints arrive in Phase 1.
+ * Everything else returns 404 from notFoundHandler. Phase 2 adds billing,
+ * job, candidate proxies; Phase 3 adds resume, screening, interview;
+ * Phase 4 adds notification.
  */
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import helmet from "helmet";
@@ -21,23 +22,35 @@ import {
   createErrorHandler,
   notFoundHandler,
   requestId,
+  Errors,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
+import { gatewayAuth } from "./lib/auth-middleware.js";
+import authRouter from "./routes/auth.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
   const metrics = createMetrics("api-gateway");
 
-  // ── Order matters ────────────────────────────────────────────────────
   app.use(requestId());
   app.use(helmet());
-  app.use(cors({ origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000", credentials: true }));
+  app.use(cors({
+    origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000",
+    credentials: true,
+  }));
   app.use(compression());
   app.use(cookieParser());
   app.use(metrics.middleware);
 
-  // Rate-limit per IP — stricter on auth endpoints
+  // Strict rate limit on /api/auth to slow credential stuffing
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: { code: "RATE_LIMITED", message: "Too many auth attempts" } },
+  });
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
@@ -46,40 +59,132 @@ export function createApp(logger: Logger): Express {
   });
   app.use(generalLimiter);
 
-  // ── Health + metrics endpoints (no auth) ─────────────────────────────
+  // ── Health endpoints + metrics ──────────────────────────────────────
   app.use(createHealthRouter());
   app.get("/metrics", async (_req: Request, res: Response) => {
     res.set("Content-Type", metrics.registry.contentType);
     res.end(await metrics.registry.metrics());
   });
 
-  // ── Phase 0: proxy /api/health-test/* → health-test service ──────────
-  // This validates header forwarding works before adding real services.
-  const healthTestTarget = process.env["HEALTH_TEST_SERVICE_URL"] ?? "http://localhost:4099";
-  app.use(
-    "/api/health-test",
-    (req: Request, _res: Response, next: NextFunction) => {
-      // Phase 1 will replace this with actual JWT validation.
-      // For Phase 0 we just inject some demo headers so we can verify
-      // the downstream service receives them.
-      req.headers["x-user-id"] = "demo-user-id";
-      req.headers["x-tenant-id"] = "demo-tenant-id";
-      req.headers["x-user-role"] = "ADMIN";
-      req.headers["x-user-email"] = "demo@example.com";
-      req.headers["x-request-id"] = (req.id as string | undefined) ?? "";
-      next();
-    },
+  // ── Public auth routes (JSON body, in-process) ──────────────────────
+  // express.json() applied ONLY to /api/auth/* — proxy routes must NOT
+  // consume the body (http-proxy-middleware streams it).
+  app.use("/api/auth", express.json({ limit: "1mb" }), authLimiter, authRouter);
+
+  // ── Proxy helper that forwards X-User-* headers ────────────────────
+  const forwardHeaders = (
+    proxyTarget: string,
+    pathRewrite: ProxyOptions["pathRewrite"]
+  ) =>
     createProxyMiddleware({
-      target: healthTestTarget,
+      target: proxyTarget,
       changeOrigin: true,
-      pathRewrite: { "^/api/health-test": "" },
+      pathRewrite,
       logger,
-    })
+      on: {
+        proxyReq: (proxyReq, rawReq) => {
+          const req = rawReq as unknown as Request;
+          if (req.user) {
+            proxyReq.setHeader("X-User-Id", req.user.id);
+            proxyReq.setHeader("X-Tenant-Id", req.user.tenantId);
+            proxyReq.setHeader("X-User-Role", req.user.role);
+            if (req.user.email) proxyReq.setHeader("X-User-Email", req.user.email);
+          }
+          if ((req as any).id) {
+            proxyReq.setHeader("X-Request-Id", (req as any).id);
+          }
+          const token = process.env["INTERNAL_SERVICE_TOKEN"];
+          if (token) proxyReq.setHeader("X-Internal-Service", token);
+        },
+      },
+    });
+
+  const identityUrl = process.env["IDENTITY_SERVICE_URL"] ?? "http://localhost:4001";
+  const tenantUrl = process.env["TENANT_SERVICE_URL"] ?? "http://localhost:4002";
+
+  // /api/users/* → identity-service /internal/users/*
+  app.use(
+    "/api/users",
+    gatewayAuth(),
+    forwardHeaders(identityUrl, { "^/api/users": "/internal/users" })
   );
 
-  // ── Errors ───────────────────────────────────────────────────────────
+  // /api/tenants/plan-change-request (in-process — wraps tenant-service)
+  app.post(
+    "/api/tenants/plan-change-request",
+    gatewayAuth(),
+    express.json({ limit: "1mb" }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        if (req.user.role !== "ADMIN") {
+          throw Errors.forbidden("Only tenant admins may request plan changes");
+        }
+        const { callService } = await import("./lib/service-client.js");
+        const result = await callService("tenant", {
+          method: "POST",
+          path: "/internal/plan-changes",
+          body: {
+            ...req.body,
+            tenantId: req.user.tenantId,
+            requestedByUserId: req.user.id,
+          },
+        });
+        res.status(201).json({ success: true, data: result });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  app.get(
+    "/api/tenants/plan-change-requests",
+    gatewayAuth(),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const { callService } = await import("./lib/service-client.js");
+        const result = await callService("tenant", {
+          method: "GET",
+          path: `/internal/plan-changes/by-tenant/${req.user.tenantId}`,
+        });
+        res.json({ success: true, data: result });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // /api/tenants/:id → tenant-service /internal/tenants/:id
+  app.use(
+    "/api/tenants",
+    gatewayAuth(),
+    forwardHeaders(tenantUrl, { "^/api/tenants": "/internal/tenants" })
+  );
+
+  // /api/super-admin/* — SUPER_ADMIN-only proxies
+  const requireSuperAdmin = (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user || req.user.role !== "SUPER_ADMIN") {
+      return next(Errors.forbidden("SUPER_ADMIN role required"));
+    }
+    next();
+  };
+
+  app.use(
+    "/api/super-admin/tenants",
+    gatewayAuth(),
+    requireSuperAdmin,
+    forwardHeaders(tenantUrl, { "^/api/super-admin/tenants": "/internal/tenants" })
+  );
+
+  app.use(
+    "/api/super-admin/plan-change-requests",
+    gatewayAuth(),
+    requireSuperAdmin,
+    forwardHeaders(tenantUrl, { "^/api/super-admin/plan-change-requests": "/internal/plan-changes" })
+  );
+
   app.use(notFoundHandler());
   app.use(createErrorHandler(logger));
-
   return app;
 }
