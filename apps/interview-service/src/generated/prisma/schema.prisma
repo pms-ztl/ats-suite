@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("INTERVIEW_DATABASE_URL")
+}
+
+enum InterviewType {
+  PHONE_SCREEN
+  TECHNICAL
+  BEHAVIORAL
+  PANEL
+  FINAL
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum InterviewRecommendation {
+  STRONG_HIRE
+  HIRE
+  LEAN_HIRE
+  NO_HIRE
+  STRONG_NO_HIRE
+}
+
+model Interview {
+  id            String          @id @default(uuid())
+  tenantId      String
+  requisitionId String
+  candidateId   String
+  applicationId String?
+  type          InterviewType?
+  stage         String
+  status        InterviewStatus @default(SCHEDULED)
+  scheduledAt   DateTime?
+  duration      Int             @default(60)
+  location      String?
+  meetingUrl    String?
+  roundId       String?
+  roundNumber   Int?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  round        InterviewRound?        @relation(fields: [roundId], references: [id])
+  panelMembers InterviewPanelMember[]
+  feedback     InterviewFeedback[]
+
+  @@index([tenantId])
+  @@index([candidateId])
+  @@index([requisitionId])
+  @@index([applicationId])
+  @@index([roundId])
+}
+
+model InterviewRound {
+  id                  String        @id @default(uuid())
+  tenantId            String
+  requisitionId       String? // null = tenant-wide default
+  name                String
+  order               Int
+  interviewType       InterviewType
+  durationMinutes     Int           @default(60)
+  instructions        String?
+  autoAdvanceOnPass   Boolean       @default(false)
+  defaultPanelistRole String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  interviews Interview[]
+
+  @@unique([requisitionId, order])
+  @@index([tenantId])
+  @@index([requisitionId])
+}
+
+model InterviewFeedback {
+  id             String                  @id @default(uuid())
+  tenantId       String
+  interviewId    String
+  interviewerId  String
+  candidateId    String
+  overallRating  Int
+  recommendation InterviewRecommendation
+  strengths      Json                    @default("[]")
+  concerns       Json                    @default("[]")
+  notes          String?
+  submittedAt    DateTime                @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+
+  @@unique([interviewId, interviewerId])
+  @@index([tenantId])
+}
+
+model InterviewPanelMember {
+  id          String   @id @default(uuid())
+  interviewId String
+  userId      String
+  role        String   @default("INTERVIEWER")
+  isRequired  Boolean  @default(true)
+  confirmed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id])
+
+  @@unique([interviewId, userId])
+  @@index([userId])
+}

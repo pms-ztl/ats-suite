@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("RESUME_DATABASE_URL")
+}
+
+enum BulkUploadStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+model Resume {
+  id               String   @id @default(cuid())
+  tenantId         String
+  candidateId      String   @unique  // FK to candidate-service (no Prisma relation)
+  fileName         String
+  originalFilename String?
+  fileSize         Int
+  mimeType         String
+  storageKey       String   @default("")
+  extractedText    String?  @db.Text
+  parsedData       Json?
+  parseStatus      String   @default("PENDING")
+  parsedAt         DateTime?
+  bulkUploadId     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([bulkUploadId])
+}
+
+model BulkUpload {
+  id              String           @id @default(uuid())
+  tenantId        String
+  userId          String
+  requisitionId   String?
+  status          BulkUploadStatus @default(QUEUED)
+  totalFiles      Int
+  processedFiles  Int              @default(0)
+  failedFiles     Int              @default(0)
+  errors          Json             @default("[]")
+  createdAt       DateTime         @default(now())
+  completedAt     DateTime?
+
+  @@index([tenantId, status])
+}
+
+// Local AgentRun projection — populated from runtime persistRun hook
+model AgentRun {
+  id                String   @id
+  tenantId          String
+  agentType         String
+  status            String
+  inputHash         String
+  tokensIn          Int
+  tokensOut         Int
+  costUsd           Decimal  @db.Decimal(10, 6)
+  latencyMs         Int
+  modelName         String
+  triggeredByUserId String?
+  errorMessage      String?
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}

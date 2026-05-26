@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SCREENING_DATABASE_URL")
+}
+
+enum ScreeningStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ScreeningOutcome {
+  PASS
+  FAIL
+  REVIEW
+}
+
+model Screening {
+  id              String           @id @default(uuid())
+  tenantId        String
+  candidateId     String
+  requisitionId   String
+  applicationId   String?
+  screeningType   String           @default("AI_ASSISTED")
+  status          ScreeningStatus  @default(PENDING)
+  result          ScreeningOutcome?
+  score           Float?
+  matchPercentage Float?
+  signals         Json             @default("[]")
+  reasoning       String?
+  agentRunId      String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([tenantId, status])
+  @@index([candidateId])
+  @@index([applicationId])
+}
+
+model AgentRun {
+  id                String   @id
+  tenantId          String
+  agentType         String
+  status            String
+  inputHash         String
+  tokensIn          Int
+  tokensOut         Int
+  costUsd           Decimal  @db.Decimal(10, 6)
+  latencyMs         Int
+  modelName         String
+  triggeredByUserId String?
+  errorMessage      String?
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
