@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Generic backend service Dockerfile (multi-stage Node 20 Alpine).
+#
+# Used by all 10 backend services. Each service is built with:
+#   docker build -f infra/Dockerfile.service \
+#     --build-arg SERVICE=identity-service \
+#     -t cdc-ats/identity-service .
+#
+# The build context MUST be the monorepo root (not the service directory) so
+# workspace packages (@cdc-ats/common, contracts, ai-engine, nats-client)
+# resolve correctly via npm workspaces.
+# ─────────────────────────────────────────────────────────────────────────────
+ARG NODE_VERSION=20-alpine
+
+# ── Stage 1: install all monorepo deps (cached unless package*.json changes) ─
+FROM node:${NODE_VERSION} AS deps
+WORKDIR /repo
+
+# Alpine deps for native modules (argon2, prisma engines)
+RUN apk add --no-cache python3 make g++ openssl libc6-compat
+
+# Copy root manifests
+COPY package.json package-lock.json* turbo.json tsconfig.base.json ./
+
+# Copy workspace manifests only (lets npm resolve workspaces without copying source)
+COPY apps/api-gateway/package.json           apps/api-gateway/package.json
+COPY apps/identity-service/package.json      apps/identity-service/package.json
+COPY apps/tenant-service/package.json        apps/tenant-service/package.json
+COPY apps/billing-service/package.json       apps/billing-service/package.json
+COPY apps/job-service/package.json           apps/job-service/package.json
+COPY apps/candidate-service/package.json     apps/candidate-service/package.json
+COPY apps/interview-service/package.json     apps/interview-service/package.json
+COPY apps/resume-service/package.json        apps/resume-service/package.json
+COPY apps/screening-service/package.json     apps/screening-service/package.json
+COPY apps/notification-service/package.json  apps/notification-service/package.json
+COPY apps/frontend/package.json              apps/frontend/package.json
+COPY packages/common/package.json            packages/common/package.json
+COPY packages/contracts/package.json         packages/contracts/package.json
+COPY packages/ai-engine/package.json         packages/ai-engine/package.json
+COPY packages/nats-client/package.json       packages/nats-client/package.json
+
+RUN npm install --no-audit --no-fund
+
+# ── Stage 2: build the target service ────────────────────────────────────────
+FROM node:${NODE_VERSION} AS builder
+ARG SERVICE
+WORKDIR /repo
+
+RUN apk add --no-cache python3 make g++ openssl libc6-compat
+
+# Bring in the installed node_modules from deps
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/package.json ./package.json
+COPY --from=deps /repo/package-lock.json* ./
+COPY --from=deps /repo/turbo.json ./turbo.json
+COPY --from=deps /repo/tsconfig.base.json ./tsconfig.base.json
+
+# Copy ALL source (workspaces are interdependent)
+COPY packages ./packages
+COPY apps ./apps
+
+# Generate Prisma client for this service (only if it has a prisma schema)
+RUN if [ -f "apps/${SERVICE}/prisma/schema.prisma" ]; then \
+      npx --workspace=@cdc-ats/${SERVICE} prisma generate; \
+    fi
+
+# Build shared packages first (TypeScript declarations needed by services)
+RUN npx turbo run build --filter=@cdc-ats/common \
+                        --filter=@cdc-ats/contracts \
+                        --filter=@cdc-ats/nats-client \
+                        --filter=@cdc-ats/ai-engine \
+  || true
+
+# Build the target service
+RUN npm run build --workspace=@cdc-ats/${SERVICE}
+
+# ── Stage 3: production runtime (smallest possible) ──────────────────────────
+FROM node:${NODE_VERSION} AS runner
+ARG SERVICE
+ENV NODE_ENV=production
+ENV SERVICE_NAME=${SERVICE}
+WORKDIR /app
+
+RUN apk add --no-cache openssl libc6-compat curl tini && \
+    addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
+
+# Copy only what the service needs to run
+COPY --from=builder --chown=nodeapp:nodeapp /repo/node_modules ./node_modules
+COPY --from=builder --chown=nodeapp:nodeapp /repo/package.json ./package.json
+COPY --from=builder --chown=nodeapp:nodeapp /repo/packages ./packages
+COPY --from=builder --chown=nodeapp:nodeapp /repo/apps/${SERVICE} ./apps/${SERVICE}
+
+# Drop privileges
+USER nodeapp
+
+# tini handles signals so node receives SIGTERM cleanly
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Default healthcheck: GET /healthz on PORT (overridable in compose)
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS "http://127.0.0.1:${PORT:-4000}/healthz" || exit 1
+
+# Each service has the same start script: node dist/index.js
+WORKDIR /app/apps/${SERVICE}
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,29 @@
+# Keep image lean — never copy huge or local-only directories
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.cache
+**/coverage
+**/test-results
+**/playwright-report
+**/__tests__
+**/e2e
+**/*.log
+**/.env.local
+**/.env.*.local
+.git
+.gitignore
+.github
+infra/postgres-init.sql.bak
+infra/grafana_data
+infra/prometheus_data
+infra/loki_data
+infra/nats_data
+**/Thumbs.db
+**/.DS_Store
+**/*.tsbuildinfo
+**/generated/prisma
+
+# Old reference monolith (NOT part of this build)
+../ATS

@@ -10,7 +10,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"]
+      "interactive": true
     },
     "typecheck": {
       "dependsOn": ["^build"],

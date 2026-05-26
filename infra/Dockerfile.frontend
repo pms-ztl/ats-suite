@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Next.js frontend Dockerfile (multi-stage Node 20 Alpine).
+#
+# Build context MUST be the monorepo root:
+#   docker build -f infra/Dockerfile.frontend -t cdc-ats/frontend .
+# ─────────────────────────────────────────────────────────────────────────────
+ARG NODE_VERSION=20-alpine
+
+FROM node:${NODE_VERSION} AS deps
+WORKDIR /repo
+RUN apk add --no-cache libc6-compat
+COPY package.json package-lock.json* turbo.json tsconfig.base.json ./
+COPY apps/frontend/package.json apps/frontend/package.json
+COPY apps/api-gateway/package.json           apps/api-gateway/package.json
+COPY apps/identity-service/package.json      apps/identity-service/package.json
+COPY apps/tenant-service/package.json        apps/tenant-service/package.json
+COPY apps/billing-service/package.json       apps/billing-service/package.json
+COPY apps/job-service/package.json           apps/job-service/package.json
+COPY apps/candidate-service/package.json     apps/candidate-service/package.json
+COPY apps/interview-service/package.json     apps/interview-service/package.json
+COPY apps/resume-service/package.json        apps/resume-service/package.json
+COPY apps/screening-service/package.json     apps/screening-service/package.json
+COPY apps/notification-service/package.json  apps/notification-service/package.json
+COPY packages/common/package.json            packages/common/package.json
+COPY packages/contracts/package.json         packages/contracts/package.json
+COPY packages/ai-engine/package.json         packages/ai-engine/package.json
+COPY packages/nats-client/package.json       packages/nats-client/package.json
+RUN npm install --no-audit --no-fund
+
+FROM node:${NODE_VERSION} AS builder
+WORKDIR /repo
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/package.json ./package.json
+COPY --from=deps /repo/turbo.json ./turbo.json
+COPY --from=deps /repo/tsconfig.base.json ./tsconfig.base.json
+COPY packages ./packages
+COPY apps/frontend ./apps/frontend
+# Build-time public env (defaults sensible; override in compose)
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+RUN npm run build --workspace=@cdc-ats/frontend
+
+FROM node:${NODE_VERSION} AS runner
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+WORKDIR /app
+RUN apk add --no-cache curl tini && \
+    addgroup -S nextapp && adduser -S nextapp -G nextapp
+COPY --from=builder --chown=nextapp:nextapp /repo/apps/frontend/.next/standalone ./
+COPY --from=builder --chown=nextapp:nextapp /repo/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder --chown=nextapp:nextapp /repo/apps/frontend/public ./apps/frontend/public
+USER nextapp
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:3000/ || exit 1
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "apps/frontend/server.js"]

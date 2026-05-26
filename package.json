@@ -10,7 +10,9 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --concurrency 20",
+    "dev:gateway": "turbo run dev --filter=@cdc-ats/api-gateway --filter=@cdc-ats/frontend",
+    "dev:backend": "turbo run dev --concurrency 20 --filter=!@cdc-ats/frontend",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "test": "turbo run test",
@@ -18,7 +20,11 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:logs": "docker compose -f infra/docker-compose.yml logs -f",
-    "infra:ps": "docker compose -f infra/docker-compose.yml ps"
+    "infra:ps": "docker compose -f infra/docker-compose.yml ps",
+    "stack:up": "npm run infra:up && npm run dev",
+    "docker:build:all": "docker compose -f infra/docker-compose.full.yml build",
+    "docker:up:all": "docker compose -f infra/docker-compose.full.yml up -d",
+    "docker:down:all": "docker compose -f infra/docker-compose.full.yml down"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
