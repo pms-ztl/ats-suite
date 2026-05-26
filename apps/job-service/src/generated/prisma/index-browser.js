@@ -183,6 +183,25 @@ exports.Prisma.SkillScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AgentRunScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  agentType: 'agentType',
+  status: 'status',
+  inputHash: 'inputHash',
+  tokensIn: 'tokensIn',
+  tokensOut: 'tokensOut',
+  costUsd: 'costUsd',
+  latencyMs: 'latencyMs',
+  modelName: 'modelName',
+  iterations: 'iterations',
+  triggeredBy: 'triggeredBy',
+  errorMessage: 'errorMessage',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -220,7 +239,8 @@ exports.Prisma.ModelName = {
   Requisition: 'Requisition',
   JobPosting: 'JobPosting',
   ApplicationFormSchema: 'ApplicationFormSchema',
-  Skill: 'Skill'
+  Skill: 'Skill',
+  AgentRun: 'AgentRun'
 };
 
 /**

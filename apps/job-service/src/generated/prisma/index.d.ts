@@ -33,6 +33,11 @@ export type ApplicationFormSchema = $Result.DefaultSelection<Prisma.$Application
  * 
  */
 export type Skill = $Result.DefaultSelection<Prisma.$SkillPayload>
+/**
+ * Model AgentRun
+ * 
+ */
+export type AgentRun = $Result.DefaultSelection<Prisma.$AgentRunPayload>
 
 /**
  * Enums
@@ -212,6 +217,16 @@ export class PrismaClient<
     * ```
     */
   get skill(): Prisma.SkillDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agentRun`: Exposes CRUD operations for the **AgentRun** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgentRuns
+    * const agentRuns = await prisma.agentRun.findMany()
+    * ```
+    */
+  get agentRun(): Prisma.AgentRunDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -656,7 +671,8 @@ export namespace Prisma {
     Requisition: 'Requisition',
     JobPosting: 'JobPosting',
     ApplicationFormSchema: 'ApplicationFormSchema',
-    Skill: 'Skill'
+    Skill: 'Skill',
+    AgentRun: 'AgentRun'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -675,7 +691,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "skill"
+      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "skill" | "agentRun"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -975,6 +991,80 @@ export namespace Prisma {
           }
         }
       }
+      AgentRun: {
+        payload: Prisma.$AgentRunPayload<ExtArgs>
+        fields: Prisma.AgentRunFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgentRunFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgentRunFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          findFirst: {
+            args: Prisma.AgentRunFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgentRunFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          findMany: {
+            args: Prisma.AgentRunFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>[]
+          }
+          create: {
+            args: Prisma.AgentRunCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          createMany: {
+            args: Prisma.AgentRunCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgentRunCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>[]
+          }
+          delete: {
+            args: Prisma.AgentRunDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          update: {
+            args: Prisma.AgentRunUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgentRunDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgentRunUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgentRunUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgentRunUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunPayload>
+          }
+          aggregate: {
+            args: Prisma.AgentRunAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgentRun>
+          }
+          groupBy: {
+            args: Prisma.AgentRunGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgentRunGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgentRunCountArgs<ExtArgs>
+            result: $Utils.Optional<AgentRunCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1075,6 +1165,7 @@ export namespace Prisma {
     jobPosting?: JobPostingOmit
     applicationFormSchema?: ApplicationFormSchemaOmit
     skill?: SkillOmit
+    agentRun?: AgentRunOmit
   }
 
   /* Types for Logging */
@@ -5991,6 +6082,1194 @@ export namespace Prisma {
 
 
   /**
+   * Model AgentRun
+   */
+
+  export type AggregateAgentRun = {
+    _count: AgentRunCountAggregateOutputType | null
+    _avg: AgentRunAvgAggregateOutputType | null
+    _sum: AgentRunSumAggregateOutputType | null
+    _min: AgentRunMinAggregateOutputType | null
+    _max: AgentRunMaxAggregateOutputType | null
+  }
+
+  export type AgentRunAvgAggregateOutputType = {
+    tokensIn: number | null
+    tokensOut: number | null
+    costUsd: Decimal | null
+    latencyMs: number | null
+    iterations: number | null
+  }
+
+  export type AgentRunSumAggregateOutputType = {
+    tokensIn: number | null
+    tokensOut: number | null
+    costUsd: Decimal | null
+    latencyMs: number | null
+    iterations: number | null
+  }
+
+  export type AgentRunMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    agentType: string | null
+    status: string | null
+    inputHash: string | null
+    tokensIn: number | null
+    tokensOut: number | null
+    costUsd: Decimal | null
+    latencyMs: number | null
+    modelName: string | null
+    iterations: number | null
+    triggeredBy: string | null
+    errorMessage: string | null
+    startedAt: Date | null
+    completedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AgentRunMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    agentType: string | null
+    status: string | null
+    inputHash: string | null
+    tokensIn: number | null
+    tokensOut: number | null
+    costUsd: Decimal | null
+    latencyMs: number | null
+    modelName: string | null
+    iterations: number | null
+    triggeredBy: string | null
+    errorMessage: string | null
+    startedAt: Date | null
+    completedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type AgentRunCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    agentType: number
+    status: number
+    inputHash: number
+    tokensIn: number
+    tokensOut: number
+    costUsd: number
+    latencyMs: number
+    modelName: number
+    iterations: number
+    triggeredBy: number
+    errorMessage: number
+    startedAt: number
+    completedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AgentRunAvgAggregateInputType = {
+    tokensIn?: true
+    tokensOut?: true
+    costUsd?: true
+    latencyMs?: true
+    iterations?: true
+  }
+
+  export type AgentRunSumAggregateInputType = {
+    tokensIn?: true
+    tokensOut?: true
+    costUsd?: true
+    latencyMs?: true
+    iterations?: true
+  }
+
+  export type AgentRunMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentType?: true
+    status?: true
+    inputHash?: true
+    tokensIn?: true
+    tokensOut?: true
+    costUsd?: true
+    latencyMs?: true
+    modelName?: true
+    iterations?: true
+    triggeredBy?: true
+    errorMessage?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+  }
+
+  export type AgentRunMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentType?: true
+    status?: true
+    inputHash?: true
+    tokensIn?: true
+    tokensOut?: true
+    costUsd?: true
+    latencyMs?: true
+    modelName?: true
+    iterations?: true
+    triggeredBy?: true
+    errorMessage?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+  }
+
+  export type AgentRunCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentType?: true
+    status?: true
+    inputHash?: true
+    tokensIn?: true
+    tokensOut?: true
+    costUsd?: true
+    latencyMs?: true
+    modelName?: true
+    iterations?: true
+    triggeredBy?: true
+    errorMessage?: true
+    startedAt?: true
+    completedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AgentRunAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRun to aggregate.
+     */
+    where?: AgentRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRuns to fetch.
+     */
+    orderBy?: AgentRunOrderByWithRelationInput | AgentRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgentRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgentRuns
+    **/
+    _count?: true | AgentRunCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AgentRunAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AgentRunSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgentRunMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgentRunMaxAggregateInputType
+  }
+
+  export type GetAgentRunAggregateType<T extends AgentRunAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgentRun]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgentRun[P]>
+      : GetScalarType<T[P], AggregateAgentRun[P]>
+  }
+
+
+
+
+  export type AgentRunGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRunWhereInput
+    orderBy?: AgentRunOrderByWithAggregationInput | AgentRunOrderByWithAggregationInput[]
+    by: AgentRunScalarFieldEnum[] | AgentRunScalarFieldEnum
+    having?: AgentRunScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgentRunCountAggregateInputType | true
+    _avg?: AgentRunAvgAggregateInputType
+    _sum?: AgentRunSumAggregateInputType
+    _min?: AgentRunMinAggregateInputType
+    _max?: AgentRunMaxAggregateInputType
+  }
+
+  export type AgentRunGroupByOutputType = {
+    id: string
+    tenantId: string
+    agentType: string
+    status: string
+    inputHash: string
+    tokensIn: number
+    tokensOut: number
+    costUsd: Decimal
+    latencyMs: number
+    modelName: string
+    iterations: number
+    triggeredBy: string | null
+    errorMessage: string | null
+    startedAt: Date
+    completedAt: Date
+    createdAt: Date
+    _count: AgentRunCountAggregateOutputType | null
+    _avg: AgentRunAvgAggregateOutputType | null
+    _sum: AgentRunSumAggregateOutputType | null
+    _min: AgentRunMinAggregateOutputType | null
+    _max: AgentRunMaxAggregateOutputType | null
+  }
+
+  type GetAgentRunGroupByPayload<T extends AgentRunGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgentRunGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgentRunGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgentRunGroupByOutputType[P]>
+            : GetScalarType<T[P], AgentRunGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgentRunSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentType?: boolean
+    status?: boolean
+    inputHash?: boolean
+    tokensIn?: boolean
+    tokensOut?: boolean
+    costUsd?: boolean
+    latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
+    triggeredBy?: boolean
+    errorMessage?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["agentRun"]>
+
+  export type AgentRunSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentType?: boolean
+    status?: boolean
+    inputHash?: boolean
+    tokensIn?: boolean
+    tokensOut?: boolean
+    costUsd?: boolean
+    latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
+    triggeredBy?: boolean
+    errorMessage?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["agentRun"]>
+
+  export type AgentRunSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentType?: boolean
+    status?: boolean
+    inputHash?: boolean
+    tokensIn?: boolean
+    tokensOut?: boolean
+    costUsd?: boolean
+    latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
+    triggeredBy?: boolean
+    errorMessage?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["agentRun"]>
+
+  export type AgentRunSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    agentType?: boolean
+    status?: boolean
+    inputHash?: boolean
+    tokensIn?: boolean
+    tokensOut?: boolean
+    costUsd?: boolean
+    latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
+    triggeredBy?: boolean
+    errorMessage?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type AgentRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "agentType" | "status" | "inputHash" | "tokensIn" | "tokensOut" | "costUsd" | "latencyMs" | "modelName" | "iterations" | "triggeredBy" | "errorMessage" | "startedAt" | "completedAt" | "createdAt", ExtArgs["result"]["agentRun"]>
+
+  export type $AgentRunPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgentRun"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      agentType: string
+      status: string
+      inputHash: string
+      tokensIn: number
+      tokensOut: number
+      costUsd: Prisma.Decimal
+      latencyMs: number
+      modelName: string
+      iterations: number
+      triggeredBy: string | null
+      errorMessage: string | null
+      startedAt: Date
+      completedAt: Date
+      createdAt: Date
+    }, ExtArgs["result"]["agentRun"]>
+    composites: {}
+  }
+
+  type AgentRunGetPayload<S extends boolean | null | undefined | AgentRunDefaultArgs> = $Result.GetResult<Prisma.$AgentRunPayload, S>
+
+  type AgentRunCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgentRunFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgentRunCountAggregateInputType | true
+    }
+
+  export interface AgentRunDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgentRun'], meta: { name: 'AgentRun' } }
+    /**
+     * Find zero or one AgentRun that matches the filter.
+     * @param {AgentRunFindUniqueArgs} args - Arguments to find a AgentRun
+     * @example
+     * // Get one AgentRun
+     * const agentRun = await prisma.agentRun.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgentRunFindUniqueArgs>(args: SelectSubset<T, AgentRunFindUniqueArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgentRun that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgentRunFindUniqueOrThrowArgs} args - Arguments to find a AgentRun
+     * @example
+     * // Get one AgentRun
+     * const agentRun = await prisma.agentRun.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgentRunFindUniqueOrThrowArgs>(args: SelectSubset<T, AgentRunFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRun that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunFindFirstArgs} args - Arguments to find a AgentRun
+     * @example
+     * // Get one AgentRun
+     * const agentRun = await prisma.agentRun.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgentRunFindFirstArgs>(args?: SelectSubset<T, AgentRunFindFirstArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRun that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunFindFirstOrThrowArgs} args - Arguments to find a AgentRun
+     * @example
+     * // Get one AgentRun
+     * const agentRun = await prisma.agentRun.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgentRunFindFirstOrThrowArgs>(args?: SelectSubset<T, AgentRunFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgentRuns that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgentRuns
+     * const agentRuns = await prisma.agentRun.findMany()
+     * 
+     * // Get first 10 AgentRuns
+     * const agentRuns = await prisma.agentRun.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agentRunWithIdOnly = await prisma.agentRun.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgentRunFindManyArgs>(args?: SelectSubset<T, AgentRunFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgentRun.
+     * @param {AgentRunCreateArgs} args - Arguments to create a AgentRun.
+     * @example
+     * // Create one AgentRun
+     * const AgentRun = await prisma.agentRun.create({
+     *   data: {
+     *     // ... data to create a AgentRun
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgentRunCreateArgs>(args: SelectSubset<T, AgentRunCreateArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgentRuns.
+     * @param {AgentRunCreateManyArgs} args - Arguments to create many AgentRuns.
+     * @example
+     * // Create many AgentRuns
+     * const agentRun = await prisma.agentRun.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgentRunCreateManyArgs>(args?: SelectSubset<T, AgentRunCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgentRuns and returns the data saved in the database.
+     * @param {AgentRunCreateManyAndReturnArgs} args - Arguments to create many AgentRuns.
+     * @example
+     * // Create many AgentRuns
+     * const agentRun = await prisma.agentRun.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgentRuns and only return the `id`
+     * const agentRunWithIdOnly = await prisma.agentRun.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgentRunCreateManyAndReturnArgs>(args?: SelectSubset<T, AgentRunCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgentRun.
+     * @param {AgentRunDeleteArgs} args - Arguments to delete one AgentRun.
+     * @example
+     * // Delete one AgentRun
+     * const AgentRun = await prisma.agentRun.delete({
+     *   where: {
+     *     // ... filter to delete one AgentRun
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgentRunDeleteArgs>(args: SelectSubset<T, AgentRunDeleteArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgentRun.
+     * @param {AgentRunUpdateArgs} args - Arguments to update one AgentRun.
+     * @example
+     * // Update one AgentRun
+     * const agentRun = await prisma.agentRun.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgentRunUpdateArgs>(args: SelectSubset<T, AgentRunUpdateArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgentRuns.
+     * @param {AgentRunDeleteManyArgs} args - Arguments to filter AgentRuns to delete.
+     * @example
+     * // Delete a few AgentRuns
+     * const { count } = await prisma.agentRun.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgentRunDeleteManyArgs>(args?: SelectSubset<T, AgentRunDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRuns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgentRuns
+     * const agentRun = await prisma.agentRun.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgentRunUpdateManyArgs>(args: SelectSubset<T, AgentRunUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRuns and returns the data updated in the database.
+     * @param {AgentRunUpdateManyAndReturnArgs} args - Arguments to update many AgentRuns.
+     * @example
+     * // Update many AgentRuns
+     * const agentRun = await prisma.agentRun.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgentRuns and only return the `id`
+     * const agentRunWithIdOnly = await prisma.agentRun.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgentRunUpdateManyAndReturnArgs>(args: SelectSubset<T, AgentRunUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgentRun.
+     * @param {AgentRunUpsertArgs} args - Arguments to update or create a AgentRun.
+     * @example
+     * // Update or create a AgentRun
+     * const agentRun = await prisma.agentRun.upsert({
+     *   create: {
+     *     // ... data to create a AgentRun
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgentRun we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgentRunUpsertArgs>(args: SelectSubset<T, AgentRunUpsertArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgentRuns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunCountArgs} args - Arguments to filter AgentRuns to count.
+     * @example
+     * // Count the number of AgentRuns
+     * const count = await prisma.agentRun.count({
+     *   where: {
+     *     // ... the filter for the AgentRuns we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgentRunCountArgs>(
+      args?: Subset<T, AgentRunCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgentRunCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgentRun.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgentRunAggregateArgs>(args: Subset<T, AgentRunAggregateArgs>): Prisma.PrismaPromise<GetAgentRunAggregateType<T>>
+
+    /**
+     * Group by AgentRun.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgentRunGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgentRunGroupByArgs['orderBy'] }
+        : { orderBy?: AgentRunGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgentRunGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgentRunGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgentRun model
+   */
+  readonly fields: AgentRunFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgentRun.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgentRunClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgentRun model
+   */
+  interface AgentRunFieldRefs {
+    readonly id: FieldRef<"AgentRun", 'String'>
+    readonly tenantId: FieldRef<"AgentRun", 'String'>
+    readonly agentType: FieldRef<"AgentRun", 'String'>
+    readonly status: FieldRef<"AgentRun", 'String'>
+    readonly inputHash: FieldRef<"AgentRun", 'String'>
+    readonly tokensIn: FieldRef<"AgentRun", 'Int'>
+    readonly tokensOut: FieldRef<"AgentRun", 'Int'>
+    readonly costUsd: FieldRef<"AgentRun", 'Decimal'>
+    readonly latencyMs: FieldRef<"AgentRun", 'Int'>
+    readonly modelName: FieldRef<"AgentRun", 'String'>
+    readonly iterations: FieldRef<"AgentRun", 'Int'>
+    readonly triggeredBy: FieldRef<"AgentRun", 'String'>
+    readonly errorMessage: FieldRef<"AgentRun", 'String'>
+    readonly startedAt: FieldRef<"AgentRun", 'DateTime'>
+    readonly completedAt: FieldRef<"AgentRun", 'DateTime'>
+    readonly createdAt: FieldRef<"AgentRun", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgentRun findUnique
+   */
+  export type AgentRunFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentRun to fetch.
+     */
+    where: AgentRunWhereUniqueInput
+  }
+
+  /**
+   * AgentRun findUniqueOrThrow
+   */
+  export type AgentRunFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentRun to fetch.
+     */
+    where: AgentRunWhereUniqueInput
+  }
+
+  /**
+   * AgentRun findFirst
+   */
+  export type AgentRunFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentRun to fetch.
+     */
+    where?: AgentRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRuns to fetch.
+     */
+    orderBy?: AgentRunOrderByWithRelationInput | AgentRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRuns.
+     */
+    cursor?: AgentRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRuns.
+     */
+    distinct?: AgentRunScalarFieldEnum | AgentRunScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRun findFirstOrThrow
+   */
+  export type AgentRunFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentRun to fetch.
+     */
+    where?: AgentRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRuns to fetch.
+     */
+    orderBy?: AgentRunOrderByWithRelationInput | AgentRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRuns.
+     */
+    cursor?: AgentRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRuns.
+     */
+    distinct?: AgentRunScalarFieldEnum | AgentRunScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRun findMany
+   */
+  export type AgentRunFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentRuns to fetch.
+     */
+    where?: AgentRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRuns to fetch.
+     */
+    orderBy?: AgentRunOrderByWithRelationInput | AgentRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgentRuns.
+     */
+    cursor?: AgentRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRuns.
+     */
+    skip?: number
+    distinct?: AgentRunScalarFieldEnum | AgentRunScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRun create
+   */
+  export type AgentRunCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * The data needed to create a AgentRun.
+     */
+    data: XOR<AgentRunCreateInput, AgentRunUncheckedCreateInput>
+  }
+
+  /**
+   * AgentRun createMany
+   */
+  export type AgentRunCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgentRuns.
+     */
+    data: AgentRunCreateManyInput | AgentRunCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentRun createManyAndReturn
+   */
+  export type AgentRunCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgentRuns.
+     */
+    data: AgentRunCreateManyInput | AgentRunCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentRun update
+   */
+  export type AgentRunUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * The data needed to update a AgentRun.
+     */
+    data: XOR<AgentRunUpdateInput, AgentRunUncheckedUpdateInput>
+    /**
+     * Choose, which AgentRun to update.
+     */
+    where: AgentRunWhereUniqueInput
+  }
+
+  /**
+   * AgentRun updateMany
+   */
+  export type AgentRunUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgentRuns.
+     */
+    data: XOR<AgentRunUpdateManyMutationInput, AgentRunUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRuns to update
+     */
+    where?: AgentRunWhereInput
+    /**
+     * Limit how many AgentRuns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRun updateManyAndReturn
+   */
+  export type AgentRunUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * The data used to update AgentRuns.
+     */
+    data: XOR<AgentRunUpdateManyMutationInput, AgentRunUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRuns to update
+     */
+    where?: AgentRunWhereInput
+    /**
+     * Limit how many AgentRuns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRun upsert
+   */
+  export type AgentRunUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * The filter to search for the AgentRun to update in case it exists.
+     */
+    where: AgentRunWhereUniqueInput
+    /**
+     * In case the AgentRun found by the `where` argument doesn't exist, create a new AgentRun with this data.
+     */
+    create: XOR<AgentRunCreateInput, AgentRunUncheckedCreateInput>
+    /**
+     * In case the AgentRun was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgentRunUpdateInput, AgentRunUncheckedUpdateInput>
+  }
+
+  /**
+   * AgentRun delete
+   */
+  export type AgentRunDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+    /**
+     * Filter which AgentRun to delete.
+     */
+    where: AgentRunWhereUniqueInput
+  }
+
+  /**
+   * AgentRun deleteMany
+   */
+  export type AgentRunDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRuns to delete
+     */
+    where?: AgentRunWhereInput
+    /**
+     * Limit how many AgentRuns to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRun without action
+   */
+  export type AgentRunDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRun
+     */
+    select?: AgentRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRun
+     */
+    omit?: AgentRunOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -6076,6 +7355,28 @@ export namespace Prisma {
   };
 
   export type SkillScalarFieldEnum = (typeof SkillScalarFieldEnum)[keyof typeof SkillScalarFieldEnum]
+
+
+  export const AgentRunScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    agentType: 'agentType',
+    status: 'status',
+    inputHash: 'inputHash',
+    tokensIn: 'tokensIn',
+    tokensOut: 'tokensOut',
+    costUsd: 'costUsd',
+    latencyMs: 'latencyMs',
+    modelName: 'modelName',
+    iterations: 'iterations',
+    triggeredBy: 'triggeredBy',
+    errorMessage: 'errorMessage',
+    startedAt: 'startedAt',
+    completedAt: 'completedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type AgentRunScalarFieldEnum = (typeof AgentRunScalarFieldEnum)[keyof typeof AgentRunScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -6211,6 +7512,20 @@ export namespace Prisma {
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'Decimal'
+   */
+  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+  /**
+   * Reference to a field of type 'Decimal[]'
+   */
+  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
     
   /**
    * Deep Input Types
@@ -6597,6 +7912,115 @@ export namespace Prisma {
     aliases?: StringNullableListFilter<"Skill">
     createdAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
+  }
+
+  export type AgentRunWhereInput = {
+    AND?: AgentRunWhereInput | AgentRunWhereInput[]
+    OR?: AgentRunWhereInput[]
+    NOT?: AgentRunWhereInput | AgentRunWhereInput[]
+    id?: StringFilter<"AgentRun"> | string
+    tenantId?: StringFilter<"AgentRun"> | string
+    agentType?: StringFilter<"AgentRun"> | string
+    status?: StringFilter<"AgentRun"> | string
+    inputHash?: StringFilter<"AgentRun"> | string
+    tokensIn?: IntFilter<"AgentRun"> | number
+    tokensOut?: IntFilter<"AgentRun"> | number
+    costUsd?: DecimalFilter<"AgentRun"> | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFilter<"AgentRun"> | number
+    modelName?: StringFilter<"AgentRun"> | string
+    iterations?: IntFilter<"AgentRun"> | number
+    triggeredBy?: StringNullableFilter<"AgentRun"> | string | null
+    errorMessage?: StringNullableFilter<"AgentRun"> | string | null
+    startedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    completedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    createdAt?: DateTimeFilter<"AgentRun"> | Date | string
+  }
+
+  export type AgentRunOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentType?: SortOrder
+    status?: SortOrder
+    inputHash?: SortOrder
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
+    triggeredBy?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AgentRunWhereInput | AgentRunWhereInput[]
+    OR?: AgentRunWhereInput[]
+    NOT?: AgentRunWhereInput | AgentRunWhereInput[]
+    tenantId?: StringFilter<"AgentRun"> | string
+    agentType?: StringFilter<"AgentRun"> | string
+    status?: StringFilter<"AgentRun"> | string
+    inputHash?: StringFilter<"AgentRun"> | string
+    tokensIn?: IntFilter<"AgentRun"> | number
+    tokensOut?: IntFilter<"AgentRun"> | number
+    costUsd?: DecimalFilter<"AgentRun"> | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFilter<"AgentRun"> | number
+    modelName?: StringFilter<"AgentRun"> | string
+    iterations?: IntFilter<"AgentRun"> | number
+    triggeredBy?: StringNullableFilter<"AgentRun"> | string | null
+    errorMessage?: StringNullableFilter<"AgentRun"> | string | null
+    startedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    completedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    createdAt?: DateTimeFilter<"AgentRun"> | Date | string
+  }, "id">
+
+  export type AgentRunOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentType?: SortOrder
+    status?: SortOrder
+    inputHash?: SortOrder
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
+    triggeredBy?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    _count?: AgentRunCountOrderByAggregateInput
+    _avg?: AgentRunAvgOrderByAggregateInput
+    _max?: AgentRunMaxOrderByAggregateInput
+    _min?: AgentRunMinOrderByAggregateInput
+    _sum?: AgentRunSumOrderByAggregateInput
+  }
+
+  export type AgentRunScalarWhereWithAggregatesInput = {
+    AND?: AgentRunScalarWhereWithAggregatesInput | AgentRunScalarWhereWithAggregatesInput[]
+    OR?: AgentRunScalarWhereWithAggregatesInput[]
+    NOT?: AgentRunScalarWhereWithAggregatesInput | AgentRunScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AgentRun"> | string
+    tenantId?: StringWithAggregatesFilter<"AgentRun"> | string
+    agentType?: StringWithAggregatesFilter<"AgentRun"> | string
+    status?: StringWithAggregatesFilter<"AgentRun"> | string
+    inputHash?: StringWithAggregatesFilter<"AgentRun"> | string
+    tokensIn?: IntWithAggregatesFilter<"AgentRun"> | number
+    tokensOut?: IntWithAggregatesFilter<"AgentRun"> | number
+    costUsd?: DecimalWithAggregatesFilter<"AgentRun"> | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntWithAggregatesFilter<"AgentRun"> | number
+    modelName?: StringWithAggregatesFilter<"AgentRun"> | string
+    iterations?: IntWithAggregatesFilter<"AgentRun"> | number
+    triggeredBy?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
+    errorMessage?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
+    startedAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
+    completedAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
   }
 
   export type RequisitionCreateInput = {
@@ -7040,6 +8464,139 @@ export namespace Prisma {
     aliases?: SkillUpdatealiasesInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunCreateInput = {
+    id: string
+    tenantId: string
+    agentType: string
+    status: string
+    inputHash: string
+    tokensIn: number
+    tokensOut: number
+    costUsd: Decimal | DecimalJsLike | number | string
+    latencyMs: number
+    modelName: string
+    iterations?: number
+    triggeredBy?: string | null
+    errorMessage?: string | null
+    startedAt: Date | string
+    completedAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AgentRunUncheckedCreateInput = {
+    id: string
+    tenantId: string
+    agentType: string
+    status: string
+    inputHash: string
+    tokensIn: number
+    tokensOut: number
+    costUsd: Decimal | DecimalJsLike | number | string
+    latencyMs: number
+    modelName: string
+    iterations?: number
+    triggeredBy?: string | null
+    errorMessage?: string | null
+    startedAt: Date | string
+    completedAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AgentRunUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    inputHash?: StringFieldUpdateOperationsInput | string
+    tokensIn?: IntFieldUpdateOperationsInput | number
+    tokensOut?: IntFieldUpdateOperationsInput | number
+    costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: StringFieldUpdateOperationsInput | string
+    iterations?: IntFieldUpdateOperationsInput | number
+    triggeredBy?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    inputHash?: StringFieldUpdateOperationsInput | string
+    tokensIn?: IntFieldUpdateOperationsInput | number
+    tokensOut?: IntFieldUpdateOperationsInput | number
+    costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: StringFieldUpdateOperationsInput | string
+    iterations?: IntFieldUpdateOperationsInput | number
+    triggeredBy?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunCreateManyInput = {
+    id: string
+    tenantId: string
+    agentType: string
+    status: string
+    inputHash: string
+    tokensIn: number
+    tokensOut: number
+    costUsd: Decimal | DecimalJsLike | number | string
+    latencyMs: number
+    modelName: string
+    iterations?: number
+    triggeredBy?: string | null
+    errorMessage?: string | null
+    startedAt: Date | string
+    completedAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type AgentRunUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    inputHash?: StringFieldUpdateOperationsInput | string
+    tokensIn?: IntFieldUpdateOperationsInput | number
+    tokensOut?: IntFieldUpdateOperationsInput | number
+    costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: StringFieldUpdateOperationsInput | string
+    iterations?: IntFieldUpdateOperationsInput | number
+    triggeredBy?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    inputHash?: StringFieldUpdateOperationsInput | string
+    tokensIn?: IntFieldUpdateOperationsInput | number
+    tokensOut?: IntFieldUpdateOperationsInput | number
+    costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: StringFieldUpdateOperationsInput | string
+    iterations?: IntFieldUpdateOperationsInput | number
+    triggeredBy?: NullableStringFieldUpdateOperationsInput | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -7551,6 +9108,106 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type AgentRunCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentType?: SortOrder
+    status?: SortOrder
+    inputHash?: SortOrder
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
+    triggeredBy?: SortOrder
+    errorMessage?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunAvgOrderByAggregateInput = {
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    iterations?: SortOrder
+  }
+
+  export type AgentRunMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentType?: SortOrder
+    status?: SortOrder
+    inputHash?: SortOrder
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
+    triggeredBy?: SortOrder
+    errorMessage?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentType?: SortOrder
+    status?: SortOrder
+    inputHash?: SortOrder
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
+    triggeredBy?: SortOrder
+    errorMessage?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunSumOrderByAggregateInput = {
+    tokensIn?: SortOrder
+    tokensOut?: SortOrder
+    costUsd?: SortOrder
+    latencyMs?: SortOrder
+    iterations?: SortOrder
+  }
+
+  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
   export type JobPostingCreateNestedManyWithoutRequisitionInput = {
     create?: XOR<JobPostingCreateWithoutRequisitionInput, JobPostingUncheckedCreateWithoutRequisitionInput> | JobPostingCreateWithoutRequisitionInput[] | JobPostingUncheckedCreateWithoutRequisitionInput[]
     connectOrCreate?: JobPostingCreateOrConnectWithoutRequisitionInput | JobPostingCreateOrConnectWithoutRequisitionInput[]
@@ -7767,6 +9424,14 @@ export namespace Prisma {
     update?: SkillUpdateWithWhereUniqueWithoutParentInput | SkillUpdateWithWhereUniqueWithoutParentInput[]
     updateMany?: SkillUpdateManyWithWhereWithoutParentInput | SkillUpdateManyWithWhereWithoutParentInput[]
     deleteMany?: SkillScalarWhereInput | SkillScalarWhereInput[]
+  }
+
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -8008,6 +9673,33 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type JobPostingCreateWithoutRequisitionInput = {

@@ -8,6 +8,7 @@ import { prisma } from "./lib/prisma.js";
 import requisitionsRouter from "./routes/requisitions.js";
 import jobPostingsRouter from "./routes/job-postings.js";
 import publicRouter from "./routes/public.js";
+import jdAuthorRouter from "./routes/jd-author.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -32,6 +33,7 @@ export function createApp(logger: Logger): Express {
   // Internal authenticated routes
   app.use("/internal/requisitions", readAuthHeaders(), requisitionsRouter);
   app.use("/internal/job-postings", readAuthHeaders(), jobPostingsRouter);
+  app.use("/internal/jd-author", readAuthHeaders(), jdAuthorRouter);
 
   // Public routes — NO auth required (gateway forwards /api/public/* unauthenticated)
   app.use("/public", publicRouter);

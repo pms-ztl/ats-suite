@@ -125,6 +125,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/billing", gatewayAuth(), forwardHeaders(billingUrl, "/internal/billing"));
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
+  app.use("/api/jd-author", gatewayAuth(), forwardHeaders(jobUrl, "/internal/jd-author"));
   app.use("/api/candidates", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidates"));
   app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
   app.use("/api/resume", gatewayAuth(), forwardHeaders(resumeUrl, "/internal/resume"));

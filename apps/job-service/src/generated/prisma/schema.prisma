@@ -100,3 +100,26 @@ model Skill {
   @@unique([tenantId, name])
   @@index([tenantId])
 }
+
+// Per-service AgentRun — denormalized telemetry for job-service agent calls
+// (jd-author). billing-service aggregates across all services via NATS events.
+model AgentRun {
+  id           String   @id
+  tenantId     String
+  agentType    String
+  status       String
+  inputHash    String
+  tokensIn     Int
+  tokensOut    Int
+  costUsd      Decimal  @db.Decimal(10, 6)
+  latencyMs    Int
+  modelName    String
+  iterations   Int      @default(1)
+  triggeredBy  String? // userId or "system"
+  errorMessage String?
+  startedAt    DateTime
+  completedAt  DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
