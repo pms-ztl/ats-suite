@@ -131,7 +131,32 @@ exports.Prisma.NotificationScalarFieldEnum = {
   link: 'link',
   readAt: 'readAt',
   metadata: 'metadata',
+  channels: 'channels',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationDeliveryScalarFieldEnum = {
+  id: 'id',
+  notificationId: 'notificationId',
+  tenantId: 'tenantId',
+  channel: 'channel',
+  status: 'status',
+  recipient: 'recipient',
+  attemptCount: 'attemptCount',
+  lastError: 'lastError',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantIntegrationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  kind: 'kind',
+  config: 'config',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -169,8 +194,22 @@ exports.NotificationType = exports.$Enums.NotificationType = {
   SYSTEM: 'SYSTEM'
 };
 
+exports.DeliveryChannel = exports.$Enums.DeliveryChannel = {
+  IN_APP: 'IN_APP',
+  EMAIL: 'EMAIL',
+  SLACK: 'SLACK'
+};
+
+exports.DeliveryStatus = exports.$Enums.DeliveryStatus = {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+};
+
 exports.Prisma.ModelName = {
-  Notification: 'Notification'
+  Notification: 'Notification',
+  NotificationDelivery: 'NotificationDelivery',
+  TenantIntegration: 'TenantIntegration'
 };
 
 /**

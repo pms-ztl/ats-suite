@@ -35,6 +35,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         body: `Plan: ${p.plan}${p.industry ? ` · ${p.industry}` : ""}${p.companySize ? ` · ${p.companySize}` : ""}`,
         link: `/admin?tenant=${p.tenantId}`,
         metadata: { tenantId: p.tenantId, plan: p.plan },
+        channels: ["in_app", "email", "slack"],
       });
     },
   });
@@ -55,6 +56,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         body: p.reason ?? undefined,
         link: "/admin/plan-requests",
         metadata: { tenantId: p.tenantId, requestId: p.requestId },
+        channels: ["in_app", "email", "slack"],
       });
     },
   });
@@ -75,6 +77,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         body: `Your tenant is now on the ${p.toPlan} plan.`,
         link: "/billing",
         metadata: { fromPlan: p.fromPlan, toPlan: p.toPlan, requestId: p.requestId },
+        channels: ["in_app", "email", "slack"],
       });
     },
   });
@@ -98,6 +101,7 @@ export async function startNotificationSubscribers(logger: Logger) {
           bulkUploadId: p.bulkUploadId, total: p.totalFiles,
           processed: p.processedFiles, failed: p.failedFiles, status: p.status,
         },
+        channels: ["in_app", "email"],
       });
     },
   });
@@ -121,6 +125,7 @@ export async function startNotificationSubscribers(logger: Logger) {
           interviewId: p.interviewId, candidateId: p.candidateId,
           recommendation: p.recommendation, roundNumber: p.roundNumber,
         },
+        channels: ["in_app", "slack"],
       });
     },
   });

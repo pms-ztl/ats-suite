@@ -209,15 +209,26 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// ─── GET /internal/users?tenantId= ─────────────────────────────────────────
+// ─── GET /internal/users?tenantId=... OR ?role=SUPER_ADMIN ───────────────
+// Either filter is required. `?role=SUPER_ADMIN` returns all super-admins
+// across the platform — used by notification-service to fan out platform
+// notifications via email/Slack.
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.query["tenantId"] as string | undefined;
-    if (!tenantId) throw Errors.validation("tenantId query param is required");
+    const role = req.query["role"] as string | undefined;
+    if (!tenantId && !role) {
+      throw Errors.validation("tenantId or role query param is required");
+    }
+
+    const where: any = {};
+    if (tenantId) where.tenantId = tenantId;
+    if (role) where.role = role;
 
     const users = await prisma.user.findMany({
-      where: { tenantId },
+      where,
       orderBy: { createdAt: "asc" },
+      take: 1000,
     });
     ok(res, users.map((u: typeof users[number]) => ({
       id: u.id,
@@ -225,6 +236,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       firstName: u.firstName,
       lastName: u.lastName,
       role: u.role,
+      tenantId: u.tenantId,
       isActive: u.isActive,
       lastLoginAt: u.lastLoginAt,
       createdAt: u.createdAt,

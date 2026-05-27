@@ -103,7 +103,32 @@ exports.Prisma.NotificationScalarFieldEnum = {
   link: 'link',
   readAt: 'readAt',
   metadata: 'metadata',
+  channels: 'channels',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationDeliveryScalarFieldEnum = {
+  id: 'id',
+  notificationId: 'notificationId',
+  tenantId: 'tenantId',
+  channel: 'channel',
+  status: 'status',
+  recipient: 'recipient',
+  attemptCount: 'attemptCount',
+  lastError: 'lastError',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantIntegrationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  kind: 'kind',
+  config: 'config',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -141,8 +166,22 @@ exports.NotificationType = exports.$Enums.NotificationType = {
   SYSTEM: 'SYSTEM'
 };
 
+exports.DeliveryChannel = exports.$Enums.DeliveryChannel = {
+  IN_APP: 'IN_APP',
+  EMAIL: 'EMAIL',
+  SLACK: 'SLACK'
+};
+
+exports.DeliveryStatus = exports.$Enums.DeliveryStatus = {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+};
+
 exports.Prisma.ModelName = {
-  Notification: 'Notification'
+  Notification: 'Notification',
+  NotificationDelivery: 'NotificationDelivery',
+  TenantIntegration: 'TenantIntegration'
 };
 /**
  * Create the Client
@@ -190,13 +229,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"NOTIFICATION_DATABASE_URL\")\n}\n\nenum NotificationType {\n  PLAN_CHANGE_REQUESTED\n  PLAN_CHANGE_APPROVED\n  PLAN_CHANGE_REJECTED\n  NEW_TENANT_SIGNUP\n  BULK_UPLOAD_COMPLETED\n  SEAT_LIMIT_REACHED\n  INTERVIEW_FEEDBACK_NEW\n  SYSTEM\n}\n\nmodel Notification {\n  id        String           @id @default(uuid())\n  // tenantId NULL = platform-wide (super-admin only sees these)\n  tenantId  String?\n  // userId NULL = broadcast to all users in tenant (or all super-admins if tenantId null)\n  userId    String?\n  type      NotificationType\n  title     String\n  body      String?\n  link      String?\n  readAt    DateTime?\n  metadata  Json             @default(\"{}\")\n  createdAt DateTime         @default(now())\n\n  @@index([userId, readAt])\n  @@index([tenantId, createdAt])\n  @@index([createdAt])\n}\n",
-  "inlineSchemaHash": "fcfc06b51063512c4b2a672a74707e4b8d37855c06f45017afb403b217a93674",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"NOTIFICATION_DATABASE_URL\")\n}\n\nenum NotificationType {\n  PLAN_CHANGE_REQUESTED\n  PLAN_CHANGE_APPROVED\n  PLAN_CHANGE_REJECTED\n  NEW_TENANT_SIGNUP\n  BULK_UPLOAD_COMPLETED\n  SEAT_LIMIT_REACHED\n  INTERVIEW_FEEDBACK_NEW\n  SYSTEM\n}\n\nmodel Notification {\n  id        String           @id @default(uuid())\n  // tenantId NULL = platform-wide (super-admin only sees these)\n  tenantId  String?\n  // userId NULL = broadcast to all users in tenant (or all super-admins if tenantId null)\n  userId    String?\n  type      NotificationType\n  title     String\n  body      String?\n  link      String?\n  readAt    DateTime?\n  metadata  Json             @default(\"{}\")\n  // Which channels should this be delivered through.\n  // Values: \"in_app\" (always — DB + SSE), \"email\", \"slack\".\n  channels  String[]         @default([\"in_app\"])\n  createdAt DateTime         @default(now())\n\n  deliveries NotificationDelivery[]\n\n  @@index([userId, readAt])\n  @@index([tenantId, createdAt])\n  @@index([createdAt])\n}\n\nenum DeliveryChannel {\n  IN_APP\n  EMAIL\n  SLACK\n}\n\nenum DeliveryStatus {\n  PENDING\n  SENT\n  FAILED\n}\n\n// One row per notification × channel attempt. Lets us retry failures\n// + show per-notification delivery state in the UI.\nmodel NotificationDelivery {\n  id             String          @id @default(uuid())\n  notificationId String\n  tenantId       String?\n  channel        DeliveryChannel\n  status         DeliveryStatus  @default(PENDING)\n  recipient      String // email address, Slack channel, or userId for in_app\n  attemptCount   Int             @default(0)\n  lastError      String?\n  sentAt         DateTime?\n  createdAt      DateTime        @default(now())\n  updatedAt      DateTime        @updatedAt\n\n  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)\n\n  @@index([notificationId])\n  @@index([status, channel])\n  @@index([tenantId, createdAt])\n}\n\n// Per-tenant integration config (Slack webhook URL, SMTP sender override).\n// In prod, treat the encrypted form as secrets-backed; for dev we plaintext-store.\nmodel TenantIntegration {\n  id        String   @id @default(uuid())\n  tenantId  String\n  kind      String // \"slack\" | \"email\"\n  config    Json // {webhookUrl: \"...\"} for slack; {fromAddress: \"...\"} for email\n  enabled   Boolean  @default(true)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@unique([tenantId, kind])\n  @@index([tenantId])\n}\n",
+  "inlineSchemaHash": "b66608ae7bb220e19365ec192d298d89767b7cca273362f3eaa10b29aaa5d2e2",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Notification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"NotificationType\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"body\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"link\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"readAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Notification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"NotificationType\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"body\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"link\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"readAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"channels\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deliveries\",\"kind\":\"object\",\"type\":\"NotificationDelivery\",\"relationName\":\"NotificationToNotificationDelivery\"}],\"dbName\":null},\"NotificationDelivery\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notificationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"channel\",\"kind\":\"enum\",\"type\":\"DeliveryChannel\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"DeliveryStatus\"},{\"name\":\"recipient\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attemptCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"lastError\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sentAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"notification\",\"kind\":\"object\",\"type\":\"Notification\",\"relationName\":\"NotificationToNotificationDelivery\"}],\"dbName\":null},\"TenantIntegration\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"kind\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"config\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"enabled\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

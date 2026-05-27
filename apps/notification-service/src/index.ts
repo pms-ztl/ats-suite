@@ -5,9 +5,12 @@ initSentry({ serviceName: "notification-service" });
 import { createApp } from "./app.js";
 import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startNotificationSubscribers } from "./lib/subscribers.js";
+import { startDeliveryWorker } from "./workers/delivery.worker.js";
 
 const logger = createLogger({ serviceName: "notification-service" });
 const PORT = Number(process.env["PORT"] ?? 4009);
+
+let deliveryWorker: ReturnType<typeof startDeliveryWorker> = null;
 
 async function main() {
   if (process.env["NATS_URL"]) {
@@ -23,13 +26,27 @@ async function main() {
     logger.warn("NATS_URL not set — no event subscribers");
   }
 
+  if (process.env["REDIS_URL"]) {
+    try {
+      deliveryWorker = startDeliveryWorker(logger);
+      logger.info("Notification delivery worker started (email + Slack channels)");
+    } catch (err) {
+      logger.warn({ err }, "Delivery worker startup failed — email + Slack deliveries disabled");
+    }
+  } else {
+    logger.warn("REDIS_URL not set — email + Slack delivery worker disabled");
+  }
+
   const app = createApp(logger);
   const server = app.listen(PORT, () => logger.info({ port: PORT }, "notification-service listening"));
 
   registerGracefulShutdown({
     logger,
     server,
-    onShutdown: [async () => { await closeNats().catch(() => {}); }],
+    onShutdown: [
+      async () => { if (deliveryWorker) await deliveryWorker.close().catch(() => {}); },
+      async () => { await closeNats().catch(() => {}); },
+    ],
   });
 }
 

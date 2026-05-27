@@ -31,9 +31,63 @@ model Notification {
   link      String?
   readAt    DateTime?
   metadata  Json             @default("{}")
+  // Which channels should this be delivered through.
+  // Values: "in_app" (always — DB + SSE), "email", "slack".
+  channels  String[]         @default(["in_app"])
   createdAt DateTime         @default(now())
+
+  deliveries NotificationDelivery[]
 
   @@index([userId, readAt])
   @@index([tenantId, createdAt])
   @@index([createdAt])
+}
+
+enum DeliveryChannel {
+  IN_APP
+  EMAIL
+  SLACK
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// One row per notification × channel attempt. Lets us retry failures
+// + show per-notification delivery state in the UI.
+model NotificationDelivery {
+  id             String          @id @default(uuid())
+  notificationId String
+  tenantId       String?
+  channel        DeliveryChannel
+  status         DeliveryStatus  @default(PENDING)
+  recipient      String // email address, Slack channel, or userId for in_app
+  attemptCount   Int             @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([status, channel])
+  @@index([tenantId, createdAt])
+}
+
+// Per-tenant integration config (Slack webhook URL, SMTP sender override).
+// In prod, treat the encrypted form as secrets-backed; for dev we plaintext-store.
+model TenantIntegration {
+  id        String   @id @default(uuid())
+  tenantId  String
+  kind      String // "slack" | "email"
+  config    Json // {webhookUrl: "..."} for slack; {fromAddress: "..."} for email
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, kind])
+  @@index([tenantId])
 }

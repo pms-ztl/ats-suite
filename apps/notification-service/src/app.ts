@@ -6,6 +6,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import notificationsRouter from "./routes/notifications.js";
+import integrationsRouter from "./routes/integrations.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -26,6 +27,7 @@ export function createApp(logger: Logger): Express {
   });
 
   app.use("/internal/notifications", readAuthHeaders(), notificationsRouter);
+  app.use("/internal/integrations", readAuthHeaders(), integrationsRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

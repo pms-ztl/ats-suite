@@ -136,6 +136,24 @@ services:
     networks:
       - ats_net
 
+  # ── Mailpit — local SMTP catch-all (web UI on 8025) ──────────────────
+  # All email sent via SMTP_URL=smtp://mailpit:1025 is captured here
+  # instead of actually being delivered. Browse caught messages at
+  # http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ats-mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - ats_net
+
   # ── Loki — log aggregation ───────────────────────────────────────────
   loki:
     image: grafana/loki:3.3.2
