@@ -88,7 +88,15 @@ const AGENT_LABELS: Record<string, string> = {
 
 // --- Columns ---
 
-function buildColumns(router: ReturnType<typeof useRouter>): ColumnDef<HITLCheckpoint, unknown>[] {
+function buildColumns(
+  router: ReturnType<typeof useRouter>,
+  handlers: {
+    onApprove: (id: string) => Promise<void>;
+    onReject: (id: string) => Promise<void>;
+    onReview: (item: HITLCheckpoint) => void;
+    busyId: string | null;
+  },
+): ColumnDef<HITLCheckpoint, unknown>[] {
   return [
     {
       accessorKey: "type",
@@ -165,16 +173,52 @@ function buildColumns(router: ReturnType<typeof useRouter>): ColumnDef<HITLCheck
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => router.push(`/hitl/${row.original.id}`)}
-        >
-          Review
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const busy = handlers.busyId === item.id;
+        if (item.status !== "PENDING") {
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlers.onReview(item)}
+            >
+              View
+            </Button>
+          );
+        }
+        return (
+          <div className="flex gap-1 justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlers.onReview(item)}
+            >
+              Review
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs text-emerald-700 border-emerald-500/30 hover:bg-emerald-50"
+              disabled={busy}
+              onClick={() => handlers.onApprove(item.id)}
+            >
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/5"
+              disabled={busy}
+              onClick={() => handlers.onReject(item.id)}
+            >
+              Reject
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 }
@@ -188,11 +232,16 @@ export default function HITLQueuePage() {
   const [activeTab, setActiveTab] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("all");
   const [agentFilter, setAgentFilter] = useState("all");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<HITLCheckpoint | null>(null);
 
   const fetchCheckpoints = useCallback(() => {
     setLoading(true);
+    const token = typeof document !== "undefined"
+      ? document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/)?.[1] ?? ""
+      : "";
     fetch("/api/agents/hitl", {
-      headers: { "x-tenant-id": "default" },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -254,7 +303,44 @@ export default function HITLQueuePage() {
   const uniqueTypes = useMemo(() => Array.from(new Set(checkpoints.map((c) => c.type))), [checkpoints]);
   const uniqueAgents = useMemo(() => Array.from(new Set(checkpoints.map((c) => c.agentType).filter(Boolean) as string[])), [checkpoints]);
 
-  const columns = useMemo(() => buildColumns(router), [router]);
+  const submitDecision = useCallback(
+    async (id: string, decision: "APPROVED" | "REJECTED") => {
+      setBusyId(id);
+      try {
+        const token = typeof document !== "undefined"
+          ? document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/)?.[1] ?? ""
+          : "";
+        const res = await fetch(`/api/hitl/${id}/decision`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ decision }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error?.message ?? `HTTP ${res.status}`);
+        }
+        toast.success(decision === "APPROVED" ? "Approved" : "Rejected");
+        // Optimistic refresh
+        fetchCheckpoints();
+        setReviewing(null);
+      } catch (err) {
+        toast.error(`Failed: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [fetchCheckpoints],
+  );
+
+  const columns = useMemo(
+    () => buildColumns(router, {
+      onApprove: (id) => submitDecision(id, "APPROVED"),
+      onReject: (id) => submitDecision(id, "REJECTED"),
+      onReview: (item) => setReviewing(item),
+      busyId,
+    }),
+    [router, submitDecision, busyId],
+  );
 
   return (
     <div className="space-y-6">
@@ -359,6 +445,81 @@ export default function HITLQueuePage() {
         emptyTitle="No checkpoints found"
         emptyDescription={activeTab === "pending" ? "All caught up! No pending reviews." : "No checkpoints match your filters."}
       />
+
+      {/* Review dialog — shows full payload + decision actions */}
+      {reviewing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setReviewing(null); }}
+        >
+          <Card className="w-full max-w-2xl max-h-[85vh] overflow-auto">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-semibold", getTypeBadgeColor(reviewing.type))}>
+                      {reviewing.type.replace(/_/g, " ")}
+                    </span>
+                    <StatusBadge status={reviewing.status.toLowerCase()} />
+                  </div>
+                  <h3 className="text-lg font-semibold">{reviewing.action}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {AGENT_LABELS[reviewing.agentType ?? ""] ?? reviewing.agentType} ·
+                    created {formatDateRelative(reviewing.createdAt)} · SLA {reviewing.slaMinutes}m
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setReviewing(null)}>×</Button>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payload</p>
+                <pre className="text-xs bg-muted/50 border border-border/60 rounded-md p-3 overflow-auto max-h-72 font-mono">
+                  {JSON.stringify(reviewing.payload, null, 2)}
+                </pre>
+              </div>
+
+              {reviewing.resolution ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Resolution</p>
+                  <pre className="text-xs bg-muted/50 border border-border/60 rounded-md p-3 overflow-auto max-h-32 font-mono">
+                    {JSON.stringify(reviewing.resolution, null, 2)}
+                  </pre>
+                  {reviewing.resolvedBy && (
+                    <p className="text-xs text-muted-foreground">
+                      Resolved by {reviewing.resolvedBy.slice(0, 8)}… at{" "}
+                      {reviewing.resolvedAt ? formatDateRelative(reviewing.resolvedAt) : "—"}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {reviewing.status === "PENDING" && (
+                <div className="flex gap-2 pt-2 border-t border-border/60">
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    disabled={busyId === reviewing.id}
+                    onClick={() => submitDecision(reviewing.id, "APPROVED")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={busyId === reviewing.id}
+                    onClick={() => submitDecision(reviewing.id, "REJECTED")}
+                  >
+                    Reject
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setReviewing(null)} className="ml-auto">
+                    Close
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
