@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft } from "lucide-react";
+import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -307,6 +307,20 @@ export default function SettingsPage() {
             <CardContent>
               <p className="text-xs text-muted-foreground">
                 Enable or disable AI agents, integrations, and platform features
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/integrations" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Webhook className="h-4 w-4" /> Integrations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Wire up Slack and email so your team gets notified outside the app
               </p>
             </CardContent>
           </Card>
