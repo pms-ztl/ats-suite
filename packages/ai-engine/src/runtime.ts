@@ -20,7 +20,32 @@ import { randomUUID, createHash } from "crypto";
 import { z, type ZodType } from "zod";
 import { generateObject, type LanguageModelV1 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import { openai, createOpenAI } from "@ai-sdk/openai";
+
+// OpenRouter is OpenAI-API-compatible. When OPENROUTER_API_KEY is set we
+// route ALL model calls through it (single API for both Anthropic + OpenAI
+// model families). Otherwise we use the native SDKs with their respective
+// keys. Lazy: only constructs the OpenRouter client when needed.
+const openRouter = process.env["OPENROUTER_API_KEY"]
+  ? createOpenAI({
+      apiKey: process.env["OPENROUTER_API_KEY"],
+      baseURL: "https://openrouter.ai/api/v1",
+      headers: {
+        // Required by OpenRouter for attribution + ranking
+        "HTTP-Referer": process.env["OPENROUTER_REFERER"] ?? "https://cdc-ats.local",
+        "X-Title": process.env["OPENROUTER_APP_TITLE"] ?? "CDC ATS",
+      },
+    })
+  : null;
+
+/** Maps short logical names to OpenRouter slugs. */
+const OPENROUTER_MODEL_MAP: Record<string, string> = {
+  "claude-sonnet-4-20250514":   "anthropic/claude-sonnet-4",
+  "claude-3-5-sonnet-20241022": "anthropic/claude-3.5-sonnet",
+  "claude-3-5-haiku-20241022":  "anthropic/claude-3.5-haiku",
+  "gpt-4o-2024-11-20":          "openai/gpt-4o",
+  "gpt-4o-mini":                "openai/gpt-4o-mini",
+};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -122,6 +147,12 @@ function estimateCost(modelId: string, tokensIn: number, tokensOut: number): num
 }
 
 function getModel(modelId: string): LanguageModelV1 {
+  // 1. OpenRouter takes priority — single API for all model families
+  if (openRouter) {
+    const routedId = OPENROUTER_MODEL_MAP[modelId] ?? modelId;
+    return openRouter(routedId);
+  }
+  // 2. Native SDKs as fallback
   if (modelId.startsWith("claude") || modelId.startsWith("anthropic")) {
     return anthropic(modelId);
   }
@@ -130,10 +161,12 @@ function getModel(modelId: string): LanguageModelV1 {
 
 /** Returns true when the agent should run against a real LLM. */
 function realLLMAvailable(modelId: string): boolean {
+  // OpenRouter covers all model families
+  if (process.env["OPENROUTER_API_KEY"]) return true;
   if (modelId.startsWith("claude") || modelId.startsWith("anthropic")) {
-    return !!process.env.ANTHROPIC_API_KEY;
+    return !!process.env["ANTHROPIC_API_KEY"];
   }
-  return !!process.env.OPENAI_API_KEY;
+  return !!process.env["OPENAI_API_KEY"];
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────

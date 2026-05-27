@@ -6,6 +6,18 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace=@cdc-ats/frontend"],
       "port": 3000
+    },
+    {
+      "name": "grafana",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "rem", "grafana-already-up-in-docker"],
+      "port": 3001
+    },
+    {
+      "name": "jaeger",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "rem", "jaeger-already-up-in-docker"],
+      "port": 16686
     }
   ]
 }

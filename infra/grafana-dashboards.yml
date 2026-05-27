@@ -1,0 +1,15 @@
+# Grafana dashboard auto-provisioning. Loads any JSON under
+# /var/lib/grafana/dashboards on startup. Mounted via docker-compose.
+apiVersion: 1
+
+providers:
+  - name: 'cdc-ats'
+    orgId: 1
+    folder: 'CDC ATS'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
