@@ -35,6 +35,7 @@ import authRouter from "./routes/auth.js";
 import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
 import { aggregatorRouter } from "./routes/aggregators.js";
+import { gdprRouter } from "./routes/gdpr.js";
 
 // Lazy-connect Redis so tests / no-redis dev still work
 let redis: Redis | null = null;
@@ -174,6 +175,9 @@ export function createApp(logger: Logger): Express {
 
   // Platform aggregator — fans out to job + candidate + billing in parallel
   app.use("/api/platform", gatewayAuth(), platformRouter(logger));
+
+  // GDPR — per-candidate export + delete fans out across services
+  app.use("/api/gdpr", gatewayAuth(), express.json({ limit: "1mb" }), gdprRouter(logger));
 
   // Cross-service read aggregators (analytics/pipeline, /agents/hitl,
   // /sourcing/talent-pools, etc.). MUST come BEFORE the single-service

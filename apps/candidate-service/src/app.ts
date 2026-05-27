@@ -10,6 +10,7 @@ import applicationsRouter from "./routes/applications.js";
 import sourcingRouter from "./routes/agent-sourcing.js";
 import offerRouter from "./routes/agent-offer.js";
 import experienceRouter from "./routes/agent-experience.js";
+import gdprRouter from "./routes/gdpr.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -36,6 +37,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/sourcing", readAuthHeaders(), sourcingRouter);
   app.use("/internal/offer", readAuthHeaders(), offerRouter);
   app.use("/internal/candidate-experience", readAuthHeaders(), experienceRouter);
+  app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());
