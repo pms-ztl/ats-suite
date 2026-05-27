@@ -132,8 +132,19 @@ exports.Prisma.UserScalarFieldEnum = {
   department: 'department',
   isActive: 'isActive',
   lastLoginAt: 'lastLoginAt',
+  mfaSecret: 'mfaSecret',
+  mfaEnabled: 'mfaEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PasswordResetScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.InviteTokenScalarFieldEnum = {
@@ -196,6 +207,7 @@ exports.UserRole = exports.$Enums.UserRole = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  PasswordReset: 'PasswordReset',
   InviteToken: 'InviteToken',
   AuditEvent: 'AuditEvent'
 };

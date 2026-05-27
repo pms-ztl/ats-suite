@@ -32,14 +32,35 @@ model User {
   department   String?
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
+  // TOTP MFA — opt-in per user. Secret is base32 (32 chars); only set
+  // when the user completes the enrolment flow + verifies one code.
+  mfaSecret    String?
+  mfaEnabled   Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  inviteTokens InviteToken[]
+  inviteTokens   InviteToken[]
+  passwordResets PasswordReset[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
+}
+
+// Password reset request — created by /auth/forgot-password, consumed by
+// /auth/reset-password. Tokens are single-use, expire after 1h.
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique @default(uuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
 }
 
 model InviteToken {

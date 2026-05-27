@@ -5,10 +5,12 @@ import {
   createErrorHandler, requestTimeout, sentryErrorHandler,
   notFoundHandler,
   requestId,
+  readAuthHeaders,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import usersRouter from "./routes/users.js";
+import authPolishRouter from "./routes/auth-polish.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -43,6 +45,9 @@ export function createApp(logger: Logger): Express {
   // services, not end users. In production, NetworkPolicy + service token
   // restricts who can reach them.
   app.use("/internal/users", usersRouter);
+  // Auth polish — forgot/reset password are unauthenticated; the others
+  // (change-password, mfa/*) require X-User-Id from a logged-in JWT.
+  app.use("/internal/auth", readAuthHeaders({ optional: true }), authPolishRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

@@ -8,9 +8,11 @@
  *   GET    /internal/notifications/stream   (SSE)
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
+import { z } from "zod";
 import { ok, Errors } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { subscribeToUser } from "../lib/redis-pubsub.js";
+import { emitNotification } from "../lib/emit.js";
 
 const router = Router();
 
@@ -135,6 +137,37 @@ router.get("/stream", async (req: Request, res: Response) => {
     clearInterval(keepAlive);
     unsubscribe?.().catch(() => {});
   });
+});
+
+// ── POST /internal/notifications/system ──────────────────────────────────
+// Gateway-only path for orchestrated, system-level notifications (e.g.
+// password reset emails). Skips the request-scoped X-Tenant-Id header
+// since the gateway already validated who can call this.
+const SystemNotifSchema = z.object({
+  tenantId: z.string().uuid().nullable(),
+  userId: z.string().uuid().nullable(),
+  type: z.enum(["SYSTEM", "PLAN_CHANGE_APPROVED", "BULK_UPLOAD_COMPLETED"]).default("SYSTEM"),
+  title: z.string().min(1).max(200),
+  body: z.string().max(5000).optional(),
+  link: z.string().url().optional(),
+  channels: z.array(z.enum(["in_app", "email", "slack"])).default(["in_app"]),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+router.post("/system", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = SystemNotifSchema.parse(req.body);
+    const saved = await emitNotification({
+      tenantId: body.tenantId,
+      userId: body.userId,
+      type: body.type,
+      title: body.title,
+      ...(body.body ? { body: body.body } : {}),
+      ...(body.link ? { link: body.link } : {}),
+      channels: body.channels,
+      ...(body.metadata ? { metadata: body.metadata } : {}),
+    });
+    ok(res, { id: saved.id });
+  } catch (err) { next(err); }
 });
 
 export default router;

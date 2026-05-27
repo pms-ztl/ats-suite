@@ -258,4 +258,121 @@ router.post("/register-company", async (req: Request, res: Response, next: NextF
   }
 });
 
+// ─── POST /api/auth/forgot-password ───────────────────────────────────────
+// Always 200 — never reveals whether the email exists. When it does, the
+// identity-service returns a reset token + user details; we email the user
+// directly via notification-service.
+const ForgotSchema = z.object({ email: z.string().email() });
+router.post("/forgot-password", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = ForgotSchema.parse(req.body);
+    const result = await callService<{
+      sent: boolean;
+      resetToken?: string;
+      userId?: string;
+      userEmail?: string;
+      userFirstName?: string;
+    }>("identity", {
+      method: "POST",
+      path: "/internal/auth/forgot-password",
+      body: { email: body.email },
+    });
+    // If a real user was matched, send the email via notification-service
+    if (result.resetToken && result.userEmail) {
+      const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
+      const resetUrl = `${appUrl}/reset-password?token=${result.resetToken}`;
+      try {
+        // Notification-service exposes a generic send-email path; fall back
+        // to a direct SMTP call would require more plumbing. For simplicity
+        // we POST a notification with channels:[email] which gets delivered
+        // by the existing BullMQ worker.
+        await callService("notification", {
+          method: "POST",
+          path: "/internal/notifications/system",
+          // Synthetic system headers — this endpoint is internal-only and
+          // accepts the platform-system actor identity.
+          userHeaders: {
+            userId: "system",
+            tenantId: "00000000-0000-0000-0000-000000000000",
+            role: "SUPER_ADMIN",
+            email: "system@cdc-ats.local",
+          },
+          body: {
+            tenantId: null,                 // platform-wide path; emit looks up by userId
+            userId: result.userId,
+            type: "SYSTEM",
+            title: "Reset your CDC ATS password",
+            body: `Hi ${result.userFirstName ?? "there"}, click the link below to set a new password. The link expires in 1 hour.\n\n${resetUrl}\n\nIf you didn't ask for this, ignore this email — your password won't change.`,
+            link: resetUrl,
+            channels: ["email"],
+          },
+        }).catch(() => {/* best effort — never leak the error */});
+      } catch { /* swallow */ }
+    }
+    ok(res, { sent: true });
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/auth/reset-password ────────────────────────────────────────
+const ResetSchema = z.object({
+  token: z.string().uuid(),
+  newPassword: z.string().min(12).max(200),
+});
+router.post("/reset-password", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = ResetSchema.parse(req.body);
+    const result = await callService<{ reset: boolean }>("identity", {
+      method: "POST",
+      path: "/internal/auth/reset-password",
+      body,
+    });
+    ok(res, result);
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/auth/change-password ───────────────────────────────────────
+const ChangeSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(12).max(200),
+});
+router.post("/change-password", gatewayAuth(), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) throw Errors.unauthorized();
+    const body = ChangeSchema.parse(req.body);
+    const result = await callService<{ changed: boolean }>("identity", {
+      method: "POST",
+      path: "/internal/auth/change-password",
+      userHeaders: {
+        userId: req.user.id,
+        tenantId: req.user.tenantId,
+        role: req.user.role,
+        email: req.user.email,
+      },
+      body,
+    });
+    ok(res, result);
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/auth/mfa/{setup,verify,disable} ────────────────────────────
+for (const action of ["setup", "verify", "disable"] as const) {
+  router.post(`/mfa/${action}`, gatewayAuth(), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) throw Errors.unauthorized();
+      const result = await callService<any>("identity", {
+        method: "POST",
+        path: `/internal/auth/mfa/${action}`,
+        userHeaders: {
+          userId: req.user.id,
+          tenantId: req.user.tenantId,
+          role: req.user.role,
+          email: req.user.email,
+        },
+        body: req.body,
+      });
+      ok(res, result);
+    } catch (err) { next(err); }
+  });
+}
+
 export default router;
