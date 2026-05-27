@@ -85,6 +85,8 @@ export async function startBillingSubscribers(logger: Logger) {
           tokensOut: payload.tokensOut,
           costUsd: payload.costUsd,
           latencyMs: payload.latencyMs,
+          modelName: payload.modelName ?? null,
+          iterations: payload.iterations ?? null,
           triggeredByUserId: payload.triggeredByUserId,
         },
         update: {
@@ -93,6 +95,8 @@ export async function startBillingSubscribers(logger: Logger) {
           tokensOut: payload.tokensOut,
           costUsd: payload.costUsd,
           latencyMs: payload.latencyMs,
+          ...(payload.modelName ? { modelName: payload.modelName } : {}),
+          ...(payload.iterations != null ? { iterations: payload.iterations } : {}),
         },
       });
     },

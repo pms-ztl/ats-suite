@@ -85,6 +85,8 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
                 tokensOut: snapshot.tokensOut,
                 costUsd: snapshot.costUsd,
                 latencyMs: snapshot.latencyMs,
+                modelName: snapshot.modelName,
+                iterations: snapshot.iterations,
                 triggeredByUserId: snapshot.userId,
               },
             });

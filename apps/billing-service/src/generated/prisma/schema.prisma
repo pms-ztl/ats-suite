@@ -44,11 +44,17 @@ model AgentRunCost {
   tokensOut         Int
   costUsd           Decimal  @db.Decimal(10, 6)
   latencyMs         Int
+  // Optional — populated by ai-engine snapshot.modelName (e.g.
+  // claude-sonnet-4-20250514, stub-deterministic). Drives the
+  // real-vs-stub split + model cost charts on the AI ops dashboard.
+  modelName         String?
+  iterations        Int?
   triggeredByUserId String?
   createdAt         DateTime @default(now())
 
   @@index([tenantId, createdAt])
   @@index([tenantId, agentType])
+  @@index([modelName])
 }
 
 // Per-tenant feature flags (separate from plan-based gating — used for

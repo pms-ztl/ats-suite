@@ -16,3 +16,22 @@ datasources:
     type: jaeger
     access: proxy
     url: http://jaeger:16686
+
+  # Postgres pointed at billing_db — drives the AI Ops dashboard.
+  # Read-only queries against AgentRunCost.
+  - name: Postgres-billing
+    uid: pg-billing
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      database: billing_db
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false

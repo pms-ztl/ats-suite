@@ -88,6 +88,8 @@ export function startScreeningWorker(logger: Logger) {
                     tokensOut: run.tokensOut,
                     costUsd: run.costUsd,
                     latencyMs: run.latencyMs,
+                    modelName: run.modelName,
+                    iterations: run.iterations,
                     triggeredByUserId: run.userId,
                   },
                 });

@@ -1,0 +1,245 @@
+{
+  "uid": "cdc-ats-ai-ops",
+  "title": "CDC ATS — AI Operations",
+  "tags": ["cdc-ats", "ai", "cost"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "agentType",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "pg-billing" },
+        "rawSql": "SELECT DISTINCT \"agentType\" FROM \"AgentRunCost\" ORDER BY 1",
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "pg-billing" },
+        "rawSql": "SELECT DISTINCT \"tenantId\" FROM \"AgentRunCost\" ORDER BY 1",
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total AI spend (range)",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(SUM(\"costUsd\"), 0)::float AS value FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") AND (\"agentType\" IN ($agentType) OR '$agentType' = '$__all') AND (\"tenantId\" IN ($tenant) OR '$tenant' = '$__all')",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 4 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^value$/" }, "graphMode": "area", "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total agent runs",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*)::int AS value FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\")",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^value$/" }, "graphMode": "area" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg cost / run",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(AVG(\"costUsd\"), 0)::float AS value FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\")",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 6 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^value$/" } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Failures",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*)::int AS value FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") AND status != 'COMPLETED'",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^value$/" }, "colorMode": "background" }
+    },
+
+    {
+      "id": 5,
+      "type": "barchart",
+      "title": "Cost by agent type",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT \"agentType\", COALESCE(SUM(\"costUsd\"), 0)::float AS \"cost_usd\" FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1 ORDER BY 2 DESC",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
+      "options": { "orientation": "horizontal", "showValue": "always", "legend": { "showLegend": false } }
+    },
+    {
+      "id": 6,
+      "type": "piechart",
+      "title": "Real LLM vs stub (cost)",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 12, "y": 5, "w": 6, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT CASE WHEN \"modelName\" IS NULL OR \"modelName\" LIKE 'stub%' THEN 'stub' ELSE 'real' END AS kind, COALESCE(SUM(\"costUsd\"), 0)::float AS \"cost_usd\" FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
+      "options": { "displayLabels": ["name", "percent"], "legend": { "displayMode": "table", "values": ["value", "percent"] } }
+    },
+    {
+      "id": 7,
+      "type": "piechart",
+      "title": "Run count by model",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 18, "y": 5, "w": 6, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(\"modelName\", '(unknown)') AS model, COUNT(*)::int AS runs FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1 ORDER BY 2 DESC",
+          "format": "table"
+        }
+      ],
+      "options": { "displayLabels": ["name"], "legend": { "displayMode": "table", "values": ["value"] } }
+    },
+
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Agent runs per minute (by type)",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT $__timeGroupAlias(\"createdAt\", '1m'), \"agentType\", COUNT(*)::int AS runs FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Cost per minute (cumulative spend over range)",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT $__timeGroupAlias(\"createdAt\", '1m'), \"agentType\", COALESCE(SUM(\"costUsd\"), 0)::float AS \"cost_usd\" FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] } }
+    },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Latency p50 / p95 / p99 (ms)",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT $__timeGroupAlias(\"createdAt\", '1m'), percentile_cont(0.50) WITHIN GROUP (ORDER BY \"latencyMs\")::int AS p50, percentile_cont(0.95) WITHIN GROUP (ORDER BY \"latencyMs\")::int AS p95, percentile_cont(0.99) WITHIN GROUP (ORDER BY \"latencyMs\")::int AS p99 FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1 ORDER BY 1",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Per-tenant spend leaderboard",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT \"tenantId\", COUNT(*)::int AS runs, COALESCE(SUM(\"costUsd\"), 0)::float AS cost_usd, COALESCE(SUM(\"tokensIn\" + \"tokensOut\"), 0)::int AS tokens FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1 ORDER BY cost_usd DESC LIMIT 20",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "cost_usd" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 4 }] },
+          { "matcher": { "id": "byName", "options": "tokens" }, "properties": [{ "id": "unit", "value": "short" }] }
+        ]
+      }
+    },
+
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Top 20 most expensive runs",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 29, "w": 24, "h": 9 },
+      "targets": [
+        {
+          "rawSql": "SELECT \"createdAt\" AS time, \"agentType\", \"modelName\", \"costUsd\"::float AS cost_usd, (\"tokensIn\" + \"tokensOut\") AS tokens, \"latencyMs\" AS latency_ms, status, \"agentRunId\" FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") ORDER BY \"costUsd\" DESC LIMIT 20",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "cost_usd" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 6 }] },
+          { "matcher": { "id": "byName", "options": "latency_ms" }, "properties": [{ "id": "unit", "value": "ms" }] }
+        ]
+      }
+    },
+
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Recent failures",
+      "datasource": { "type": "postgres", "uid": "pg-billing" },
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "rawSql": "SELECT \"createdAt\" AS time, \"agentType\", status, \"modelName\", \"tenantId\", \"agentRunId\" FROM \"AgentRunCost\" WHERE $__timeFilter(\"createdAt\") AND status != 'COMPLETED' ORDER BY \"createdAt\" DESC LIMIT 50",
+          "format": "table"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+  ]
+}

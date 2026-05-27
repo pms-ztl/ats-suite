@@ -3128,6 +3128,7 @@ export namespace Prisma {
     tokensOut: number | null
     costUsd: Decimal | null
     latencyMs: number | null
+    iterations: number | null
   }
 
   export type AgentRunCostSumAggregateOutputType = {
@@ -3135,6 +3136,7 @@ export namespace Prisma {
     tokensOut: number | null
     costUsd: Decimal | null
     latencyMs: number | null
+    iterations: number | null
   }
 
   export type AgentRunCostMinAggregateOutputType = {
@@ -3147,6 +3149,8 @@ export namespace Prisma {
     tokensOut: number | null
     costUsd: Decimal | null
     latencyMs: number | null
+    modelName: string | null
+    iterations: number | null
     triggeredByUserId: string | null
     createdAt: Date | null
   }
@@ -3161,6 +3165,8 @@ export namespace Prisma {
     tokensOut: number | null
     costUsd: Decimal | null
     latencyMs: number | null
+    modelName: string | null
+    iterations: number | null
     triggeredByUserId: string | null
     createdAt: Date | null
   }
@@ -3175,6 +3181,8 @@ export namespace Prisma {
     tokensOut: number
     costUsd: number
     latencyMs: number
+    modelName: number
+    iterations: number
     triggeredByUserId: number
     createdAt: number
     _all: number
@@ -3186,6 +3194,7 @@ export namespace Prisma {
     tokensOut?: true
     costUsd?: true
     latencyMs?: true
+    iterations?: true
   }
 
   export type AgentRunCostSumAggregateInputType = {
@@ -3193,6 +3202,7 @@ export namespace Prisma {
     tokensOut?: true
     costUsd?: true
     latencyMs?: true
+    iterations?: true
   }
 
   export type AgentRunCostMinAggregateInputType = {
@@ -3205,6 +3215,8 @@ export namespace Prisma {
     tokensOut?: true
     costUsd?: true
     latencyMs?: true
+    modelName?: true
+    iterations?: true
     triggeredByUserId?: true
     createdAt?: true
   }
@@ -3219,6 +3231,8 @@ export namespace Prisma {
     tokensOut?: true
     costUsd?: true
     latencyMs?: true
+    modelName?: true
+    iterations?: true
     triggeredByUserId?: true
     createdAt?: true
   }
@@ -3233,6 +3247,8 @@ export namespace Prisma {
     tokensOut?: true
     costUsd?: true
     latencyMs?: true
+    modelName?: true
+    iterations?: true
     triggeredByUserId?: true
     createdAt?: true
     _all?: true
@@ -3334,6 +3350,8 @@ export namespace Prisma {
     tokensOut: number
     costUsd: Decimal
     latencyMs: number
+    modelName: string | null
+    iterations: number | null
     triggeredByUserId: string | null
     createdAt: Date
     _count: AgentRunCostCountAggregateOutputType | null
@@ -3367,6 +3385,8 @@ export namespace Prisma {
     tokensOut?: boolean
     costUsd?: boolean
     latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
     triggeredByUserId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["agentRunCost"]>
@@ -3381,6 +3401,8 @@ export namespace Prisma {
     tokensOut?: boolean
     costUsd?: boolean
     latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
     triggeredByUserId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["agentRunCost"]>
@@ -3395,6 +3417,8 @@ export namespace Prisma {
     tokensOut?: boolean
     costUsd?: boolean
     latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
     triggeredByUserId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["agentRunCost"]>
@@ -3409,11 +3433,13 @@ export namespace Prisma {
     tokensOut?: boolean
     costUsd?: boolean
     latencyMs?: boolean
+    modelName?: boolean
+    iterations?: boolean
     triggeredByUserId?: boolean
     createdAt?: boolean
   }
 
-  export type AgentRunCostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "agentRunId" | "agentType" | "status" | "tokensIn" | "tokensOut" | "costUsd" | "latencyMs" | "triggeredByUserId" | "createdAt", ExtArgs["result"]["agentRunCost"]>
+  export type AgentRunCostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "agentRunId" | "agentType" | "status" | "tokensIn" | "tokensOut" | "costUsd" | "latencyMs" | "modelName" | "iterations" | "triggeredByUserId" | "createdAt", ExtArgs["result"]["agentRunCost"]>
 
   export type $AgentRunCostPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "AgentRunCost"
@@ -3428,6 +3454,8 @@ export namespace Prisma {
       tokensOut: number
       costUsd: Prisma.Decimal
       latencyMs: number
+      modelName: string | null
+      iterations: number | null
       triggeredByUserId: string | null
       createdAt: Date
     }, ExtArgs["result"]["agentRunCost"]>
@@ -3862,6 +3890,8 @@ export namespace Prisma {
     readonly tokensOut: FieldRef<"AgentRunCost", 'Int'>
     readonly costUsd: FieldRef<"AgentRunCost", 'Decimal'>
     readonly latencyMs: FieldRef<"AgentRunCost", 'Int'>
+    readonly modelName: FieldRef<"AgentRunCost", 'String'>
+    readonly iterations: FieldRef<"AgentRunCost", 'Int'>
     readonly triggeredByUserId: FieldRef<"AgentRunCost", 'String'>
     readonly createdAt: FieldRef<"AgentRunCost", 'DateTime'>
   }
@@ -5279,6 +5309,8 @@ export namespace Prisma {
     tokensOut: 'tokensOut',
     costUsd: 'costUsd',
     latencyMs: 'latencyMs',
+    modelName: 'modelName',
+    iterations: 'iterations',
     triggeredByUserId: 'triggeredByUserId',
     createdAt: 'createdAt'
   };
@@ -5550,6 +5582,8 @@ export namespace Prisma {
     tokensOut?: IntFilter<"AgentRunCost"> | number
     costUsd?: DecimalFilter<"AgentRunCost"> | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFilter<"AgentRunCost"> | number
+    modelName?: StringNullableFilter<"AgentRunCost"> | string | null
+    iterations?: IntNullableFilter<"AgentRunCost"> | number | null
     triggeredByUserId?: StringNullableFilter<"AgentRunCost"> | string | null
     createdAt?: DateTimeFilter<"AgentRunCost"> | Date | string
   }
@@ -5564,6 +5598,8 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    modelName?: SortOrderInput | SortOrder
+    iterations?: SortOrderInput | SortOrder
     triggeredByUserId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
   }
@@ -5581,6 +5617,8 @@ export namespace Prisma {
     tokensOut?: IntFilter<"AgentRunCost"> | number
     costUsd?: DecimalFilter<"AgentRunCost"> | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFilter<"AgentRunCost"> | number
+    modelName?: StringNullableFilter<"AgentRunCost"> | string | null
+    iterations?: IntNullableFilter<"AgentRunCost"> | number | null
     triggeredByUserId?: StringNullableFilter<"AgentRunCost"> | string | null
     createdAt?: DateTimeFilter<"AgentRunCost"> | Date | string
   }, "id" | "agentRunId">
@@ -5595,6 +5633,8 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    modelName?: SortOrderInput | SortOrder
+    iterations?: SortOrderInput | SortOrder
     triggeredByUserId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: AgentRunCostCountOrderByAggregateInput
@@ -5617,6 +5657,8 @@ export namespace Prisma {
     tokensOut?: IntWithAggregatesFilter<"AgentRunCost"> | number
     costUsd?: DecimalWithAggregatesFilter<"AgentRunCost"> | Decimal | DecimalJsLike | number | string
     latencyMs?: IntWithAggregatesFilter<"AgentRunCost"> | number
+    modelName?: StringNullableWithAggregatesFilter<"AgentRunCost"> | string | null
+    iterations?: IntNullableWithAggregatesFilter<"AgentRunCost"> | number | null
     triggeredByUserId?: StringNullableWithAggregatesFilter<"AgentRunCost"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"AgentRunCost"> | Date | string
   }
@@ -5794,6 +5836,8 @@ export namespace Prisma {
     tokensOut: number
     costUsd: Decimal | DecimalJsLike | number | string
     latencyMs: number
+    modelName?: string | null
+    iterations?: number | null
     triggeredByUserId?: string | null
     createdAt?: Date | string
   }
@@ -5808,6 +5852,8 @@ export namespace Prisma {
     tokensOut: number
     costUsd: Decimal | DecimalJsLike | number | string
     latencyMs: number
+    modelName?: string | null
+    iterations?: number | null
     triggeredByUserId?: string | null
     createdAt?: Date | string
   }
@@ -5822,6 +5868,8 @@ export namespace Prisma {
     tokensOut?: IntFieldUpdateOperationsInput | number
     costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    iterations?: NullableIntFieldUpdateOperationsInput | number | null
     triggeredByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5836,6 +5884,8 @@ export namespace Prisma {
     tokensOut?: IntFieldUpdateOperationsInput | number
     costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    iterations?: NullableIntFieldUpdateOperationsInput | number | null
     triggeredByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5850,6 +5900,8 @@ export namespace Prisma {
     tokensOut: number
     costUsd: Decimal | DecimalJsLike | number | string
     latencyMs: number
+    modelName?: string | null
+    iterations?: number | null
     triggeredByUserId?: string | null
     createdAt?: Date | string
   }
@@ -5864,6 +5916,8 @@ export namespace Prisma {
     tokensOut?: IntFieldUpdateOperationsInput | number
     costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    iterations?: NullableIntFieldUpdateOperationsInput | number | null
     triggeredByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5878,6 +5932,8 @@ export namespace Prisma {
     tokensOut?: IntFieldUpdateOperationsInput | number
     costUsd?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     latencyMs?: IntFieldUpdateOperationsInput | number
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    iterations?: NullableIntFieldUpdateOperationsInput | number | null
     triggeredByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6126,6 +6182,17 @@ export namespace Prisma {
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type AgentRunCostCountOrderByAggregateInput = {
     id?: SortOrder
     tenantId?: SortOrder
@@ -6136,6 +6203,8 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
     triggeredByUserId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6145,6 +6214,7 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    iterations?: SortOrder
   }
 
   export type AgentRunCostMaxOrderByAggregateInput = {
@@ -6157,6 +6227,8 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
     triggeredByUserId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6171,6 +6243,8 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    modelName?: SortOrder
+    iterations?: SortOrder
     triggeredByUserId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6180,6 +6254,7 @@ export namespace Prisma {
     tokensOut?: SortOrder
     costUsd?: SortOrder
     latencyMs?: SortOrder
+    iterations?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -6212,6 +6287,22 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -6323,6 +6414,14 @@ export namespace Prisma {
     decrement?: Decimal | DecimalJsLike | number | string
     multiply?: Decimal | DecimalJsLike | number | string
     divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -6499,6 +6598,33 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<

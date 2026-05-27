@@ -146,6 +146,8 @@ exports.Prisma.AgentRunCostScalarFieldEnum = {
   tokensOut: 'tokensOut',
   costUsd: 'costUsd',
   latencyMs: 'latencyMs',
+  modelName: 'modelName',
+  iterations: 'iterations',
   triggeredByUserId: 'triggeredByUserId',
   createdAt: 'createdAt'
 };
