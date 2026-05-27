@@ -6,6 +6,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import billingRouter from "./routes/billing.js";
+import platformRouter from "./routes/platform.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -30,6 +31,9 @@ export function createApp(logger: Logger): Express {
 
   // Internal routes — gateway forwards X-Tenant-Id/X-User-Id
   app.use("/internal/billing", readAuthHeaders(), billingRouter);
+  // Platform control plane (super-admin only). Role enforcement happens at the
+  // gateway via requireSuperAdmin — here we trust the forwarded X-User-Role.
+  app.use("/internal/platform", readAuthHeaders(), platformRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

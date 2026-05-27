@@ -161,6 +161,27 @@ exports.Prisma.FeatureFlagScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PlatformAgentKillSwitchScalarFieldEnum = {
+  agentType: 'agentType',
+  disabled: 'disabled',
+  reason: 'reason',
+  updatedByUserId: 'updatedByUserId',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PromptOverrideScalarFieldEnum = {
+  id: 'id',
+  agentType: 'agentType',
+  systemPrompt: 'systemPrompt',
+  modelName: 'modelName',
+  temperature: 'temperature',
+  version: 'version',
+  isActive: 'isActive',
+  notes: 'notes',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -191,7 +212,9 @@ exports.Prisma.ModelName = {
   TenantPlanCache: 'TenantPlanCache',
   AgentKillSwitch: 'AgentKillSwitch',
   AgentRunCost: 'AgentRunCost',
-  FeatureFlag: 'FeatureFlag'
+  FeatureFlag: 'FeatureFlag',
+  PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
+  PromptOverride: 'PromptOverride'
 };
 
 /**

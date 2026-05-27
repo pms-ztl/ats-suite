@@ -33,6 +33,16 @@ export type AgentRunCost = $Result.DefaultSelection<Prisma.$AgentRunCostPayload>
  * 
  */
 export type FeatureFlag = $Result.DefaultSelection<Prisma.$FeatureFlagPayload>
+/**
+ * Model PlatformAgentKillSwitch
+ * 
+ */
+export type PlatformAgentKillSwitch = $Result.DefaultSelection<Prisma.$PlatformAgentKillSwitchPayload>
+/**
+ * Model PromptOverride
+ * 
+ */
+export type PromptOverride = $Result.DefaultSelection<Prisma.$PromptOverridePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -191,6 +201,26 @@ export class PrismaClient<
     * ```
     */
   get featureFlag(): Prisma.FeatureFlagDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformAgentKillSwitch`: Exposes CRUD operations for the **PlatformAgentKillSwitch** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformAgentKillSwitches
+    * const platformAgentKillSwitches = await prisma.platformAgentKillSwitch.findMany()
+    * ```
+    */
+  get platformAgentKillSwitch(): Prisma.PlatformAgentKillSwitchDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.promptOverride`: Exposes CRUD operations for the **PromptOverride** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PromptOverrides
+    * const promptOverrides = await prisma.promptOverride.findMany()
+    * ```
+    */
+  get promptOverride(): Prisma.PromptOverrideDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -635,7 +665,9 @@ export namespace Prisma {
     TenantPlanCache: 'TenantPlanCache',
     AgentKillSwitch: 'AgentKillSwitch',
     AgentRunCost: 'AgentRunCost',
-    FeatureFlag: 'FeatureFlag'
+    FeatureFlag: 'FeatureFlag',
+    PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
+    PromptOverride: 'PromptOverride'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -654,7 +686,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag"
+      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "promptOverride"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -954,6 +986,154 @@ export namespace Prisma {
           }
         }
       }
+      PlatformAgentKillSwitch: {
+        payload: Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>
+        fields: Prisma.PlatformAgentKillSwitchFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformAgentKillSwitchFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformAgentKillSwitchFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformAgentKillSwitchFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformAgentKillSwitchFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformAgentKillSwitchFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformAgentKillSwitchCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformAgentKillSwitchCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformAgentKillSwitchCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformAgentKillSwitchDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          update: {
+            args: Prisma.PlatformAgentKillSwitchUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformAgentKillSwitchDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformAgentKillSwitchUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformAgentKillSwitchUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformAgentKillSwitchUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformAgentKillSwitchPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformAgentKillSwitchAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformAgentKillSwitch>
+          }
+          groupBy: {
+            args: Prisma.PlatformAgentKillSwitchGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformAgentKillSwitchGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformAgentKillSwitchCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformAgentKillSwitchCountAggregateOutputType> | number
+          }
+        }
+      }
+      PromptOverride: {
+        payload: Prisma.$PromptOverridePayload<ExtArgs>
+        fields: Prisma.PromptOverrideFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PromptOverrideFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PromptOverrideFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          findFirst: {
+            args: Prisma.PromptOverrideFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PromptOverrideFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          findMany: {
+            args: Prisma.PromptOverrideFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>[]
+          }
+          create: {
+            args: Prisma.PromptOverrideCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          createMany: {
+            args: Prisma.PromptOverrideCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PromptOverrideCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>[]
+          }
+          delete: {
+            args: Prisma.PromptOverrideDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          update: {
+            args: Prisma.PromptOverrideUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          deleteMany: {
+            args: Prisma.PromptOverrideDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PromptOverrideUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PromptOverrideUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>[]
+          }
+          upsert: {
+            args: Prisma.PromptOverrideUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PromptOverridePayload>
+          }
+          aggregate: {
+            args: Prisma.PromptOverrideAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePromptOverride>
+          }
+          groupBy: {
+            args: Prisma.PromptOverrideGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PromptOverrideGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PromptOverrideCountArgs<ExtArgs>
+            result: $Utils.Optional<PromptOverrideCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1054,6 +1234,8 @@ export namespace Prisma {
     agentKillSwitch?: AgentKillSwitchOmit
     agentRunCost?: AgentRunCostOmit
     featureFlag?: FeatureFlagOmit
+    platformAgentKillSwitch?: PlatformAgentKillSwitchOmit
+    promptOverride?: PromptOverrideOmit
   }
 
   /* Types for Logging */
@@ -5265,6 +5447,2099 @@ export namespace Prisma {
 
 
   /**
+   * Model PlatformAgentKillSwitch
+   */
+
+  export type AggregatePlatformAgentKillSwitch = {
+    _count: PlatformAgentKillSwitchCountAggregateOutputType | null
+    _min: PlatformAgentKillSwitchMinAggregateOutputType | null
+    _max: PlatformAgentKillSwitchMaxAggregateOutputType | null
+  }
+
+  export type PlatformAgentKillSwitchMinAggregateOutputType = {
+    agentType: string | null
+    disabled: boolean | null
+    reason: string | null
+    updatedByUserId: string | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformAgentKillSwitchMaxAggregateOutputType = {
+    agentType: string | null
+    disabled: boolean | null
+    reason: string | null
+    updatedByUserId: string | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformAgentKillSwitchCountAggregateOutputType = {
+    agentType: number
+    disabled: number
+    reason: number
+    updatedByUserId: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlatformAgentKillSwitchMinAggregateInputType = {
+    agentType?: true
+    disabled?: true
+    reason?: true
+    updatedByUserId?: true
+    updatedAt?: true
+  }
+
+  export type PlatformAgentKillSwitchMaxAggregateInputType = {
+    agentType?: true
+    disabled?: true
+    reason?: true
+    updatedByUserId?: true
+    updatedAt?: true
+  }
+
+  export type PlatformAgentKillSwitchCountAggregateInputType = {
+    agentType?: true
+    disabled?: true
+    reason?: true
+    updatedByUserId?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlatformAgentKillSwitchAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformAgentKillSwitch to aggregate.
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformAgentKillSwitches to fetch.
+     */
+    orderBy?: PlatformAgentKillSwitchOrderByWithRelationInput | PlatformAgentKillSwitchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformAgentKillSwitchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformAgentKillSwitches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformAgentKillSwitches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformAgentKillSwitches
+    **/
+    _count?: true | PlatformAgentKillSwitchCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformAgentKillSwitchMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformAgentKillSwitchMaxAggregateInputType
+  }
+
+  export type GetPlatformAgentKillSwitchAggregateType<T extends PlatformAgentKillSwitchAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformAgentKillSwitch]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformAgentKillSwitch[P]>
+      : GetScalarType<T[P], AggregatePlatformAgentKillSwitch[P]>
+  }
+
+
+
+
+  export type PlatformAgentKillSwitchGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformAgentKillSwitchWhereInput
+    orderBy?: PlatformAgentKillSwitchOrderByWithAggregationInput | PlatformAgentKillSwitchOrderByWithAggregationInput[]
+    by: PlatformAgentKillSwitchScalarFieldEnum[] | PlatformAgentKillSwitchScalarFieldEnum
+    having?: PlatformAgentKillSwitchScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformAgentKillSwitchCountAggregateInputType | true
+    _min?: PlatformAgentKillSwitchMinAggregateInputType
+    _max?: PlatformAgentKillSwitchMaxAggregateInputType
+  }
+
+  export type PlatformAgentKillSwitchGroupByOutputType = {
+    agentType: string
+    disabled: boolean
+    reason: string | null
+    updatedByUserId: string | null
+    updatedAt: Date
+    _count: PlatformAgentKillSwitchCountAggregateOutputType | null
+    _min: PlatformAgentKillSwitchMinAggregateOutputType | null
+    _max: PlatformAgentKillSwitchMaxAggregateOutputType | null
+  }
+
+  type GetPlatformAgentKillSwitchGroupByPayload<T extends PlatformAgentKillSwitchGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformAgentKillSwitchGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformAgentKillSwitchGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformAgentKillSwitchGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformAgentKillSwitchGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformAgentKillSwitchSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    updatedByUserId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["platformAgentKillSwitch"]>
+
+  export type PlatformAgentKillSwitchSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    updatedByUserId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["platformAgentKillSwitch"]>
+
+  export type PlatformAgentKillSwitchSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    updatedByUserId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["platformAgentKillSwitch"]>
+
+  export type PlatformAgentKillSwitchSelectScalar = {
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    updatedByUserId?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlatformAgentKillSwitchOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"agentType" | "disabled" | "reason" | "updatedByUserId" | "updatedAt", ExtArgs["result"]["platformAgentKillSwitch"]>
+
+  export type $PlatformAgentKillSwitchPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformAgentKillSwitch"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      agentType: string
+      disabled: boolean
+      reason: string | null
+      updatedByUserId: string | null
+      updatedAt: Date
+    }, ExtArgs["result"]["platformAgentKillSwitch"]>
+    composites: {}
+  }
+
+  type PlatformAgentKillSwitchGetPayload<S extends boolean | null | undefined | PlatformAgentKillSwitchDefaultArgs> = $Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload, S>
+
+  type PlatformAgentKillSwitchCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformAgentKillSwitchFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformAgentKillSwitchCountAggregateInputType | true
+    }
+
+  export interface PlatformAgentKillSwitchDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformAgentKillSwitch'], meta: { name: 'PlatformAgentKillSwitch' } }
+    /**
+     * Find zero or one PlatformAgentKillSwitch that matches the filter.
+     * @param {PlatformAgentKillSwitchFindUniqueArgs} args - Arguments to find a PlatformAgentKillSwitch
+     * @example
+     * // Get one PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformAgentKillSwitchFindUniqueArgs>(args: SelectSubset<T, PlatformAgentKillSwitchFindUniqueArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformAgentKillSwitch that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformAgentKillSwitchFindUniqueOrThrowArgs} args - Arguments to find a PlatformAgentKillSwitch
+     * @example
+     * // Get one PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformAgentKillSwitchFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformAgentKillSwitchFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformAgentKillSwitch that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchFindFirstArgs} args - Arguments to find a PlatformAgentKillSwitch
+     * @example
+     * // Get one PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformAgentKillSwitchFindFirstArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchFindFirstArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformAgentKillSwitch that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchFindFirstOrThrowArgs} args - Arguments to find a PlatformAgentKillSwitch
+     * @example
+     * // Get one PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformAgentKillSwitchFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformAgentKillSwitches that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformAgentKillSwitches
+     * const platformAgentKillSwitches = await prisma.platformAgentKillSwitch.findMany()
+     * 
+     * // Get first 10 PlatformAgentKillSwitches
+     * const platformAgentKillSwitches = await prisma.platformAgentKillSwitch.findMany({ take: 10 })
+     * 
+     * // Only select the `agentType`
+     * const platformAgentKillSwitchWithAgentTypeOnly = await prisma.platformAgentKillSwitch.findMany({ select: { agentType: true } })
+     * 
+     */
+    findMany<T extends PlatformAgentKillSwitchFindManyArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformAgentKillSwitch.
+     * @param {PlatformAgentKillSwitchCreateArgs} args - Arguments to create a PlatformAgentKillSwitch.
+     * @example
+     * // Create one PlatformAgentKillSwitch
+     * const PlatformAgentKillSwitch = await prisma.platformAgentKillSwitch.create({
+     *   data: {
+     *     // ... data to create a PlatformAgentKillSwitch
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformAgentKillSwitchCreateArgs>(args: SelectSubset<T, PlatformAgentKillSwitchCreateArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformAgentKillSwitches.
+     * @param {PlatformAgentKillSwitchCreateManyArgs} args - Arguments to create many PlatformAgentKillSwitches.
+     * @example
+     * // Create many PlatformAgentKillSwitches
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformAgentKillSwitchCreateManyArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformAgentKillSwitches and returns the data saved in the database.
+     * @param {PlatformAgentKillSwitchCreateManyAndReturnArgs} args - Arguments to create many PlatformAgentKillSwitches.
+     * @example
+     * // Create many PlatformAgentKillSwitches
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformAgentKillSwitches and only return the `agentType`
+     * const platformAgentKillSwitchWithAgentTypeOnly = await prisma.platformAgentKillSwitch.createManyAndReturn({
+     *   select: { agentType: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformAgentKillSwitchCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformAgentKillSwitch.
+     * @param {PlatformAgentKillSwitchDeleteArgs} args - Arguments to delete one PlatformAgentKillSwitch.
+     * @example
+     * // Delete one PlatformAgentKillSwitch
+     * const PlatformAgentKillSwitch = await prisma.platformAgentKillSwitch.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformAgentKillSwitch
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformAgentKillSwitchDeleteArgs>(args: SelectSubset<T, PlatformAgentKillSwitchDeleteArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformAgentKillSwitch.
+     * @param {PlatformAgentKillSwitchUpdateArgs} args - Arguments to update one PlatformAgentKillSwitch.
+     * @example
+     * // Update one PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformAgentKillSwitchUpdateArgs>(args: SelectSubset<T, PlatformAgentKillSwitchUpdateArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformAgentKillSwitches.
+     * @param {PlatformAgentKillSwitchDeleteManyArgs} args - Arguments to filter PlatformAgentKillSwitches to delete.
+     * @example
+     * // Delete a few PlatformAgentKillSwitches
+     * const { count } = await prisma.platformAgentKillSwitch.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformAgentKillSwitchDeleteManyArgs>(args?: SelectSubset<T, PlatformAgentKillSwitchDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformAgentKillSwitches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformAgentKillSwitches
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformAgentKillSwitchUpdateManyArgs>(args: SelectSubset<T, PlatformAgentKillSwitchUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformAgentKillSwitches and returns the data updated in the database.
+     * @param {PlatformAgentKillSwitchUpdateManyAndReturnArgs} args - Arguments to update many PlatformAgentKillSwitches.
+     * @example
+     * // Update many PlatformAgentKillSwitches
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformAgentKillSwitches and only return the `agentType`
+     * const platformAgentKillSwitchWithAgentTypeOnly = await prisma.platformAgentKillSwitch.updateManyAndReturn({
+     *   select: { agentType: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformAgentKillSwitchUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformAgentKillSwitchUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformAgentKillSwitch.
+     * @param {PlatformAgentKillSwitchUpsertArgs} args - Arguments to update or create a PlatformAgentKillSwitch.
+     * @example
+     * // Update or create a PlatformAgentKillSwitch
+     * const platformAgentKillSwitch = await prisma.platformAgentKillSwitch.upsert({
+     *   create: {
+     *     // ... data to create a PlatformAgentKillSwitch
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformAgentKillSwitch we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformAgentKillSwitchUpsertArgs>(args: SelectSubset<T, PlatformAgentKillSwitchUpsertArgs<ExtArgs>>): Prisma__PlatformAgentKillSwitchClient<$Result.GetResult<Prisma.$PlatformAgentKillSwitchPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformAgentKillSwitches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchCountArgs} args - Arguments to filter PlatformAgentKillSwitches to count.
+     * @example
+     * // Count the number of PlatformAgentKillSwitches
+     * const count = await prisma.platformAgentKillSwitch.count({
+     *   where: {
+     *     // ... the filter for the PlatformAgentKillSwitches we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformAgentKillSwitchCountArgs>(
+      args?: Subset<T, PlatformAgentKillSwitchCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformAgentKillSwitchCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformAgentKillSwitch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformAgentKillSwitchAggregateArgs>(args: Subset<T, PlatformAgentKillSwitchAggregateArgs>): Prisma.PrismaPromise<GetPlatformAgentKillSwitchAggregateType<T>>
+
+    /**
+     * Group by PlatformAgentKillSwitch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformAgentKillSwitchGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformAgentKillSwitchGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformAgentKillSwitchGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformAgentKillSwitchGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformAgentKillSwitchGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformAgentKillSwitchGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformAgentKillSwitch model
+   */
+  readonly fields: PlatformAgentKillSwitchFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformAgentKillSwitch.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformAgentKillSwitchClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformAgentKillSwitch model
+   */
+  interface PlatformAgentKillSwitchFieldRefs {
+    readonly agentType: FieldRef<"PlatformAgentKillSwitch", 'String'>
+    readonly disabled: FieldRef<"PlatformAgentKillSwitch", 'Boolean'>
+    readonly reason: FieldRef<"PlatformAgentKillSwitch", 'String'>
+    readonly updatedByUserId: FieldRef<"PlatformAgentKillSwitch", 'String'>
+    readonly updatedAt: FieldRef<"PlatformAgentKillSwitch", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformAgentKillSwitch findUnique
+   */
+  export type PlatformAgentKillSwitchFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformAgentKillSwitch to fetch.
+     */
+    where: PlatformAgentKillSwitchWhereUniqueInput
+  }
+
+  /**
+   * PlatformAgentKillSwitch findUniqueOrThrow
+   */
+  export type PlatformAgentKillSwitchFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformAgentKillSwitch to fetch.
+     */
+    where: PlatformAgentKillSwitchWhereUniqueInput
+  }
+
+  /**
+   * PlatformAgentKillSwitch findFirst
+   */
+  export type PlatformAgentKillSwitchFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformAgentKillSwitch to fetch.
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformAgentKillSwitches to fetch.
+     */
+    orderBy?: PlatformAgentKillSwitchOrderByWithRelationInput | PlatformAgentKillSwitchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformAgentKillSwitches.
+     */
+    cursor?: PlatformAgentKillSwitchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformAgentKillSwitches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformAgentKillSwitches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformAgentKillSwitches.
+     */
+    distinct?: PlatformAgentKillSwitchScalarFieldEnum | PlatformAgentKillSwitchScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformAgentKillSwitch findFirstOrThrow
+   */
+  export type PlatformAgentKillSwitchFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformAgentKillSwitch to fetch.
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformAgentKillSwitches to fetch.
+     */
+    orderBy?: PlatformAgentKillSwitchOrderByWithRelationInput | PlatformAgentKillSwitchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformAgentKillSwitches.
+     */
+    cursor?: PlatformAgentKillSwitchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformAgentKillSwitches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformAgentKillSwitches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformAgentKillSwitches.
+     */
+    distinct?: PlatformAgentKillSwitchScalarFieldEnum | PlatformAgentKillSwitchScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformAgentKillSwitch findMany
+   */
+  export type PlatformAgentKillSwitchFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformAgentKillSwitches to fetch.
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformAgentKillSwitches to fetch.
+     */
+    orderBy?: PlatformAgentKillSwitchOrderByWithRelationInput | PlatformAgentKillSwitchOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformAgentKillSwitches.
+     */
+    cursor?: PlatformAgentKillSwitchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformAgentKillSwitches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformAgentKillSwitches.
+     */
+    skip?: number
+    distinct?: PlatformAgentKillSwitchScalarFieldEnum | PlatformAgentKillSwitchScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformAgentKillSwitch create
+   */
+  export type PlatformAgentKillSwitchCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformAgentKillSwitch.
+     */
+    data: XOR<PlatformAgentKillSwitchCreateInput, PlatformAgentKillSwitchUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformAgentKillSwitch createMany
+   */
+  export type PlatformAgentKillSwitchCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformAgentKillSwitches.
+     */
+    data: PlatformAgentKillSwitchCreateManyInput | PlatformAgentKillSwitchCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformAgentKillSwitch createManyAndReturn
+   */
+  export type PlatformAgentKillSwitchCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformAgentKillSwitches.
+     */
+    data: PlatformAgentKillSwitchCreateManyInput | PlatformAgentKillSwitchCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformAgentKillSwitch update
+   */
+  export type PlatformAgentKillSwitchUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformAgentKillSwitch.
+     */
+    data: XOR<PlatformAgentKillSwitchUpdateInput, PlatformAgentKillSwitchUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformAgentKillSwitch to update.
+     */
+    where: PlatformAgentKillSwitchWhereUniqueInput
+  }
+
+  /**
+   * PlatformAgentKillSwitch updateMany
+   */
+  export type PlatformAgentKillSwitchUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformAgentKillSwitches.
+     */
+    data: XOR<PlatformAgentKillSwitchUpdateManyMutationInput, PlatformAgentKillSwitchUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformAgentKillSwitches to update
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * Limit how many PlatformAgentKillSwitches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformAgentKillSwitch updateManyAndReturn
+   */
+  export type PlatformAgentKillSwitchUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformAgentKillSwitches.
+     */
+    data: XOR<PlatformAgentKillSwitchUpdateManyMutationInput, PlatformAgentKillSwitchUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformAgentKillSwitches to update
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * Limit how many PlatformAgentKillSwitches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformAgentKillSwitch upsert
+   */
+  export type PlatformAgentKillSwitchUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformAgentKillSwitch to update in case it exists.
+     */
+    where: PlatformAgentKillSwitchWhereUniqueInput
+    /**
+     * In case the PlatformAgentKillSwitch found by the `where` argument doesn't exist, create a new PlatformAgentKillSwitch with this data.
+     */
+    create: XOR<PlatformAgentKillSwitchCreateInput, PlatformAgentKillSwitchUncheckedCreateInput>
+    /**
+     * In case the PlatformAgentKillSwitch was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformAgentKillSwitchUpdateInput, PlatformAgentKillSwitchUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformAgentKillSwitch delete
+   */
+  export type PlatformAgentKillSwitchDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+    /**
+     * Filter which PlatformAgentKillSwitch to delete.
+     */
+    where: PlatformAgentKillSwitchWhereUniqueInput
+  }
+
+  /**
+   * PlatformAgentKillSwitch deleteMany
+   */
+  export type PlatformAgentKillSwitchDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformAgentKillSwitches to delete
+     */
+    where?: PlatformAgentKillSwitchWhereInput
+    /**
+     * Limit how many PlatformAgentKillSwitches to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformAgentKillSwitch without action
+   */
+  export type PlatformAgentKillSwitchDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformAgentKillSwitch
+     */
+    select?: PlatformAgentKillSwitchSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformAgentKillSwitch
+     */
+    omit?: PlatformAgentKillSwitchOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PromptOverride
+   */
+
+  export type AggregatePromptOverride = {
+    _count: PromptOverrideCountAggregateOutputType | null
+    _avg: PromptOverrideAvgAggregateOutputType | null
+    _sum: PromptOverrideSumAggregateOutputType | null
+    _min: PromptOverrideMinAggregateOutputType | null
+    _max: PromptOverrideMaxAggregateOutputType | null
+  }
+
+  export type PromptOverrideAvgAggregateOutputType = {
+    temperature: number | null
+    version: number | null
+  }
+
+  export type PromptOverrideSumAggregateOutputType = {
+    temperature: number | null
+    version: number | null
+  }
+
+  export type PromptOverrideMinAggregateOutputType = {
+    id: string | null
+    agentType: string | null
+    systemPrompt: string | null
+    modelName: string | null
+    temperature: number | null
+    version: number | null
+    isActive: boolean | null
+    notes: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type PromptOverrideMaxAggregateOutputType = {
+    id: string | null
+    agentType: string | null
+    systemPrompt: string | null
+    modelName: string | null
+    temperature: number | null
+    version: number | null
+    isActive: boolean | null
+    notes: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type PromptOverrideCountAggregateOutputType = {
+    id: number
+    agentType: number
+    systemPrompt: number
+    modelName: number
+    temperature: number
+    version: number
+    isActive: number
+    notes: number
+    createdByUserId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PromptOverrideAvgAggregateInputType = {
+    temperature?: true
+    version?: true
+  }
+
+  export type PromptOverrideSumAggregateInputType = {
+    temperature?: true
+    version?: true
+  }
+
+  export type PromptOverrideMinAggregateInputType = {
+    id?: true
+    agentType?: true
+    systemPrompt?: true
+    modelName?: true
+    temperature?: true
+    version?: true
+    isActive?: true
+    notes?: true
+    createdByUserId?: true
+    createdAt?: true
+  }
+
+  export type PromptOverrideMaxAggregateInputType = {
+    id?: true
+    agentType?: true
+    systemPrompt?: true
+    modelName?: true
+    temperature?: true
+    version?: true
+    isActive?: true
+    notes?: true
+    createdByUserId?: true
+    createdAt?: true
+  }
+
+  export type PromptOverrideCountAggregateInputType = {
+    id?: true
+    agentType?: true
+    systemPrompt?: true
+    modelName?: true
+    temperature?: true
+    version?: true
+    isActive?: true
+    notes?: true
+    createdByUserId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PromptOverrideAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PromptOverride to aggregate.
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PromptOverrides to fetch.
+     */
+    orderBy?: PromptOverrideOrderByWithRelationInput | PromptOverrideOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PromptOverrideWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PromptOverrides from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PromptOverrides.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PromptOverrides
+    **/
+    _count?: true | PromptOverrideCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PromptOverrideAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PromptOverrideSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PromptOverrideMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PromptOverrideMaxAggregateInputType
+  }
+
+  export type GetPromptOverrideAggregateType<T extends PromptOverrideAggregateArgs> = {
+        [P in keyof T & keyof AggregatePromptOverride]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePromptOverride[P]>
+      : GetScalarType<T[P], AggregatePromptOverride[P]>
+  }
+
+
+
+
+  export type PromptOverrideGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PromptOverrideWhereInput
+    orderBy?: PromptOverrideOrderByWithAggregationInput | PromptOverrideOrderByWithAggregationInput[]
+    by: PromptOverrideScalarFieldEnum[] | PromptOverrideScalarFieldEnum
+    having?: PromptOverrideScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PromptOverrideCountAggregateInputType | true
+    _avg?: PromptOverrideAvgAggregateInputType
+    _sum?: PromptOverrideSumAggregateInputType
+    _min?: PromptOverrideMinAggregateInputType
+    _max?: PromptOverrideMaxAggregateInputType
+  }
+
+  export type PromptOverrideGroupByOutputType = {
+    id: string
+    agentType: string
+    systemPrompt: string | null
+    modelName: string | null
+    temperature: number | null
+    version: number
+    isActive: boolean
+    notes: string | null
+    createdByUserId: string | null
+    createdAt: Date
+    _count: PromptOverrideCountAggregateOutputType | null
+    _avg: PromptOverrideAvgAggregateOutputType | null
+    _sum: PromptOverrideSumAggregateOutputType | null
+    _min: PromptOverrideMinAggregateOutputType | null
+    _max: PromptOverrideMaxAggregateOutputType | null
+  }
+
+  type GetPromptOverrideGroupByPayload<T extends PromptOverrideGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PromptOverrideGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PromptOverrideGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PromptOverrideGroupByOutputType[P]>
+            : GetScalarType<T[P], PromptOverrideGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PromptOverrideSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    systemPrompt?: boolean
+    modelName?: boolean
+    temperature?: boolean
+    version?: boolean
+    isActive?: boolean
+    notes?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["promptOverride"]>
+
+  export type PromptOverrideSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    systemPrompt?: boolean
+    modelName?: boolean
+    temperature?: boolean
+    version?: boolean
+    isActive?: boolean
+    notes?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["promptOverride"]>
+
+  export type PromptOverrideSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    systemPrompt?: boolean
+    modelName?: boolean
+    temperature?: boolean
+    version?: boolean
+    isActive?: boolean
+    notes?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["promptOverride"]>
+
+  export type PromptOverrideSelectScalar = {
+    id?: boolean
+    agentType?: boolean
+    systemPrompt?: boolean
+    modelName?: boolean
+    temperature?: boolean
+    version?: boolean
+    isActive?: boolean
+    notes?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+  }
+
+  export type PromptOverrideOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agentType" | "systemPrompt" | "modelName" | "temperature" | "version" | "isActive" | "notes" | "createdByUserId" | "createdAt", ExtArgs["result"]["promptOverride"]>
+
+  export type $PromptOverridePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PromptOverride"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      agentType: string
+      systemPrompt: string | null
+      modelName: string | null
+      temperature: number | null
+      version: number
+      isActive: boolean
+      notes: string | null
+      createdByUserId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["promptOverride"]>
+    composites: {}
+  }
+
+  type PromptOverrideGetPayload<S extends boolean | null | undefined | PromptOverrideDefaultArgs> = $Result.GetResult<Prisma.$PromptOverridePayload, S>
+
+  type PromptOverrideCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PromptOverrideFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PromptOverrideCountAggregateInputType | true
+    }
+
+  export interface PromptOverrideDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PromptOverride'], meta: { name: 'PromptOverride' } }
+    /**
+     * Find zero or one PromptOverride that matches the filter.
+     * @param {PromptOverrideFindUniqueArgs} args - Arguments to find a PromptOverride
+     * @example
+     * // Get one PromptOverride
+     * const promptOverride = await prisma.promptOverride.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PromptOverrideFindUniqueArgs>(args: SelectSubset<T, PromptOverrideFindUniqueArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PromptOverride that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PromptOverrideFindUniqueOrThrowArgs} args - Arguments to find a PromptOverride
+     * @example
+     * // Get one PromptOverride
+     * const promptOverride = await prisma.promptOverride.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PromptOverrideFindUniqueOrThrowArgs>(args: SelectSubset<T, PromptOverrideFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PromptOverride that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideFindFirstArgs} args - Arguments to find a PromptOverride
+     * @example
+     * // Get one PromptOverride
+     * const promptOverride = await prisma.promptOverride.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PromptOverrideFindFirstArgs>(args?: SelectSubset<T, PromptOverrideFindFirstArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PromptOverride that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideFindFirstOrThrowArgs} args - Arguments to find a PromptOverride
+     * @example
+     * // Get one PromptOverride
+     * const promptOverride = await prisma.promptOverride.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PromptOverrideFindFirstOrThrowArgs>(args?: SelectSubset<T, PromptOverrideFindFirstOrThrowArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PromptOverrides that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PromptOverrides
+     * const promptOverrides = await prisma.promptOverride.findMany()
+     * 
+     * // Get first 10 PromptOverrides
+     * const promptOverrides = await prisma.promptOverride.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const promptOverrideWithIdOnly = await prisma.promptOverride.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PromptOverrideFindManyArgs>(args?: SelectSubset<T, PromptOverrideFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PromptOverride.
+     * @param {PromptOverrideCreateArgs} args - Arguments to create a PromptOverride.
+     * @example
+     * // Create one PromptOverride
+     * const PromptOverride = await prisma.promptOverride.create({
+     *   data: {
+     *     // ... data to create a PromptOverride
+     *   }
+     * })
+     * 
+     */
+    create<T extends PromptOverrideCreateArgs>(args: SelectSubset<T, PromptOverrideCreateArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PromptOverrides.
+     * @param {PromptOverrideCreateManyArgs} args - Arguments to create many PromptOverrides.
+     * @example
+     * // Create many PromptOverrides
+     * const promptOverride = await prisma.promptOverride.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PromptOverrideCreateManyArgs>(args?: SelectSubset<T, PromptOverrideCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PromptOverrides and returns the data saved in the database.
+     * @param {PromptOverrideCreateManyAndReturnArgs} args - Arguments to create many PromptOverrides.
+     * @example
+     * // Create many PromptOverrides
+     * const promptOverride = await prisma.promptOverride.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PromptOverrides and only return the `id`
+     * const promptOverrideWithIdOnly = await prisma.promptOverride.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PromptOverrideCreateManyAndReturnArgs>(args?: SelectSubset<T, PromptOverrideCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PromptOverride.
+     * @param {PromptOverrideDeleteArgs} args - Arguments to delete one PromptOverride.
+     * @example
+     * // Delete one PromptOverride
+     * const PromptOverride = await prisma.promptOverride.delete({
+     *   where: {
+     *     // ... filter to delete one PromptOverride
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PromptOverrideDeleteArgs>(args: SelectSubset<T, PromptOverrideDeleteArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PromptOverride.
+     * @param {PromptOverrideUpdateArgs} args - Arguments to update one PromptOverride.
+     * @example
+     * // Update one PromptOverride
+     * const promptOverride = await prisma.promptOverride.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PromptOverrideUpdateArgs>(args: SelectSubset<T, PromptOverrideUpdateArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PromptOverrides.
+     * @param {PromptOverrideDeleteManyArgs} args - Arguments to filter PromptOverrides to delete.
+     * @example
+     * // Delete a few PromptOverrides
+     * const { count } = await prisma.promptOverride.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PromptOverrideDeleteManyArgs>(args?: SelectSubset<T, PromptOverrideDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PromptOverrides.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PromptOverrides
+     * const promptOverride = await prisma.promptOverride.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PromptOverrideUpdateManyArgs>(args: SelectSubset<T, PromptOverrideUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PromptOverrides and returns the data updated in the database.
+     * @param {PromptOverrideUpdateManyAndReturnArgs} args - Arguments to update many PromptOverrides.
+     * @example
+     * // Update many PromptOverrides
+     * const promptOverride = await prisma.promptOverride.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PromptOverrides and only return the `id`
+     * const promptOverrideWithIdOnly = await prisma.promptOverride.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PromptOverrideUpdateManyAndReturnArgs>(args: SelectSubset<T, PromptOverrideUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PromptOverride.
+     * @param {PromptOverrideUpsertArgs} args - Arguments to update or create a PromptOverride.
+     * @example
+     * // Update or create a PromptOverride
+     * const promptOverride = await prisma.promptOverride.upsert({
+     *   create: {
+     *     // ... data to create a PromptOverride
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PromptOverride we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PromptOverrideUpsertArgs>(args: SelectSubset<T, PromptOverrideUpsertArgs<ExtArgs>>): Prisma__PromptOverrideClient<$Result.GetResult<Prisma.$PromptOverridePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PromptOverrides.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideCountArgs} args - Arguments to filter PromptOverrides to count.
+     * @example
+     * // Count the number of PromptOverrides
+     * const count = await prisma.promptOverride.count({
+     *   where: {
+     *     // ... the filter for the PromptOverrides we want to count
+     *   }
+     * })
+    **/
+    count<T extends PromptOverrideCountArgs>(
+      args?: Subset<T, PromptOverrideCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PromptOverrideCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PromptOverride.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PromptOverrideAggregateArgs>(args: Subset<T, PromptOverrideAggregateArgs>): Prisma.PrismaPromise<GetPromptOverrideAggregateType<T>>
+
+    /**
+     * Group by PromptOverride.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PromptOverrideGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PromptOverrideGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PromptOverrideGroupByArgs['orderBy'] }
+        : { orderBy?: PromptOverrideGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PromptOverrideGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPromptOverrideGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PromptOverride model
+   */
+  readonly fields: PromptOverrideFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PromptOverride.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PromptOverrideClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PromptOverride model
+   */
+  interface PromptOverrideFieldRefs {
+    readonly id: FieldRef<"PromptOverride", 'String'>
+    readonly agentType: FieldRef<"PromptOverride", 'String'>
+    readonly systemPrompt: FieldRef<"PromptOverride", 'String'>
+    readonly modelName: FieldRef<"PromptOverride", 'String'>
+    readonly temperature: FieldRef<"PromptOverride", 'Float'>
+    readonly version: FieldRef<"PromptOverride", 'Int'>
+    readonly isActive: FieldRef<"PromptOverride", 'Boolean'>
+    readonly notes: FieldRef<"PromptOverride", 'String'>
+    readonly createdByUserId: FieldRef<"PromptOverride", 'String'>
+    readonly createdAt: FieldRef<"PromptOverride", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PromptOverride findUnique
+   */
+  export type PromptOverrideFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter, which PromptOverride to fetch.
+     */
+    where: PromptOverrideWhereUniqueInput
+  }
+
+  /**
+   * PromptOverride findUniqueOrThrow
+   */
+  export type PromptOverrideFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter, which PromptOverride to fetch.
+     */
+    where: PromptOverrideWhereUniqueInput
+  }
+
+  /**
+   * PromptOverride findFirst
+   */
+  export type PromptOverrideFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter, which PromptOverride to fetch.
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PromptOverrides to fetch.
+     */
+    orderBy?: PromptOverrideOrderByWithRelationInput | PromptOverrideOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PromptOverrides.
+     */
+    cursor?: PromptOverrideWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PromptOverrides from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PromptOverrides.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PromptOverrides.
+     */
+    distinct?: PromptOverrideScalarFieldEnum | PromptOverrideScalarFieldEnum[]
+  }
+
+  /**
+   * PromptOverride findFirstOrThrow
+   */
+  export type PromptOverrideFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter, which PromptOverride to fetch.
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PromptOverrides to fetch.
+     */
+    orderBy?: PromptOverrideOrderByWithRelationInput | PromptOverrideOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PromptOverrides.
+     */
+    cursor?: PromptOverrideWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PromptOverrides from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PromptOverrides.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PromptOverrides.
+     */
+    distinct?: PromptOverrideScalarFieldEnum | PromptOverrideScalarFieldEnum[]
+  }
+
+  /**
+   * PromptOverride findMany
+   */
+  export type PromptOverrideFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter, which PromptOverrides to fetch.
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PromptOverrides to fetch.
+     */
+    orderBy?: PromptOverrideOrderByWithRelationInput | PromptOverrideOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PromptOverrides.
+     */
+    cursor?: PromptOverrideWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PromptOverrides from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PromptOverrides.
+     */
+    skip?: number
+    distinct?: PromptOverrideScalarFieldEnum | PromptOverrideScalarFieldEnum[]
+  }
+
+  /**
+   * PromptOverride create
+   */
+  export type PromptOverrideCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PromptOverride.
+     */
+    data: XOR<PromptOverrideCreateInput, PromptOverrideUncheckedCreateInput>
+  }
+
+  /**
+   * PromptOverride createMany
+   */
+  export type PromptOverrideCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PromptOverrides.
+     */
+    data: PromptOverrideCreateManyInput | PromptOverrideCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PromptOverride createManyAndReturn
+   */
+  export type PromptOverrideCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * The data used to create many PromptOverrides.
+     */
+    data: PromptOverrideCreateManyInput | PromptOverrideCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PromptOverride update
+   */
+  export type PromptOverrideUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PromptOverride.
+     */
+    data: XOR<PromptOverrideUpdateInput, PromptOverrideUncheckedUpdateInput>
+    /**
+     * Choose, which PromptOverride to update.
+     */
+    where: PromptOverrideWhereUniqueInput
+  }
+
+  /**
+   * PromptOverride updateMany
+   */
+  export type PromptOverrideUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PromptOverrides.
+     */
+    data: XOR<PromptOverrideUpdateManyMutationInput, PromptOverrideUncheckedUpdateManyInput>
+    /**
+     * Filter which PromptOverrides to update
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * Limit how many PromptOverrides to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PromptOverride updateManyAndReturn
+   */
+  export type PromptOverrideUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * The data used to update PromptOverrides.
+     */
+    data: XOR<PromptOverrideUpdateManyMutationInput, PromptOverrideUncheckedUpdateManyInput>
+    /**
+     * Filter which PromptOverrides to update
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * Limit how many PromptOverrides to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PromptOverride upsert
+   */
+  export type PromptOverrideUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PromptOverride to update in case it exists.
+     */
+    where: PromptOverrideWhereUniqueInput
+    /**
+     * In case the PromptOverride found by the `where` argument doesn't exist, create a new PromptOverride with this data.
+     */
+    create: XOR<PromptOverrideCreateInput, PromptOverrideUncheckedCreateInput>
+    /**
+     * In case the PromptOverride was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PromptOverrideUpdateInput, PromptOverrideUncheckedUpdateInput>
+  }
+
+  /**
+   * PromptOverride delete
+   */
+  export type PromptOverrideDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+    /**
+     * Filter which PromptOverride to delete.
+     */
+    where: PromptOverrideWhereUniqueInput
+  }
+
+  /**
+   * PromptOverride deleteMany
+   */
+  export type PromptOverrideDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PromptOverrides to delete
+     */
+    where?: PromptOverrideWhereInput
+    /**
+     * Limit how many PromptOverrides to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PromptOverride without action
+   */
+  export type PromptOverrideDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PromptOverride
+     */
+    select?: PromptOverrideSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PromptOverride
+     */
+    omit?: PromptOverrideOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -5328,6 +7603,33 @@ export namespace Prisma {
   };
 
   export type FeatureFlagScalarFieldEnum = (typeof FeatureFlagScalarFieldEnum)[keyof typeof FeatureFlagScalarFieldEnum]
+
+
+  export const PlatformAgentKillSwitchScalarFieldEnum: {
+    agentType: 'agentType',
+    disabled: 'disabled',
+    reason: 'reason',
+    updatedByUserId: 'updatedByUserId',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlatformAgentKillSwitchScalarFieldEnum = (typeof PlatformAgentKillSwitchScalarFieldEnum)[keyof typeof PlatformAgentKillSwitchScalarFieldEnum]
+
+
+  export const PromptOverrideScalarFieldEnum: {
+    id: 'id',
+    agentType: 'agentType',
+    systemPrompt: 'systemPrompt',
+    modelName: 'modelName',
+    temperature: 'temperature',
+    version: 'version',
+    isActive: 'isActive',
+    notes: 'notes',
+    createdByUserId: 'createdByUserId',
+    createdAt: 'createdAt'
+  };
+
+  export type PromptOverrideScalarFieldEnum = (typeof PromptOverrideScalarFieldEnum)[keyof typeof PromptOverrideScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -5721,6 +8023,137 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"FeatureFlag"> | Date | string
   }
 
+  export type PlatformAgentKillSwitchWhereInput = {
+    AND?: PlatformAgentKillSwitchWhereInput | PlatformAgentKillSwitchWhereInput[]
+    OR?: PlatformAgentKillSwitchWhereInput[]
+    NOT?: PlatformAgentKillSwitchWhereInput | PlatformAgentKillSwitchWhereInput[]
+    agentType?: StringFilter<"PlatformAgentKillSwitch"> | string
+    disabled?: BoolFilter<"PlatformAgentKillSwitch"> | boolean
+    reason?: StringNullableFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedByUserId?: StringNullableFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedAt?: DateTimeFilter<"PlatformAgentKillSwitch"> | Date | string
+  }
+
+  export type PlatformAgentKillSwitchOrderByWithRelationInput = {
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    updatedByUserId?: SortOrderInput | SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformAgentKillSwitchWhereUniqueInput = Prisma.AtLeast<{
+    agentType?: string
+    AND?: PlatformAgentKillSwitchWhereInput | PlatformAgentKillSwitchWhereInput[]
+    OR?: PlatformAgentKillSwitchWhereInput[]
+    NOT?: PlatformAgentKillSwitchWhereInput | PlatformAgentKillSwitchWhereInput[]
+    disabled?: BoolFilter<"PlatformAgentKillSwitch"> | boolean
+    reason?: StringNullableFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedByUserId?: StringNullableFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedAt?: DateTimeFilter<"PlatformAgentKillSwitch"> | Date | string
+  }, "agentType">
+
+  export type PlatformAgentKillSwitchOrderByWithAggregationInput = {
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    updatedByUserId?: SortOrderInput | SortOrder
+    updatedAt?: SortOrder
+    _count?: PlatformAgentKillSwitchCountOrderByAggregateInput
+    _max?: PlatformAgentKillSwitchMaxOrderByAggregateInput
+    _min?: PlatformAgentKillSwitchMinOrderByAggregateInput
+  }
+
+  export type PlatformAgentKillSwitchScalarWhereWithAggregatesInput = {
+    AND?: PlatformAgentKillSwitchScalarWhereWithAggregatesInput | PlatformAgentKillSwitchScalarWhereWithAggregatesInput[]
+    OR?: PlatformAgentKillSwitchScalarWhereWithAggregatesInput[]
+    NOT?: PlatformAgentKillSwitchScalarWhereWithAggregatesInput | PlatformAgentKillSwitchScalarWhereWithAggregatesInput[]
+    agentType?: StringWithAggregatesFilter<"PlatformAgentKillSwitch"> | string
+    disabled?: BoolWithAggregatesFilter<"PlatformAgentKillSwitch"> | boolean
+    reason?: StringNullableWithAggregatesFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedByUserId?: StringNullableWithAggregatesFilter<"PlatformAgentKillSwitch"> | string | null
+    updatedAt?: DateTimeWithAggregatesFilter<"PlatformAgentKillSwitch"> | Date | string
+  }
+
+  export type PromptOverrideWhereInput = {
+    AND?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
+    OR?: PromptOverrideWhereInput[]
+    NOT?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
+    id?: StringFilter<"PromptOverride"> | string
+    agentType?: StringFilter<"PromptOverride"> | string
+    systemPrompt?: StringNullableFilter<"PromptOverride"> | string | null
+    modelName?: StringNullableFilter<"PromptOverride"> | string | null
+    temperature?: FloatNullableFilter<"PromptOverride"> | number | null
+    version?: IntFilter<"PromptOverride"> | number
+    isActive?: BoolFilter<"PromptOverride"> | boolean
+    notes?: StringNullableFilter<"PromptOverride"> | string | null
+    createdByUserId?: StringNullableFilter<"PromptOverride"> | string | null
+    createdAt?: DateTimeFilter<"PromptOverride"> | Date | string
+  }
+
+  export type PromptOverrideOrderByWithRelationInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    systemPrompt?: SortOrderInput | SortOrder
+    modelName?: SortOrderInput | SortOrder
+    temperature?: SortOrderInput | SortOrder
+    version?: SortOrder
+    isActive?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdByUserId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PromptOverrideWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
+    OR?: PromptOverrideWhereInput[]
+    NOT?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
+    agentType?: StringFilter<"PromptOverride"> | string
+    systemPrompt?: StringNullableFilter<"PromptOverride"> | string | null
+    modelName?: StringNullableFilter<"PromptOverride"> | string | null
+    temperature?: FloatNullableFilter<"PromptOverride"> | number | null
+    version?: IntFilter<"PromptOverride"> | number
+    isActive?: BoolFilter<"PromptOverride"> | boolean
+    notes?: StringNullableFilter<"PromptOverride"> | string | null
+    createdByUserId?: StringNullableFilter<"PromptOverride"> | string | null
+    createdAt?: DateTimeFilter<"PromptOverride"> | Date | string
+  }, "id">
+
+  export type PromptOverrideOrderByWithAggregationInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    systemPrompt?: SortOrderInput | SortOrder
+    modelName?: SortOrderInput | SortOrder
+    temperature?: SortOrderInput | SortOrder
+    version?: SortOrder
+    isActive?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdByUserId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: PromptOverrideCountOrderByAggregateInput
+    _avg?: PromptOverrideAvgOrderByAggregateInput
+    _max?: PromptOverrideMaxOrderByAggregateInput
+    _min?: PromptOverrideMinOrderByAggregateInput
+    _sum?: PromptOverrideSumOrderByAggregateInput
+  }
+
+  export type PromptOverrideScalarWhereWithAggregatesInput = {
+    AND?: PromptOverrideScalarWhereWithAggregatesInput | PromptOverrideScalarWhereWithAggregatesInput[]
+    OR?: PromptOverrideScalarWhereWithAggregatesInput[]
+    NOT?: PromptOverrideScalarWhereWithAggregatesInput | PromptOverrideScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PromptOverride"> | string
+    agentType?: StringWithAggregatesFilter<"PromptOverride"> | string
+    systemPrompt?: StringNullableWithAggregatesFilter<"PromptOverride"> | string | null
+    modelName?: StringNullableWithAggregatesFilter<"PromptOverride"> | string | null
+    temperature?: FloatNullableWithAggregatesFilter<"PromptOverride"> | number | null
+    version?: IntWithAggregatesFilter<"PromptOverride"> | number
+    isActive?: BoolWithAggregatesFilter<"PromptOverride"> | boolean
+    notes?: StringNullableWithAggregatesFilter<"PromptOverride"> | string | null
+    createdByUserId?: StringNullableWithAggregatesFilter<"PromptOverride"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PromptOverride"> | Date | string
+  }
+
   export type TenantPlanCacheCreateInput = {
     tenantId: string
     plan: string
@@ -5999,6 +8432,153 @@ export namespace Prisma {
     enabled?: BoolFieldUpdateOperationsInput | boolean
     metadata?: JsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformAgentKillSwitchCreateInput = {
+    agentType: string
+    disabled?: boolean
+    reason?: string | null
+    updatedByUserId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type PlatformAgentKillSwitchUncheckedCreateInput = {
+    agentType: string
+    disabled?: boolean
+    reason?: string | null
+    updatedByUserId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type PlatformAgentKillSwitchUpdateInput = {
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformAgentKillSwitchUncheckedUpdateInput = {
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformAgentKillSwitchCreateManyInput = {
+    agentType: string
+    disabled?: boolean
+    reason?: string | null
+    updatedByUserId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type PlatformAgentKillSwitchUpdateManyMutationInput = {
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformAgentKillSwitchUncheckedUpdateManyInput = {
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PromptOverrideCreateInput = {
+    id?: string
+    agentType: string
+    systemPrompt?: string | null
+    modelName?: string | null
+    temperature?: number | null
+    version?: number
+    isActive?: boolean
+    notes?: string | null
+    createdByUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PromptOverrideUncheckedCreateInput = {
+    id?: string
+    agentType: string
+    systemPrompt?: string | null
+    modelName?: string | null
+    temperature?: number | null
+    version?: number
+    isActive?: boolean
+    notes?: string | null
+    createdByUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PromptOverrideUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    systemPrompt?: NullableStringFieldUpdateOperationsInput | string | null
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    temperature?: NullableFloatFieldUpdateOperationsInput | number | null
+    version?: IntFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PromptOverrideUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    systemPrompt?: NullableStringFieldUpdateOperationsInput | string | null
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    temperature?: NullableFloatFieldUpdateOperationsInput | number | null
+    version?: IntFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PromptOverrideCreateManyInput = {
+    id?: string
+    agentType: string
+    systemPrompt?: string | null
+    modelName?: string | null
+    temperature?: number | null
+    version?: number
+    isActive?: boolean
+    notes?: string | null
+    createdByUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PromptOverrideUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    systemPrompt?: NullableStringFieldUpdateOperationsInput | string | null
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    temperature?: NullableFloatFieldUpdateOperationsInput | number | null
+    version?: IntFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PromptOverrideUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    systemPrompt?: NullableStringFieldUpdateOperationsInput | string | null
+    modelName?: NullableStringFieldUpdateOperationsInput | string | null
+    temperature?: NullableFloatFieldUpdateOperationsInput | number | null
+    version?: IntFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -6384,6 +8964,106 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type PlatformAgentKillSwitchCountOrderByAggregateInput = {
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    updatedByUserId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformAgentKillSwitchMaxOrderByAggregateInput = {
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    updatedByUserId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformAgentKillSwitchMinOrderByAggregateInput = {
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    updatedByUserId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type PromptOverrideCountOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    systemPrompt?: SortOrder
+    modelName?: SortOrder
+    temperature?: SortOrder
+    version?: SortOrder
+    isActive?: SortOrder
+    notes?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PromptOverrideAvgOrderByAggregateInput = {
+    temperature?: SortOrder
+    version?: SortOrder
+  }
+
+  export type PromptOverrideMaxOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    systemPrompt?: SortOrder
+    modelName?: SortOrder
+    temperature?: SortOrder
+    version?: SortOrder
+    isActive?: SortOrder
+    notes?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PromptOverrideMinOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    systemPrompt?: SortOrder
+    modelName?: SortOrder
+    temperature?: SortOrder
+    version?: SortOrder
+    isActive?: SortOrder
+    notes?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PromptOverrideSumOrderByAggregateInput = {
+    temperature?: SortOrder
+    version?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -6417,6 +9097,14 @@ export namespace Prisma {
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
     set?: number | null
     increment?: number
     decrement?: number
@@ -6648,6 +9336,22 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
 

@@ -21,6 +21,7 @@ import { z, type ZodType } from "zod";
 import { generateObject, type LanguageModelV1 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai, createOpenAI } from "@ai-sdk/openai";
+import { resolvePromptConfig } from "./prompt-override-cache.js";
 
 // OpenRouter is OpenAI-API-compatible. When OPENROUTER_API_KEY is set we
 // route ALL model calls through it (single API for both Anthropic + OpenAI
@@ -205,6 +206,10 @@ export async function runAgent<TIn, TOut>(opts: {
       tokensOut = real.tokensOut;
       iterations = real.iterations;
       costUsd = real.costUsd;
+      // Phase 21 — the runtime may swap the modelId via a prompt-override.
+      // Surface the actually-used model in the run snapshot so the cost
+      // dashboard reflects the override.
+      modelName = real.modelName;
     } else if (stub) {
       output = await stub(opts.input, opts.context);
       // Stub cost model: scaled by input size
@@ -265,8 +270,18 @@ async function callRealLLM<TIn, TOut>(
   def: AgentDefinition<TIn, TOut>,
   input: TIn,
   _ctx: AgentContext,
-): Promise<{ output: TOut; tokensIn: number; tokensOut: number; iterations: number; costUsd: number }> {
-  const modelId = def.modelId ?? "claude-sonnet-4-20250514";
+): Promise<{ output: TOut; tokensIn: number; tokensOut: number; iterations: number; costUsd: number; modelName: string }> {
+  // Phase 21 — resolve hardcoded defaults against the active prompt override
+  // from billing-service. Cached for 5 min in-process; failure mode falls
+  // back to defaults so agent calls never break because of a control-plane
+  // outage.
+  const resolved = await resolvePromptConfig(def.name, {
+    systemPrompt: def.systemPrompt,
+    modelId: def.modelId ?? "claude-sonnet-4-20250514",
+  });
+
+  const modelId = resolved.modelId;
+  const systemPrompt = resolved.systemPrompt;
   const maxRepairs = def.maxRepairAttempts ?? 3;
   const maxCost = def.maxCostUsd ?? 0.50;
   const userPrompt = def.buildUserPrompt(input);
@@ -291,8 +306,9 @@ async function callRealLLM<TIn, TOut>(
       const result = await generateObject({
         model: getModel(modelId),
         schema: def.outputSchema as any,
-        system: def.systemPrompt,
+        system: systemPrompt,
         prompt,
+        ...(resolved.temperature !== undefined ? { temperature: resolved.temperature } : {}),
       });
 
       const inTok = result.usage?.promptTokens ?? 0;
@@ -307,6 +323,7 @@ async function callRealLLM<TIn, TOut>(
         tokensOut: totalOut,
         iterations,
         costUsd: totalCost,
+        modelName: modelId,
       };
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);

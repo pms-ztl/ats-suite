@@ -18,7 +18,7 @@ import {
 import {
   Building2, Users, BarChart3, DollarSign, TrendingUp,
   Search, MoreHorizontal, ExternalLink, Ban, CheckCircle2,
-  Rocket, Zap, Crown, RefreshCw, AlertTriangle,
+  Rocket, Zap, Crown, RefreshCw, AlertTriangle, Power, Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -219,6 +219,49 @@ export default function SuperAdminPage() {
           value={statsLoading ? "—" : `$${(stats?.totalCostUsd30d ?? 0).toFixed(2)}`}
           icon={<DollarSign className="h-5 w-5" />}
         />
+      </div>
+
+      {/* ── Platform control plane (Phase 21) ───────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Link href="/admin/platform/agents" className="block">
+          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardContent className="p-4 flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <Power className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Agent control plane</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Global kill switch — disable any agent for every tenant in 1 click.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/platform/cost" className="block">
+          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardContent className="p-4 flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <DollarSign className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Cross-tenant cost</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">See AI spend per tenant + per agent across the whole platform.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/platform/prompts" className="block">
+          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardContent className="p-4 flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                <Brain className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Prompt control plane</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Edit agent system prompts + model + temperature with version history.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* ── Plan breakdown ───────────────────────────────────────────────── */}

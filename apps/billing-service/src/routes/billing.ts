@@ -156,13 +156,21 @@ router.get("/check-agent", async (req: Request, res: Response, next: NextFunctio
     if (!agentType) throw Errors.validation("agentType query param required");
     const plan = await getTenantPlan(tenantId);
     const planAllows = isPlanAgentEnabled(plan, agentType);
-    const killed = await prisma.agentKillSwitch.findUnique({
-      where: { tenantId_agentType: { tenantId, agentType } },
-    });
+    const [tenantKill, platformKill] = await Promise.all([
+      prisma.agentKillSwitch.findUnique({
+        where: { tenantId_agentType: { tenantId, agentType } },
+      }),
+      // Phase 21 — platform-wide kill switch trumps tenant settings.
+      prisma.platformAgentKillSwitch.findUnique({ where: { agentType } }),
+    ]);
+    const tenantKillDisabled = tenantKill?.disabled ?? false;
+    const platformKillDisabled = platformKill?.disabled ?? false;
     ok(res, {
-      allowed: planAllows && !(killed?.disabled ?? false),
+      allowed: planAllows && !tenantKillDisabled && !platformKillDisabled,
       planAllows,
-      killSwitchDisabled: killed?.disabled ?? false,
+      killSwitchDisabled: tenantKillDisabled,
+      platformKillDisabled,
+      platformKillReason: platformKillDisabled ? platformKill?.reason ?? null : null,
       plan,
     });
   } catch (err) { next(err); }

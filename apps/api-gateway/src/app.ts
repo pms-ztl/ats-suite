@@ -273,6 +273,10 @@ export function createApp(logger: Logger): Express {
   app.use("/api/super-admin/tenants", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/tenants"));
   app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
 
+  // Phase 21 — platform control plane (super-admin only). Proxies to billing-service
+  // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
+  app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
+
   // Phase 20 — tenant self-service config (branding + retention).
   // Branding GET/PUT proxies to tenant-service's /internal/branding and
   // /internal/retention. Auth required: tenant-admin scope (the route

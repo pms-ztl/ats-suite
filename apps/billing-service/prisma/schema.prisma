@@ -70,3 +70,45 @@ model FeatureFlag {
   @@unique([tenantId, name])
   @@index([tenantId])
 }
+
+// Phase 21 — platform-wide kill switch. When `disabled = true` for an
+// agentType, ai-engine refuses to invoke that agent for ANY tenant. Used
+// for emergency stop (bad prompts shipped, model regression, billing
+// runaway) — gives super-admin one-click control over the whole fleet.
+//
+// This is DIFFERENT from AgentKillSwitch (per-tenant). Both gates run;
+// the agent is allowed only if both gates allow it.
+model PlatformAgentKillSwitch {
+  agentType String   @id     // "resume-parser", "candidate-screener", ...
+  disabled  Boolean  @default(false)
+  reason    String?           // surfaced to engineers in the audit + the API response
+  updatedByUserId String?
+  updatedAt DateTime @updatedAt
+}
+
+// Phase 21 — central prompt overrides. When a row exists for an agentType
+// with `isActive = true`, ai-engine uses these values instead of the
+// hardcoded defaults baked into the agent definitions. Cached for 5
+// minutes in ai-engine so a stampede of agent calls doesn't hammer the DB.
+//
+// Version history is preserved by leaving inactive rows in place — each
+// PUT creates a new row, marks the previous active row inactive. Lets
+// super-admin roll back to a known-good prompt by toggling `isActive`.
+model PromptOverride {
+  id              String   @id @default(uuid())
+  agentType       String
+  // Override fields — null means "use the default for this field". Lets
+  // super-admin tweak just the temperature without rewriting the whole prompt.
+  systemPrompt    String?  @db.Text
+  modelName       String?
+  temperature     Float?
+  // Audit + rollback support.
+  version         Int      @default(1)
+  isActive        Boolean  @default(true)
+  notes           String?  // why was this saved (changelog entry)
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  @@index([agentType, isActive])
+  @@index([agentType, createdAt])
+}
