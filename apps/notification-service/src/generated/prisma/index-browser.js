@@ -149,6 +149,26 @@ exports.Prisma.NotificationDeliveryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.HitlCheckpointScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  agentRunId: 'agentRunId',
+  agentType: 'agentType',
+  type: 'type',
+  action: 'action',
+  payload: 'payload',
+  status: 'status',
+  slaMinutes: 'slaMinutes',
+  assignedTo: 'assignedTo',
+  assignedToName: 'assignedToName',
+  resolution: 'resolution',
+  resolvedBy: 'resolvedBy',
+  resolvedAt: 'resolvedAt',
+  escalatedAt: 'escalatedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.TenantIntegrationScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -165,6 +185,11 @@ exports.Prisma.SortOrder = {
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -206,9 +231,17 @@ exports.DeliveryStatus = exports.$Enums.DeliveryStatus = {
   FAILED: 'FAILED'
 };
 
+exports.HitlStatus = exports.$Enums.HitlStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
+};
+
 exports.Prisma.ModelName = {
   Notification: 'Notification',
   NotificationDelivery: 'NotificationDelivery',
+  HitlCheckpoint: 'HitlCheckpoint',
   TenantIntegration: 'TenantIntegration'
 };
 

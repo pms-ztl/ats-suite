@@ -24,6 +24,11 @@ export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
  */
 export type NotificationDelivery = $Result.DefaultSelection<Prisma.$NotificationDeliveryPayload>
 /**
+ * Model HitlCheckpoint
+ * 
+ */
+export type HitlCheckpoint = $Result.DefaultSelection<Prisma.$HitlCheckpointPayload>
+/**
  * Model TenantIntegration
  * 
  */
@@ -64,6 +69,16 @@ export const DeliveryStatus: {
 
 export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus]
 
+
+export const HitlStatus: {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type HitlStatus = (typeof HitlStatus)[keyof typeof HitlStatus]
+
 }
 
 export type NotificationType = $Enums.NotificationType
@@ -77,6 +92,10 @@ export const DeliveryChannel: typeof $Enums.DeliveryChannel
 export type DeliveryStatus = $Enums.DeliveryStatus
 
 export const DeliveryStatus: typeof $Enums.DeliveryStatus
+
+export type HitlStatus = $Enums.HitlStatus
+
+export const HitlStatus: typeof $Enums.HitlStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -215,6 +234,16 @@ export class PrismaClient<
     * ```
     */
   get notificationDelivery(): Prisma.NotificationDeliveryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.hitlCheckpoint`: Exposes CRUD operations for the **HitlCheckpoint** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more HitlCheckpoints
+    * const hitlCheckpoints = await prisma.hitlCheckpoint.findMany()
+    * ```
+    */
+  get hitlCheckpoint(): Prisma.HitlCheckpointDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.tenantIntegration`: Exposes CRUD operations for the **TenantIntegration** model.
@@ -668,6 +697,7 @@ export namespace Prisma {
   export const ModelName: {
     Notification: 'Notification',
     NotificationDelivery: 'NotificationDelivery',
+    HitlCheckpoint: 'HitlCheckpoint',
     TenantIntegration: 'TenantIntegration'
   };
 
@@ -687,7 +717,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "notification" | "notificationDelivery" | "tenantIntegration"
+      modelProps: "notification" | "notificationDelivery" | "hitlCheckpoint" | "tenantIntegration"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -836,6 +866,80 @@ export namespace Prisma {
           count: {
             args: Prisma.NotificationDeliveryCountArgs<ExtArgs>
             result: $Utils.Optional<NotificationDeliveryCountAggregateOutputType> | number
+          }
+        }
+      }
+      HitlCheckpoint: {
+        payload: Prisma.$HitlCheckpointPayload<ExtArgs>
+        fields: Prisma.HitlCheckpointFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.HitlCheckpointFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.HitlCheckpointFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          findFirst: {
+            args: Prisma.HitlCheckpointFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.HitlCheckpointFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          findMany: {
+            args: Prisma.HitlCheckpointFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>[]
+          }
+          create: {
+            args: Prisma.HitlCheckpointCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          createMany: {
+            args: Prisma.HitlCheckpointCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.HitlCheckpointCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>[]
+          }
+          delete: {
+            args: Prisma.HitlCheckpointDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          update: {
+            args: Prisma.HitlCheckpointUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          deleteMany: {
+            args: Prisma.HitlCheckpointDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.HitlCheckpointUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.HitlCheckpointUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>[]
+          }
+          upsert: {
+            args: Prisma.HitlCheckpointUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HitlCheckpointPayload>
+          }
+          aggregate: {
+            args: Prisma.HitlCheckpointAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateHitlCheckpoint>
+          }
+          groupBy: {
+            args: Prisma.HitlCheckpointGroupByArgs<ExtArgs>
+            result: $Utils.Optional<HitlCheckpointGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.HitlCheckpointCountArgs<ExtArgs>
+            result: $Utils.Optional<HitlCheckpointCountAggregateOutputType> | number
           }
         }
       }
@@ -1011,6 +1115,7 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     notification?: NotificationOmit
     notificationDelivery?: NotificationDeliveryOmit
+    hitlCheckpoint?: HitlCheckpointOmit
     tenantIntegration?: TenantIntegrationOmit
   }
 
@@ -3433,6 +3538,1183 @@ export namespace Prisma {
 
 
   /**
+   * Model HitlCheckpoint
+   */
+
+  export type AggregateHitlCheckpoint = {
+    _count: HitlCheckpointCountAggregateOutputType | null
+    _avg: HitlCheckpointAvgAggregateOutputType | null
+    _sum: HitlCheckpointSumAggregateOutputType | null
+    _min: HitlCheckpointMinAggregateOutputType | null
+    _max: HitlCheckpointMaxAggregateOutputType | null
+  }
+
+  export type HitlCheckpointAvgAggregateOutputType = {
+    slaMinutes: number | null
+  }
+
+  export type HitlCheckpointSumAggregateOutputType = {
+    slaMinutes: number | null
+  }
+
+  export type HitlCheckpointMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    agentRunId: string | null
+    agentType: string | null
+    type: string | null
+    action: string | null
+    status: $Enums.HitlStatus | null
+    slaMinutes: number | null
+    assignedTo: string | null
+    assignedToName: string | null
+    resolvedBy: string | null
+    resolvedAt: Date | null
+    escalatedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type HitlCheckpointMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    agentRunId: string | null
+    agentType: string | null
+    type: string | null
+    action: string | null
+    status: $Enums.HitlStatus | null
+    slaMinutes: number | null
+    assignedTo: string | null
+    assignedToName: string | null
+    resolvedBy: string | null
+    resolvedAt: Date | null
+    escalatedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type HitlCheckpointCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    agentRunId: number
+    agentType: number
+    type: number
+    action: number
+    payload: number
+    status: number
+    slaMinutes: number
+    assignedTo: number
+    assignedToName: number
+    resolution: number
+    resolvedBy: number
+    resolvedAt: number
+    escalatedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type HitlCheckpointAvgAggregateInputType = {
+    slaMinutes?: true
+  }
+
+  export type HitlCheckpointSumAggregateInputType = {
+    slaMinutes?: true
+  }
+
+  export type HitlCheckpointMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentRunId?: true
+    agentType?: true
+    type?: true
+    action?: true
+    status?: true
+    slaMinutes?: true
+    assignedTo?: true
+    assignedToName?: true
+    resolvedBy?: true
+    resolvedAt?: true
+    escalatedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type HitlCheckpointMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentRunId?: true
+    agentType?: true
+    type?: true
+    action?: true
+    status?: true
+    slaMinutes?: true
+    assignedTo?: true
+    assignedToName?: true
+    resolvedBy?: true
+    resolvedAt?: true
+    escalatedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type HitlCheckpointCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    agentRunId?: true
+    agentType?: true
+    type?: true
+    action?: true
+    payload?: true
+    status?: true
+    slaMinutes?: true
+    assignedTo?: true
+    assignedToName?: true
+    resolution?: true
+    resolvedBy?: true
+    resolvedAt?: true
+    escalatedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type HitlCheckpointAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HitlCheckpoint to aggregate.
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HitlCheckpoints to fetch.
+     */
+    orderBy?: HitlCheckpointOrderByWithRelationInput | HitlCheckpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: HitlCheckpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HitlCheckpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HitlCheckpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned HitlCheckpoints
+    **/
+    _count?: true | HitlCheckpointCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: HitlCheckpointAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: HitlCheckpointSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: HitlCheckpointMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: HitlCheckpointMaxAggregateInputType
+  }
+
+  export type GetHitlCheckpointAggregateType<T extends HitlCheckpointAggregateArgs> = {
+        [P in keyof T & keyof AggregateHitlCheckpoint]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateHitlCheckpoint[P]>
+      : GetScalarType<T[P], AggregateHitlCheckpoint[P]>
+  }
+
+
+
+
+  export type HitlCheckpointGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HitlCheckpointWhereInput
+    orderBy?: HitlCheckpointOrderByWithAggregationInput | HitlCheckpointOrderByWithAggregationInput[]
+    by: HitlCheckpointScalarFieldEnum[] | HitlCheckpointScalarFieldEnum
+    having?: HitlCheckpointScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: HitlCheckpointCountAggregateInputType | true
+    _avg?: HitlCheckpointAvgAggregateInputType
+    _sum?: HitlCheckpointSumAggregateInputType
+    _min?: HitlCheckpointMinAggregateInputType
+    _max?: HitlCheckpointMaxAggregateInputType
+  }
+
+  export type HitlCheckpointGroupByOutputType = {
+    id: string
+    tenantId: string
+    agentRunId: string
+    agentType: string
+    type: string
+    action: string
+    payload: JsonValue
+    status: $Enums.HitlStatus
+    slaMinutes: number
+    assignedTo: string | null
+    assignedToName: string | null
+    resolution: JsonValue | null
+    resolvedBy: string | null
+    resolvedAt: Date | null
+    escalatedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: HitlCheckpointCountAggregateOutputType | null
+    _avg: HitlCheckpointAvgAggregateOutputType | null
+    _sum: HitlCheckpointSumAggregateOutputType | null
+    _min: HitlCheckpointMinAggregateOutputType | null
+    _max: HitlCheckpointMaxAggregateOutputType | null
+  }
+
+  type GetHitlCheckpointGroupByPayload<T extends HitlCheckpointGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<HitlCheckpointGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof HitlCheckpointGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], HitlCheckpointGroupByOutputType[P]>
+            : GetScalarType<T[P], HitlCheckpointGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type HitlCheckpointSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentRunId?: boolean
+    agentType?: boolean
+    type?: boolean
+    action?: boolean
+    payload?: boolean
+    status?: boolean
+    slaMinutes?: boolean
+    assignedTo?: boolean
+    assignedToName?: boolean
+    resolution?: boolean
+    resolvedBy?: boolean
+    resolvedAt?: boolean
+    escalatedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hitlCheckpoint"]>
+
+  export type HitlCheckpointSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentRunId?: boolean
+    agentType?: boolean
+    type?: boolean
+    action?: boolean
+    payload?: boolean
+    status?: boolean
+    slaMinutes?: boolean
+    assignedTo?: boolean
+    assignedToName?: boolean
+    resolution?: boolean
+    resolvedBy?: boolean
+    resolvedAt?: boolean
+    escalatedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hitlCheckpoint"]>
+
+  export type HitlCheckpointSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    agentRunId?: boolean
+    agentType?: boolean
+    type?: boolean
+    action?: boolean
+    payload?: boolean
+    status?: boolean
+    slaMinutes?: boolean
+    assignedTo?: boolean
+    assignedToName?: boolean
+    resolution?: boolean
+    resolvedBy?: boolean
+    resolvedAt?: boolean
+    escalatedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["hitlCheckpoint"]>
+
+  export type HitlCheckpointSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    agentRunId?: boolean
+    agentType?: boolean
+    type?: boolean
+    action?: boolean
+    payload?: boolean
+    status?: boolean
+    slaMinutes?: boolean
+    assignedTo?: boolean
+    assignedToName?: boolean
+    resolution?: boolean
+    resolvedBy?: boolean
+    resolvedAt?: boolean
+    escalatedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type HitlCheckpointOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "agentRunId" | "agentType" | "type" | "action" | "payload" | "status" | "slaMinutes" | "assignedTo" | "assignedToName" | "resolution" | "resolvedBy" | "resolvedAt" | "escalatedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["hitlCheckpoint"]>
+
+  export type $HitlCheckpointPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "HitlCheckpoint"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      agentRunId: string
+      agentType: string
+      type: string
+      action: string
+      payload: Prisma.JsonValue
+      status: $Enums.HitlStatus
+      slaMinutes: number
+      assignedTo: string | null
+      assignedToName: string | null
+      resolution: Prisma.JsonValue | null
+      resolvedBy: string | null
+      resolvedAt: Date | null
+      escalatedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["hitlCheckpoint"]>
+    composites: {}
+  }
+
+  type HitlCheckpointGetPayload<S extends boolean | null | undefined | HitlCheckpointDefaultArgs> = $Result.GetResult<Prisma.$HitlCheckpointPayload, S>
+
+  type HitlCheckpointCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<HitlCheckpointFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: HitlCheckpointCountAggregateInputType | true
+    }
+
+  export interface HitlCheckpointDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['HitlCheckpoint'], meta: { name: 'HitlCheckpoint' } }
+    /**
+     * Find zero or one HitlCheckpoint that matches the filter.
+     * @param {HitlCheckpointFindUniqueArgs} args - Arguments to find a HitlCheckpoint
+     * @example
+     * // Get one HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends HitlCheckpointFindUniqueArgs>(args: SelectSubset<T, HitlCheckpointFindUniqueArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one HitlCheckpoint that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {HitlCheckpointFindUniqueOrThrowArgs} args - Arguments to find a HitlCheckpoint
+     * @example
+     * // Get one HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends HitlCheckpointFindUniqueOrThrowArgs>(args: SelectSubset<T, HitlCheckpointFindUniqueOrThrowArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HitlCheckpoint that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointFindFirstArgs} args - Arguments to find a HitlCheckpoint
+     * @example
+     * // Get one HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends HitlCheckpointFindFirstArgs>(args?: SelectSubset<T, HitlCheckpointFindFirstArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HitlCheckpoint that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointFindFirstOrThrowArgs} args - Arguments to find a HitlCheckpoint
+     * @example
+     * // Get one HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends HitlCheckpointFindFirstOrThrowArgs>(args?: SelectSubset<T, HitlCheckpointFindFirstOrThrowArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more HitlCheckpoints that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all HitlCheckpoints
+     * const hitlCheckpoints = await prisma.hitlCheckpoint.findMany()
+     * 
+     * // Get first 10 HitlCheckpoints
+     * const hitlCheckpoints = await prisma.hitlCheckpoint.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const hitlCheckpointWithIdOnly = await prisma.hitlCheckpoint.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends HitlCheckpointFindManyArgs>(args?: SelectSubset<T, HitlCheckpointFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a HitlCheckpoint.
+     * @param {HitlCheckpointCreateArgs} args - Arguments to create a HitlCheckpoint.
+     * @example
+     * // Create one HitlCheckpoint
+     * const HitlCheckpoint = await prisma.hitlCheckpoint.create({
+     *   data: {
+     *     // ... data to create a HitlCheckpoint
+     *   }
+     * })
+     * 
+     */
+    create<T extends HitlCheckpointCreateArgs>(args: SelectSubset<T, HitlCheckpointCreateArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many HitlCheckpoints.
+     * @param {HitlCheckpointCreateManyArgs} args - Arguments to create many HitlCheckpoints.
+     * @example
+     * // Create many HitlCheckpoints
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends HitlCheckpointCreateManyArgs>(args?: SelectSubset<T, HitlCheckpointCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many HitlCheckpoints and returns the data saved in the database.
+     * @param {HitlCheckpointCreateManyAndReturnArgs} args - Arguments to create many HitlCheckpoints.
+     * @example
+     * // Create many HitlCheckpoints
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many HitlCheckpoints and only return the `id`
+     * const hitlCheckpointWithIdOnly = await prisma.hitlCheckpoint.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends HitlCheckpointCreateManyAndReturnArgs>(args?: SelectSubset<T, HitlCheckpointCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a HitlCheckpoint.
+     * @param {HitlCheckpointDeleteArgs} args - Arguments to delete one HitlCheckpoint.
+     * @example
+     * // Delete one HitlCheckpoint
+     * const HitlCheckpoint = await prisma.hitlCheckpoint.delete({
+     *   where: {
+     *     // ... filter to delete one HitlCheckpoint
+     *   }
+     * })
+     * 
+     */
+    delete<T extends HitlCheckpointDeleteArgs>(args: SelectSubset<T, HitlCheckpointDeleteArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one HitlCheckpoint.
+     * @param {HitlCheckpointUpdateArgs} args - Arguments to update one HitlCheckpoint.
+     * @example
+     * // Update one HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends HitlCheckpointUpdateArgs>(args: SelectSubset<T, HitlCheckpointUpdateArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more HitlCheckpoints.
+     * @param {HitlCheckpointDeleteManyArgs} args - Arguments to filter HitlCheckpoints to delete.
+     * @example
+     * // Delete a few HitlCheckpoints
+     * const { count } = await prisma.hitlCheckpoint.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends HitlCheckpointDeleteManyArgs>(args?: SelectSubset<T, HitlCheckpointDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HitlCheckpoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many HitlCheckpoints
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends HitlCheckpointUpdateManyArgs>(args: SelectSubset<T, HitlCheckpointUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HitlCheckpoints and returns the data updated in the database.
+     * @param {HitlCheckpointUpdateManyAndReturnArgs} args - Arguments to update many HitlCheckpoints.
+     * @example
+     * // Update many HitlCheckpoints
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more HitlCheckpoints and only return the `id`
+     * const hitlCheckpointWithIdOnly = await prisma.hitlCheckpoint.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends HitlCheckpointUpdateManyAndReturnArgs>(args: SelectSubset<T, HitlCheckpointUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one HitlCheckpoint.
+     * @param {HitlCheckpointUpsertArgs} args - Arguments to update or create a HitlCheckpoint.
+     * @example
+     * // Update or create a HitlCheckpoint
+     * const hitlCheckpoint = await prisma.hitlCheckpoint.upsert({
+     *   create: {
+     *     // ... data to create a HitlCheckpoint
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the HitlCheckpoint we want to update
+     *   }
+     * })
+     */
+    upsert<T extends HitlCheckpointUpsertArgs>(args: SelectSubset<T, HitlCheckpointUpsertArgs<ExtArgs>>): Prisma__HitlCheckpointClient<$Result.GetResult<Prisma.$HitlCheckpointPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of HitlCheckpoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointCountArgs} args - Arguments to filter HitlCheckpoints to count.
+     * @example
+     * // Count the number of HitlCheckpoints
+     * const count = await prisma.hitlCheckpoint.count({
+     *   where: {
+     *     // ... the filter for the HitlCheckpoints we want to count
+     *   }
+     * })
+    **/
+    count<T extends HitlCheckpointCountArgs>(
+      args?: Subset<T, HitlCheckpointCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], HitlCheckpointCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a HitlCheckpoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends HitlCheckpointAggregateArgs>(args: Subset<T, HitlCheckpointAggregateArgs>): Prisma.PrismaPromise<GetHitlCheckpointAggregateType<T>>
+
+    /**
+     * Group by HitlCheckpoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HitlCheckpointGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends HitlCheckpointGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: HitlCheckpointGroupByArgs['orderBy'] }
+        : { orderBy?: HitlCheckpointGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, HitlCheckpointGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetHitlCheckpointGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the HitlCheckpoint model
+   */
+  readonly fields: HitlCheckpointFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for HitlCheckpoint.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__HitlCheckpointClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the HitlCheckpoint model
+   */
+  interface HitlCheckpointFieldRefs {
+    readonly id: FieldRef<"HitlCheckpoint", 'String'>
+    readonly tenantId: FieldRef<"HitlCheckpoint", 'String'>
+    readonly agentRunId: FieldRef<"HitlCheckpoint", 'String'>
+    readonly agentType: FieldRef<"HitlCheckpoint", 'String'>
+    readonly type: FieldRef<"HitlCheckpoint", 'String'>
+    readonly action: FieldRef<"HitlCheckpoint", 'String'>
+    readonly payload: FieldRef<"HitlCheckpoint", 'Json'>
+    readonly status: FieldRef<"HitlCheckpoint", 'HitlStatus'>
+    readonly slaMinutes: FieldRef<"HitlCheckpoint", 'Int'>
+    readonly assignedTo: FieldRef<"HitlCheckpoint", 'String'>
+    readonly assignedToName: FieldRef<"HitlCheckpoint", 'String'>
+    readonly resolution: FieldRef<"HitlCheckpoint", 'Json'>
+    readonly resolvedBy: FieldRef<"HitlCheckpoint", 'String'>
+    readonly resolvedAt: FieldRef<"HitlCheckpoint", 'DateTime'>
+    readonly escalatedAt: FieldRef<"HitlCheckpoint", 'DateTime'>
+    readonly createdAt: FieldRef<"HitlCheckpoint", 'DateTime'>
+    readonly updatedAt: FieldRef<"HitlCheckpoint", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * HitlCheckpoint findUnique
+   */
+  export type HitlCheckpointFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter, which HitlCheckpoint to fetch.
+     */
+    where: HitlCheckpointWhereUniqueInput
+  }
+
+  /**
+   * HitlCheckpoint findUniqueOrThrow
+   */
+  export type HitlCheckpointFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter, which HitlCheckpoint to fetch.
+     */
+    where: HitlCheckpointWhereUniqueInput
+  }
+
+  /**
+   * HitlCheckpoint findFirst
+   */
+  export type HitlCheckpointFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter, which HitlCheckpoint to fetch.
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HitlCheckpoints to fetch.
+     */
+    orderBy?: HitlCheckpointOrderByWithRelationInput | HitlCheckpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HitlCheckpoints.
+     */
+    cursor?: HitlCheckpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HitlCheckpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HitlCheckpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HitlCheckpoints.
+     */
+    distinct?: HitlCheckpointScalarFieldEnum | HitlCheckpointScalarFieldEnum[]
+  }
+
+  /**
+   * HitlCheckpoint findFirstOrThrow
+   */
+  export type HitlCheckpointFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter, which HitlCheckpoint to fetch.
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HitlCheckpoints to fetch.
+     */
+    orderBy?: HitlCheckpointOrderByWithRelationInput | HitlCheckpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HitlCheckpoints.
+     */
+    cursor?: HitlCheckpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HitlCheckpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HitlCheckpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HitlCheckpoints.
+     */
+    distinct?: HitlCheckpointScalarFieldEnum | HitlCheckpointScalarFieldEnum[]
+  }
+
+  /**
+   * HitlCheckpoint findMany
+   */
+  export type HitlCheckpointFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter, which HitlCheckpoints to fetch.
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HitlCheckpoints to fetch.
+     */
+    orderBy?: HitlCheckpointOrderByWithRelationInput | HitlCheckpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing HitlCheckpoints.
+     */
+    cursor?: HitlCheckpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HitlCheckpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HitlCheckpoints.
+     */
+    skip?: number
+    distinct?: HitlCheckpointScalarFieldEnum | HitlCheckpointScalarFieldEnum[]
+  }
+
+  /**
+   * HitlCheckpoint create
+   */
+  export type HitlCheckpointCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * The data needed to create a HitlCheckpoint.
+     */
+    data: XOR<HitlCheckpointCreateInput, HitlCheckpointUncheckedCreateInput>
+  }
+
+  /**
+   * HitlCheckpoint createMany
+   */
+  export type HitlCheckpointCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many HitlCheckpoints.
+     */
+    data: HitlCheckpointCreateManyInput | HitlCheckpointCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * HitlCheckpoint createManyAndReturn
+   */
+  export type HitlCheckpointCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * The data used to create many HitlCheckpoints.
+     */
+    data: HitlCheckpointCreateManyInput | HitlCheckpointCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * HitlCheckpoint update
+   */
+  export type HitlCheckpointUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * The data needed to update a HitlCheckpoint.
+     */
+    data: XOR<HitlCheckpointUpdateInput, HitlCheckpointUncheckedUpdateInput>
+    /**
+     * Choose, which HitlCheckpoint to update.
+     */
+    where: HitlCheckpointWhereUniqueInput
+  }
+
+  /**
+   * HitlCheckpoint updateMany
+   */
+  export type HitlCheckpointUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update HitlCheckpoints.
+     */
+    data: XOR<HitlCheckpointUpdateManyMutationInput, HitlCheckpointUncheckedUpdateManyInput>
+    /**
+     * Filter which HitlCheckpoints to update
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * Limit how many HitlCheckpoints to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * HitlCheckpoint updateManyAndReturn
+   */
+  export type HitlCheckpointUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * The data used to update HitlCheckpoints.
+     */
+    data: XOR<HitlCheckpointUpdateManyMutationInput, HitlCheckpointUncheckedUpdateManyInput>
+    /**
+     * Filter which HitlCheckpoints to update
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * Limit how many HitlCheckpoints to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * HitlCheckpoint upsert
+   */
+  export type HitlCheckpointUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * The filter to search for the HitlCheckpoint to update in case it exists.
+     */
+    where: HitlCheckpointWhereUniqueInput
+    /**
+     * In case the HitlCheckpoint found by the `where` argument doesn't exist, create a new HitlCheckpoint with this data.
+     */
+    create: XOR<HitlCheckpointCreateInput, HitlCheckpointUncheckedCreateInput>
+    /**
+     * In case the HitlCheckpoint was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<HitlCheckpointUpdateInput, HitlCheckpointUncheckedUpdateInput>
+  }
+
+  /**
+   * HitlCheckpoint delete
+   */
+  export type HitlCheckpointDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+    /**
+     * Filter which HitlCheckpoint to delete.
+     */
+    where: HitlCheckpointWhereUniqueInput
+  }
+
+  /**
+   * HitlCheckpoint deleteMany
+   */
+  export type HitlCheckpointDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HitlCheckpoints to delete
+     */
+    where?: HitlCheckpointWhereInput
+    /**
+     * Limit how many HitlCheckpoints to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * HitlCheckpoint without action
+   */
+  export type HitlCheckpointDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HitlCheckpoint
+     */
+    select?: HitlCheckpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HitlCheckpoint
+     */
+    omit?: HitlCheckpointOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model TenantIntegration
    */
 
@@ -4497,6 +5779,29 @@ export namespace Prisma {
   export type NotificationDeliveryScalarFieldEnum = (typeof NotificationDeliveryScalarFieldEnum)[keyof typeof NotificationDeliveryScalarFieldEnum]
 
 
+  export const HitlCheckpointScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    agentRunId: 'agentRunId',
+    agentType: 'agentType',
+    type: 'type',
+    action: 'action',
+    payload: 'payload',
+    status: 'status',
+    slaMinutes: 'slaMinutes',
+    assignedTo: 'assignedTo',
+    assignedToName: 'assignedToName',
+    resolution: 'resolution',
+    resolvedBy: 'resolvedBy',
+    resolvedAt: 'resolvedAt',
+    escalatedAt: 'escalatedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type HitlCheckpointScalarFieldEnum = (typeof HitlCheckpointScalarFieldEnum)[keyof typeof HitlCheckpointScalarFieldEnum]
+
+
   export const TenantIntegrationScalarFieldEnum: {
     id: 'id',
     tenantId: 'tenantId',
@@ -4523,6 +5828,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const QueryMode: {
@@ -4650,6 +5963,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'HitlStatus'
+   */
+  export type EnumHitlStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HitlStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'HitlStatus[]'
+   */
+  export type ListEnumHitlStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HitlStatus[]'>
     
 
 
@@ -4847,6 +6174,120 @@ export namespace Prisma {
     sentAt?: DateTimeNullableWithAggregatesFilter<"NotificationDelivery"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"NotificationDelivery"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"NotificationDelivery"> | Date | string
+  }
+
+  export type HitlCheckpointWhereInput = {
+    AND?: HitlCheckpointWhereInput | HitlCheckpointWhereInput[]
+    OR?: HitlCheckpointWhereInput[]
+    NOT?: HitlCheckpointWhereInput | HitlCheckpointWhereInput[]
+    id?: StringFilter<"HitlCheckpoint"> | string
+    tenantId?: StringFilter<"HitlCheckpoint"> | string
+    agentRunId?: StringFilter<"HitlCheckpoint"> | string
+    agentType?: StringFilter<"HitlCheckpoint"> | string
+    type?: StringFilter<"HitlCheckpoint"> | string
+    action?: StringFilter<"HitlCheckpoint"> | string
+    payload?: JsonFilter<"HitlCheckpoint">
+    status?: EnumHitlStatusFilter<"HitlCheckpoint"> | $Enums.HitlStatus
+    slaMinutes?: IntFilter<"HitlCheckpoint"> | number
+    assignedTo?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    assignedToName?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    resolution?: JsonNullableFilter<"HitlCheckpoint">
+    resolvedBy?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    resolvedAt?: DateTimeNullableFilter<"HitlCheckpoint"> | Date | string | null
+    escalatedAt?: DateTimeNullableFilter<"HitlCheckpoint"> | Date | string | null
+    createdAt?: DateTimeFilter<"HitlCheckpoint"> | Date | string
+    updatedAt?: DateTimeFilter<"HitlCheckpoint"> | Date | string
+  }
+
+  export type HitlCheckpointOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentRunId?: SortOrder
+    agentType?: SortOrder
+    type?: SortOrder
+    action?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    slaMinutes?: SortOrder
+    assignedTo?: SortOrderInput | SortOrder
+    assignedToName?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    escalatedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HitlCheckpointWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: HitlCheckpointWhereInput | HitlCheckpointWhereInput[]
+    OR?: HitlCheckpointWhereInput[]
+    NOT?: HitlCheckpointWhereInput | HitlCheckpointWhereInput[]
+    tenantId?: StringFilter<"HitlCheckpoint"> | string
+    agentRunId?: StringFilter<"HitlCheckpoint"> | string
+    agentType?: StringFilter<"HitlCheckpoint"> | string
+    type?: StringFilter<"HitlCheckpoint"> | string
+    action?: StringFilter<"HitlCheckpoint"> | string
+    payload?: JsonFilter<"HitlCheckpoint">
+    status?: EnumHitlStatusFilter<"HitlCheckpoint"> | $Enums.HitlStatus
+    slaMinutes?: IntFilter<"HitlCheckpoint"> | number
+    assignedTo?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    assignedToName?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    resolution?: JsonNullableFilter<"HitlCheckpoint">
+    resolvedBy?: StringNullableFilter<"HitlCheckpoint"> | string | null
+    resolvedAt?: DateTimeNullableFilter<"HitlCheckpoint"> | Date | string | null
+    escalatedAt?: DateTimeNullableFilter<"HitlCheckpoint"> | Date | string | null
+    createdAt?: DateTimeFilter<"HitlCheckpoint"> | Date | string
+    updatedAt?: DateTimeFilter<"HitlCheckpoint"> | Date | string
+  }, "id">
+
+  export type HitlCheckpointOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentRunId?: SortOrder
+    agentType?: SortOrder
+    type?: SortOrder
+    action?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    slaMinutes?: SortOrder
+    assignedTo?: SortOrderInput | SortOrder
+    assignedToName?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    escalatedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: HitlCheckpointCountOrderByAggregateInput
+    _avg?: HitlCheckpointAvgOrderByAggregateInput
+    _max?: HitlCheckpointMaxOrderByAggregateInput
+    _min?: HitlCheckpointMinOrderByAggregateInput
+    _sum?: HitlCheckpointSumOrderByAggregateInput
+  }
+
+  export type HitlCheckpointScalarWhereWithAggregatesInput = {
+    AND?: HitlCheckpointScalarWhereWithAggregatesInput | HitlCheckpointScalarWhereWithAggregatesInput[]
+    OR?: HitlCheckpointScalarWhereWithAggregatesInput[]
+    NOT?: HitlCheckpointScalarWhereWithAggregatesInput | HitlCheckpointScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    tenantId?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    agentRunId?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    agentType?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    type?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    action?: StringWithAggregatesFilter<"HitlCheckpoint"> | string
+    payload?: JsonWithAggregatesFilter<"HitlCheckpoint">
+    status?: EnumHitlStatusWithAggregatesFilter<"HitlCheckpoint"> | $Enums.HitlStatus
+    slaMinutes?: IntWithAggregatesFilter<"HitlCheckpoint"> | number
+    assignedTo?: StringNullableWithAggregatesFilter<"HitlCheckpoint"> | string | null
+    assignedToName?: StringNullableWithAggregatesFilter<"HitlCheckpoint"> | string | null
+    resolution?: JsonNullableWithAggregatesFilter<"HitlCheckpoint">
+    resolvedBy?: StringNullableWithAggregatesFilter<"HitlCheckpoint"> | string | null
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"HitlCheckpoint"> | Date | string | null
+    escalatedAt?: DateTimeNullableWithAggregatesFilter<"HitlCheckpoint"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"HitlCheckpoint"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"HitlCheckpoint"> | Date | string
   }
 
   export type TenantIntegrationWhereInput = {
@@ -5107,6 +6548,146 @@ export namespace Prisma {
     attemptCount?: IntFieldUpdateOperationsInput | number
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
     sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HitlCheckpointCreateInput = {
+    id?: string
+    tenantId: string
+    agentRunId: string
+    agentType: string
+    type: string
+    action: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.HitlStatus
+    slaMinutes?: number
+    assignedTo?: string | null
+    assignedToName?: string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: string | null
+    resolvedAt?: Date | string | null
+    escalatedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HitlCheckpointUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    agentRunId: string
+    agentType: string
+    type: string
+    action: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.HitlStatus
+    slaMinutes?: number
+    assignedTo?: string | null
+    assignedToName?: string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: string | null
+    resolvedAt?: Date | string | null
+    escalatedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HitlCheckpointUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentRunId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumHitlStatusFieldUpdateOperationsInput | $Enums.HitlStatus
+    slaMinutes?: IntFieldUpdateOperationsInput | number
+    assignedTo?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedToName?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    escalatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HitlCheckpointUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentRunId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumHitlStatusFieldUpdateOperationsInput | $Enums.HitlStatus
+    slaMinutes?: IntFieldUpdateOperationsInput | number
+    assignedTo?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedToName?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    escalatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HitlCheckpointCreateManyInput = {
+    id?: string
+    tenantId: string
+    agentRunId: string
+    agentType: string
+    type: string
+    action: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.HitlStatus
+    slaMinutes?: number
+    assignedTo?: string | null
+    assignedToName?: string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: string | null
+    resolvedAt?: Date | string | null
+    escalatedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HitlCheckpointUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentRunId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumHitlStatusFieldUpdateOperationsInput | $Enums.HitlStatus
+    slaMinutes?: IntFieldUpdateOperationsInput | number
+    assignedTo?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedToName?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    escalatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HitlCheckpointUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    agentRunId?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumHitlStatusFieldUpdateOperationsInput | $Enums.HitlStatus
+    slaMinutes?: IntFieldUpdateOperationsInput | number
+    assignedTo?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedToName?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableJsonNullValueInput | InputJsonValue
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    escalatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5540,6 +7121,136 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type EnumHitlStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.HitlStatus | EnumHitlStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumHitlStatusFilter<$PrismaModel> | $Enums.HitlStatus
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type HitlCheckpointCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentRunId?: SortOrder
+    agentType?: SortOrder
+    type?: SortOrder
+    action?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    slaMinutes?: SortOrder
+    assignedTo?: SortOrder
+    assignedToName?: SortOrder
+    resolution?: SortOrder
+    resolvedBy?: SortOrder
+    resolvedAt?: SortOrder
+    escalatedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HitlCheckpointAvgOrderByAggregateInput = {
+    slaMinutes?: SortOrder
+  }
+
+  export type HitlCheckpointMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentRunId?: SortOrder
+    agentType?: SortOrder
+    type?: SortOrder
+    action?: SortOrder
+    status?: SortOrder
+    slaMinutes?: SortOrder
+    assignedTo?: SortOrder
+    assignedToName?: SortOrder
+    resolvedBy?: SortOrder
+    resolvedAt?: SortOrder
+    escalatedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HitlCheckpointMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    agentRunId?: SortOrder
+    agentType?: SortOrder
+    type?: SortOrder
+    action?: SortOrder
+    status?: SortOrder
+    slaMinutes?: SortOrder
+    assignedTo?: SortOrder
+    assignedToName?: SortOrder
+    resolvedBy?: SortOrder
+    resolvedAt?: SortOrder
+    escalatedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HitlCheckpointSumOrderByAggregateInput = {
+    slaMinutes?: SortOrder
+  }
+
+  export type EnumHitlStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HitlStatus | EnumHitlStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumHitlStatusWithAggregatesFilter<$PrismaModel> | $Enums.HitlStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHitlStatusFilter<$PrismaModel>
+    _max?: NestedEnumHitlStatusFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -5685,6 +7396,10 @@ export namespace Prisma {
     upsert?: NotificationUpsertWithoutDeliveriesInput
     connect?: NotificationWhereUniqueInput
     update?: XOR<XOR<NotificationUpdateToOneWithWhereWithoutDeliveriesInput, NotificationUpdateWithoutDeliveriesInput>, NotificationUncheckedUpdateWithoutDeliveriesInput>
+  }
+
+  export type EnumHitlStatusFieldUpdateOperationsInput = {
+    set?: $Enums.HitlStatus
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -5924,6 +7639,46 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumHitlStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.HitlStatus | EnumHitlStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumHitlStatusFilter<$PrismaModel> | $Enums.HitlStatus
+  }
+
+  export type NestedEnumHitlStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HitlStatus | EnumHitlStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HitlStatus[] | ListEnumHitlStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumHitlStatusWithAggregatesFilter<$PrismaModel> | $Enums.HitlStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHitlStatusFilter<$PrismaModel>
+    _max?: NestedEnumHitlStatusFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedBoolFilter<$PrismaModel = never> = {

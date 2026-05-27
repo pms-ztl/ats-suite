@@ -206,6 +206,9 @@ export function createApp(logger: Logger): Express {
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
   app.use("/api/integrations", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/integrations"));
+  // HITL — GET is handled by aggregatorRouter above for shape consistency;
+  // POST + PATCH go straight through to notification-service.
+  app.use("/api/hitl", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/hitl"));
 
   // /api/tenants/plan-change-request (in-process — wraps tenant-service)
   app.post(

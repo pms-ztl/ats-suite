@@ -198,11 +198,22 @@ export function aggregatorRouter(logger: Logger): Router {
     } catch (err) { next(err); }
   });
 
-  // ── HITL queue (empty stub — HITL infrastructure deferred) ─────────────
+  // ── HITL queue — proxies to notification-service for the actual data ───
   router.get("/agents/hitl", async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) throw Errors.unauthorized();
-      ok(res, { items: [], total: 0 });
+      const userHeaders = {
+        userId: req.user.id,
+        tenantId: req.user.tenantId,
+        role: req.user.role,
+        email: req.user.email,
+      };
+      const items = await callService<any[]>("notification", {
+        path: "/internal/hitl",
+        userHeaders,
+        timeoutMs: 3000,
+      }).catch(() => []);
+      ok(res, items ?? []);
     } catch (err) { next(err); }
   });
 

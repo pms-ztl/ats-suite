@@ -77,6 +77,41 @@ model NotificationDelivery {
   @@index([tenantId, createdAt])
 }
 
+// ── HITL (Human-In-The-Loop) checkpoints ──────────────────────────────
+// Created when an agent run requests human review (low confidence,
+// bias detected, plan limit exceeded, sensitive decision).
+// Surfaced in the /hitl review queue. Tenant admin approves or rejects.
+enum HitlStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model HitlCheckpoint {
+  id             String     @id @default(uuid())
+  tenantId       String
+  agentRunId     String
+  agentType      String // e.g. "candidate-screener", "bias-auditor"
+  type           String // "low_confidence", "bias_flag", "sensitive_decision"
+  action         String // short title shown in queue ("Approve screening", etc.)
+  payload        Json       @default("{}") // agent output + context the reviewer needs
+  status         HitlStatus @default(PENDING)
+  slaMinutes     Int        @default(240) // 4 hours default
+  assignedTo     String? // optional userId
+  assignedToName String?
+  resolution     Json? // {action, comment, ...}
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  escalatedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([agentRunId])
+}
+
 // Per-tenant integration config (Slack webhook URL, SMTP sender override).
 // In prod, treat the encrypted form as secrets-backed; for dev we plaintext-store.
 model TenantIntegration {
