@@ -1,0 +1,16 @@
+{
+  "name": "@cdc-ats/seed-data",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "tsx --env-file=../../.env src/seed.ts",
+    "seed:full": "tsx --env-file=../../.env src/seed.ts --full",
+    "seed:reset": "tsx --env-file=../../.env src/seed.ts --reset"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
