@@ -25,7 +25,37 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { refreshTokenIfNeeded, getTokenExpiryMs } from "@/lib/token-refresh";
+
+/**
+ * Hex → "h s% l%" tuple for CSS custom property `--primary` (Tailwind hsl format).
+ * Falls back to the design token when input is invalid so a malformed branding
+ * value doesn't break the theme.
+ */
+function hexToHslTuple(hex: string | null | undefined): string | null {
+  if (!hex || !/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(hex)) return null;
+  let h = hex.slice(1);
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let hue = 0, sat = 0;
+  const light = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    sat = light > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: hue = ((g - b) / d + (g < b ? 6 : 0)); break;
+      case g: hue = ((b - r) / d + 2); break;
+      case b: hue = ((r - g) / d + 4); break;
+    }
+    hue *= 60;
+  }
+  return `${Math.round(hue)} ${Math.round(sat * 100)}% ${Math.round(light * 100)}%`;
+}
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
   // uppercase (backend)
@@ -60,6 +90,7 @@ const ROLE_LABELS: Record<string, string> = {
 const SIDEBAR_STORAGE_KEY = "ats-sidebar-collapsed";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { branding } = useTenantBranding();
   // Start expanded so SSR + first client render match (no hydration mismatch),
   // then hydrate the persisted value from localStorage right after mount.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -118,8 +149,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     router.push("/login");
   };
 
+  // Inject tenant brand primary color as --primary so Tailwind's bg-primary,
+  // text-primary, etc. all pick up the tenant's color without per-component changes.
+  const brandStyle = (() => {
+    const hsl = hexToHslTuple(branding?.brandPrimaryColor);
+    return hsl ? ({ "--primary": hsl } as React.CSSProperties) : undefined;
+  })();
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={brandStyle}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm"

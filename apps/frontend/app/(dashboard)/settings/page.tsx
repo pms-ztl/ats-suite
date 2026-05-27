@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook } from "lucide-react";
+import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -335,6 +335,34 @@ export default function SettingsPage() {
             <CardContent>
               <p className="text-xs text-muted-foreground">
                 Change your password and manage two-factor authentication
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/branding" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Palette className="h-4 w-4" /> Brand & Career Portal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Logo, colors, tagline, and the public-facing career portal candidates see
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/retention" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Trash2 className="h-4 w-4" /> Data retention
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                How long candidate data is kept after their last activity before automated anonymization
               </p>
             </CardContent>
           </Card>

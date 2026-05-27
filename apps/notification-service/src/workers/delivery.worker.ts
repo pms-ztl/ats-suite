@@ -19,8 +19,9 @@ import { Worker, Queue, type Job } from "bullmq";
 import { Redis } from "ioredis";
 import type { Logger } from "pino";
 import { prisma } from "../lib/prisma.js";
-import { sendEmail, renderNotificationEmail } from "../lib/mailer.js";
+import { sendEmail, renderNotificationEmail, substituteVariables } from "../lib/mailer.js";
 import { sendSlack } from "../lib/slack.js";
+import { getTenantBranding } from "../lib/branding-cache.js";
 
 export const DELIVERY_QUEUE = "notification-delivery";
 
@@ -81,16 +82,51 @@ export function startDeliveryWorker(logger: Logger): Worker<DeliveryJobData> | n
 
       try {
         if (delivery.channel === "EMAIL") {
-          const { text, html } = renderNotificationEmail({
+          // Fetch tenant branding (cached 60s) so the email visually matches
+          // the workspace. Fall back to platform defaults if tenantId missing
+          // (platform-wide notifications to super-admins).
+          const branding = delivery.tenantId
+            ? await getTenantBranding(delivery.tenantId)
+            : null;
+
+          // Look up per-tenant template override for this notification type.
+          // If none exists, mailer falls back to the auto-generated body.
+          const override = delivery.tenantId
+            ? await prisma.emailTemplate.findUnique({
+                where: { tenantId_type: { tenantId: delivery.tenantId, type: n.type } },
+              })
+            : null;
+
+          // Pull variables from notification metadata. Each emit site is
+          // responsible for populating these (e.g. {candidateName, jobTitle}).
+          const vars = (n.metadata as Record<string, unknown> | null) ?? {};
+          const stringVars: Record<string, string> = {};
+          for (const [k, v] of Object.entries(vars)) {
+            if (v === null || v === undefined) continue;
+            stringVars[k] = String(v);
+          }
+
+          const template = override && override.enabled
+            ? {
+                subject: substituteVariables(override.subject, stringVars),
+                bodyText: substituteVariables(override.bodyText, stringVars),
+                bodyHtml: substituteVariables(override.bodyHtml, stringVars),
+              }
+            : null;
+
+          const rendered = renderNotificationEmail({
             title: n.title,
             body: n.body,
             link: n.link,
+            branding,
+            template,
+            variables: stringVars,
           });
           const res = await sendEmail({
             to: delivery.recipient,
-            subject: n.title,
-            text,
-            html,
+            subject: rendered.subject,
+            text: rendered.text,
+            html: rendered.html,
           });
           ok = res.ok;
           error = res.error;

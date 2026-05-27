@@ -135,6 +135,14 @@ exports.Prisma.TenantScalarFieldEnum = {
   dataRegion: 'dataRegion',
   isolationConfig: 'isolationConfig',
   settings: 'settings',
+  brandPrimaryColor: 'brandPrimaryColor',
+  brandSecondaryColor: 'brandSecondaryColor',
+  brandAccentColor: 'brandAccentColor',
+  brandTagline: 'brandTagline',
+  careerPortalWelcomeMessage: 'careerPortalWelcomeMessage',
+  careerPortalAboutHtml: 'careerPortalAboutHtml',
+  careerPortalHeroImageUrl: 'careerPortalHeroImageUrl',
+  dataRetentionDays: 'dataRetentionDays',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

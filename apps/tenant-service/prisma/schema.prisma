@@ -43,6 +43,25 @@ model Tenant {
   dataRegion  String       @default("us-east-1")
   isolationConfig Json     @default("{}")
   settings    Json         @default("{}")
+
+  // Phase 20 — tenant self-service branding.
+  // Colors stored as hex strings (e.g. "#1A8FFF"); validated at write time.
+  // Career portal copy is plain text / sanitized HTML so a tenant can put
+  // their own welcome message + "About us" on the public jobs board.
+  brandPrimaryColor   String?
+  brandSecondaryColor String?
+  brandAccentColor    String?
+  brandTagline        String?  @db.VarChar(160)
+  careerPortalWelcomeMessage String? @db.Text
+  careerPortalAboutHtml      String? @db.Text
+  careerPortalHeroImageUrl   String?
+
+  // Phase 20 — data retention. dataRetentionDays = how long candidate data
+  // sits after their last activity before the nightly purge worker invokes
+  // GDPR-delete. Floor enforced at write time via PLAN_LIMITS to keep
+  // tenants from setting < legal minimum.
+  dataRetentionDays Int @default(730)
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

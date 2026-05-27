@@ -8,6 +8,7 @@ import { prisma } from "./lib/prisma.js";
 import notificationsRouter from "./routes/notifications.js";
 import integrationsRouter from "./routes/integrations.js";
 import hitlRouter from "./routes/hitl.js";
+import emailTemplatesRouter from "./routes/email-templates.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/notifications", readAuthHeaders(), notificationsRouter);
   app.use("/internal/integrations", readAuthHeaders(), integrationsRouter);
   app.use("/internal/hitl", readAuthHeaders(), hitlRouter);
+  app.use("/internal/email-templates", readAuthHeaders(), emailTemplatesRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

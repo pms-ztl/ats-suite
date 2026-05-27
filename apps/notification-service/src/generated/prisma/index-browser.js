@@ -179,6 +179,19 @@ exports.Prisma.TenantIntegrationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.EmailTemplateScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  type: 'type',
+  subject: 'subject',
+  bodyHtml: 'bodyHtml',
+  bodyText: 'bodyText',
+  variables: 'variables',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -242,7 +255,8 @@ exports.Prisma.ModelName = {
   Notification: 'Notification',
   NotificationDelivery: 'NotificationDelivery',
   HitlCheckpoint: 'HitlCheckpoint',
-  TenantIntegration: 'TenantIntegration'
+  TenantIntegration: 'TenantIntegration',
+  EmailTemplate: 'EmailTemplate'
 };
 
 /**

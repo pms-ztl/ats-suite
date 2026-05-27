@@ -1035,8 +1035,18 @@ export namespace Prisma {
 
   export type AggregateTenant = {
     _count: TenantCountAggregateOutputType | null
+    _avg: TenantAvgAggregateOutputType | null
+    _sum: TenantSumAggregateOutputType | null
     _min: TenantMinAggregateOutputType | null
     _max: TenantMaxAggregateOutputType | null
+  }
+
+  export type TenantAvgAggregateOutputType = {
+    dataRetentionDays: number | null
+  }
+
+  export type TenantSumAggregateOutputType = {
+    dataRetentionDays: number | null
   }
 
   export type TenantMinAggregateOutputType = {
@@ -1051,6 +1061,14 @@ export namespace Prisma {
     industry: string | null
     companySize: string | null
     dataRegion: string | null
+    brandPrimaryColor: string | null
+    brandSecondaryColor: string | null
+    brandAccentColor: string | null
+    brandTagline: string | null
+    careerPortalWelcomeMessage: string | null
+    careerPortalAboutHtml: string | null
+    careerPortalHeroImageUrl: string | null
+    dataRetentionDays: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1067,6 +1085,14 @@ export namespace Prisma {
     industry: string | null
     companySize: string | null
     dataRegion: string | null
+    brandPrimaryColor: string | null
+    brandSecondaryColor: string | null
+    brandAccentColor: string | null
+    brandTagline: string | null
+    careerPortalWelcomeMessage: string | null
+    careerPortalAboutHtml: string | null
+    careerPortalHeroImageUrl: string | null
+    dataRetentionDays: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1085,11 +1111,27 @@ export namespace Prisma {
     dataRegion: number
     isolationConfig: number
     settings: number
+    brandPrimaryColor: number
+    brandSecondaryColor: number
+    brandAccentColor: number
+    brandTagline: number
+    careerPortalWelcomeMessage: number
+    careerPortalAboutHtml: number
+    careerPortalHeroImageUrl: number
+    dataRetentionDays: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type TenantAvgAggregateInputType = {
+    dataRetentionDays?: true
+  }
+
+  export type TenantSumAggregateInputType = {
+    dataRetentionDays?: true
+  }
 
   export type TenantMinAggregateInputType = {
     id?: true
@@ -1103,6 +1145,14 @@ export namespace Prisma {
     industry?: true
     companySize?: true
     dataRegion?: true
+    brandPrimaryColor?: true
+    brandSecondaryColor?: true
+    brandAccentColor?: true
+    brandTagline?: true
+    careerPortalWelcomeMessage?: true
+    careerPortalAboutHtml?: true
+    careerPortalHeroImageUrl?: true
+    dataRetentionDays?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1119,6 +1169,14 @@ export namespace Prisma {
     industry?: true
     companySize?: true
     dataRegion?: true
+    brandPrimaryColor?: true
+    brandSecondaryColor?: true
+    brandAccentColor?: true
+    brandTagline?: true
+    careerPortalWelcomeMessage?: true
+    careerPortalAboutHtml?: true
+    careerPortalHeroImageUrl?: true
+    dataRetentionDays?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1137,6 +1195,14 @@ export namespace Prisma {
     dataRegion?: true
     isolationConfig?: true
     settings?: true
+    brandPrimaryColor?: true
+    brandSecondaryColor?: true
+    brandAccentColor?: true
+    brandTagline?: true
+    careerPortalWelcomeMessage?: true
+    careerPortalAboutHtml?: true
+    careerPortalHeroImageUrl?: true
+    dataRetentionDays?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1180,6 +1246,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: TenantAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TenantSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: TenantMinAggregateInputType
@@ -1210,6 +1288,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: TenantCountAggregateInputType | true
+    _avg?: TenantAvgAggregateInputType
+    _sum?: TenantSumAggregateInputType
     _min?: TenantMinAggregateInputType
     _max?: TenantMaxAggregateInputType
   }
@@ -1228,9 +1308,19 @@ export namespace Prisma {
     dataRegion: string
     isolationConfig: JsonValue
     settings: JsonValue
+    brandPrimaryColor: string | null
+    brandSecondaryColor: string | null
+    brandAccentColor: string | null
+    brandTagline: string | null
+    careerPortalWelcomeMessage: string | null
+    careerPortalAboutHtml: string | null
+    careerPortalHeroImageUrl: string | null
+    dataRetentionDays: number
     createdAt: Date
     updatedAt: Date
     _count: TenantCountAggregateOutputType | null
+    _avg: TenantAvgAggregateOutputType | null
+    _sum: TenantSumAggregateOutputType | null
     _min: TenantMinAggregateOutputType | null
     _max: TenantMaxAggregateOutputType | null
   }
@@ -1263,6 +1353,14 @@ export namespace Prisma {
     dataRegion?: boolean
     isolationConfig?: boolean
     settings?: boolean
+    brandPrimaryColor?: boolean
+    brandSecondaryColor?: boolean
+    brandAccentColor?: boolean
+    brandTagline?: boolean
+    careerPortalWelcomeMessage?: boolean
+    careerPortalAboutHtml?: boolean
+    careerPortalHeroImageUrl?: boolean
+    dataRetentionDays?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     planChangeRequests?: boolean | Tenant$planChangeRequestsArgs<ExtArgs>
@@ -1283,6 +1381,14 @@ export namespace Prisma {
     dataRegion?: boolean
     isolationConfig?: boolean
     settings?: boolean
+    brandPrimaryColor?: boolean
+    brandSecondaryColor?: boolean
+    brandAccentColor?: boolean
+    brandTagline?: boolean
+    careerPortalWelcomeMessage?: boolean
+    careerPortalAboutHtml?: boolean
+    careerPortalHeroImageUrl?: boolean
+    dataRetentionDays?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["tenant"]>
@@ -1301,6 +1407,14 @@ export namespace Prisma {
     dataRegion?: boolean
     isolationConfig?: boolean
     settings?: boolean
+    brandPrimaryColor?: boolean
+    brandSecondaryColor?: boolean
+    brandAccentColor?: boolean
+    brandTagline?: boolean
+    careerPortalWelcomeMessage?: boolean
+    careerPortalAboutHtml?: boolean
+    careerPortalHeroImageUrl?: boolean
+    dataRetentionDays?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["tenant"]>
@@ -1319,11 +1433,19 @@ export namespace Prisma {
     dataRegion?: boolean
     isolationConfig?: boolean
     settings?: boolean
+    brandPrimaryColor?: boolean
+    brandSecondaryColor?: boolean
+    brandAccentColor?: boolean
+    brandTagline?: boolean
+    careerPortalWelcomeMessage?: boolean
+    careerPortalAboutHtml?: boolean
+    careerPortalHeroImageUrl?: boolean
+    dataRetentionDays?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
+  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "brandPrimaryColor" | "brandSecondaryColor" | "brandAccentColor" | "brandTagline" | "careerPortalWelcomeMessage" | "careerPortalAboutHtml" | "careerPortalHeroImageUrl" | "dataRetentionDays" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
   export type TenantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     planChangeRequests?: boolean | Tenant$planChangeRequestsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
@@ -1350,6 +1472,14 @@ export namespace Prisma {
       dataRegion: string
       isolationConfig: Prisma.JsonValue
       settings: Prisma.JsonValue
+      brandPrimaryColor: string | null
+      brandSecondaryColor: string | null
+      brandAccentColor: string | null
+      brandTagline: string | null
+      careerPortalWelcomeMessage: string | null
+      careerPortalAboutHtml: string | null
+      careerPortalHeroImageUrl: string | null
+      dataRetentionDays: number
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["tenant"]>
@@ -1789,6 +1919,14 @@ export namespace Prisma {
     readonly dataRegion: FieldRef<"Tenant", 'String'>
     readonly isolationConfig: FieldRef<"Tenant", 'Json'>
     readonly settings: FieldRef<"Tenant", 'Json'>
+    readonly brandPrimaryColor: FieldRef<"Tenant", 'String'>
+    readonly brandSecondaryColor: FieldRef<"Tenant", 'String'>
+    readonly brandAccentColor: FieldRef<"Tenant", 'String'>
+    readonly brandTagline: FieldRef<"Tenant", 'String'>
+    readonly careerPortalWelcomeMessage: FieldRef<"Tenant", 'String'>
+    readonly careerPortalAboutHtml: FieldRef<"Tenant", 'String'>
+    readonly careerPortalHeroImageUrl: FieldRef<"Tenant", 'String'>
+    readonly dataRetentionDays: FieldRef<"Tenant", 'Int'>
     readonly createdAt: FieldRef<"Tenant", 'DateTime'>
     readonly updatedAt: FieldRef<"Tenant", 'DateTime'>
   }
@@ -3385,6 +3523,14 @@ export namespace Prisma {
     dataRegion: 'dataRegion',
     isolationConfig: 'isolationConfig',
     settings: 'settings',
+    brandPrimaryColor: 'brandPrimaryColor',
+    brandSecondaryColor: 'brandSecondaryColor',
+    brandAccentColor: 'brandAccentColor',
+    brandTagline: 'brandTagline',
+    careerPortalWelcomeMessage: 'careerPortalWelcomeMessage',
+    careerPortalAboutHtml: 'careerPortalAboutHtml',
+    careerPortalHeroImageUrl: 'careerPortalHeroImageUrl',
+    dataRetentionDays: 'dataRetentionDays',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -3525,6 +3671,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
    * Reference to a field of type 'PlanChangeStatus'
    */
   export type EnumPlanChangeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlanChangeStatus'>
@@ -3539,16 +3699,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Float'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 
   /**
-   * Reference to a field of type 'Int[]'
+   * Reference to a field of type 'Float[]'
    */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -3572,6 +3732,14 @@ export namespace Prisma {
     dataRegion?: StringFilter<"Tenant"> | string
     isolationConfig?: JsonFilter<"Tenant">
     settings?: JsonFilter<"Tenant">
+    brandPrimaryColor?: StringNullableFilter<"Tenant"> | string | null
+    brandSecondaryColor?: StringNullableFilter<"Tenant"> | string | null
+    brandAccentColor?: StringNullableFilter<"Tenant"> | string | null
+    brandTagline?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalWelcomeMessage?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalAboutHtml?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalHeroImageUrl?: StringNullableFilter<"Tenant"> | string | null
+    dataRetentionDays?: IntFilter<"Tenant"> | number
     createdAt?: DateTimeFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeFilter<"Tenant"> | Date | string
     planChangeRequests?: PlanChangeRequestListRelationFilter
@@ -3591,6 +3759,14 @@ export namespace Prisma {
     dataRegion?: SortOrder
     isolationConfig?: SortOrder
     settings?: SortOrder
+    brandPrimaryColor?: SortOrderInput | SortOrder
+    brandSecondaryColor?: SortOrderInput | SortOrder
+    brandAccentColor?: SortOrderInput | SortOrder
+    brandTagline?: SortOrderInput | SortOrder
+    careerPortalWelcomeMessage?: SortOrderInput | SortOrder
+    careerPortalAboutHtml?: SortOrderInput | SortOrder
+    careerPortalHeroImageUrl?: SortOrderInput | SortOrder
+    dataRetentionDays?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     planChangeRequests?: PlanChangeRequestOrderByRelationAggregateInput
@@ -3613,6 +3789,14 @@ export namespace Prisma {
     dataRegion?: StringFilter<"Tenant"> | string
     isolationConfig?: JsonFilter<"Tenant">
     settings?: JsonFilter<"Tenant">
+    brandPrimaryColor?: StringNullableFilter<"Tenant"> | string | null
+    brandSecondaryColor?: StringNullableFilter<"Tenant"> | string | null
+    brandAccentColor?: StringNullableFilter<"Tenant"> | string | null
+    brandTagline?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalWelcomeMessage?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalAboutHtml?: StringNullableFilter<"Tenant"> | string | null
+    careerPortalHeroImageUrl?: StringNullableFilter<"Tenant"> | string | null
+    dataRetentionDays?: IntFilter<"Tenant"> | number
     createdAt?: DateTimeFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeFilter<"Tenant"> | Date | string
     planChangeRequests?: PlanChangeRequestListRelationFilter
@@ -3632,11 +3816,21 @@ export namespace Prisma {
     dataRegion?: SortOrder
     isolationConfig?: SortOrder
     settings?: SortOrder
+    brandPrimaryColor?: SortOrderInput | SortOrder
+    brandSecondaryColor?: SortOrderInput | SortOrder
+    brandAccentColor?: SortOrderInput | SortOrder
+    brandTagline?: SortOrderInput | SortOrder
+    careerPortalWelcomeMessage?: SortOrderInput | SortOrder
+    careerPortalAboutHtml?: SortOrderInput | SortOrder
+    careerPortalHeroImageUrl?: SortOrderInput | SortOrder
+    dataRetentionDays?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: TenantCountOrderByAggregateInput
+    _avg?: TenantAvgOrderByAggregateInput
     _max?: TenantMaxOrderByAggregateInput
     _min?: TenantMinOrderByAggregateInput
+    _sum?: TenantSumOrderByAggregateInput
   }
 
   export type TenantScalarWhereWithAggregatesInput = {
@@ -3656,6 +3850,14 @@ export namespace Prisma {
     dataRegion?: StringWithAggregatesFilter<"Tenant"> | string
     isolationConfig?: JsonWithAggregatesFilter<"Tenant">
     settings?: JsonWithAggregatesFilter<"Tenant">
+    brandPrimaryColor?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    brandSecondaryColor?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    brandAccentColor?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    brandTagline?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    careerPortalWelcomeMessage?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    careerPortalAboutHtml?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    careerPortalHeroImageUrl?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
+    dataRetentionDays?: IntWithAggregatesFilter<"Tenant"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   }
@@ -3759,6 +3961,14 @@ export namespace Prisma {
     dataRegion?: string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: string | null
+    brandSecondaryColor?: string | null
+    brandAccentColor?: string | null
+    brandTagline?: string | null
+    careerPortalWelcomeMessage?: string | null
+    careerPortalAboutHtml?: string | null
+    careerPortalHeroImageUrl?: string | null
+    dataRetentionDays?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     planChangeRequests?: PlanChangeRequestCreateNestedManyWithoutTenantInput
@@ -3778,6 +3988,14 @@ export namespace Prisma {
     dataRegion?: string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: string | null
+    brandSecondaryColor?: string | null
+    brandAccentColor?: string | null
+    brandTagline?: string | null
+    careerPortalWelcomeMessage?: string | null
+    careerPortalAboutHtml?: string | null
+    careerPortalHeroImageUrl?: string | null
+    dataRetentionDays?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     planChangeRequests?: PlanChangeRequestUncheckedCreateNestedManyWithoutTenantInput
@@ -3797,6 +4015,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     planChangeRequests?: PlanChangeRequestUpdateManyWithoutTenantNestedInput
@@ -3816,6 +4042,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     planChangeRequests?: PlanChangeRequestUncheckedUpdateManyWithoutTenantNestedInput
@@ -3835,6 +4069,14 @@ export namespace Prisma {
     dataRegion?: string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: string | null
+    brandSecondaryColor?: string | null
+    brandAccentColor?: string | null
+    brandTagline?: string | null
+    careerPortalWelcomeMessage?: string | null
+    careerPortalAboutHtml?: string | null
+    careerPortalHeroImageUrl?: string | null
+    dataRetentionDays?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -3853,6 +4095,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -3871,6 +4121,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4050,6 +4308,17 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -4090,8 +4359,20 @@ export namespace Prisma {
     dataRegion?: SortOrder
     isolationConfig?: SortOrder
     settings?: SortOrder
+    brandPrimaryColor?: SortOrder
+    brandSecondaryColor?: SortOrder
+    brandAccentColor?: SortOrder
+    brandTagline?: SortOrder
+    careerPortalWelcomeMessage?: SortOrder
+    careerPortalAboutHtml?: SortOrder
+    careerPortalHeroImageUrl?: SortOrder
+    dataRetentionDays?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type TenantAvgOrderByAggregateInput = {
+    dataRetentionDays?: SortOrder
   }
 
   export type TenantMaxOrderByAggregateInput = {
@@ -4106,6 +4387,14 @@ export namespace Prisma {
     industry?: SortOrder
     companySize?: SortOrder
     dataRegion?: SortOrder
+    brandPrimaryColor?: SortOrder
+    brandSecondaryColor?: SortOrder
+    brandAccentColor?: SortOrder
+    brandTagline?: SortOrder
+    careerPortalWelcomeMessage?: SortOrder
+    careerPortalAboutHtml?: SortOrder
+    careerPortalHeroImageUrl?: SortOrder
+    dataRetentionDays?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4122,8 +4411,20 @@ export namespace Prisma {
     industry?: SortOrder
     companySize?: SortOrder
     dataRegion?: SortOrder
+    brandPrimaryColor?: SortOrder
+    brandSecondaryColor?: SortOrder
+    brandAccentColor?: SortOrder
+    brandTagline?: SortOrder
+    careerPortalWelcomeMessage?: SortOrder
+    careerPortalAboutHtml?: SortOrder
+    careerPortalHeroImageUrl?: SortOrder
+    dataRetentionDays?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type TenantSumOrderByAggregateInput = {
+    dataRetentionDays?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -4220,6 +4521,22 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -4334,6 +4651,14 @@ export namespace Prisma {
     set?: string | null
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -4437,6 +4762,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -4463,17 +4799,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type NestedIntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type NestedEnumTenantPlanWithAggregatesFilter<$PrismaModel = never> = {
@@ -4559,6 +4884,33 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -4675,6 +5027,14 @@ export namespace Prisma {
     dataRegion?: string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: string | null
+    brandSecondaryColor?: string | null
+    brandAccentColor?: string | null
+    brandTagline?: string | null
+    careerPortalWelcomeMessage?: string | null
+    careerPortalAboutHtml?: string | null
+    careerPortalHeroImageUrl?: string | null
+    dataRetentionDays?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4693,6 +5053,14 @@ export namespace Prisma {
     dataRegion?: string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: string | null
+    brandSecondaryColor?: string | null
+    brandAccentColor?: string | null
+    brandTagline?: string | null
+    careerPortalWelcomeMessage?: string | null
+    careerPortalAboutHtml?: string | null
+    careerPortalHeroImageUrl?: string | null
+    dataRetentionDays?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4727,6 +5095,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4745,6 +5121,14 @@ export namespace Prisma {
     dataRegion?: StringFieldUpdateOperationsInput | string
     isolationConfig?: JsonNullValueInput | InputJsonValue
     settings?: JsonNullValueInput | InputJsonValue
+    brandPrimaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandSecondaryColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandAccentColor?: NullableStringFieldUpdateOperationsInput | string | null
+    brandTagline?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalWelcomeMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
+    careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    dataRetentionDays?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

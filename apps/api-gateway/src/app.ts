@@ -210,6 +210,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
   app.use("/api/integrations", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/integrations"));
+  app.use("/api/email-templates", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/email-templates"));
   // HITL — GET is handled by aggregatorRouter above for shape consistency;
   // POST + PATCH go straight through to notification-service.
   app.use("/api/hitl", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/hitl"));
@@ -271,6 +272,18 @@ export function createApp(logger: Logger): Express {
 
   app.use("/api/super-admin/tenants", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/tenants"));
   app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
+
+  // Phase 20 — tenant self-service config (branding + retention).
+  // Branding GET/PUT proxies to tenant-service's /internal/branding and
+  // /internal/retention. Auth required: tenant-admin scope (the route
+  // itself reads X-Tenant-Id from the forwarded headers).
+  app.use("/api/branding", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/branding"));
+  app.use("/api/retention", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/retention"));
+
+  // Public branding endpoint — no auth, used by the candidate-portal to
+  // whitelabel /jobs and /jobs/:id/apply. Restrictive cache so updates
+  // propagate without a CDN purge but we still get ~60s edge caching.
+  app.use("/api/public/branding", forwardHeaders(tenantUrl, "/internal/public-branding"));
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());      // capture into Sentry (no-op if SENTRY_DSN unset)

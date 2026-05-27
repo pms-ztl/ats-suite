@@ -126,3 +126,25 @@ model TenantIntegration {
   @@unique([tenantId, kind])
   @@index([tenantId])
 }
+
+// Per-tenant override of the default email body for a given notification type.
+// When rendering an email, mailer first looks up (tenantId, type) here;
+// if no row exists, it falls back to the system default in renderNotificationEmail.
+// `bodyHtml` and `bodyText` support Mustache-lite variables: {{candidateName}}, etc.
+// `variables` is a documentation column listing the variables this template
+// expects — used by the frontend editor to render a variable picker.
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  tenantId  String
+  type      String // matches NotificationType enum value
+  subject   String
+  bodyHtml  String   @db.Text
+  bodyText  String   @db.Text
+  variables Json     @default("[]") // ["candidateName", "jobTitle", ...]
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}

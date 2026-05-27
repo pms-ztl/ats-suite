@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { SIDEBAR_CATEGORIES, CATEGORY_FEATURES_COUNT } from "@/lib/constants";
 import { usePermissions } from "@/lib/use-permissions";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -53,6 +54,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { can, isSuperAdmin, isTenantAdmin } = usePermissions();
   const { user } = useCurrentUser();
+  const { branding } = useTenantBranding();
   const [hitlPendingCount, setHitlPendingCount] = useState(0);
   const [seats, setSeats] = useState<{ used: number; limit: number; unlimited: boolean } | null>(null);
   const plan = PLAN_META[user?.tenant?.plan ?? "FREE"] ?? PLAN_META.FREE;
@@ -160,11 +162,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo */}
         <div className="flex h-14 items-center border-b border-border/40 px-4">
           <Link href="/" className={cn("flex items-center gap-2 min-w-0", collapsed && "mx-auto")}>
-            <div className="h-8 w-8 shrink-0 rounded-lg bg-primary glow-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary-foreground">
-                {user?.tenant?.name?.charAt(0)?.toUpperCase() ?? "C"}
-              </span>
-            </div>
+            {branding?.logoUrl ? (
+              // Branded: real logo at 32×32, object-contain so any aspect renders cleanly.
+              <img
+                src={branding.logoUrl}
+                alt={branding.name}
+                className="h-8 w-8 shrink-0 rounded-lg object-contain bg-white/5 p-0.5"
+              />
+            ) : (
+              // Fallback: initial letter on primary-colored tile.
+              <div
+                className="h-8 w-8 shrink-0 rounded-lg glow-primary flex items-center justify-center"
+                style={{ backgroundColor: branding?.brandPrimaryColor ?? undefined }}
+              >
+                <span className="text-sm font-bold text-primary-foreground">
+                  {(branding?.name ?? user?.tenant?.name)?.charAt(0)?.toUpperCase() ?? "C"}
+                </span>
+              </div>
+            )}
             <div
               className={cn(
                 "min-w-0 overflow-hidden transition-all duration-200",
@@ -173,7 +188,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="block text-sm font-bold text-foreground truncate leading-tight">
-                  {user?.tenant?.name ?? "CDC ATS"}
+                  {branding?.name ?? user?.tenant?.name ?? "CDC ATS"}
                 </span>
                 <span className={cn(
                   "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0",
@@ -182,7 +197,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   {plan.icon}{plan.label}
                 </span>
               </div>
-              <p className="text-2xs text-muted-foreground truncate">AI-Powered Hiring</p>
+              <p className="text-2xs text-muted-foreground truncate">{branding?.brandTagline ?? "AI-Powered Hiring"}</p>
             </div>
           </Link>
         </div>
