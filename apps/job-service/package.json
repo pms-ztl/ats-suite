@@ -18,6 +18,7 @@
     "@cdc-ats/contracts": "*",
     "@cdc-ats/nats-client": "*",
     "@cdc-ats/ai-engine": "*",
+    "@cdc-ats/outbox": "*",
     "@prisma/client": "^6.0.0",
     "express": "^4.21.2",
     "pino": "^9.5.0",

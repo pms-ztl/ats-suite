@@ -101,6 +101,32 @@ model Skill {
   @@index([tenantId])
 }
 
+// Transactional outbox — see @cdc-ats/outbox for usage. Events get written
+// here in the same transaction as the domain change, then a background
+// worker publishes to NATS with at-least-once guarantee.
+enum OutboxStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Outbox {
+  id           String       @id @default(uuid())
+  subject      String       // NATS subject, e.g. tenant.{id}.agent.completed
+  type         String       // logical event type, e.g. agent.completed
+  tenantId     String?      // null for platform-wide events
+  payload      Json
+  status       OutboxStatus @default(PENDING)
+  attemptCount Int          @default(0)
+  lastError    String?
+  sentAt       DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@index([tenantId])
+}
+
 // Per-service AgentRun — denormalized telemetry for job-service agent calls
 // (jd-author). billing-service aggregates across all services via NATS events.
 model AgentRun {

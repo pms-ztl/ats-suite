@@ -183,6 +183,20 @@ exports.Prisma.SkillScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OutboxScalarFieldEnum = {
+  id: 'id',
+  subject: 'subject',
+  type: 'type',
+  tenantId: 'tenantId',
+  payload: 'payload',
+  status: 'status',
+  attemptCount: 'attemptCount',
+  lastError: 'lastError',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.AgentRunScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -235,11 +249,18 @@ exports.RequisitionStatus = exports.$Enums.RequisitionStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.OutboxStatus = exports.$Enums.OutboxStatus = {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+};
+
 exports.Prisma.ModelName = {
   Requisition: 'Requisition',
   JobPosting: 'JobPosting',
   ApplicationFormSchema: 'ApplicationFormSchema',
   Skill: 'Skill',
+  Outbox: 'Outbox',
   AgentRun: 'AgentRun'
 };
 

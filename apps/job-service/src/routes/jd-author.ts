@@ -5,14 +5,15 @@
  *
  * The agent runs against Claude when ANTHROPIC_API_KEY is set, otherwise
  * the deterministic stub. Cost/usage is persisted via the per-service
- * AgentRun model (in job_db).
+ * AgentRun model + Outbox in a single DB transaction so the
+ * agent.completed NATS event cannot be lost mid-publish.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, getTenantId, getUserId, createLogger } from "@cdc-ats/common";
 import { runAgent, type JDAuthorInput, type JDAuthorOutput } from "@cdc-ats/ai-engine";
-import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
+import { enqueueOutbox } from "@cdc-ats/outbox";
 import { prisma } from "../lib/prisma.js";
 
 const logger = createLogger({ serviceName: "job-service:jd-author" });
@@ -44,54 +45,53 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       context: {
         tenantId,
         userId,
+        // ── Transactional outbox: AgentRun row + outbox event written
+        //    atomically. If this transaction commits, the event is guaranteed
+        //    to land in NATS eventually (worker retries on broker downtime).
+        //    If the transaction rolls back, neither lands — no half-states.
         persistRun: async (snapshot) => {
-          // 1. Persist AgentRun row in job_db (denormalized per-service telemetry)
-          await prisma.agentRun
-            .create({
-              data: {
-                id: snapshot.agentRunId,
-                tenantId: snapshot.tenantId,
-                agentType: snapshot.agentType,
-                status: snapshot.status,
-                triggeredBy: snapshot.userId ?? "system",
-                inputHash: snapshot.inputHash,
-                tokensIn: snapshot.tokensIn,
-                tokensOut: snapshot.tokensOut,
-                costUsd: snapshot.costUsd,
-                latencyMs: snapshot.latencyMs,
-                modelName: snapshot.modelName,
-                iterations: snapshot.iterations,
-                errorMessage: snapshot.errorMessage,
-                startedAt: snapshot.startedAt,
-                completedAt: snapshot.completedAt,
-              },
-            })
-            .catch((err) => {
-              logger.warn({ err, agentRunId: snapshot.agentRunId }, "AgentRun persist failed");
-            });
-
-          // 2. Publish agent.completed → billing-service aggregates cost for /api/billing/*
           try {
-            await publishEvent({
-              subject: tenantSubject(snapshot.tenantId, "agent", "completed"),
-              type: "agent.completed",
-              tenantId: snapshot.tenantId,
-              payload: {
+            await prisma.$transaction(async (tx) => {
+              await tx.agentRun.create({
+                data: {
+                  id: snapshot.agentRunId,
+                  tenantId: snapshot.tenantId,
+                  agentType: snapshot.agentType,
+                  status: snapshot.status,
+                  triggeredBy: snapshot.userId ?? "system",
+                  inputHash: snapshot.inputHash,
+                  tokensIn: snapshot.tokensIn,
+                  tokensOut: snapshot.tokensOut,
+                  costUsd: snapshot.costUsd,
+                  latencyMs: snapshot.latencyMs,
+                  modelName: snapshot.modelName,
+                  iterations: snapshot.iterations,
+                  errorMessage: snapshot.errorMessage,
+                  startedAt: snapshot.startedAt,
+                  completedAt: snapshot.completedAt,
+                },
+              });
+              await enqueueOutbox(tx as any, {
+                subject: tenantSubject(snapshot.tenantId, "agent", "completed"),
+                type: "agent.completed",
                 tenantId: snapshot.tenantId,
-                agentRunId: snapshot.agentRunId,
-                agentType: snapshot.agentType,
-                status: snapshot.status,
-                tokensIn: snapshot.tokensIn,
-                tokensOut: snapshot.tokensOut,
-                costUsd: snapshot.costUsd,
-                latencyMs: snapshot.latencyMs,
-                modelName: snapshot.modelName,
-                iterations: snapshot.iterations,
-                triggeredByUserId: snapshot.userId,
-              },
+                payload: {
+                  tenantId: snapshot.tenantId,
+                  agentRunId: snapshot.agentRunId,
+                  agentType: snapshot.agentType,
+                  status: snapshot.status,
+                  tokensIn: snapshot.tokensIn,
+                  tokensOut: snapshot.tokensOut,
+                  costUsd: snapshot.costUsd,
+                  latencyMs: snapshot.latencyMs,
+                  modelName: snapshot.modelName,
+                  iterations: snapshot.iterations,
+                  triggeredByUserId: snapshot.userId,
+                },
+              });
             });
           } catch (err) {
-            logger.warn({ err, agentRunId: snapshot.agentRunId }, "agent.completed publish failed");
+            logger.warn({ err, agentRunId: snapshot.agentRunId }, "AgentRun+outbox transaction failed");
           }
         },
       },
