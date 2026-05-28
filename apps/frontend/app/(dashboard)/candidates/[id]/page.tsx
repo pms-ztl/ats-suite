@@ -97,6 +97,13 @@ export default function CandidateDetailPage() {
     score?: number; matchPercentage?: number; result?: string; reasoning?: string;
     agentTrace?: AgentStep[] | null;
   } | null>(null);
+  // Phase 38 — candidate assistant (agentic candidate-experience) chat
+  const [asstInput, setAsstInput] = useState("");
+  const [asstBusy, setAsstBusy] = useState(false);
+  const [asstTurns, setAsstTurns] = useState<Array<{
+    query: string; response?: string; shouldEscalate?: boolean; escalationReason?: string | null;
+    agentTrace?: AgentStep[]; toolsUsed?: string[]; loading: boolean; error?: string;
+  }>>([]);
   // Batch 6: custom-form attachments (anything beyond the primary resume)
   const [attachments, setAttachments] = useState<Array<{
     id: string;
@@ -180,6 +187,37 @@ export default function CandidateDetailPage() {
       })
       .catch(() => {});
   }, [id]);
+
+  async function sendToAssistant(q: string) {
+    const query = q.trim();
+    if (!query || asstBusy) return;
+    setAsstInput("");
+    setAsstBusy(true);
+    const idx = asstTurns.length;
+    setAsstTurns((t) => [...t, { query, loading: true }]);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      let token: string | null = null;
+      try { token = window.sessionStorage.getItem("ats-access-token"); } catch {}
+      const res = await fetch(`${API}/candidate-experience`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ candidateId: id, message: query }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const d = json.data ?? json;
+      setAsstTurns((t) => t.map((turn, i) => i === idx ? {
+        ...turn, loading: false, response: d.response, shouldEscalate: d.shouldEscalate,
+        escalationReason: d.escalationReason, agentTrace: d.agentTrace, toolsUsed: d.toolsUsed,
+      } : turn));
+    } catch {
+      setAsstTurns((t) => t.map((turn, i) => i === idx ? { ...turn, loading: false, error: "The assistant couldn't respond." } : turn));
+    } finally {
+      setAsstBusy(false);
+    }
+  }
 
   async function handleAdvanceStage(applicationId: string, newStage: string) {
     setAdvancing(true);
@@ -397,6 +435,9 @@ export default function CandidateDetailPage() {
                   <Sparkles className="h-3 w-3" /> AI Screening
                 </TabsTrigger>
               )}
+              <TabsTrigger value="assistant" className="gap-1.5">
+                <MessageSquare className="h-3 w-3" /> Assistant
+              </TabsTrigger>
               <TabsTrigger value="timeline">
                 Timeline
               </TabsTrigger>
@@ -445,6 +486,56 @@ export default function CandidateDetailPage() {
                 <AgentReasoningTrace steps={screening.agentTrace} defaultOpen />
               </TabsContent>
             )}
+
+            <TabsContent value="assistant" className="mt-4 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Preview the candidate assistant — it answers about this candidate's application using tools, and escalates to a recruiter when needed.
+              </p>
+              {asstTurns.map((t, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-end">
+                    <div className="rounded-2xl bg-primary text-primary-foreground px-3 py-1.5 text-sm max-w-[80%]">{t.query}</div>
+                  </div>
+                  <Card>
+                    <CardContent className="p-3 space-y-2">
+                      {t.loading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 animate-spin" /> Thinking…
+                        </div>
+                      ) : t.error ? (
+                        <p className="text-sm text-rose-600">{t.error}</p>
+                      ) : (
+                        <>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{t.response}</p>
+                          {t.shouldEscalate && (
+                            <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300">
+                              Escalated{t.escalationReason ? `: ${t.escalationReason}` : ""}
+                            </Badge>
+                          )}
+                          {t.agentTrace && t.agentTrace.length > 0 && (
+                            <AgentReasoningTrace steps={t.agentTrace} toolsUsed={t.toolsUsed} />
+                          )}
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+              <form
+                onSubmit={(e) => { e.preventDefault(); sendToAssistant(asstInput); }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  value={asstInput}
+                  onChange={(e) => setAsstInput(e.target.value)}
+                  placeholder="Ask as the candidate, e.g. 'What's my status?'"
+                  className="h-9 flex-1 rounded-md border bg-background px-3 text-sm"
+                />
+                <Button type="submit" size="sm" disabled={asstBusy || !asstInput.trim()}>
+                  {asstBusy ? "…" : "Send"}
+                </Button>
+              </form>
+            </TabsContent>
 
             <TabsContent value="applications" className="mt-4 space-y-3">
               {(!candidate.applications || candidate.applications.length === 0) ? (

@@ -20,13 +20,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CalendarDays, Plus, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { CalendarDays, Plus, Clock, CheckCircle, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { usePermissions } from "@/lib/use-permissions";
 import { AccessDenied } from "@/components/shared/access-denied";
 import { PageSkeleton } from "@/components/shared/page-skeleton";
 import { PageError } from "@/components/shared/page-error";
+import { AgentReasoningTrace, type AgentStep } from "@/components/shared/agent-reasoning-trace";
+
+interface ProposedSlot { start: string; end: string; score: number; availableParticipants: string[]; conflicts: string[] }
+interface ScheduleSuggestion { proposedSlots?: ProposedSlot[]; agentTrace?: AgentStep[]; toolsUsed?: string[] }
 
 interface ScheduleEvent {
   id: string;
@@ -78,6 +82,8 @@ export default function SchedulingPage() {
   const [formEnd, setFormEnd] = useState("");
   const [formLocation, setFormLocation] = useState("");
   const [formAttendees, setFormAttendees] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestion, setSuggestion] = useState<ScheduleSuggestion | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -102,6 +108,51 @@ export default function SchedulingPage() {
     if (typeFilter === "ALL") return events;
     return events.filter((e) => e.type === typeFilter);
   }, [events, typeFilter]);
+
+  async function runAiSuggest() {
+    const emails = formAttendees.split(",").map((e) => e.trim()).filter(Boolean);
+    if (emails.length === 0) {
+      toast.error("Add at least one attendee email first");
+      return;
+    }
+    setSuggesting(true);
+    setSuggestion(null);
+    try {
+      const now = new Date();
+      const start = formStart ? new Date(formStart) : now;
+      const end = new Date(start.getTime() + 14 * 86400_000);
+      const res = await fetch(`${API}/scheduling`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({
+          participants: emails.map((email) => ({ email, role: "interviewer", busyWindows: [] })),
+          durationMinutes: 60,
+          dateRange: { start: start.toISOString(), end: end.toISOString() },
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setSuggestion(json.data ?? json);
+    } catch {
+      toast.error("AI scheduling failed.");
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  function applySlot(slot: ProposedSlot) {
+    // datetime-local wants "YYYY-MM-DDTHH:mm" in local time
+    const toLocal = (iso: string) => {
+      const d = new Date(iso);
+      const off = d.getTimezoneOffset() * 60_000;
+      return new Date(d.getTime() - off).toISOString().slice(0, 16);
+    };
+    setFormStart(toLocal(slot.start));
+    setFormEnd(toLocal(slot.end));
+    if (!formTitle) setFormTitle("Interview");
+    toast.success("Slot applied to the form");
+  }
 
   async function handleCreateEvent() {
     if (!formTitle || !formStart || !formEnd) {
@@ -231,6 +282,41 @@ export default function SchedulingPage() {
                     placeholder="user@example.com, user2@example.com"
                   />
                 </div>
+
+                {/* AI suggest times */}
+                <div className="space-y-2 rounded-md border border-primary/20 p-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={runAiSuggest}
+                    disabled={suggesting}
+                  >
+                    {suggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
+                    {suggesting ? "Finding times…" : "AI suggest times"}
+                  </Button>
+                  {suggestion?.proposedSlots && suggestion.proposedSlots.length > 0 && (
+                    <div className="space-y-1">
+                      {suggestion.proposedSlots.slice(0, 5).map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => applySlot(s)}
+                          className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-xs hover:bg-muted transition-colors"
+                        >
+                          <span>{new Date(s.start).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                          <span className={s.conflicts.length === 0 ? "text-emerald-600" : "text-amber-600"}>
+                            {s.conflicts.length === 0 ? "all free" : `${s.conflicts.length} conflict${s.conflicts.length > 1 ? "s" : ""}`} · {(s.score * 100).toFixed(0)}%
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {suggestion?.agentTrace && suggestion.agentTrace.length > 0 && (
+                    <AgentReasoningTrace steps={suggestion.agentTrace} toolsUsed={suggestion.toolsUsed} />
+                  )}
+                </div>
+
                 <Button
                   className="w-full"
                   onClick={handleCreateEvent}
