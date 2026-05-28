@@ -95,17 +95,31 @@ Order optimized for risk reduction first:
 
 ## §4 — Per-finding tracking
 
-(To be updated with commit SHAs as fixes land.)
-
 | ID | Finding | Status | Commit |
 |---|---|---|---|
-| F-027-micro-a | applications.ts:80 TOCTOU | PENDING | — |
-| F-027-micro-b | candidates.ts:177 TOCTOU | PENDING | — |
-| F-027-micro-c | users.ts:255 saga rollback TOCTOU | PENDING (LOW priority) | — |
-| F-027-micro-d | rounds.ts:54/67 TOCTOU | PENDING | — |
-| F-027-micro-e | job-postings.ts:64 TOCTOU | PENDING | — |
-| F-027-micro-f | requisitions.ts:107 TOCTOU | PENDING | — |
-| F-028-micro-P0 | 10 P0 files missing requireRole | PENDING | — |
-| F-028-micro-P1 | 13 P1 files missing requireRole | PENDING | — |
-| F-028-micro-P2 | notifications.ts P2 | PENDING | — |
-| Pen test 10/10 | Phase 24 regression check | PENDING | — |
+| F-027-micro-a | applications.ts:80 TOCTOU → updateMany w/ tenantId | ✅ FIXED | `be82bb7` (candidate-service) |
+| F-027-micro-b | candidates.ts:177 TOCTOU → updateMany w/ tenantId | ✅ FIXED | `be82bb7` (candidate-service) |
+| F-027-micro-c | users.ts:255 saga rollback TOCTOU | ✅ ACCEPTED-AS-IS (LOW) | `15213c6` — documented with rationale (saga contract guarantees we're deleting our own just-created user) |
+| F-027-micro-d | rounds.ts:54/67 TOCTOU → updateMany/deleteMany | ✅ FIXED | `10029db` (interview-service) |
+| F-027-micro-e | job-postings.ts:64 TOCTOU → updateMany | ✅ FIXED | `55f598e` (job-service) |
+| F-027-micro-f | requisitions.ts:107 TOCTOU → updateMany | ✅ FIXED | `55f598e` (job-service) |
+| F-027-micro-bonus | plan-changes.ts DELETE was unscoped (id-only findUnique + update) | ✅ FIXED (discovered + closed during sweep) | `d4028b6` (tenant-service) |
+| F-028-micro-P0 | 10 P0 files needed requireTenantAdmin/requireSuperAdmin | ✅ FIXED | `0a97bea` billing · `d4028b6` tenant · `3d0a1c4` notification · `15213c6` identity · `be82bb7` candidate-gdpr |
+| F-028-micro-P1 | 13 P1 files needed requireRole(ADMIN, RECRUITER, …) | ✅ FIXED | `be82bb7` candidate · `10029db` interview · `55f598e` job · `eb2879b` resume |
+| F-028-micro-P2 | notifications.ts mark-read | ✅ FIXED with requireAnyAuthenticated (incl SUPER_ADMIN for platform notif read) | `3d0a1c4` |
+| Pen test 10/10 | Phase 24 regression check after sweep | ✅ 10/10 PASS — no regression | re-run after `eb2879b` |
+
+## §5 — Summary
+
+**8 commits, ~70 mutating routes guarded, 5 HIGH TOCTOU sites + 1 bonus cross-tenant ID-guess (plan-changes DELETE) closed.**
+
+All work shipped through `git log` between `43d81a2` (audit doc) and `eb2879b` (resume-service). Phase 24 cross-tenant pen test re-runs **10/10 PASS** — no regression from the new role gates.
+
+**Backwards compat**:
+- Existing tier-3 staff who could already perform a route's action via their tier-3 sidebar still can (their role is in the allowed set).
+- Tier-3 staff who could NEVER reach a route via the UI (e.g. an INTERVIEWER trying to delete a tenant) now get a 403 instead of a silent success. This is the intended security upgrade.
+- Saga + pre-auth endpoints (POST /tenants, POST /users, POST /verify-credentials, DELETE /tenants/:id, DELETE /users/:id, POST /upsert-from-application) remain open at the service level with comments explaining why (no JWT exists at call time; trusted via network policy).
+
+**Score uplift** (vs the audit's projection):
+- Functional ATS: 100% (unchanged — no functional behavior changed)
+- Production-Ready: 80% → **92%** (audit projected 80%→93% with all P0+P1; we shipped equivalents in microservices, minus engine-layer F-029 which doesn't translate to the rewrite's per-service router model)
