@@ -17,11 +17,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Mail, Phone, MapPin, Calendar, Briefcase, ArrowLeft,
-  ChevronDown, Clock, User, Globe,
+  ChevronDown, Clock, User, Globe, Sparkles, MessageSquare, ShieldOff,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { ParsedResumeView } from "@/components/candidates/parsed-resume-view";
+import { InterviewQuestionsTab } from "@/components/candidates/interview-questions-tab";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface CandidateDetail {
   id: string;
@@ -41,6 +45,9 @@ interface CandidateDetail {
     createdAt?: string;
     requisition?: { id: string; title: string; department?: string };
   }[];
+  // Phase 37k — rich parsed data + fairness view
+  parsedSummary?: Record<string, unknown> | null;
+  parsedSummaryFair?: Record<string, unknown> | null;
 }
 
 interface TimelineEntry {
@@ -81,6 +88,9 @@ export default function CandidateDetailPage() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(true);
   const [advancing, setAdvancing] = useState(false);
+  // Phase 37k — toggles ParsedResumeView between the full parsedSummary and
+  // the PII-stripped parsedSummaryFair view. Off by default.
+  const [fairnessMode, setFairnessMode] = useState(false);
   // Batch 6: custom-form attachments (anything beyond the primary resume)
   const [attachments, setAttachments] = useState<Array<{
     id: string;
@@ -327,13 +337,33 @@ export default function CandidateDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Right: Applications + Timeline */}
+        {/* Right: Applications + Timeline + parsed resume + interview questions */}
         <div className="lg:col-span-2">
+          {/* Phase 37k — fairness mode toggle, only visible when parsed data exists */}
+          {candidate.parsedSummary && (
+            <div className="flex items-center justify-end gap-2 mb-2">
+              <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" />
+              <Label htmlFor="fairness" className="text-xs text-muted-foreground cursor-pointer">
+                Fairness mode (hide identity-correlated fields)
+              </Label>
+              <Switch id="fairness" checked={fairnessMode} onCheckedChange={setFairnessMode} />
+            </div>
+          )}
           <Tabs defaultValue="applications" className="w-full">
             <TabsList>
               <TabsTrigger value="applications">
                 Applications ({candidate.applications?.length ?? 0})
               </TabsTrigger>
+              {candidate.parsedSummary && (
+                <TabsTrigger value="resume" className="gap-1.5">
+                  <Sparkles className="h-3 w-3" /> Resume
+                </TabsTrigger>
+              )}
+              {candidate.parsedSummary && (
+                <TabsTrigger value="questions" className="gap-1.5">
+                  <MessageSquare className="h-3 w-3" /> Interview Questions
+                </TabsTrigger>
+              )}
               <TabsTrigger value="timeline">
                 Timeline
               </TabsTrigger>
@@ -341,6 +371,29 @@ export default function CandidateDetailPage() {
                 Attachments{attachments.length > 0 ? ` (${attachments.length})` : ""}
               </TabsTrigger>
             </TabsList>
+
+            {candidate.parsedSummary && (
+              <TabsContent value="resume" className="mt-4">
+                <ParsedResumeView
+                  parsedSummary={(fairnessMode && candidate.parsedSummaryFair) ? candidate.parsedSummaryFair : candidate.parsedSummary}
+                  fairnessMode={fairnessMode}
+                />
+              </TabsContent>
+            )}
+
+            {candidate.parsedSummary && (
+              <TabsContent value="questions" className="mt-4">
+                <InterviewQuestionsTab
+                  candidateId={candidate.id}
+                  applications={(candidate.applications ?? []).map((a) => ({
+                    id: a.id,
+                    requisition: a.requisition
+                      ? { id: a.requisition.id, title: a.requisition.title }
+                      : null,
+                  }))}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent value="applications" className="mt-4 space-y-3">
               {(!candidate.applications || candidate.applications.length === 0) ? (
