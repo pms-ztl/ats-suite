@@ -6,7 +6,7 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import argon2 from "argon2";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole, requireTenantAdmin } from "@cdc-ats/common";
 import { CreateUserInputSchema, LoginInputSchema, UserRoleSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 import { PLAN_LIMITS, canAddSeats, isUnlimited } from "../lib/plan-limits.js";
@@ -16,6 +16,10 @@ const router = Router();
 // ─── POST /internal/users/verify-credentials ──────────────────────────────
 // Called by gateway during /api/auth/login. Returns user record on match,
 // 401 on mismatch / inactive.
+// NOTE: intentionally NOT requireRole-guarded — this endpoint is what
+// CREATES the role context (verifies credentials, returns user info so
+// gateway can sign a JWT). No JWT exists at this moment. Trusted via
+// network policy (only gateway can reach it).
 router.post("/verify-credentials", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = LoginInputSchema.parse(req.body);
@@ -48,6 +52,8 @@ router.post("/verify-credentials", async (req: Request, res: Response, next: Nex
 });
 
 // ─── POST /internal/users — create user (called by register-company saga) ─
+// NOTE: intentionally NOT requireRole-guarded — saga path runs BEFORE the
+// new tenant admin has a JWT. Same trust model as POST /internal/tenants.
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = CreateUserInputSchema.parse(req.body);
@@ -123,7 +129,8 @@ const InviteSchema = z.object({
   invitedByUserId: z.string().uuid(),
 });
 
-router.post("/invite", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: only tenant admins can invite users.
+router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = InviteSchema.parse(req.body);
 
@@ -213,7 +220,10 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 // Either filter is required. `?role=SUPER_ADMIN` returns all super-admins
 // across the platform — used by notification-service to fan out platform
 // notifications via email/Slack.
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: ADMIN+ only. notification-service calls this
+// with synthetic SUPER_ADMIN role; tenant admins call with their tenantId.
+// Tier-3 staff have no business listing users.
+router.get("/", requireRole("SUPER_ADMIN", "ADMIN"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.query["tenantId"] as string | undefined;
     const role = req.query["role"] as string | undefined;
@@ -249,6 +259,11 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 // ─── DELETE /internal/users/:id — saga compensation ───────────────────────
 // Called by gateway register-company saga IF tenant-service fails after user
 // was already created. Should be very rare; logs prominently for debugging.
+// NOTE: intentionally NOT requireRole-guarded — saga path runs during
+// register-company rollback when no JWT exists. Trusted via network policy.
+// F-027-micro-c (LOW): plain delete-by-id is acceptable here because the
+// saga's contract guarantees we're deleting the user we just created in
+// this same saga; no cross-tenant scenario exists at this code path.
 router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
