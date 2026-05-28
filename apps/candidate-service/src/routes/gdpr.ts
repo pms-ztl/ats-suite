@@ -82,6 +82,47 @@ router.get("/candidates/:id/export", async (req: Request, res: Response, next: N
   } catch (err) { next(err); }
 });
 
+// ── GET /internal/gdpr/tenant/export ──────────────────────────────────────
+// Phase 31c — full tenant data export (GDPR Article 20 — data portability).
+// Returns every candidate, application, note, and attachment metadata for
+// the caller's tenant. Admin-only.
+//
+// Memory note: this loads everything into memory. For tenants with >50k
+// candidates the response will be tens of MB; that's acceptable for a manual
+// admin export. Future optimisation: stream-as-NDJSON or chunk to S3.
+router.get("/tenant/export", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+
+    const [candidates, applications, notes, attachments] = await Promise.all([
+      prisma.candidate.findMany({ where: { tenantId } }),
+      prisma.application.findMany({ where: { tenantId } }),
+      prisma.candidateNote.findMany({ where: { tenantId } }),
+      prisma.applicationAttachment.findMany({ where: { tenantId } }),
+    ]);
+
+    ok(res, {
+      service: "candidate",
+      counts: {
+        candidates: candidates.length,
+        applications: applications.length,
+        notes: notes.length,
+        attachments: attachments.length,
+      },
+      candidates,
+      applications,
+      notes,
+      attachmentsMeta: attachments.map((a) => ({
+        id: a.id, applicationId: a.applicationId, fieldId: a.fieldId,
+        fileName: a.fileName, fileSize: a.fileSize, mimeType: a.mimeType,
+        createdAt: a.createdAt,
+        // intentionally NOT exporting raw bytes — the storage layer is the
+        // authoritative source for those.
+      })),
+    });
+  } catch (err) { next(err); }
+});
+
 // ── DELETE /internal/gdpr/candidates/:id ──────────────────────────────────
 // Anonymizes the candidate + deletes their applications & notes. The
 // candidate row is NOT physically deleted (it would orphan foreign keys

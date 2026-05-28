@@ -130,6 +130,16 @@ const InviteSchema = z.object({
 });
 
 // Phase 27 F-028-micro-P0: only tenant admins can invite users.
+// Phase 31a — closes the "invited users can never log in" gap.
+//
+// Old behaviour (broken): created user with a random tempPassword, returned
+// it in the response body, and... never emailed it. User was permanently
+// stuck unable to log in.
+//
+// New behaviour: create user with an UNGUESSABLE placeholder password +
+// create an InviteToken (7-day expiry). Gateway emails an /accept-invite
+// link via notification-service. User sets their real password through
+// the accept flow, which marks the token used and overwrites passwordHash.
 router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = InviteSchema.parse(req.body);
@@ -150,20 +160,37 @@ router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, n
     });
     if (existing) throw Errors.conflict("User with this email already exists in this tenant");
 
-    // Create user with temporary password (will need to be reset on first login;
-    // proper invite-link flow is a Phase 1.5 follow-up)
-    const tempPassword = Math.random().toString(36).slice(2, 14);
-    const passwordHash = await argon2.hash(tempPassword, { type: argon2.argon2id });
-    const user = await prisma.user.create({
-      data: {
-        tenantId: body.tenantId,
-        email: body.email.toLowerCase(),
-        firstName: body.firstName,
-        lastName: body.lastName,
-        role: body.role,
-        passwordHash,
-        isActive: true,
-      },
+    // 256 bits of entropy → user cannot guess it, so password-login is
+    // effectively disabled until /accept-invite overwrites passwordHash.
+    const { randomBytes } = await import("crypto");
+    const placeholder = randomBytes(32).toString("base64");
+    const passwordHash = await argon2.hash(placeholder, { type: argon2.argon2id });
+
+    // Create user + invite token in a single transaction so a partial
+    // failure never leaves a stranded user without a way to accept.
+    const { user, invite } = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          tenantId: body.tenantId,
+          email: body.email.toLowerCase(),
+          firstName: body.firstName,
+          lastName: body.lastName,
+          role: body.role,
+          passwordHash,
+          isActive: true,
+        },
+      });
+      const inv = await tx.inviteToken.create({
+        data: {
+          tenantId: body.tenantId,
+          email: u.email,
+          role: body.role,
+          invitedByUserId: body.invitedByUserId,
+          // 7 days — invites sit in inboxes longer than password resets.
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+      return { user: u, invite: inv };
     });
 
     await prisma.auditEvent.create({
@@ -185,7 +212,11 @@ router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, n
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
-      tempPassword,    // returned to gateway so it can be emailed; never logged
+      // Returned so the gateway can compose the accept-invite URL and
+      // hand it to notification-service. Internal-only — never exposed
+      // via /api/users/:id GET.
+      inviteToken: invite.token,
+      inviteExpiresAt: invite.expiresAt.toISOString(),
     });
   } catch (err) {
     next(err);
@@ -208,6 +239,9 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
       role: user.role,
       isActive: user.isActive,
       lastLoginAt: user.lastLoginAt,
+      // Phase 31b — exposed via /auth/me so dashboard can show a confirm banner.
+      emailVerified: (user as any).emailVerified ?? true,
+      emailVerifiedAt: (user as any).emailVerifiedAt ?? null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

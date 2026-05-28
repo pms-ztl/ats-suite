@@ -108,12 +108,35 @@ services:
     restart: unless-stopped
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Phase 31d — alert rules mounted alongside the main config.
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
     ports:
       - "9090:9090"
+    networks:
+      - ats_net
+
+  # ── Phase 31d — Alertmanager: dedupes + routes Prometheus alerts ─────
+  # Forwards critical alerts to PagerDuty + Slack, warnings to Slack only.
+  # Pre-prod: leave PAGERDUTY_SERVICE_KEY + SLACK_WEBHOOK_URL unset and the
+  # config will accept alerts but not deliver anywhere external.
+  alertmanager:
+    image: prom/alertmanager:v0.28.0
+    container_name: ats-alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    environment:
+      SMTP_SMARTHOST: "${SMTP_SMARTHOST:-mailpit:1025}"
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL:-}"
+      PAGERDUTY_SERVICE_KEY: "${PAGERDUTY_SERVICE_KEY:-}"
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
     networks:
       - ats_net
 

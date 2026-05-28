@@ -1,0 +1,137 @@
+# Phase 31d — Prometheus alert rules.
+#
+# Loaded by prometheus.yml via `rule_files`. Each alert fires when the
+# expression is true for the `for` duration. Alertmanager receives the
+# firing alerts and routes them per its own config.
+#
+# Severity convention:
+#   critical → page on-call immediately (PagerDuty, phone)
+#   warning  → notify Slack channel during business hours
+#   info     → dashboard-only
+
+groups:
+  - name: service-availability
+    interval: 30s
+    rules:
+      # ── Service down ────────────────────────────────────────────────
+      # A scrape target has been unreachable for 2 minutes. Could mean
+      # the container crashed, the port changed, or networking is broken.
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is down"
+          description: "Prometheus has failed to scrape {{ $labels.job }} at {{ $labels.instance }} for 2 minutes. Check `docker logs cdc-ats-{{ $labels.job }}` or `kubectl logs -l app={{ $labels.job }}`."
+          runbook_url: "https://github.com/cdc-ats/runbooks/blob/main/service-down.md"
+
+      # ── Health check failing ────────────────────────────────────────
+      # /health/ready returns non-200 — service is up but unhappy
+      # (DB unreachable, NATS unreachable, etc).
+      - alert: ServiceUnhealthy
+        expr: probe_success{job=~".+-service|api-gateway"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} failed readiness for 3m"
+          description: "/health/ready on {{ $labels.job }} is failing. The service is running but one of its dependencies (DB, NATS, Redis) is unreachable."
+
+  - name: error-rates
+    interval: 30s
+    rules:
+      # ── 5xx rate ────────────────────────────────────────────────────
+      # >5% of HTTP responses in a 5-minute window are 5xx. That's a
+      # clear sign of either a bad deploy or upstream failure.
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+            /
+          sum(rate(http_requests_total[5m])) by (job)
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }}: 5xx rate > 5% for 5m"
+          description: "{{ $value | humanizePercentage }} of requests to {{ $labels.job }} are returning 5xx. Recent deploy? Check the last few commits."
+
+      # ── 4xx rate (excluding 401/403/404) ────────────────────────────
+      # Surge of 4xx that isn't auth or not-found usually means a client
+      # is mis-formatting requests — could be a frontend regression or
+      # a misbehaving integration.
+      - alert: HighClientErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"4..", status!~"401|403|404"}[5m])) by (job)
+            /
+          sum(rate(http_requests_total[5m])) by (job)
+            > 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }}: non-auth 4xx rate > 10% for 10m"
+          description: "Clients are sending malformed requests. Likely cause: frontend regression or third-party integration drift."
+
+  - name: latency
+    interval: 30s
+    rules:
+      # ── p99 latency ─────────────────────────────────────────────────
+      # 99th-percentile HTTP latency exceeds 2 seconds for 10 minutes.
+      # That's slow enough to feel broken in the UI.
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }}: p99 latency > 2s for 10m"
+          description: "Current p99: {{ $value }}s. Could be a slow DB query, exhausted connection pool, or downstream service degradation."
+
+  - name: business
+    interval: 1m
+    rules:
+      # ── Stripe webhook processing failures ──────────────────────────
+      # Stripe retries failed webhooks, but a sustained failure means
+      # subscription state is drifting from reality — paid customers
+      # could be on FREE or vice versa.
+      - alert: StripeWebhookFailures
+        expr: |
+          increase(http_requests_total{job="api-gateway", status=~"5..", route="/api/stripe/webhook"}[10m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Stripe webhook handler failing"
+          description: "{{ $value }} failed Stripe webhook deliveries in the last 10m. Check billing-service logs and StripeWebhookEvent.processingError column. Plan state may be inconsistent."
+
+      # ── Email send failures ─────────────────────────────────────────
+      # When the BullMQ delivery worker fails to send, invite emails
+      # never reach the recipient — invited users get stuck.
+      - alert: EmailDeliveryBacklog
+        expr: |
+          notification_delivery_queue_size > 100
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Email delivery queue > 100 for 15m"
+          description: "BullMQ delivery worker is falling behind. Either the worker crashed, SMTP is down, or load spiked. Check `docker logs cdc-ats-notification-service`."
+
+      # ── Agent run cost runaway ──────────────────────────────────────
+      # Single tenant burning > $50 in agent costs in an hour. Could be
+      # legitimate (huge bulk upload) or a runaway prompt loop. Either
+      # way the platform owner wants to know.
+      - alert: AgentCostSpike
+        expr: |
+          sum(rate(agent_run_cost_usd[1h])) by (tenant_id) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }} burning agent budget"
+          description: "Tenant is averaging > $50/hour in LLM costs. Verify it's intentional; otherwise consider the per-tenant kill switch."

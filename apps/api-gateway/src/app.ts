@@ -180,7 +180,7 @@ export function createApp(logger: Logger): Express {
       try {
         if (!req.user) throw Errors.unauthorized();
         const { callService } = await import("./lib/service-client.js");
-        const result = await callService("identity", {
+        const result = await callService<any>("identity", {
           method: "POST",
           path: "/internal/users/invite",
           body: {
@@ -194,7 +194,50 @@ export function createApp(logger: Logger): Express {
             "X-User-Role": req.user.role,
           },
         });
-        res.status(201).json({ success: true, data: result });
+
+        // Phase 31a — email the accept-invite link. Best-effort: even if
+        // the email fails (notification-service down), the invite token is
+        // valid and the admin can grab it from the audit log + paste it
+        // manually. We never block the invite on email delivery.
+        if (result?.inviteToken && result?.email) {
+          const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
+          const acceptUrl = `${appUrl}/accept-invite?token=${result.inviteToken}`;
+          // Fetch tenant name so the email reads "Welcome to Acme" instead
+          // of "Welcome to {generic}".
+          let tenantName = "your team";
+          try {
+            const t = await callService<any>("tenant", {
+              method: "GET",
+              path: `/internal/tenants/${req.user.tenantId}`,
+            });
+            tenantName = t?.name ?? tenantName;
+          } catch { /* ignore */ }
+
+          await callService("notification", {
+            method: "POST",
+            path: "/internal/notifications/system",
+            userHeaders: {
+              userId: "system",
+              tenantId: req.user.tenantId,
+              role: "SUPER_ADMIN",
+              email: "system@cdc-ats.local",
+            },
+            body: {
+              tenantId: req.user.tenantId,
+              userId: result.id,                // recipient (the new user)
+              type: "SYSTEM",
+              title: `You're invited to ${tenantName} on CDC ATS`,
+              body: `Hi ${result.firstName ?? "there"},\n\n${req.user.email ?? "A teammate"} invited you to join ${tenantName} on CDC ATS as ${result.role}.\n\nSet your password to accept this invite:\n${acceptUrl}\n\nThis link expires in 7 days.`,
+              link: acceptUrl,
+              channels: ["email"],
+            },
+          }).catch(() => { /* email failure is non-fatal */ });
+        }
+
+        // Strip inviteToken from the response so it doesn't leak to the
+        // admin's browser network tab (email is the only legit channel).
+        const { inviteToken, inviteExpiresAt, ...safe } = result;
+        res.status(201).json({ success: true, data: safe });
       } catch (err) {
         next(err);
       }

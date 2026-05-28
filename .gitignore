@@ -14,3 +14,7 @@ coverage/
 !.vscode/settings.json
 /tmp/
 .cache/
+
+# Phase 31e — local backup directory (never commit dumps)
+/backups/
+*.sql.gz

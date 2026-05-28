@@ -10,6 +10,10 @@ interface AuthUser {
   name: string;
   role: string;
   tenantId: string;
+  // Phase 31b — false for users registered via /register-company who haven't
+  // clicked the email-verify link yet. Existing users (pre-migration) default
+  // to true so we don't retroactively annoy them.
+  emailVerified?: boolean;
   tenant?: {
     id: string;
     name: string;

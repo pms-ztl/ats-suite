@@ -12,6 +12,7 @@ import { prisma } from "./lib/prisma.js";
 import usersRouter from "./routes/users.js";
 import authPolishRouter from "./routes/auth-polish.js";
 import ssoRouter from "./routes/sso.js";
+import gdprRouter from "./routes/gdpr.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -57,6 +58,7 @@ export function createApp(logger: Logger): Express {
   // initiate, callback) and auth-gated config (gateway adds requireTenantAdmin
   // when proxying /api/sso/config/*).
   app.use("/internal/sso", readAuthHeaders({ optional: true }), ssoRouter);
+  app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

@@ -41,16 +41,42 @@ model User {
   // tenants because real-world IdPs guarantee uniqueness per IdP.
   externalId   String?  @unique
   ssoLastLogin DateTime?
+  // Phase 31b — set true after the user clicks the link in the verify
+  // email sent after /register-company. Existing users (created before
+  // Phase 31b) keep their default of true to avoid retroactively locking
+  // anyone out — the migration backfills emailVerified=true for them.
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   inviteTokens InviteToken[]
   passwordResets PasswordReset[]
+  emailVerifications EmailVerification[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
   @@index([externalId])
+}
+
+// Phase 31b — email verification tokens. Created by /register-company and
+// /resend-verification. Consumed by /verify-email. Single-use, 24h expiry
+// (longer than password resets — users often don't see the email for hours).
+model EmailVerification {
+  id        String    @id @default(uuid())
+  userId    String
+  email     String    // snapshot — guards against an attacker changing the
+                      // user's email between request + click
+  token     String    @unique @default(uuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
 }
 
 // Password reset request — created by /auth/forgot-password, consumed by

@@ -118,7 +118,7 @@ router.get("/me", gatewayAuth(), async (req: Request, res: Response, next: NextF
     const [user, tenant] = await Promise.all([
       callService<{
         id: string; tenantId: string; email: string; firstName: string; lastName: string; role: string;
-        isActive: boolean; lastLoginAt: string | null;
+        isActive: boolean; lastLoginAt: string | null; emailVerified?: boolean;
       }>("identity", { method: "GET", path: `/internal/users/${req.user.id}` }),
       callService<{
         id: string; name: string; slug: string; plan: string; status: string;
@@ -136,6 +136,10 @@ router.get("/me", gatewayAuth(), async (req: Request, res: Response, next: NextF
       tenantId: user.tenantId,
       isActive: user.isActive,
       lastLoginAt: user.lastLoginAt,
+      // Phase 31b — exposed so the dashboard can show a "Confirm your email"
+      // banner. Defaults to true for users created before the migration so
+      // we don't retroactively annoy anyone.
+      emailVerified: user.emailVerified ?? true,
       tenant: {
         id: tenant.id,
         name: tenant.name,
@@ -221,7 +225,39 @@ router.post("/register-company", async (req: Request, res: Response, next: NextF
       throw err;
     }
 
-    // Step 3 — issue tokens
+    // Step 3 — request + email an email-verification link. Best-effort —
+    // if it fails, registration still completes; the user can request a
+    // resend later. We don't block the signup on email delivery (Stripe
+    // does the same for their account creation).
+    try {
+      const v = await callService<{
+        sent: boolean; verifyToken?: string; userEmail?: string; userFirstName?: string;
+      }>("identity", {
+        method: "POST",
+        path: "/internal/auth/request-email-verification",
+        body: { userId: user.id },
+      });
+      if (v?.sent && v.verifyToken && v.userEmail) {
+        const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
+        const verifyUrl = `${appUrl}/verify-email?token=${v.verifyToken}`;
+        await callService("notification", {
+          method: "POST",
+          path: "/internal/notifications/system",
+          userHeaders: { userId: "system", tenantId: tenant.id, role: "SUPER_ADMIN", email: "system@cdc-ats.local" },
+          body: {
+            tenantId: tenant.id,
+            userId: user.id,
+            type: "SYSTEM",
+            title: "Confirm your email to finish signing up",
+            body: `Hi ${v.userFirstName ?? "there"},\n\nThanks for signing up with CDC ATS! Please confirm your email so we know we've got the right one:\n\n${verifyUrl}\n\nThis link expires in 24 hours. If you didn't sign up, ignore this email.`,
+            link: verifyUrl,
+            channels: ["email"],
+          },
+        }).catch(() => undefined);
+      }
+    } catch { /* non-fatal */ }
+
+    // Step 4 — issue tokens
     const accessToken = await signAccessToken({
       userId: user.id,
       tenantId: tenant.id,
@@ -330,6 +366,132 @@ router.post("/reset-password", async (req: Request, res: Response, next: NextFun
   } catch (err) { next(err); }
 });
 
+// ─── POST /api/auth/resend-verification ───────────────────────────────────
+// Phase 31b — authenticated. Lets the signed-in user re-request a verify
+// email if they lost the original (e.g. spam folder). Rate-limited to
+// 1 per minute by trivially using the upsert pattern in identity-service
+// (existing pending tokens get expired before a new one is issued).
+router.post("/resend-verification", gatewayAuth(), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) throw Errors.unauthorized();
+    const v = await callService<{
+      sent: boolean; alreadyVerified?: boolean; verifyToken?: string; userEmail?: string; userFirstName?: string;
+    }>("identity", {
+      method: "POST",
+      path: "/internal/auth/request-email-verification",
+      body: { userId: req.user.id },
+    });
+    if (v.alreadyVerified) {
+      return ok(res, { sent: false, alreadyVerified: true });
+    }
+    if (v.sent && v.verifyToken && v.userEmail) {
+      const appUrl = process.env["APP_URL"] ?? "http://localhost:3000";
+      const verifyUrl = `${appUrl}/verify-email?token=${v.verifyToken}`;
+      await callService("notification", {
+        method: "POST",
+        path: "/internal/notifications/system",
+        userHeaders: { userId: "system", tenantId: req.user.tenantId, role: "SUPER_ADMIN", email: "system@cdc-ats.local" },
+        body: {
+          tenantId: req.user.tenantId,
+          userId: req.user.id,
+          type: "SYSTEM",
+          title: "Confirm your email",
+          body: `Hi ${v.userFirstName ?? "there"},\n\nHere's a fresh confirmation link (the previous one is now invalid):\n\n${verifyUrl}\n\nThis link expires in 24 hours.`,
+          link: verifyUrl,
+          channels: ["email"],
+        },
+      }).catch(() => undefined);
+    }
+    ok(res, { sent: true });
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/auth/verify-email ──────────────────────────────────────────
+// Phase 31b — public, token-gated. Called by the /verify-email page.
+const VerifyEmailSchema = z.object({ token: z.string().uuid() });
+router.post("/verify-email", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = VerifyEmailSchema.parse(req.body);
+    const result = await callService<{ verified: boolean; userId: string; email: string }>("identity", {
+      method: "POST",
+      path: "/internal/auth/verify-email",
+      body,
+    });
+    ok(res, result);
+  } catch (err) { next(err); }
+});
+
+// ─── GET /api/auth/invite-info?token=... ──────────────────────────────────
+// Phase 31a — public, token-gated. The /accept-invite page hits this to
+// show "Hi Alex, you've been invited to Acme Corp as Recruiter" before
+// asking for a password.
+router.get("/invite-info", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.query["token"];
+    if (typeof token !== "string" || !token) {
+      throw Errors.validation("token query param required");
+    }
+    const result = await callService<any>("identity", {
+      method: "GET",
+      path: `/internal/auth/invite-info?token=${encodeURIComponent(token)}`,
+    });
+    // Add tenantName so the UI can say "Welcome to Acme Corp" without a
+    // second roundtrip.
+    let tenantName: string | null = null;
+    try {
+      const t = await callService<any>("tenant", {
+        method: "GET",
+        path: `/internal/tenants/${result.tenantId}`,
+      });
+      tenantName = t?.name ?? null;
+    } catch { /* leave null */ }
+    ok(res, { ...result, tenantName });
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/auth/accept-invite ─────────────────────────────────────────
+// Phase 31a — public, token-gated. Sets the user's password and auto-logs
+// them in by signing a JWT + setting the ats-token cookie, same as the
+// regular login flow.
+const AcceptInviteSchema = z.object({
+  token: z.string().uuid(),
+  newPassword: z.string().min(12).max(200),
+});
+router.post("/accept-invite", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = AcceptInviteSchema.parse(req.body);
+    const result = await callService<{
+      accepted: boolean;
+      userId: string;
+      email: string;
+      tenantId: string;
+      role: string;
+    }>("identity", {
+      method: "POST",
+      path: "/internal/auth/accept-invite",
+      body,
+    });
+
+    // Auto-login: sign a JWT identical to the regular login flow and set
+    // the httpOnly cookie. The /accept-invite page then redirects to /.
+    const { signAccessToken } = await import("../lib/jwt.js");
+    const token = await signAccessToken({
+      userId: result.userId,
+      email: result.email,
+      tenantId: result.tenantId,
+      role: result.role as any,
+    });
+    res.cookie("ats-token", token, {
+      httpOnly: true,
+      secure: process.env["NODE_ENV"] === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+    ok(res, { accepted: true, accessToken: token, userId: result.userId });
+  } catch (err) { next(err); }
+});
+
 // ─── POST /api/auth/change-password ───────────────────────────────────────
 const ChangeSchema = z.object({
   currentPassword: z.string().min(1),
@@ -421,8 +583,9 @@ router.post("/sso/saml/:tenantId/callback", async (req: Request, res: Response, 
     const result = await callService<{
       mode?: "test";
       assertion?: unknown;
-      user?: { id: string; tenantId: string; email: string; role: string };
+      user?: { id: string; tenantId: string; email: string; role: string; firstName?: string };
       externalId?: string;
+      jitCreated?: boolean;
     }>("identity", {
       method: "POST",
       path: `/internal/sso/saml/${tenantId}/callback`,
@@ -439,9 +602,34 @@ router.post("/sso/saml/:tenantId/callback", async (req: Request, res: Response, 
       email: result.user.email, role: result.user.role as any,
     });
     res.cookie("ats-token", accessToken, { ...COOKIE_OPTS, maxAge: 24 * 60 * 60 * 1000 });
+    // Phase 31a — send welcome email for JIT-provisioned users.
+    if (result.jitCreated) sendSsoWelcomeEmail(result.user).catch(() => undefined);
     res.redirect(302, "/sso-callback");
   } catch (err) { next(err); }
 });
+
+// Phase 31a — best-effort welcome email for a newly JIT-provisioned SSO user.
+// Fire-and-forget — failure must not break the login redirect.
+async function sendSsoWelcomeEmail(user: { id: string; tenantId: string; email: string; role: string; firstName?: string }) {
+  let tenantName = "your team";
+  try {
+    const t = await callService<any>("tenant", { method: "GET", path: `/internal/tenants/${user.tenantId}` });
+    tenantName = t?.name ?? tenantName;
+  } catch { /* ignore */ }
+  await callService("notification", {
+    method: "POST",
+    path: "/internal/notifications/system",
+    userHeaders: { userId: "system", tenantId: user.tenantId, role: "SUPER_ADMIN", email: "system@cdc-ats.local" },
+    body: {
+      tenantId: user.tenantId,
+      userId: user.id,
+      type: "SYSTEM",
+      title: `Welcome to ${tenantName} on CDC ATS`,
+      body: `Hi ${user.firstName ?? "there"},\n\nYour account was just created via Single Sign-On. You're set up as ${user.role}.\n\nYou can sign in any time at ${process.env["APP_URL"] ?? "your CDC ATS workspace"} using your organization's identity provider.`,
+      channels: ["email"],
+    },
+  }).catch(() => undefined);
+}
 
 /**
  * GET /api/auth/sso/oidc/:tenantId/callback — receive IdP OIDC redirect
@@ -458,8 +646,9 @@ router.get("/sso/oidc/:tenantId/callback", async (req: Request, res: Response, n
     const result = await callService<{
       mode?: "test";
       assertion?: unknown;
-      user?: { id: string; tenantId: string; email: string; role: string };
+      user?: { id: string; tenantId: string; email: string; role: string; firstName?: string };
       externalId?: string;
+      jitCreated?: boolean;
     }>("identity", {
       method: "GET",
       path: `/internal/sso/oidc/${tenantId}/callback?${qs.toString()}`,
@@ -472,6 +661,8 @@ router.get("/sso/oidc/:tenantId/callback", async (req: Request, res: Response, n
       email: result.user.email, role: result.user.role as any,
     });
     res.cookie("ats-token", accessToken, { ...COOKIE_OPTS, maxAge: 24 * 60 * 60 * 1000 });
+    // Phase 31a — welcome email for JIT-provisioned OIDC users.
+    if (result.jitCreated) sendSsoWelcomeEmail(result.user).catch(() => undefined);
     res.redirect(302, "/sso-callback");
   } catch (err) { next(err); }
 });

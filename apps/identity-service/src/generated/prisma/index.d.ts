@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model EmailVerification
+ * 
+ */
+export type EmailVerification = $Result.DefaultSelection<Prisma.$EmailVerificationPayload>
+/**
  * Model PasswordReset
  * 
  */
@@ -218,6 +223,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.emailVerification`: Exposes CRUD operations for the **EmailVerification** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EmailVerifications
+    * const emailVerifications = await prisma.emailVerification.findMany()
+    * ```
+    */
+  get emailVerification(): Prisma.EmailVerificationDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.passwordReset`: Exposes CRUD operations for the **PasswordReset** model.
@@ -710,6 +725,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    EmailVerification: 'EmailVerification',
     PasswordReset: 'PasswordReset',
     InviteToken: 'InviteToken',
     AuditEvent: 'AuditEvent',
@@ -733,7 +749,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "passwordReset" | "inviteToken" | "auditEvent" | "tenantSso" | "ssoLoginAudit"
+      modelProps: "user" | "emailVerification" | "passwordReset" | "inviteToken" | "auditEvent" | "tenantSso" | "ssoLoginAudit"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -808,6 +824,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      EmailVerification: {
+        payload: Prisma.$EmailVerificationPayload<ExtArgs>
+        fields: Prisma.EmailVerificationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EmailVerificationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EmailVerificationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          findFirst: {
+            args: Prisma.EmailVerificationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EmailVerificationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          findMany: {
+            args: Prisma.EmailVerificationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>[]
+          }
+          create: {
+            args: Prisma.EmailVerificationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          createMany: {
+            args: Prisma.EmailVerificationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EmailVerificationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>[]
+          }
+          delete: {
+            args: Prisma.EmailVerificationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          update: {
+            args: Prisma.EmailVerificationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          deleteMany: {
+            args: Prisma.EmailVerificationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EmailVerificationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EmailVerificationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>[]
+          }
+          upsert: {
+            args: Prisma.EmailVerificationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmailVerificationPayload>
+          }
+          aggregate: {
+            args: Prisma.EmailVerificationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEmailVerification>
+          }
+          groupBy: {
+            args: Prisma.EmailVerificationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EmailVerificationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EmailVerificationCountArgs<ExtArgs>
+            result: $Utils.Optional<EmailVerificationCountAggregateOutputType> | number
           }
         }
       }
@@ -1278,6 +1368,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    emailVerification?: EmailVerificationOmit
     passwordReset?: PasswordResetOmit
     inviteToken?: InviteTokenOmit
     auditEvent?: AuditEventOmit
@@ -1365,11 +1456,13 @@ export namespace Prisma {
   export type UserCountOutputType = {
     inviteTokens: number
     passwordResets: number
+    emailVerifications: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     inviteTokens?: boolean | UserCountOutputTypeCountInviteTokensArgs
     passwordResets?: boolean | UserCountOutputTypeCountPasswordResetsArgs
+    emailVerifications?: boolean | UserCountOutputTypeCountEmailVerificationsArgs
   }
 
   // Custom InputTypes
@@ -1395,6 +1488,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountPasswordResetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PasswordResetWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountEmailVerificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmailVerificationWhereInput
   }
 
 
@@ -1427,6 +1527,8 @@ export namespace Prisma {
     mfaEnabled: boolean | null
     externalId: string | null
     ssoLastLogin: Date | null
+    emailVerified: boolean | null
+    emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1446,6 +1548,8 @@ export namespace Prisma {
     mfaEnabled: boolean | null
     externalId: string | null
     ssoLastLogin: Date | null
+    emailVerified: boolean | null
+    emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1465,6 +1569,8 @@ export namespace Prisma {
     mfaEnabled: number
     externalId: number
     ssoLastLogin: number
+    emailVerified: number
+    emailVerifiedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1486,6 +1592,8 @@ export namespace Prisma {
     mfaEnabled?: true
     externalId?: true
     ssoLastLogin?: true
+    emailVerified?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1505,6 +1613,8 @@ export namespace Prisma {
     mfaEnabled?: true
     externalId?: true
     ssoLastLogin?: true
+    emailVerified?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1524,6 +1634,8 @@ export namespace Prisma {
     mfaEnabled?: true
     externalId?: true
     ssoLastLogin?: true
+    emailVerified?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1616,6 +1728,8 @@ export namespace Prisma {
     mfaEnabled: boolean
     externalId: string | null
     ssoLastLogin: Date | null
+    emailVerified: boolean
+    emailVerifiedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1652,10 +1766,13 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: boolean
     ssoLastLogin?: boolean
+    emailVerified?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
     passwordResets?: boolean | User$passwordResetsArgs<ExtArgs>
+    emailVerifications?: boolean | User$emailVerificationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1674,6 +1791,8 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: boolean
     ssoLastLogin?: boolean
+    emailVerified?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1693,6 +1812,8 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: boolean
     ssoLastLogin?: boolean
+    emailVerified?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1712,14 +1833,17 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: boolean
     ssoLastLogin?: boolean
+    emailVerified?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "externalId" | "ssoLastLogin" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "externalId" | "ssoLastLogin" | "emailVerified" | "emailVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
     passwordResets?: boolean | User$passwordResetsArgs<ExtArgs>
+    emailVerifications?: boolean | User$emailVerificationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1730,6 +1854,7 @@ export namespace Prisma {
     objects: {
       inviteTokens: Prisma.$InviteTokenPayload<ExtArgs>[]
       passwordResets: Prisma.$PasswordResetPayload<ExtArgs>[]
+      emailVerifications: Prisma.$EmailVerificationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -1746,6 +1871,8 @@ export namespace Prisma {
       mfaEnabled: boolean
       externalId: string | null
       ssoLastLogin: Date | null
+      emailVerified: boolean
+      emailVerifiedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -2144,6 +2271,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     inviteTokens<T extends User$inviteTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$inviteTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InviteTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     passwordResets<T extends User$passwordResetsArgs<ExtArgs> = {}>(args?: Subset<T, User$passwordResetsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    emailVerifications<T extends User$emailVerificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$emailVerificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2187,6 +2315,8 @@ export namespace Prisma {
     readonly mfaEnabled: FieldRef<"User", 'Boolean'>
     readonly externalId: FieldRef<"User", 'String'>
     readonly ssoLastLogin: FieldRef<"User", 'DateTime'>
+    readonly emailVerified: FieldRef<"User", 'Boolean'>
+    readonly emailVerifiedAt: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -2625,6 +2755,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.emailVerifications
+   */
+  export type User$emailVerificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    where?: EmailVerificationWhereInput
+    orderBy?: EmailVerificationOrderByWithRelationInput | EmailVerificationOrderByWithRelationInput[]
+    cursor?: EmailVerificationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EmailVerificationScalarFieldEnum | EmailVerificationScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2640,6 +2794,1090 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EmailVerification
+   */
+
+  export type AggregateEmailVerification = {
+    _count: EmailVerificationCountAggregateOutputType | null
+    _min: EmailVerificationMinAggregateOutputType | null
+    _max: EmailVerificationMaxAggregateOutputType | null
+  }
+
+  export type EmailVerificationMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    email: string | null
+    token: string | null
+    expiresAt: Date | null
+    usedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type EmailVerificationMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    email: string | null
+    token: string | null
+    expiresAt: Date | null
+    usedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type EmailVerificationCountAggregateOutputType = {
+    id: number
+    userId: number
+    email: number
+    token: number
+    expiresAt: number
+    usedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type EmailVerificationMinAggregateInputType = {
+    id?: true
+    userId?: true
+    email?: true
+    token?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+  }
+
+  export type EmailVerificationMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    email?: true
+    token?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+  }
+
+  export type EmailVerificationCountAggregateInputType = {
+    id?: true
+    userId?: true
+    email?: true
+    token?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type EmailVerificationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmailVerification to aggregate.
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmailVerifications to fetch.
+     */
+    orderBy?: EmailVerificationOrderByWithRelationInput | EmailVerificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EmailVerificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmailVerifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmailVerifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EmailVerifications
+    **/
+    _count?: true | EmailVerificationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EmailVerificationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EmailVerificationMaxAggregateInputType
+  }
+
+  export type GetEmailVerificationAggregateType<T extends EmailVerificationAggregateArgs> = {
+        [P in keyof T & keyof AggregateEmailVerification]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEmailVerification[P]>
+      : GetScalarType<T[P], AggregateEmailVerification[P]>
+  }
+
+
+
+
+  export type EmailVerificationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmailVerificationWhereInput
+    orderBy?: EmailVerificationOrderByWithAggregationInput | EmailVerificationOrderByWithAggregationInput[]
+    by: EmailVerificationScalarFieldEnum[] | EmailVerificationScalarFieldEnum
+    having?: EmailVerificationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EmailVerificationCountAggregateInputType | true
+    _min?: EmailVerificationMinAggregateInputType
+    _max?: EmailVerificationMaxAggregateInputType
+  }
+
+  export type EmailVerificationGroupByOutputType = {
+    id: string
+    userId: string
+    email: string
+    token: string
+    expiresAt: Date
+    usedAt: Date | null
+    createdAt: Date
+    _count: EmailVerificationCountAggregateOutputType | null
+    _min: EmailVerificationMinAggregateOutputType | null
+    _max: EmailVerificationMaxAggregateOutputType | null
+  }
+
+  type GetEmailVerificationGroupByPayload<T extends EmailVerificationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EmailVerificationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EmailVerificationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EmailVerificationGroupByOutputType[P]>
+            : GetScalarType<T[P], EmailVerificationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EmailVerificationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    email?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emailVerification"]>
+
+  export type EmailVerificationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    email?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emailVerification"]>
+
+  export type EmailVerificationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    email?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emailVerification"]>
+
+  export type EmailVerificationSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    email?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type EmailVerificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "email" | "token" | "expiresAt" | "usedAt" | "createdAt", ExtArgs["result"]["emailVerification"]>
+  export type EmailVerificationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type EmailVerificationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type EmailVerificationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $EmailVerificationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EmailVerification"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      email: string
+      token: string
+      expiresAt: Date
+      usedAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["emailVerification"]>
+    composites: {}
+  }
+
+  type EmailVerificationGetPayload<S extends boolean | null | undefined | EmailVerificationDefaultArgs> = $Result.GetResult<Prisma.$EmailVerificationPayload, S>
+
+  type EmailVerificationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EmailVerificationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EmailVerificationCountAggregateInputType | true
+    }
+
+  export interface EmailVerificationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EmailVerification'], meta: { name: 'EmailVerification' } }
+    /**
+     * Find zero or one EmailVerification that matches the filter.
+     * @param {EmailVerificationFindUniqueArgs} args - Arguments to find a EmailVerification
+     * @example
+     * // Get one EmailVerification
+     * const emailVerification = await prisma.emailVerification.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EmailVerificationFindUniqueArgs>(args: SelectSubset<T, EmailVerificationFindUniqueArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EmailVerification that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EmailVerificationFindUniqueOrThrowArgs} args - Arguments to find a EmailVerification
+     * @example
+     * // Get one EmailVerification
+     * const emailVerification = await prisma.emailVerification.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EmailVerificationFindUniqueOrThrowArgs>(args: SelectSubset<T, EmailVerificationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmailVerification that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationFindFirstArgs} args - Arguments to find a EmailVerification
+     * @example
+     * // Get one EmailVerification
+     * const emailVerification = await prisma.emailVerification.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EmailVerificationFindFirstArgs>(args?: SelectSubset<T, EmailVerificationFindFirstArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmailVerification that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationFindFirstOrThrowArgs} args - Arguments to find a EmailVerification
+     * @example
+     * // Get one EmailVerification
+     * const emailVerification = await prisma.emailVerification.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EmailVerificationFindFirstOrThrowArgs>(args?: SelectSubset<T, EmailVerificationFindFirstOrThrowArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EmailVerifications that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EmailVerifications
+     * const emailVerifications = await prisma.emailVerification.findMany()
+     * 
+     * // Get first 10 EmailVerifications
+     * const emailVerifications = await prisma.emailVerification.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const emailVerificationWithIdOnly = await prisma.emailVerification.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EmailVerificationFindManyArgs>(args?: SelectSubset<T, EmailVerificationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EmailVerification.
+     * @param {EmailVerificationCreateArgs} args - Arguments to create a EmailVerification.
+     * @example
+     * // Create one EmailVerification
+     * const EmailVerification = await prisma.emailVerification.create({
+     *   data: {
+     *     // ... data to create a EmailVerification
+     *   }
+     * })
+     * 
+     */
+    create<T extends EmailVerificationCreateArgs>(args: SelectSubset<T, EmailVerificationCreateArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EmailVerifications.
+     * @param {EmailVerificationCreateManyArgs} args - Arguments to create many EmailVerifications.
+     * @example
+     * // Create many EmailVerifications
+     * const emailVerification = await prisma.emailVerification.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EmailVerificationCreateManyArgs>(args?: SelectSubset<T, EmailVerificationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EmailVerifications and returns the data saved in the database.
+     * @param {EmailVerificationCreateManyAndReturnArgs} args - Arguments to create many EmailVerifications.
+     * @example
+     * // Create many EmailVerifications
+     * const emailVerification = await prisma.emailVerification.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EmailVerifications and only return the `id`
+     * const emailVerificationWithIdOnly = await prisma.emailVerification.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EmailVerificationCreateManyAndReturnArgs>(args?: SelectSubset<T, EmailVerificationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EmailVerification.
+     * @param {EmailVerificationDeleteArgs} args - Arguments to delete one EmailVerification.
+     * @example
+     * // Delete one EmailVerification
+     * const EmailVerification = await prisma.emailVerification.delete({
+     *   where: {
+     *     // ... filter to delete one EmailVerification
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EmailVerificationDeleteArgs>(args: SelectSubset<T, EmailVerificationDeleteArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EmailVerification.
+     * @param {EmailVerificationUpdateArgs} args - Arguments to update one EmailVerification.
+     * @example
+     * // Update one EmailVerification
+     * const emailVerification = await prisma.emailVerification.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EmailVerificationUpdateArgs>(args: SelectSubset<T, EmailVerificationUpdateArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EmailVerifications.
+     * @param {EmailVerificationDeleteManyArgs} args - Arguments to filter EmailVerifications to delete.
+     * @example
+     * // Delete a few EmailVerifications
+     * const { count } = await prisma.emailVerification.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EmailVerificationDeleteManyArgs>(args?: SelectSubset<T, EmailVerificationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmailVerifications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EmailVerifications
+     * const emailVerification = await prisma.emailVerification.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EmailVerificationUpdateManyArgs>(args: SelectSubset<T, EmailVerificationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmailVerifications and returns the data updated in the database.
+     * @param {EmailVerificationUpdateManyAndReturnArgs} args - Arguments to update many EmailVerifications.
+     * @example
+     * // Update many EmailVerifications
+     * const emailVerification = await prisma.emailVerification.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EmailVerifications and only return the `id`
+     * const emailVerificationWithIdOnly = await prisma.emailVerification.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EmailVerificationUpdateManyAndReturnArgs>(args: SelectSubset<T, EmailVerificationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EmailVerification.
+     * @param {EmailVerificationUpsertArgs} args - Arguments to update or create a EmailVerification.
+     * @example
+     * // Update or create a EmailVerification
+     * const emailVerification = await prisma.emailVerification.upsert({
+     *   create: {
+     *     // ... data to create a EmailVerification
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EmailVerification we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EmailVerificationUpsertArgs>(args: SelectSubset<T, EmailVerificationUpsertArgs<ExtArgs>>): Prisma__EmailVerificationClient<$Result.GetResult<Prisma.$EmailVerificationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EmailVerifications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationCountArgs} args - Arguments to filter EmailVerifications to count.
+     * @example
+     * // Count the number of EmailVerifications
+     * const count = await prisma.emailVerification.count({
+     *   where: {
+     *     // ... the filter for the EmailVerifications we want to count
+     *   }
+     * })
+    **/
+    count<T extends EmailVerificationCountArgs>(
+      args?: Subset<T, EmailVerificationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EmailVerificationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EmailVerification.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EmailVerificationAggregateArgs>(args: Subset<T, EmailVerificationAggregateArgs>): Prisma.PrismaPromise<GetEmailVerificationAggregateType<T>>
+
+    /**
+     * Group by EmailVerification.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmailVerificationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EmailVerificationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EmailVerificationGroupByArgs['orderBy'] }
+        : { orderBy?: EmailVerificationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EmailVerificationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEmailVerificationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EmailVerification model
+   */
+  readonly fields: EmailVerificationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EmailVerification.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EmailVerificationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EmailVerification model
+   */
+  interface EmailVerificationFieldRefs {
+    readonly id: FieldRef<"EmailVerification", 'String'>
+    readonly userId: FieldRef<"EmailVerification", 'String'>
+    readonly email: FieldRef<"EmailVerification", 'String'>
+    readonly token: FieldRef<"EmailVerification", 'String'>
+    readonly expiresAt: FieldRef<"EmailVerification", 'DateTime'>
+    readonly usedAt: FieldRef<"EmailVerification", 'DateTime'>
+    readonly createdAt: FieldRef<"EmailVerification", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EmailVerification findUnique
+   */
+  export type EmailVerificationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter, which EmailVerification to fetch.
+     */
+    where: EmailVerificationWhereUniqueInput
+  }
+
+  /**
+   * EmailVerification findUniqueOrThrow
+   */
+  export type EmailVerificationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter, which EmailVerification to fetch.
+     */
+    where: EmailVerificationWhereUniqueInput
+  }
+
+  /**
+   * EmailVerification findFirst
+   */
+  export type EmailVerificationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter, which EmailVerification to fetch.
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmailVerifications to fetch.
+     */
+    orderBy?: EmailVerificationOrderByWithRelationInput | EmailVerificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmailVerifications.
+     */
+    cursor?: EmailVerificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmailVerifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmailVerifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmailVerifications.
+     */
+    distinct?: EmailVerificationScalarFieldEnum | EmailVerificationScalarFieldEnum[]
+  }
+
+  /**
+   * EmailVerification findFirstOrThrow
+   */
+  export type EmailVerificationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter, which EmailVerification to fetch.
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmailVerifications to fetch.
+     */
+    orderBy?: EmailVerificationOrderByWithRelationInput | EmailVerificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmailVerifications.
+     */
+    cursor?: EmailVerificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmailVerifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmailVerifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmailVerifications.
+     */
+    distinct?: EmailVerificationScalarFieldEnum | EmailVerificationScalarFieldEnum[]
+  }
+
+  /**
+   * EmailVerification findMany
+   */
+  export type EmailVerificationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter, which EmailVerifications to fetch.
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmailVerifications to fetch.
+     */
+    orderBy?: EmailVerificationOrderByWithRelationInput | EmailVerificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EmailVerifications.
+     */
+    cursor?: EmailVerificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmailVerifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmailVerifications.
+     */
+    skip?: number
+    distinct?: EmailVerificationScalarFieldEnum | EmailVerificationScalarFieldEnum[]
+  }
+
+  /**
+   * EmailVerification create
+   */
+  export type EmailVerificationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EmailVerification.
+     */
+    data: XOR<EmailVerificationCreateInput, EmailVerificationUncheckedCreateInput>
+  }
+
+  /**
+   * EmailVerification createMany
+   */
+  export type EmailVerificationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EmailVerifications.
+     */
+    data: EmailVerificationCreateManyInput | EmailVerificationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EmailVerification createManyAndReturn
+   */
+  export type EmailVerificationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * The data used to create many EmailVerifications.
+     */
+    data: EmailVerificationCreateManyInput | EmailVerificationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmailVerification update
+   */
+  export type EmailVerificationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EmailVerification.
+     */
+    data: XOR<EmailVerificationUpdateInput, EmailVerificationUncheckedUpdateInput>
+    /**
+     * Choose, which EmailVerification to update.
+     */
+    where: EmailVerificationWhereUniqueInput
+  }
+
+  /**
+   * EmailVerification updateMany
+   */
+  export type EmailVerificationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EmailVerifications.
+     */
+    data: XOR<EmailVerificationUpdateManyMutationInput, EmailVerificationUncheckedUpdateManyInput>
+    /**
+     * Filter which EmailVerifications to update
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * Limit how many EmailVerifications to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmailVerification updateManyAndReturn
+   */
+  export type EmailVerificationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * The data used to update EmailVerifications.
+     */
+    data: XOR<EmailVerificationUpdateManyMutationInput, EmailVerificationUncheckedUpdateManyInput>
+    /**
+     * Filter which EmailVerifications to update
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * Limit how many EmailVerifications to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmailVerification upsert
+   */
+  export type EmailVerificationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EmailVerification to update in case it exists.
+     */
+    where: EmailVerificationWhereUniqueInput
+    /**
+     * In case the EmailVerification found by the `where` argument doesn't exist, create a new EmailVerification with this data.
+     */
+    create: XOR<EmailVerificationCreateInput, EmailVerificationUncheckedCreateInput>
+    /**
+     * In case the EmailVerification was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EmailVerificationUpdateInput, EmailVerificationUncheckedUpdateInput>
+  }
+
+  /**
+   * EmailVerification delete
+   */
+  export type EmailVerificationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
+    /**
+     * Filter which EmailVerification to delete.
+     */
+    where: EmailVerificationWhereUniqueInput
+  }
+
+  /**
+   * EmailVerification deleteMany
+   */
+  export type EmailVerificationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmailVerifications to delete
+     */
+    where?: EmailVerificationWhereInput
+    /**
+     * Limit how many EmailVerifications to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmailVerification without action
+   */
+  export type EmailVerificationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmailVerification
+     */
+    select?: EmailVerificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmailVerification
+     */
+    omit?: EmailVerificationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmailVerificationInclude<ExtArgs> | null
   }
 
 
@@ -8112,11 +9350,26 @@ export namespace Prisma {
     mfaEnabled: 'mfaEnabled',
     externalId: 'externalId',
     ssoLastLogin: 'ssoLastLogin',
+    emailVerified: 'emailVerified',
+    emailVerifiedAt: 'emailVerifiedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const EmailVerificationScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    email: 'email',
+    token: 'token',
+    expiresAt: 'expiresAt',
+    usedAt: 'usedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type EmailVerificationScalarFieldEnum = (typeof EmailVerificationScalarFieldEnum)[keyof typeof EmailVerificationScalarFieldEnum]
 
 
   export const PasswordResetScalarFieldEnum: {
@@ -8372,10 +9625,13 @@ export namespace Prisma {
     mfaEnabled?: BoolFilter<"User"> | boolean
     externalId?: StringNullableFilter<"User"> | string | null
     ssoLastLogin?: DateTimeNullableFilter<"User"> | Date | string | null
+    emailVerified?: BoolFilter<"User"> | boolean
+    emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     inviteTokens?: InviteTokenListRelationFilter
     passwordResets?: PasswordResetListRelationFilter
+    emailVerifications?: EmailVerificationListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -8393,10 +9649,13 @@ export namespace Prisma {
     mfaEnabled?: SortOrder
     externalId?: SortOrderInput | SortOrder
     ssoLastLogin?: SortOrderInput | SortOrder
+    emailVerified?: SortOrder
+    emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     inviteTokens?: InviteTokenOrderByRelationAggregateInput
     passwordResets?: PasswordResetOrderByRelationAggregateInput
+    emailVerifications?: EmailVerificationOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -8418,10 +9677,13 @@ export namespace Prisma {
     mfaSecret?: StringNullableFilter<"User"> | string | null
     mfaEnabled?: BoolFilter<"User"> | boolean
     ssoLastLogin?: DateTimeNullableFilter<"User"> | Date | string | null
+    emailVerified?: BoolFilter<"User"> | boolean
+    emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     inviteTokens?: InviteTokenListRelationFilter
     passwordResets?: PasswordResetListRelationFilter
+    emailVerifications?: EmailVerificationListRelationFilter
   }, "id" | "externalId" | "tenantId_email">
 
   export type UserOrderByWithAggregationInput = {
@@ -8439,6 +9701,8 @@ export namespace Prisma {
     mfaEnabled?: SortOrder
     externalId?: SortOrderInput | SortOrder
     ssoLastLogin?: SortOrderInput | SortOrder
+    emailVerified?: SortOrder
+    emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -8464,8 +9728,75 @@ export namespace Prisma {
     mfaEnabled?: BoolWithAggregatesFilter<"User"> | boolean
     externalId?: StringNullableWithAggregatesFilter<"User"> | string | null
     ssoLastLogin?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    emailVerified?: BoolWithAggregatesFilter<"User"> | boolean
+    emailVerifiedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type EmailVerificationWhereInput = {
+    AND?: EmailVerificationWhereInput | EmailVerificationWhereInput[]
+    OR?: EmailVerificationWhereInput[]
+    NOT?: EmailVerificationWhereInput | EmailVerificationWhereInput[]
+    id?: StringFilter<"EmailVerification"> | string
+    userId?: StringFilter<"EmailVerification"> | string
+    email?: StringFilter<"EmailVerification"> | string
+    token?: StringFilter<"EmailVerification"> | string
+    expiresAt?: DateTimeFilter<"EmailVerification"> | Date | string
+    usedAt?: DateTimeNullableFilter<"EmailVerification"> | Date | string | null
+    createdAt?: DateTimeFilter<"EmailVerification"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type EmailVerificationOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    email?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type EmailVerificationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    token?: string
+    AND?: EmailVerificationWhereInput | EmailVerificationWhereInput[]
+    OR?: EmailVerificationWhereInput[]
+    NOT?: EmailVerificationWhereInput | EmailVerificationWhereInput[]
+    userId?: StringFilter<"EmailVerification"> | string
+    email?: StringFilter<"EmailVerification"> | string
+    expiresAt?: DateTimeFilter<"EmailVerification"> | Date | string
+    usedAt?: DateTimeNullableFilter<"EmailVerification"> | Date | string | null
+    createdAt?: DateTimeFilter<"EmailVerification"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "token">
+
+  export type EmailVerificationOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    email?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: EmailVerificationCountOrderByAggregateInput
+    _max?: EmailVerificationMaxOrderByAggregateInput
+    _min?: EmailVerificationMinOrderByAggregateInput
+  }
+
+  export type EmailVerificationScalarWhereWithAggregatesInput = {
+    AND?: EmailVerificationScalarWhereWithAggregatesInput | EmailVerificationScalarWhereWithAggregatesInput[]
+    OR?: EmailVerificationScalarWhereWithAggregatesInput[]
+    NOT?: EmailVerificationScalarWhereWithAggregatesInput | EmailVerificationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"EmailVerification"> | string
+    userId?: StringWithAggregatesFilter<"EmailVerification"> | string
+    email?: StringWithAggregatesFilter<"EmailVerification"> | string
+    token?: StringWithAggregatesFilter<"EmailVerification"> | string
+    expiresAt?: DateTimeWithAggregatesFilter<"EmailVerification"> | Date | string
+    usedAt?: DateTimeNullableWithAggregatesFilter<"EmailVerification"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"EmailVerification"> | Date | string
   }
 
   export type PasswordResetWhereInput = {
@@ -8884,10 +10215,13 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
+    emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -8905,10 +10239,13 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
+    emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -8926,10 +10263,13 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
+    emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -8947,10 +10287,13 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+    emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -8968,6 +10311,8 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -8987,6 +10332,8 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9006,8 +10353,79 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationCreateInput = {
+    id?: string
+    email: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutEmailVerificationsInput
+  }
+
+  export type EmailVerificationUncheckedCreateInput = {
+    id?: string
+    userId: string
+    email: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type EmailVerificationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutEmailVerificationsNestedInput
+  }
+
+  export type EmailVerificationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationCreateManyInput = {
+    id?: string
+    userId: string
+    email: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type EmailVerificationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PasswordResetCreateInput = {
@@ -9553,6 +10971,12 @@ export namespace Prisma {
     none?: PasswordResetWhereInput
   }
 
+  export type EmailVerificationListRelationFilter = {
+    every?: EmailVerificationWhereInput
+    some?: EmailVerificationWhereInput
+    none?: EmailVerificationWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -9563,6 +10987,10 @@ export namespace Prisma {
   }
 
   export type PasswordResetOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EmailVerificationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9586,6 +11014,8 @@ export namespace Prisma {
     mfaEnabled?: SortOrder
     externalId?: SortOrder
     ssoLastLogin?: SortOrder
+    emailVerified?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9605,6 +11035,8 @@ export namespace Prisma {
     mfaEnabled?: SortOrder
     externalId?: SortOrder
     ssoLastLogin?: SortOrder
+    emailVerified?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9624,6 +11056,8 @@ export namespace Prisma {
     mfaEnabled?: SortOrder
     externalId?: SortOrder
     ssoLastLogin?: SortOrder
+    emailVerified?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -9713,6 +11147,36 @@ export namespace Prisma {
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
+  }
+
+  export type EmailVerificationCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    email?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EmailVerificationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    email?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EmailVerificationMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    email?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type PasswordResetCountOrderByAggregateInput = {
@@ -10015,6 +11479,13 @@ export namespace Prisma {
     connect?: PasswordResetWhereUniqueInput | PasswordResetWhereUniqueInput[]
   }
 
+  export type EmailVerificationCreateNestedManyWithoutUserInput = {
+    create?: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput> | EmailVerificationCreateWithoutUserInput[] | EmailVerificationUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EmailVerificationCreateOrConnectWithoutUserInput | EmailVerificationCreateOrConnectWithoutUserInput[]
+    createMany?: EmailVerificationCreateManyUserInputEnvelope
+    connect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+  }
+
   export type InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput = {
     create?: XOR<InviteTokenCreateWithoutInvitedByInput, InviteTokenUncheckedCreateWithoutInvitedByInput> | InviteTokenCreateWithoutInvitedByInput[] | InviteTokenUncheckedCreateWithoutInvitedByInput[]
     connectOrCreate?: InviteTokenCreateOrConnectWithoutInvitedByInput | InviteTokenCreateOrConnectWithoutInvitedByInput[]
@@ -10027,6 +11498,13 @@ export namespace Prisma {
     connectOrCreate?: PasswordResetCreateOrConnectWithoutUserInput | PasswordResetCreateOrConnectWithoutUserInput[]
     createMany?: PasswordResetCreateManyUserInputEnvelope
     connect?: PasswordResetWhereUniqueInput | PasswordResetWhereUniqueInput[]
+  }
+
+  export type EmailVerificationUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput> | EmailVerificationCreateWithoutUserInput[] | EmailVerificationUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EmailVerificationCreateOrConnectWithoutUserInput | EmailVerificationCreateOrConnectWithoutUserInput[]
+    createMany?: EmailVerificationCreateManyUserInputEnvelope
+    connect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -10081,6 +11559,20 @@ export namespace Prisma {
     deleteMany?: PasswordResetScalarWhereInput | PasswordResetScalarWhereInput[]
   }
 
+  export type EmailVerificationUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput> | EmailVerificationCreateWithoutUserInput[] | EmailVerificationUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EmailVerificationCreateOrConnectWithoutUserInput | EmailVerificationCreateOrConnectWithoutUserInput[]
+    upsert?: EmailVerificationUpsertWithWhereUniqueWithoutUserInput | EmailVerificationUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EmailVerificationCreateManyUserInputEnvelope
+    set?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    disconnect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    delete?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    connect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    update?: EmailVerificationUpdateWithWhereUniqueWithoutUserInput | EmailVerificationUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EmailVerificationUpdateManyWithWhereWithoutUserInput | EmailVerificationUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EmailVerificationScalarWhereInput | EmailVerificationScalarWhereInput[]
+  }
+
   export type InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput = {
     create?: XOR<InviteTokenCreateWithoutInvitedByInput, InviteTokenUncheckedCreateWithoutInvitedByInput> | InviteTokenCreateWithoutInvitedByInput[] | InviteTokenUncheckedCreateWithoutInvitedByInput[]
     connectOrCreate?: InviteTokenCreateOrConnectWithoutInvitedByInput | InviteTokenCreateOrConnectWithoutInvitedByInput[]
@@ -10107,6 +11599,34 @@ export namespace Prisma {
     update?: PasswordResetUpdateWithWhereUniqueWithoutUserInput | PasswordResetUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: PasswordResetUpdateManyWithWhereWithoutUserInput | PasswordResetUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: PasswordResetScalarWhereInput | PasswordResetScalarWhereInput[]
+  }
+
+  export type EmailVerificationUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput> | EmailVerificationCreateWithoutUserInput[] | EmailVerificationUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EmailVerificationCreateOrConnectWithoutUserInput | EmailVerificationCreateOrConnectWithoutUserInput[]
+    upsert?: EmailVerificationUpsertWithWhereUniqueWithoutUserInput | EmailVerificationUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EmailVerificationCreateManyUserInputEnvelope
+    set?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    disconnect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    delete?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    connect?: EmailVerificationWhereUniqueInput | EmailVerificationWhereUniqueInput[]
+    update?: EmailVerificationUpdateWithWhereUniqueWithoutUserInput | EmailVerificationUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EmailVerificationUpdateManyWithWhereWithoutUserInput | EmailVerificationUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EmailVerificationScalarWhereInput | EmailVerificationScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutEmailVerificationsInput = {
+    create?: XOR<UserCreateWithoutEmailVerificationsInput, UserUncheckedCreateWithoutEmailVerificationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEmailVerificationsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutEmailVerificationsNestedInput = {
+    create?: XOR<UserCreateWithoutEmailVerificationsInput, UserUncheckedCreateWithoutEmailVerificationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEmailVerificationsInput
+    upsert?: UserUpsertWithoutEmailVerificationsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEmailVerificationsInput, UserUpdateWithoutEmailVerificationsInput>, UserUncheckedUpdateWithoutEmailVerificationsInput>
   }
 
   export type UserCreateNestedOneWithoutPasswordResetsInput = {
@@ -10433,6 +11953,34 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type EmailVerificationCreateWithoutUserInput = {
+    id?: string
+    email: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type EmailVerificationUncheckedCreateWithoutUserInput = {
+    id?: string
+    email: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type EmailVerificationCreateOrConnectWithoutUserInput = {
+    where: EmailVerificationWhereUniqueInput
+    create: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput>
+  }
+
+  export type EmailVerificationCreateManyUserInputEnvelope = {
+    data: EmailVerificationCreateManyUserInput | EmailVerificationCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type InviteTokenUpsertWithWhereUniqueWithoutInvitedByInput = {
     where: InviteTokenWhereUniqueInput
     update: XOR<InviteTokenUpdateWithoutInvitedByInput, InviteTokenUncheckedUpdateWithoutInvitedByInput>
@@ -10492,6 +12040,143 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PasswordReset"> | Date | string
   }
 
+  export type EmailVerificationUpsertWithWhereUniqueWithoutUserInput = {
+    where: EmailVerificationWhereUniqueInput
+    update: XOR<EmailVerificationUpdateWithoutUserInput, EmailVerificationUncheckedUpdateWithoutUserInput>
+    create: XOR<EmailVerificationCreateWithoutUserInput, EmailVerificationUncheckedCreateWithoutUserInput>
+  }
+
+  export type EmailVerificationUpdateWithWhereUniqueWithoutUserInput = {
+    where: EmailVerificationWhereUniqueInput
+    data: XOR<EmailVerificationUpdateWithoutUserInput, EmailVerificationUncheckedUpdateWithoutUserInput>
+  }
+
+  export type EmailVerificationUpdateManyWithWhereWithoutUserInput = {
+    where: EmailVerificationScalarWhereInput
+    data: XOR<EmailVerificationUpdateManyMutationInput, EmailVerificationUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type EmailVerificationScalarWhereInput = {
+    AND?: EmailVerificationScalarWhereInput | EmailVerificationScalarWhereInput[]
+    OR?: EmailVerificationScalarWhereInput[]
+    NOT?: EmailVerificationScalarWhereInput | EmailVerificationScalarWhereInput[]
+    id?: StringFilter<"EmailVerification"> | string
+    userId?: StringFilter<"EmailVerification"> | string
+    email?: StringFilter<"EmailVerification"> | string
+    token?: StringFilter<"EmailVerification"> | string
+    expiresAt?: DateTimeFilter<"EmailVerification"> | Date | string
+    usedAt?: DateTimeNullableFilter<"EmailVerification"> | Date | string | null
+    createdAt?: DateTimeFilter<"EmailVerification"> | Date | string
+  }
+
+  export type UserCreateWithoutEmailVerificationsInput = {
+    id?: string
+    tenantId: string
+    email: string
+    passwordHash: string
+    firstName: string
+    lastName: string
+    role?: $Enums.UserRole
+    department?: string | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    mfaSecret?: string | null
+    mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
+    passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutEmailVerificationsInput = {
+    id?: string
+    tenantId: string
+    email: string
+    passwordHash: string
+    firstName: string
+    lastName: string
+    role?: $Enums.UserRole
+    department?: string | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    mfaSecret?: string | null
+    mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
+    passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutEmailVerificationsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutEmailVerificationsInput, UserUncheckedCreateWithoutEmailVerificationsInput>
+  }
+
+  export type UserUpsertWithoutEmailVerificationsInput = {
+    update: XOR<UserUpdateWithoutEmailVerificationsInput, UserUncheckedUpdateWithoutEmailVerificationsInput>
+    create: XOR<UserCreateWithoutEmailVerificationsInput, UserUncheckedCreateWithoutEmailVerificationsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutEmailVerificationsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutEmailVerificationsInput, UserUncheckedUpdateWithoutEmailVerificationsInput>
+  }
+
+  export type UserUpdateWithoutEmailVerificationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
+    passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutEmailVerificationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
+    passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type UserCreateWithoutPasswordResetsInput = {
     id?: string
     tenantId: string
@@ -10507,9 +12192,12 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
+    emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPasswordResetsInput = {
@@ -10527,9 +12215,12 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
+    emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPasswordResetsInput = {
@@ -10563,9 +12254,12 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
+    emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPasswordResetsInput = {
@@ -10583,9 +12277,12 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
+    emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutInviteTokensInput = {
@@ -10603,9 +12300,12 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
+    emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutInviteTokensInput = {
@@ -10623,9 +12323,12 @@ export namespace Prisma {
     mfaEnabled?: boolean
     externalId?: string | null
     ssoLastLogin?: Date | string | null
+    emailVerified?: boolean
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
+    emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutInviteTokensInput = {
@@ -10659,9 +12362,12 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
+    emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutInviteTokensInput = {
@@ -10679,9 +12385,12 @@ export namespace Prisma {
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
+    emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type InviteTokenCreateManyInvitedByInput = {
@@ -10697,6 +12406,15 @@ export namespace Prisma {
 
   export type PasswordResetCreateManyUserInput = {
     id?: string
+    token?: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type EmailVerificationCreateManyUserInput = {
+    id?: string
+    email: string
     token?: string
     expiresAt: Date | string
     usedAt?: Date | string | null
@@ -10754,6 +12472,33 @@ export namespace Prisma {
 
   export type PasswordResetUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmailVerificationUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     token?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

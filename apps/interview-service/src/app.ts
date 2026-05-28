@@ -9,6 +9,7 @@ import interviewsRouter from "./routes/interviews.js";
 import roundsRouter from "./routes/rounds.js";
 import intelligenceRouter from "./routes/agent-intelligence.js";
 import schedulingRouter from "./routes/agent-scheduling.js";
+import gdprRouter from "./routes/gdpr.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -27,6 +28,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/rounds", readAuthHeaders(), roundsRouter);
   app.use("/internal/interview-intelligence", readAuthHeaders(), intelligenceRouter);
   app.use("/internal/scheduling", readAuthHeaders(), schedulingRouter);
+  app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());
   app.use(createErrorHandler(logger));

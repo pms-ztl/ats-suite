@@ -28,6 +28,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { refreshTokenIfNeeded, getTokenExpiryMs } from "@/lib/token-refresh";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
 
 /**
  * Hex → "h s% l%" tuple for CSS custom property `--primary` (Tailwind hsl format).
@@ -251,6 +252,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
+
+        {/* Phase 31b — dismissable confirm-email banner (top of every page) */}
+        <VerifyEmailBanner />
 
         {/* Main Content */}
         <main id="main-content" className="p-6 animate-page-in">{children}</main>

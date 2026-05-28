@@ -1,0 +1,82 @@
+# Phase 31d — Alertmanager routing config.
+#
+# Reads alerts from Prometheus, deduplicates them, and routes by severity to:
+#   - critical → PagerDuty + Slack
+#   - warning  → Slack only
+#   - info     → log-only (not delivered anywhere)
+#
+# Replace the PLACEHOLDER fields below before deploying to prod.
+
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "${SMTP_SMARTHOST:-mailpit:1025}"
+  smtp_from: "alerts@cdc-ats.local"
+  slack_api_url: "${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/PLACEHOLDER}"
+
+route:
+  receiver: default
+  group_by: ["alertname", "job"]
+  # Wait this long before firing a fresh notification (gives related
+  # alerts a chance to group together).
+  group_wait: 30s
+  # If new alerts join the group, wait this long before sending an update.
+  group_interval: 5m
+  # If an alert keeps firing, re-notify this often (so a long outage
+  # doesn't get forgotten).
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = critical
+      receiver: oncall
+      # Critical alerts page on-call immediately — don't wait for grouping.
+      group_wait: 0s
+      repeat_interval: 1h
+    - matchers:
+        - severity = warning
+      receiver: slack-warnings
+    - matchers:
+        - severity = info
+      receiver: log-only
+
+receivers:
+  # Default catches anything that doesn't match a route — should be empty
+  # in steady state; if you see alerts here, add a route for them.
+  - name: default
+    slack_configs:
+      - channel: "#ops-default"
+        send_resolved: true
+
+  - name: oncall
+    pagerduty_configs:
+      - service_key: "${PAGERDUTY_SERVICE_KEY:-PLACEHOLDER}"
+        send_resolved: true
+    slack_configs:
+      - channel: "#ops-critical"
+        title: "🚨 {{ .CommonAnnotations.summary }}"
+        text: |
+          *Severity:* {{ .CommonLabels.severity }}
+          *Service:* {{ .CommonLabels.job }}
+          *Description:* {{ .CommonAnnotations.description }}
+          {{ if .CommonAnnotations.runbook_url }}*Runbook:* {{ .CommonAnnotations.runbook_url }}{{ end }}
+        send_resolved: true
+
+  - name: slack-warnings
+    slack_configs:
+      - channel: "#ops-warnings"
+        title: "⚠️ {{ .CommonAnnotations.summary }}"
+        text: |
+          *Service:* {{ .CommonLabels.job }}
+          {{ .CommonAnnotations.description }}
+        send_resolved: true
+
+  - name: log-only
+    # No notification — useful for noisy info-level alerts that you want
+    # to query in Prometheus but not push anywhere.
+    webhook_configs: []
+
+# Inhibit lower-severity alerts when a critical one for the same job is firing
+# (no point spamming "high 4xx rate" when the service is fully down).
+inhibit_rules:
+  - source_matchers: [severity = critical]
+    target_matchers: [severity =~ "warning|info"]
+    equal: [job]

@@ -22,35 +22,61 @@ enum UserRole {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  tenantId     String // FK semantically to tenant-service's Tenant.id, but NO Prisma relation (cross-service)
-  email        String
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         UserRole  @default(RECRUITER)
-  department   String?
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
+  id              String    @id @default(uuid())
+  tenantId        String // FK semantically to tenant-service's Tenant.id, but NO Prisma relation (cross-service)
+  email           String
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            UserRole  @default(RECRUITER)
+  department      String?
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
   // TOTP MFA — opt-in per user. Secret is base32 (32 chars); only set
   // when the user completes the enrolment flow + verifies one code.
-  mfaSecret    String?
-  mfaEnabled   Boolean   @default(false)
+  mfaSecret       String?
+  mfaEnabled      Boolean   @default(false)
   // Phase 28 — SSO: stable IdP-provided identifier (SAML nameID, OIDC sub).
   // When set, this user authenticated via SSO last time. Unique across
   // tenants because real-world IdPs guarantee uniqueness per IdP.
-  externalId   String?   @unique
-  ssoLastLogin DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  externalId      String?   @unique
+  ssoLastLogin    DateTime?
+  // Phase 31b — set true after the user clicks the link in the verify
+  // email sent after /register-company. Existing users (created before
+  // Phase 31b) keep their default of true to avoid retroactively locking
+  // anyone out — the migration backfills emailVerified=true for them.
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  inviteTokens   InviteToken[]
-  passwordResets PasswordReset[]
+  inviteTokens       InviteToken[]
+  passwordResets     PasswordReset[]
+  emailVerifications EmailVerification[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
   @@index([externalId])
+}
+
+// Phase 31b — email verification tokens. Created by /register-company and
+// /resend-verification. Consumed by /verify-email. Single-use, 24h expiry
+// (longer than password resets — users often don't see the email for hours).
+model EmailVerification {
+  id        String    @id @default(uuid())
+  userId    String
+  email     String // snapshot — guards against an attacker changing the
+  // user's email between request + click
+  token     String    @unique @default(uuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
 }
 
 // Password reset request — created by /auth/forgot-password, consumed by

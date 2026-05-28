@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2, Sparkles } from "lucide-react";
+import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2, Sparkles, Download } from "lucide-react";
 import Link from "next/link";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import {
@@ -101,6 +101,45 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   // Phase 29 — restart-onboarding modal opener
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  // Phase 31c — tenant data export.
+  const [exporting, setExporting] = useState(false);
+
+  const downloadTenantExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const token = (() => {
+        try { return window.sessionStorage.getItem("ats-access-token"); } catch { return null; }
+      })();
+      const res = await fetch(`${apiBase}/gdpr/tenant/export`, {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({} as any));
+        throw new Error(body?.error?.message ?? body?.message ?? `${res.status}`);
+      }
+      // Stream → blob → object URL → trigger a download by clicking a hidden link.
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      // Extract the filename from Content-Disposition if the server set one.
+      const cd = res.headers.get("Content-Disposition") ?? "";
+      const m = /filename="([^"]+)"/.exec(cd);
+      a.download = m?.[1] ?? `cdc-ats-tenant-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Export downloaded");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Profile
   const [profile, setProfile] = useState<ProfileSettings>({
@@ -394,6 +433,22 @@ export default function SettingsPage() {
             <CardContent>
               <p className="text-xs text-muted-foreground">
                 Re-open the 5-step setup wizard — useful when walking a new admin through the basics.
+              </p>
+            </CardContent>
+          </Card>
+        </button>
+        <button onClick={downloadTenantExport} disabled={exporting} className="block text-left">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Download className="h-4 w-4" /> Export tenant data
+                {exporting && <Loader2 className="h-3.5 w-3.5 animate-spin ml-auto" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Download everything we have for your tenant as JSON (GDPR Article 20). Includes
+                users, requisitions, candidates, interviews, audit log.
               </p>
             </CardContent>
           </Card>

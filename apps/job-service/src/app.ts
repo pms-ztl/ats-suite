@@ -9,6 +9,7 @@ import requisitionsRouter from "./routes/requisitions.js";
 import jobPostingsRouter from "./routes/job-postings.js";
 import publicRouter from "./routes/public.js";
 import jdAuthorRouter from "./routes/jd-author.js";
+import gdprRouter from "./routes/gdpr.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/requisitions", readAuthHeaders(), requisitionsRouter);
   app.use("/internal/job-postings", readAuthHeaders(), jobPostingsRouter);
   app.use("/internal/jd-author", readAuthHeaders(), jdAuthorRouter);
+  app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
 
   // Public routes — NO auth required (gateway forwards /api/public/* unauthenticated)
   app.use("/public", publicRouter);

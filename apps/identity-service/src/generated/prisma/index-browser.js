@@ -136,8 +136,20 @@ exports.Prisma.UserScalarFieldEnum = {
   mfaEnabled: 'mfaEnabled',
   externalId: 'externalId',
   ssoLastLogin: 'ssoLastLogin',
+  emailVerified: 'emailVerified',
+  emailVerifiedAt: 'emailVerifiedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EmailVerificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.PasswordResetScalarFieldEnum = {
@@ -254,6 +266,7 @@ exports.SsoStatus = exports.$Enums.SsoStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  EmailVerification: 'EmailVerification',
   PasswordReset: 'PasswordReset',
   InviteToken: 'InviteToken',
   AuditEvent: 'AuditEvent',

@@ -1,0 +1,121 @@
+# Phase 31e — nightly Postgres backup as a Kubernetes CronJob.
+#
+# Schedules backup-all-dbs.sh at 03:00 UTC every day. Mounts a PVC
+# (or hostPath in dev) for backup storage. If AWS_S3_BACKUP_BUCKET is set
+# in the secret, the script also uploads to S3.
+#
+# Re-using the bash script keeps backup/restore identical between local
+# dev (docker compose) and prod (k8s) — same code path, same output format.
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cdc-ats-backup
+  labels:
+    app: cdc-ats-backup
+spec:
+  # 03:00 UTC daily — quiet hours for most customer time zones.
+  schedule: "{{ .Values.backup.schedule | default "0 3 * * *" }}"
+  # Don't pile up if one run is slow — skip the missed run and wait for next.
+  concurrencyPolicy: Forbid
+  # Keep the last 3 success + 1 failure for postmortem visibility.
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      # 1-hour total cap; a tenant DB this large is a separate problem to solve.
+      activeDeadlineSeconds: 3600
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: cdc-ats-backup
+          containers:
+            - name: pg-dump
+              image: postgres:16-alpine
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # Install AWS CLI if S3 upload requested. The official
+                  # postgres image is alpine-based so we use apk.
+                  if [ -n "${AWS_S3_BACKUP_BUCKET:-}" ]; then
+                    apk add --no-cache aws-cli
+                  fi
+                  /scripts/backup-all-dbs.sh
+              env:
+                - name: PG_HOST
+                  value: {{ .Values.backup.pgHost | quote }}
+                - name: PG_PORT
+                  value: {{ .Values.backup.pgPort | default 5432 | quote }}
+                - name: PG_USER
+                  value: {{ .Values.backup.pgUser | quote }}
+                - name: PG_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.passwordSecret }}
+                      key: password
+                - name: BACKUP_DIR
+                  value: /backups
+                - name: BACKUP_RETENTION_DAYS
+                  value: {{ .Values.backup.retentionDays | default 30 | quote }}
+                {{- if .Values.backup.s3Bucket }}
+                - name: AWS_S3_BACKUP_BUCKET
+                  value: {{ .Values.backup.s3Bucket | quote }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.awsCredentialsSecret }}
+                      key: access-key-id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.awsCredentialsSecret }}
+                      key: secret-access-key
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.awsRegion | default "us-east-1" | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: scripts
+              configMap:
+                name: cdc-ats-backup-scripts
+                defaultMode: 0755
+            - name: backups
+              persistentVolumeClaim:
+                claimName: cdc-ats-backups
+---
+# PVC for the on-cluster backup copy. Even when S3 is configured, keeping
+# the most recent backup on disk speeds up the most common restore scenario
+# (recover from last night).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cdc-ats-backups
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: {{ .Values.backup.pvcSize | default "20Gi" }}
+  {{- with .Values.backup.storageClassName }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+---
+# ConfigMap with the backup script. Updated by the chart upgrade.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdc-ats-backup-scripts
+data:
+  backup-all-dbs.sh: |
+{{ .Files.Get "files/backup-all-dbs.sh" | indent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cdc-ats-backup
+{{- end }}

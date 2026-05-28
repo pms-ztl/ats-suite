@@ -181,7 +181,10 @@ router.post("/saml/:tenantId/callback", async (req: Request, res: Response, next
       outcome: result.created ? "success:jit_created" : result.linked ? "success:linked" : "success",
       ipAddress, userAgent, userId: result.user.id,
     });
-    ok(res, { user: result.user, externalId: assertion.externalId });
+    // Phase 31a — surface `jitCreated` so the gateway can fire a welcome
+    // email on first-ever SSO login. `linked` means we joined them to a
+    // pre-existing invited account, so no welcome email needed.
+    ok(res, { user: result.user, externalId: assertion.externalId, jitCreated: result.created });
   } catch (err: any) {
     const outcome = err?.code ? `fail:${String(err.code).toLowerCase()}` : "fail:unknown";
     await recordAudit({ tenantId, email: "(unknown)", protocol: "SAML", outcome, ipAddress, userAgent });
@@ -256,7 +259,10 @@ router.get("/oidc/:tenantId/callback", async (req: Request, res: Response, next:
       outcome: result.created ? "success:jit_created" : result.linked ? "success:linked" : "success",
       ipAddress, userAgent, userId: result.user.id,
     });
-    ok(res, { user: result.user, externalId: assertion.externalId });
+    // Phase 31a — surface `jitCreated` so the gateway can fire a welcome
+    // email on first-ever SSO login. `linked` means we joined them to a
+    // pre-existing invited account, so no welcome email needed.
+    ok(res, { user: result.user, externalId: assertion.externalId, jitCreated: result.created });
   } catch (err: any) {
     const outcome = err?.code ? `fail:${String(err.code).toLowerCase()}` : "fail:unknown";
     await recordAudit({ tenantId, email: "(unknown)", protocol: "OIDC", outcome, ipAddress, userAgent });
