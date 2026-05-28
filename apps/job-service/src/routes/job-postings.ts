@@ -3,7 +3,10 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: publishing jobs is admin/recruiter only.
+const requirePublisher = requireRole("ADMIN", "RECRUITER");
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -18,7 +21,7 @@ const CreatePostingSchema = z.object({
   expiresAt: z.string().datetime().optional(),
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requirePublisher, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreatePostingSchema.parse(req.body);
@@ -51,7 +54,8 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-027-micro-e + F-028-micro-P1: gate + scope mutation by tenantId.
+router.patch("/:id", requirePublisher, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
@@ -61,7 +65,9 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
     const data: any = { ...body };
     if (body.isPublished === true && !existing.publishedAt) data.publishedAt = new Date();
     if (body.expiresAt) data.expiresAt = new Date(body.expiresAt);
-    const updated = await prisma.jobPosting.update({ where: { id }, data });
+    const { count } = await prisma.jobPosting.updateMany({ where: { id, tenantId }, data });
+    if (count === 0) throw Errors.notFound("Job posting");
+    const updated = await prisma.jobPosting.findUnique({ where: { id } });
     ok(res, updated);
   } catch (err) { next(err); }
 });

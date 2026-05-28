@@ -3,7 +3,10 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: requisitions are admin/recruiter/hiring-manager managed.
+const requireReqEditor = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { RequisitionStatusSchema, FormFieldSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 
@@ -71,7 +74,7 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
   } catch (err) { next(err); }
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireReqEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateReqSchema.parse(req.body);
@@ -95,7 +98,8 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-027-micro-f + F-028-micro-P1: gate + scope mutation by tenantId.
+router.patch("/:id", requireReqEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
@@ -104,7 +108,9 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
     if (!existing) throw Errors.notFound("Requisition");
     const data: any = { ...body };
     if (body.requirements) data.requirements = body.requirements;
-    const updated = await prisma.requisition.update({ where: { id }, data });
+    const { count } = await prisma.requisition.updateMany({ where: { id, tenantId }, data });
+    if (count === 0) throw Errors.notFound("Requisition");
+    const updated = await prisma.requisition.findUnique({ where: { id } });
     ok(res, updated);
   } catch (err) { next(err); }
 });
@@ -131,7 +137,7 @@ router.get("/:id/form", async (req: Request, res: Response, next: NextFunction) 
   } catch (err) { next(err); }
 });
 
-router.put("/:id/form", async (req: Request, res: Response, next: NextFunction) => {
+router.put("/:id/form", requireReqEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
