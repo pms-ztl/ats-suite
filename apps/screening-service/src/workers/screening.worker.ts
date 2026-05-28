@@ -6,10 +6,17 @@
  */
 import { createWorker, publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
-import { runAgent } from "@cdc-ats/ai-engine";
-import type { ScreeningInput, ScreeningOutput } from "@cdc-ats/ai-engine";
+import { runAgent, runAgenticAgent, hasAgenticAgent } from "@cdc-ats/ai-engine";
+import type {
+  ScreeningInput,
+  ScreeningOutput,
+  AgenticScreeningInput,
+  AgenticScreeningOutput,
+  AgentRunSnapshot,
+} from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
 import { fetchResume, fetchRequisition } from "../lib/service-client.js";
+import { buildScreenerTools } from "../lib/screener-tools.js";
 import type { ScreeningJob } from "../lib/queue.js";
 import type { Logger } from "pino";
 
@@ -51,66 +58,137 @@ export function startScreeningWorker(logger: Logger) {
         skillsCount: resumeSkills.length, requirementsCount: jobRequirements.length,
       }, "Fetched cross-service context for screening");
 
-      try {
-        const result = await runAgent<ScreeningInput, ScreeningOutput>({
-          agentType: "candidate-screener",
-          input: { resumeText, resumeSkills, jobRequirements, jobTitle },
-          context: {
-            tenantId, userId,
-            persistRun: async (run) => {
-              await prisma.agentRun.create({
-                data: {
-                  id: run.agentRunId,
-                  tenantId: run.tenantId,
-                  agentType: run.agentType,
-                  status: run.status,
-                  inputHash: run.inputHash,
-                  tokensIn: run.tokensIn,
-                  tokensOut: run.tokensOut,
-                  costUsd: run.costUsd,
-                  latencyMs: run.latencyMs,
-                  modelName: run.modelName,
-                  triggeredByUserId: run.userId,
-                  errorMessage: run.errorMessage ?? null,
-                },
-              });
-              try {
-                await publishEvent({
-                  subject: tenantSubject(run.tenantId, "agent", "completed"),
-                  type: "agent.completed",
-                  tenantId: run.tenantId,
-                  payload: {
-                    tenantId: run.tenantId,
-                    agentRunId: run.agentRunId,
-                    agentType: run.agentType,
-                    status: run.status,
-                    tokensIn: run.tokensIn,
-                    tokensOut: run.tokensOut,
-                    costUsd: run.costUsd,
-                    latencyMs: run.latencyMs,
-                    modelName: run.modelName,
-                    iterations: run.iterations,
-                    triggeredByUserId: run.userId,
-                  },
-                });
-                logger.info({ agentRunId: run.agentRunId }, "Published agent.completed");
-              } catch (err) {
-                logger.error({ err, agentRunId: run.agentRunId }, "Failed to publish agent.completed");
-              }
-            },
+      // Shared persistence hook — writes AgentRun + emits agent.completed,
+      // identical for both the single-shot and agentic execution paths.
+      const persistRun = async (run: AgentRunSnapshot) => {
+        await prisma.agentRun.create({
+          data: {
+            id: run.agentRunId,
+            tenantId: run.tenantId,
+            agentType: run.agentType,
+            status: run.status,
+            inputHash: run.inputHash,
+            tokensIn: run.tokensIn,
+            tokensOut: run.tokensOut,
+            costUsd: run.costUsd,
+            latencyMs: run.latencyMs,
+            modelName: run.modelName,
+            triggeredByUserId: run.userId,
+            errorMessage: run.errorMessage ?? null,
           },
         });
+        try {
+          await publishEvent({
+            subject: tenantSubject(run.tenantId, "agent", "completed"),
+            type: "agent.completed",
+            tenantId: run.tenantId,
+            payload: {
+              tenantId: run.tenantId,
+              agentRunId: run.agentRunId,
+              agentType: run.agentType,
+              status: run.status,
+              tokensIn: run.tokensIn,
+              tokensOut: run.tokensOut,
+              costUsd: run.costUsd,
+              latencyMs: run.latencyMs,
+              modelName: run.modelName,
+              iterations: run.iterations,
+              triggeredByUserId: run.userId,
+            },
+          });
+          logger.info({ agentRunId: run.agentRunId }, "Published agent.completed");
+        } catch (err) {
+          logger.error({ err, agentRunId: run.agentRunId }, "Failed to publish agent.completed");
+        }
+      };
+
+      try {
+        // ── Agentic path (genuine ReAct loop) when the agent is registered ────
+        // Set AGENTIC_SCREENER=0 to fall back to the single-shot screener.
+        const useAgentic =
+          hasAgenticAgent("candidate-screener") && process.env["AGENTIC_SCREENER"] !== "0";
+
+        let verdict: {
+          result: ScreeningOutput["result"];
+          score: number;
+          matchPercentage: number;
+          signals: string[];
+          reasoning: string;
+          agentRunId: string;
+        };
+        // Agentic-only extras surfaced on the completion event (no schema change).
+        let agenticMeta:
+          | {
+              confidence: number;
+              recommendedAction: string;
+              escalatedToHuman: boolean;
+              toolsUsed: string[];
+              stepCount: number;
+              requirementFindings: AgenticScreeningOutput["requirementFindings"];
+            }
+          | null = null;
+
+        if (useAgentic) {
+          const toolImpls = buildScreenerTools({ tenantId, userId, logger });
+          const ag = await runAgenticAgent<AgenticScreeningInput, AgenticScreeningOutput>({
+            agentType: "candidate-screener",
+            input: { candidateId, requisitionId, jobTitle },
+            context: { tenantId, userId, toolImpls, persistRun },
+          });
+          logger.info(
+            {
+              candidateId,
+              requisitionId,
+              toolsUsed: ag.toolsUsed,
+              steps: ag.steps.length,
+              result: ag.output.result,
+              confidence: ag.output.confidence,
+              recommendedAction: ag.output.recommendedAction,
+            },
+            "Agentic screener finished (ReAct loop)",
+          );
+          verdict = {
+            result: ag.output.result,
+            score: ag.output.score,
+            matchPercentage: ag.output.matchPercentage,
+            signals: ag.output.signals,
+            reasoning: ag.output.reasoning,
+            agentRunId: ag.agentRunId,
+          };
+          agenticMeta = {
+            confidence: ag.output.confidence,
+            recommendedAction: ag.output.recommendedAction,
+            escalatedToHuman: ag.output.escalatedToHuman,
+            toolsUsed: ag.toolsUsed,
+            stepCount: ag.steps.length,
+            requirementFindings: ag.output.requirementFindings,
+          };
+        } else {
+          const result = await runAgent<ScreeningInput, ScreeningOutput>({
+            agentType: "candidate-screener",
+            input: { resumeText, resumeSkills, jobRequirements, jobTitle },
+            context: { tenantId, userId, persistRun },
+          });
+          verdict = {
+            result: result.output.result,
+            score: result.output.score,
+            matchPercentage: result.output.matchPercentage,
+            signals: result.output.signals,
+            reasoning: result.output.reasoning,
+            agentRunId: result.agentRunId,
+          };
+        }
 
         await prisma.screening.update({
           where: { id: screening.id },
           data: {
             status: "COMPLETED",
-            result: result.output.result,
-            score: result.output.score,
-            matchPercentage: result.output.matchPercentage,
-            signals: result.output.signals as any,
-            reasoning: result.output.reasoning,
-            agentRunId: result.agentRunId,
+            result: verdict.result,
+            score: verdict.score,
+            matchPercentage: verdict.matchPercentage,
+            signals: verdict.signals as any,
+            reasoning: verdict.reasoning,
+            agentRunId: verdict.agentRunId,
             completedAt: new Date(),
           },
         });
@@ -125,12 +203,13 @@ export function startScreeningWorker(logger: Logger) {
             screeningId: screening.id,
             candidateId,
             requisitionId,
-            result: result.output.result,
-            score: result.output.score,
+            result: verdict.result,
+            score: verdict.score,
+            ...(agenticMeta ? { agentic: agenticMeta } : {}),
           },
         }).catch(() => {});
 
-        return { screeningId: screening.id, result: result.output.result };
+        return { screeningId: screening.id, result: verdict.result };
       } catch (err) {
         await prisma.screening.update({
           where: { id: screening.id },

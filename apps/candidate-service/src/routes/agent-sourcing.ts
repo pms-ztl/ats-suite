@@ -13,11 +13,16 @@ import { z } from "zod";
 import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import {
   runAgent,
+  runAgenticAgent,
+  hasAgenticAgent,
   publishAgentCompleted,
   type SourcingInput,
   type SourcingOutput,
+  type AgenticSourcingInput,
+  type AgenticSourcingOutput,
 } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
+import { buildSourcingTools } from "../lib/sourcing-tools.js";
 
 const logger = createLogger({ serviceName: "candidate-service:sourcing" });
 const router = Router();
@@ -51,8 +56,49 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
     }
     const reqBody: any = await reqRes.json();
     const requisition = reqBody.data;
+    const requirements: string[] = Array.isArray(requisition.requirements)
+      ? requisition.requirements
+      : [];
 
-    // 2. Build candidate pool from this tenant's candidates
+    // ── Agentic path: the agent drives its OWN search via tools ──────────────
+    // Set AGENTIC_SOURCING=0 to fall back to the single-shot ranker.
+    const useAgentic = hasAgenticAgent("sourcing") && process.env["AGENTIC_SOURCING"] !== "0";
+
+    if (useAgentic) {
+      const toolImpls = buildSourcingTools({ tenantId, userId, logger });
+      const ag = await runAgenticAgent<AgenticSourcingInput, AgenticSourcingOutput>({
+        agentType: "sourcing",
+        input: {
+          requisitionId: requisition.id,
+          jobTitle: requisition.title,
+          department: requisition.department,
+          requirements,
+          ...(maxResults != null ? { maxResults } : {}),
+        },
+        context: { tenantId, userId, toolImpls, persistRun: publishAgentCompleted(logger) },
+      });
+      logger.info(
+        {
+          requisitionId: requisition.id,
+          toolsUsed: ag.toolsUsed,
+          steps: ag.steps.length,
+          returned: ag.output.candidates.length,
+          shortlisted: ag.output.candidates.filter((c) => c.shortlisted).length,
+        },
+        "Agentic sourcing finished (ReAct loop)",
+      );
+      return ok(res, {
+        ...ag.output,
+        agentRunId: ag.agentRunId,
+        toolsUsed: ag.toolsUsed,
+        steps: ag.steps.length,
+        tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+        costUsd: ag.snapshot.costUsd,
+        modelName: ag.snapshot.modelName,
+      });
+    }
+
+    // ── Single-shot fallback: pre-fetch pool and rank ───────────────────────
     const candidates = await prisma.candidate.findMany({
       where: { tenantId },
       take: 200,
@@ -67,7 +113,6 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
       source: "database" as const,
     }));
 
-    // 3. Run the agent
     const result = await runAgent<SourcingInput, SourcingOutput>({
       agentType: "sourcing",
       input: {
@@ -76,7 +121,7 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
           title: requisition.title,
           department: requisition.department,
           description: requisition.description,
-          requirements: Array.isArray(requisition.requirements) ? requisition.requirements : [],
+          requirements,
         },
         candidatePool,
         ...(maxResults != null ? { maxResults } : {}),

@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
+    "test": "tsx test/agentic-screener.test.ts && tsx test/agentic-sourcing.test.ts && tsx test/agentic-scheduling.test.ts && tsx test/agentic-copilot.test.ts && tsx test/agentic-analytics.test.ts && tsx test/agentic-experience.test.ts && tsx test/agentic-offer.test.ts && tsx test/agentic-bias.test.ts",
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {

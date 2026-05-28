@@ -146,12 +146,12 @@ const MODEL_COSTS: Record<string, { inputPer1m: number; outputPer1m: number }> =
   "gpt-4o-mini": { inputPer1m: 0.15, outputPer1m: 0.60 },
 };
 
-function estimateCost(modelId: string, tokensIn: number, tokensOut: number): number {
+export function estimateCost(modelId: string, tokensIn: number, tokensOut: number): number {
   const rates = MODEL_COSTS[modelId] ?? { inputPer1m: 3.0, outputPer1m: 15.0 };
   return (tokensIn / 1_000_000) * rates.inputPer1m + (tokensOut / 1_000_000) * rates.outputPer1m;
 }
 
-function getModel(modelId: string): LanguageModelV1 {
+export function getModel(modelId: string): LanguageModelV1 {
   // 1. OpenRouter takes priority — single API for all model families
   if (openRouter) {
     const routedId = OPENROUTER_MODEL_MAP[modelId] ?? modelId;
@@ -165,7 +165,7 @@ function getModel(modelId: string): LanguageModelV1 {
 }
 
 /** Returns true when the agent should run against a real LLM. */
-function realLLMAvailable(modelId: string): boolean {
+export function realLLMAvailable(modelId: string): boolean {
   // OpenRouter covers all model families
   if (process.env["OPENROUTER_API_KEY"]) return true;
   if (modelId.startsWith("claude") || modelId.startsWith("anthropic")) {

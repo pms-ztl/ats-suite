@@ -12,10 +12,15 @@ import { z } from "zod";
 import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import {
   runAgent,
+  runAgenticAgent,
+  hasAgenticAgent,
   publishAgentCompleted,
   type SchedulingInput,
   type SchedulingOutput,
+  type AgenticSchedulingInput,
+  type AgenticSchedulingOutput,
 } from "@cdc-ats/ai-engine";
+import { buildSchedulingTools } from "../lib/scheduling-tools.js";
 
 const logger = createLogger({ serviceName: "interview-service:scheduling" });
 const router = Router();
@@ -43,6 +48,11 @@ const RequestSchema = z.object({
       minimumNoticeDays: z.number().int().min(0).max(30).optional(),
     })
     .optional(),
+  // Optional booking context — when present, the agentic scheduler may create
+  // the Interview row itself instead of only proposing slots.
+  candidateId: z.string().optional(),
+  requisitionId: z.string().optional(),
+  stage: z.string().optional(),
 });
 
 // Phase 27 F-028-micro-P1: scheduling agent is admin/recruiter only.
@@ -51,6 +61,42 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
     const body = RequestSchema.parse(req.body);
+
+    // ── Agentic path: agent computes slots, checks load, and may BOOK ────────
+    // Set AGENTIC_SCHEDULING=0 to fall back to the single-shot proposer.
+    const useAgentic = hasAgenticAgent("scheduling") && process.env["AGENTIC_SCHEDULING"] !== "0";
+
+    if (useAgentic) {
+      const toolImpls = buildSchedulingTools({
+        tenantId,
+        userId,
+        logger,
+        participants: body.participants,
+        durationMinutes: body.durationMinutes,
+        ...(body.preferences ? { preferences: body.preferences } : {}),
+        ...(body.candidateId ? { candidateId: body.candidateId } : {}),
+        ...(body.requisitionId ? { requisitionId: body.requisitionId } : {}),
+        ...(body.stage ? { stage: body.stage } : {}),
+      });
+      const ag = await runAgenticAgent<AgenticSchedulingInput, AgenticSchedulingOutput>({
+        agentType: "scheduling",
+        input: body as AgenticSchedulingInput,
+        context: { tenantId, userId, toolImpls, persistRun: publishAgentCompleted(logger) },
+      });
+      logger.info(
+        { toolsUsed: ag.toolsUsed, steps: ag.steps.length, booked: ag.output.booked },
+        "Agentic scheduling finished (ReAct loop)",
+      );
+      return ok(res, {
+        ...ag.output,
+        agentRunId: ag.agentRunId,
+        toolsUsed: ag.toolsUsed,
+        steps: ag.steps.length,
+        tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+        costUsd: ag.snapshot.costUsd,
+        modelName: ag.snapshot.modelName,
+      });
+    }
 
     const result = await runAgent<SchedulingInput, SchedulingOutput>({
       agentType: "scheduling",

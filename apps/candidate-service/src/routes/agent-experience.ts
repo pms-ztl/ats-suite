@@ -13,11 +13,15 @@ import { z } from "zod";
 import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import {
   runAgent,
+  runAgenticAgent,
+  hasAgenticAgent,
   publishAgentCompleted,
   type CandidateExperienceInput,
   type CandidateExperienceOutput,
+  type AgenticCandidateExperienceInput,
 } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
+import { buildExperienceTools } from "../lib/experience-tools.js";
 
 const logger = createLogger({ serviceName: "candidate-service:experience" });
 const router = Router();
@@ -58,6 +62,42 @@ router.post("/", requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER"), async (req
       return res.status(404).json({
         success: false,
         error: { code: "CANDIDATE_NOT_FOUND", message: `Candidate ${body.candidateId} not found` },
+      });
+    }
+
+    // ── Agentic path: the agent looks up status / FAQ / escalates itself ────
+    // Set AGENTIC_EXPERIENCE=0 to fall back to the pre-fetched single shot.
+    if (hasAgenticAgent("candidate-experience") && process.env["AGENTIC_EXPERIENCE"] !== "0") {
+      const toolImpls = buildExperienceTools({
+        tenantId,
+        userId,
+        logger,
+        candidateId: candidate.id,
+        reqHeaders: { userId: userId ?? "", role: (req.headers["x-user-role"] as string) ?? "ADMIN" },
+      });
+      const ag = await runAgenticAgent<AgenticCandidateExperienceInput, CandidateExperienceOutput>({
+        agentType: "candidate-experience",
+        input: {
+          candidateId: candidate.id,
+          candidateName: candidate.firstName,
+          message: body.message,
+          ...(body.conversationHistory ? { conversationHistory: body.conversationHistory } : {}),
+        },
+        context: { tenantId, userId, toolImpls, persistRun: publishAgentCompleted(logger) },
+      });
+      logger.info(
+        { candidateId: candidate.id, toolsUsed: ag.toolsUsed, steps: ag.steps.length, escalated: ag.output.shouldEscalate },
+        "Agentic candidate-experience finished (ReAct loop)",
+      );
+      return ok(res, {
+        ...ag.output,
+        candidateId: candidate.id,
+        agentRunId: ag.agentRunId,
+        toolsUsed: ag.toolsUsed,
+        steps: ag.steps.length,
+        tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+        costUsd: ag.snapshot.costUsd,
+        modelName: ag.snapshot.modelName,
       });
     }
 

@@ -12,11 +12,15 @@ import { z } from "zod";
 import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import {
   runAgent,
+  runAgenticAgent,
+  hasAgenticAgent,
   publishAgentCompleted,
   type OfferInput,
   type OfferOutput,
+  type AgenticOfferInput,
 } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
+import { buildOfferTools } from "../lib/offer-tools.js";
 
 const logger = createLogger({ serviceName: "candidate-service:offer" });
 const router = Router();
@@ -61,6 +65,43 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
       return res.status(404).json({
         success: false,
         error: { code: "APPLICATION_NOT_FOUND", message: `Application ${body.applicationId} not found` },
+      });
+    }
+
+    // ── Agentic path: the agent fetches band/market/signal itself ───────────
+    // Set AGENTIC_OFFER=0 to fall back to the pre-loaded single shot.
+    if (hasAgenticAgent("offer") && process.env["AGENTIC_OFFER"] !== "0") {
+      const toolImpls = buildOfferTools({
+        tenantId,
+        userId,
+        logger,
+        applicationId: application.id,
+        reqHeaders: { userId: userId ?? "", role: (req.headers["x-user-role"] as string) ?? "ADMIN" },
+      });
+      const ag = await runAgenticAgent<AgenticOfferInput, OfferOutput>({
+        agentType: "offer",
+        input: {
+          applicationId: application.id,
+          ...(body.candidateExpectation != null ? { candidateExpectation: body.candidateExpectation } : {}),
+          ...(body.candidateCurrentSalary != null ? { candidateCurrentSalary: body.candidateCurrentSalary } : {}),
+          ...(body.hiringManagerNotes ? { hiringManagerNotes: body.hiringManagerNotes } : {}),
+        },
+        context: { tenantId, userId, toolImpls, persistRun: publishAgentCompleted(logger) },
+      });
+      logger.info(
+        { applicationId: application.id, toolsUsed: ag.toolsUsed, steps: ag.steps.length, position: ag.output.compBandPosition },
+        "Agentic offer finished (ReAct loop)",
+      );
+      return ok(res, {
+        ...ag.output,
+        applicationId: application.id,
+        candidateId: application.candidateId,
+        agentRunId: ag.agentRunId,
+        toolsUsed: ag.toolsUsed,
+        steps: ag.steps.length,
+        tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+        costUsd: ag.snapshot.costUsd,
+        modelName: ag.snapshot.modelName,
       });
     }
 

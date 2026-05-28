@@ -14,6 +14,8 @@ import type { Logger } from "pino";
 import { ok, Errors } from "@cdc-ats/common";
 import {
   runAgent,
+  runAgenticAgent,
+  hasAgenticAgent,
   publishAgentCompleted,
   type AnalyticsInput,
   type AnalyticsOutput,
@@ -21,8 +23,14 @@ import {
   type BiasAuditorOutput,
   type CopilotInput,
   type CopilotOutput,
+  type AgenticCopilotInput,
+  type AgenticAnalyticsInput,
+  type AgenticBiasAuditorInput,
 } from "@cdc-ats/ai-engine";
 import { callService } from "../lib/service-client.js";
+import { buildCopilotTools } from "../lib/copilot-tools.js";
+import { buildAnalyticsTools } from "../lib/analytics-tools.js";
+import { buildBiasTools } from "../lib/bias-tools.js";
 
 interface ReqOverview {
   openRequisitions: number;
@@ -64,6 +72,39 @@ export function analyticsAgentRouter(logger: Logger): Router {
         role: req.user.role,
         email: req.user.email,
       };
+
+      // ── Agentic path: agent pulls only the metric slices it needs ─────────
+      // Set AGENTIC_ANALYTICS=0 to fall back to the pre-loaded single shot.
+      if (hasAgenticAgent("analytics") && process.env["AGENTIC_ANALYTICS"] !== "0") {
+        const toolImpls = buildAnalyticsTools(userHeaders);
+        const ag = await runAgenticAgent<AgenticAnalyticsInput, AnalyticsOutput>({
+          agentType: "analytics",
+          input: {
+            query: body.query,
+            ...(body.timeRangeDays != null ? { timeRangeDays: body.timeRangeDays } : {}),
+            ...(body.department ? { department: body.department } : {}),
+          },
+          context: {
+            tenantId: req.user.tenantId,
+            userId: req.user.id,
+            toolImpls,
+            persistRun: publishAgentCompleted(logger),
+          },
+        });
+        logger.info(
+          { toolsUsed: ag.toolsUsed, steps: ag.steps.length, insights: ag.output.insights.length },
+          "Agentic analytics finished (retrieval ReAct loop)",
+        );
+        return ok(res, {
+          ...ag.output,
+          agentRunId: ag.agentRunId,
+          toolsUsed: ag.toolsUsed,
+          steps: ag.steps.length,
+          tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+          costUsd: ag.snapshot.costUsd,
+          modelName: ag.snapshot.modelName,
+        });
+      }
 
       const [reqRes, candRes, billRes] = await Promise.allSettled([
         callService<ReqOverview>("job", { path: "/internal/requisitions/overview", userHeaders, timeoutMs: 3000 }),
@@ -142,6 +183,43 @@ export function biasAuditorRouter(logger: Logger): Router {
       if (!req.user) throw Errors.unauthorized();
       const body = BiasRequestSchema.parse(req.body);
 
+      // ── Agentic path: agent computes 4/5ths per attribute via a tool ──────
+      // Set AGENTIC_BIAS=0 to fall back to the pre-computed single shot.
+      if (hasAgenticAgent("bias-auditor") && process.env["AGENTIC_BIAS"] !== "0") {
+        const { tools, flagged } = buildBiasTools({ tenantId: req.user.tenantId, logger });
+        const ag = await runAgenticAgent<AgenticBiasAuditorInput, BiasAuditorOutput>({
+          agentType: "bias-auditor",
+          input: {
+            data: body.data.map((d) => ({
+              attribute: d.attribute,
+              stage: d.stage,
+              groups: d.groups.map((g) => ({ name: g.name, applicants: g.applicants, selected: g.selected })),
+            })),
+            ...(body.timeRangeDays != null ? { timeRangeDays: body.timeRangeDays } : {}),
+          },
+          context: {
+            tenantId: req.user.tenantId,
+            userId: req.user.id,
+            toolImpls: tools,
+            persistRun: publishAgentCompleted(logger),
+          },
+        });
+        logger.info(
+          { toolsUsed: ag.toolsUsed, steps: ag.steps.length, violationsFlagged: flagged.length },
+          "Agentic bias-auditor finished (ReAct loop)",
+        );
+        return ok(res, {
+          ...ag.output,
+          violationsFlagged: flagged,
+          agentRunId: ag.agentRunId,
+          toolsUsed: ag.toolsUsed,
+          steps: ag.steps.length,
+          tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+          costUsd: ag.snapshot.costUsd,
+          modelName: ag.snapshot.modelName,
+        });
+      }
+
       const result = await runAgent<BiasAuditorInput, BiasAuditorOutput>({
         agentType: "bias-auditor",
         input: body as BiasAuditorInput,
@@ -186,6 +264,35 @@ export function copilotRouter(logger: Logger): Router {
         role: req.user.role,
         email: req.user.email,
       };
+
+      // ── Agentic path: the agent retrieves only what the query needs ───────
+      // Set AGENTIC_COPILOT=0 to fall back to the blind pre-fetch + synthesize.
+      if (hasAgenticAgent("copilot") && process.env["AGENTIC_COPILOT"] !== "0") {
+        const toolImpls = buildCopilotTools(userHeaders);
+        const ag = await runAgenticAgent<AgenticCopilotInput, CopilotOutput>({
+          agentType: "copilot",
+          input: { query: body.query, ...(body.context ? { context: body.context } : {}) },
+          context: {
+            tenantId: req.user.tenantId,
+            userId: req.user.id,
+            toolImpls,
+            persistRun: publishAgentCompleted(logger),
+          },
+        });
+        logger.info(
+          { toolsUsed: ag.toolsUsed, steps: ag.steps.length, sources: ag.output.sources.length },
+          "Agentic copilot finished (retrieval ReAct loop)",
+        );
+        return ok(res, {
+          ...ag.output,
+          agentRunId: ag.agentRunId,
+          toolsUsed: ag.toolsUsed,
+          steps: ag.steps.length,
+          tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
+          costUsd: ag.snapshot.costUsd,
+          modelName: ag.snapshot.modelName,
+        });
+      }
 
       const [candRes, reqRes, billRes] = await Promise.allSettled([
         callService<any[]>("candidate", { path: "/internal/candidates", userHeaders, timeoutMs: 3000 }),

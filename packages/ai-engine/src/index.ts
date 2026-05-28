@@ -6,6 +6,17 @@
 export * from "./runtime.js";
 export * from "./persist.js";
 
+// Agentic runtime — genuine ReAct loop (tool use + multi-step reasoning + trace)
+export * from "./agentic.js";
+export * from "./agents/screener-agentic.js";
+export * from "./agents/sourcing-agentic.js";
+export * from "./agents/scheduling-agentic.js";
+export * from "./agents/copilot-agentic.js";
+export * from "./agents/analytics-agentic.js";
+export * from "./agents/candidate-experience-agentic.js";
+export * from "./agents/offer-agentic.js";
+export * from "./agents/bias-auditor-agentic.js";
+
 // Agents from Phase 6a
 export * from "./agents/resume-parser.js";
 export * from "./agents/screening.js";
