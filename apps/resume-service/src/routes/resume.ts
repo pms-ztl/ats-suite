@@ -19,6 +19,8 @@ const requireUploader = requireRole("ADMIN", "RECRUITER");
 import { prisma } from "../lib/prisma.js";
 import { enqueueResumeParse } from "../lib/queue.js";
 import { upsertCandidate } from "../lib/service-client.js";
+import { extractResumeText } from "../lib/extract.js";
+import { buildKey, putObject, getPresignedDownloadUrl, isStorageConfigured } from "../lib/storage.js";
 
 const router = Router();
 
@@ -63,8 +65,16 @@ router.post(
       const body = UploadBodySchema.parse(req.body);
       if (!req.file) throw Errors.validation("Resume file is required");
 
-      const extractedText = req.file.buffer.toString("utf-8").slice(0, 50000);
+      // Phase 35a — real text extraction (was: buffer.toString("utf-8") giving
+      // garbage for PDFs). PDFs go through pdf-parse, DOCX through mammoth,
+      // legacy .doc best-effort via mammoth fallback, TXT direct UTF-8.
+      const extraction = await extractResumeText(
+        req.file.buffer,
+        req.file.mimetype,
+        req.file.originalname,
+      );
 
+      // Create the row first so we have an id to put in the S3 key.
       const resume = await prisma.resume.upsert({
         where: { candidateId: body.candidateId },
         update: {
@@ -73,7 +83,7 @@ router.post(
           originalFilename: req.file.originalname,
           fileSize: req.file.size,
           mimeType: req.file.mimetype,
-          extractedText,
+          extractedText: extraction.text,
           parseStatus: "EXTRACTED",
         },
         create: {
@@ -83,10 +93,28 @@ router.post(
           originalFilename: req.file.originalname,
           fileSize: req.file.size,
           mimeType: req.file.mimetype,
-          extractedText,
+          extractedText: extraction.text,
           parseStatus: "EXTRACTED",
         },
       });
+
+      // Phase 35b — persist binary to S3 (or MinIO in dev). When storage
+      // isn't configured we skip; the extracted text is still in DB so
+      // parsing + screening still work. We just can't offer downloads.
+      if (isStorageConfigured()) {
+        const key = buildKey({ tenantId, resumeId: resume.id, fileName: req.file.originalname });
+        const stored = await putObject({
+          key,
+          body: req.file.buffer,
+          contentType: req.file.mimetype,
+        });
+        if (stored) {
+          await prisma.resume.update({
+            where: { id: resume.id },
+            data: { storageKey: stored },
+          });
+        }
+      }
 
       await enqueueResumeParse({
         candidateId: body.candidateId,
@@ -134,7 +162,9 @@ router.post(
       for (const file of files) {
         try {
           const buf = await fs.readFile(file.path);
-          const extractedText = buf.toString("utf-8").slice(0, 50000);
+          // Phase 35a — real extraction (was: buffer.toString("utf-8"))
+          const extraction = await extractResumeText(buf, file.mimetype, file.originalname);
+          const extractedText = extraction.text;
 
           // Derive placeholder candidate details from filename
           const baseName = file.originalname.replace(/\.(pdf|docx?|txt)$/i, "")
@@ -167,6 +197,17 @@ router.post(
               bulkUploadId: bulk.id,
             },
           });
+          // Phase 35b — persist the binary to S3 for bulk uploads too.
+          // Best-effort: failure here doesn't fail the whole row.
+          if (isStorageConfigured()) {
+            const key = buildKey({ tenantId, resumeId: resume.id, fileName: file.originalname });
+            const stored = await putObject({
+              key, body: buf, contentType: file.mimetype,
+            }).catch(() => null);
+            if (stored) {
+              await prisma.resume.update({ where: { id: resume.id }, data: { storageKey: stored } });
+            }
+          }
           await enqueueResumeParse({
             candidateId: candidate.id,
             tenantId, userId,
@@ -241,6 +282,24 @@ router.get("/:candidateId", async (req: Request, res: Response, next: NextFuncti
     const r = await prisma.resume.findFirst({ where: { candidateId, tenantId } });
     if (!r) throw Errors.notFound("Resume");
     ok(res, r);
+  } catch (err) { next(err); }
+});
+
+// ── GET /internal/resume/:resumeId/download-url ─────────────────────────
+// Phase 35b — generate a 10-minute presigned URL for the resume binary.
+// Recruiter clicks "Download original" in /candidates; we hand them a
+// short-lived signed URL so the file isn't served through the gateway
+// (saves bandwidth + simplifies CORS).
+router.get("/:resumeId/download-url", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const resumeId = req.params["resumeId"] as string;
+    const r = await prisma.resume.findFirst({ where: { id: resumeId, tenantId } });
+    if (!r) throw Errors.notFound("Resume");
+    if (!r.storageKey) throw Errors.notFound("Resume binary (storage not configured at upload time)");
+    const url = await getPresignedDownloadUrl(r.storageKey);
+    if (!url) throw Errors.unavailable("Storage not configured");
+    ok(res, { url, expiresInSeconds: 600, fileName: r.originalFilename ?? r.fileName });
   } catch (err) { next(err); }
 });
 

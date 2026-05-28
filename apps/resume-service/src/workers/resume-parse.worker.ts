@@ -85,7 +85,11 @@ export function startResumeParseWorker(logger: Logger) {
           },
         });
 
-        // Publish resume.parsed → screening-service consumes
+        // Publish resume.parsed — screening-service AND candidate-service consume.
+        // Phase 35c — include the full parsed payload so candidate-service can
+        // backfill Candidate.parsedSummary + name/email/phone/location for
+        // bulk-uploaded candidates (placeholder values get overwritten).
+        // Resumes' parsed data is typically <10KB — well within JetStream's defaults.
         await publishEvent({
           subject: ts(tenantId, "resume", "parsed"),
           type: "resume.parsed",
@@ -97,6 +101,7 @@ export function startResumeParseWorker(logger: Logger) {
             bulkUploadId: bulkUploadId ?? null,
             parsedSkillsCount: result.output.skills?.length ?? 0,
             parseCostUsd: result.snapshot.costUsd,
+            parsed: result.output,   // full structured output for backfill
           },
         }).catch(() => { /* non-fatal */ });
 

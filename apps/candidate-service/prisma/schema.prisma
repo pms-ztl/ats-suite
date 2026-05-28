@@ -45,6 +45,18 @@ model Candidate {
   source      String?
   tags        String[] @default([])
   isAnonymized Boolean @default(false)
+
+  // Phase 35c — structured data backfilled from the resume parser.
+  // Stored as JSON (not separate columns) so the schema doesn't need to
+  // change every time the parser adds a new field. Shape:
+  //   { skills: string[], experience: [{company,title,start,end,bullets}],
+  //     education: [{school,degree,field,start,end}],
+  //     summary: string, yearsOfExperience: number, languages: string[],
+  //     certifications: string[], links: {linkedin?, github?, portfolio?},
+  //     parsedAt: ISO, sourceResumeId: uuid }
+  // Backfilled by a NATS subscriber on resume.parsed.
+  parsedSummary Json?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

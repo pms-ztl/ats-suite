@@ -137,6 +137,7 @@ exports.Prisma.CandidateScalarFieldEnum = {
   source: 'source',
   tags: 'tags',
   isAnonymized: 'isAnonymized',
+  parsedSummary: 'parsedSummary',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -195,15 +196,15 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
-};
-
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
 };
 exports.ApplicationStage = exports.$Enums.ApplicationStage = {
   APPLIED: 'APPLIED',
