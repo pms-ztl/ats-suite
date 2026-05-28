@@ -18,7 +18,7 @@ import {
 import {
   Building2, Users, BarChart3, DollarSign, TrendingUp,
   Search, MoreHorizontal, ExternalLink, Ban, CheckCircle2,
-  Rocket, Zap, Crown, RefreshCw, AlertTriangle, Power, Brain, FileText,
+  Rocket, Zap, Crown, RefreshCw, AlertTriangle, Power, Brain, FileText, UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -162,6 +162,28 @@ export default function SuperAdminPage() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchTenants(); }, [fetchTenants]);
+
+  // Phase 32a — start an impersonation session as the tenant's first ADMIN.
+  // Backend signs a 1-hour JWT, sets the cookie, and we hard-nav to / so
+  // the auth context re-fetches /auth/me with the new identity.
+  const impersonateTenant = async (id: string, name: string) => {
+    if (!confirm(`Impersonate ${name}? Every action will be audited and the session expires in 1 hour.`)) return;
+    try {
+      const res = await fetch(`${getApiBase()}/super-admin/impersonate/${id}/start`, {
+        method: "POST",
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({} as any));
+        throw new Error(body?.error?.message ?? body?.message ?? `${res.status}`);
+      }
+      toast.success(`Now impersonating ${name} — taking you to their dashboard…`);
+      window.location.href = "/";
+    } catch (e: any) {
+      toast.error(e.message || "Couldn't start impersonation");
+    }
+  };
 
   const updateTenant = async (id: string, body: Record<string, string>) => {
     try {
@@ -421,6 +443,10 @@ export default function SuperAdminPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { status: "SUSPENDED" })}>
                               <Ban className="h-4 w-4 mr-2 text-amber-500" /> Suspend
+                            </DropdownMenuItem>
+                            {/* Phase 32a — impersonate this tenant's admin for support debugging. */}
+                            <DropdownMenuItem onClick={() => impersonateTenant(t.id, t.name)}>
+                              <UserCog className="h-4 w-4 mr-2 text-rose-500" /> Impersonate admin
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

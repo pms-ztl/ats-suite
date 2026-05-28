@@ -32,6 +32,7 @@ import type { Logger } from "pino";
 import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import { gatewayAuth } from "./lib/auth-middleware.js";
 import authRouter from "./routes/auth.js";
+import impersonateRouter from "./routes/impersonate.js";
 import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
 import { aggregatorRouter } from "./routes/aggregators.js";
@@ -136,6 +137,9 @@ export function createApp(logger: Logger): Express {
             proxyReq.setHeader("X-Tenant-Id", req.user.tenantId);
             proxyReq.setHeader("X-User-Role", req.user.role);
             if (req.user.email) proxyReq.setHeader("X-User-Email", req.user.email);
+            // Phase 32a — forward impersonation context so downstream services
+            // can write "acted by X on behalf of Y" audit entries.
+            if (req.user.actorUserId) proxyReq.setHeader("X-Actor-User-Id", req.user.actorUserId);
           }
           if ((req as any).id) {
             proxyReq.setHeader("X-Request-Id", (req as any).id);
@@ -352,6 +356,26 @@ export function createApp(logger: Logger): Express {
   // Phase 21 — platform control plane (super-admin only). Proxies to billing-service
   // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
   app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
+
+  // Phase 32a — super-admin impersonation. In-process router (signs JWT +
+  // writes audit). Mounted BEFORE the proxy routes so super-admin gating
+  // happens before any forwarding.
+  app.use(
+    "/api/super-admin/impersonate",
+    gatewayAuth(),
+    requireSuperAdmin,
+    express.json({ limit: "32kb" }),
+    impersonateRouter,
+  );
+
+  // Phase 32c — audit log viewer. Read-only super-admin path proxied
+  // straight to identity-service /internal/audit (GET only).
+  app.use("/api/super-admin/audit", gatewayAuth(), requireSuperAdmin, forwardHeaders(identityUrl, "/internal/audit"));
+
+  // Phase 32b — support tickets. Tenant side (open / list / reply) is
+  // standard auth; super-admin side is gated inside the router.
+  app.use("/api/support", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/support"));
+  app.use("/api/super-admin/support", gatewayAuth(), requireSuperAdmin, forwardHeaders(notificationUrl, "/internal/support/admin"));
 
   // Phase 28 — Tenant SSO config (auth-gated; identity-service handles requireTenantAdmin internally).
   // Public SSO endpoints (discover, initiate, callback) are NOT here — they live

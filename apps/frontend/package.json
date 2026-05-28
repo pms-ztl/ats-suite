@@ -10,7 +10,9 @@
     "start:standalone": "node .next/standalone/apps/frontend/server.js",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf .next .turbo"
+    "clean": "rimraf .next .turbo",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test e2e/a11y.spec.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -55,6 +57,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.10.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",

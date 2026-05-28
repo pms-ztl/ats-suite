@@ -20,4 +20,10 @@ export interface JwtPayload {
   type: "access" | "refresh";
   iat: number;
   exp: number;
+  // Phase 32a — present when a SUPER_ADMIN is impersonating another user.
+  // `sub` becomes the impersonated user (so all downstream auth/scoping
+  // works exactly as if they were logged in directly). `actorUserId` is
+  // the real user driving the session — every audit entry records BOTH so
+  // we can answer "who actually did this".
+  actorUserId?: string;
 }

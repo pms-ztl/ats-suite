@@ -13,6 +13,7 @@ import usersRouter from "./routes/users.js";
 import authPolishRouter from "./routes/auth-polish.js";
 import ssoRouter from "./routes/sso.js";
 import gdprRouter from "./routes/gdpr.js";
+import auditRouter from "./routes/audit.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -59,6 +60,10 @@ export function createApp(logger: Logger): Express {
   // when proxying /api/sso/config/*).
   app.use("/internal/sso", readAuthHeaders({ optional: true }), ssoRouter);
   app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
+  // Phase 32a/32c — audit log read/write. POST is internal (no role check
+  // — only the gateway/services should hit it); GET is super-admin only
+  // (enforced inside the router via requireSuperAdmin).
+  app.use("/internal/audit", readAuthHeaders({ optional: true }), auditRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

@@ -14,6 +14,9 @@ interface AuthUser {
   // clicked the email-verify link yet. Existing users (pre-migration) default
   // to true so we don't retroactively annoy them.
   emailVerified?: boolean;
+  // Phase 32a — present when a super-admin is impersonating. Drives the
+  // red top-of-page banner + "Stop impersonating" button.
+  actorUserId?: string | null;
   tenant?: {
     id: string;
     name: string;

@@ -140,6 +140,9 @@ router.get("/me", gatewayAuth(), async (req: Request, res: Response, next: NextF
       // banner. Defaults to true for users created before the migration so
       // we don't retroactively annoy anyone.
       emailVerified: user.emailVerified ?? true,
+      // Phase 32a — set when a super-admin is impersonating. The frontend
+      // shows the red impersonation banner whenever this is non-null.
+      actorUserId: req.user.actorUserId ?? null,
       tenant: {
         id: tenant.id,
         name: tenant.name,

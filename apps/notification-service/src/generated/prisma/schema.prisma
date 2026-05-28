@@ -148,3 +148,62 @@ model EmailTemplate {
   @@unique([tenantId, type])
   @@index([tenantId])
 }
+
+// Phase 32b — in-app support tickets.
+//
+// Tenants open tickets via /support; super-admins triage them via
+// /admin/support. Replies are tracked in SupportTicketMessage for a
+// threaded conversation. Status is intentionally a small set — anything
+// resembling a full helpdesk (priorities, SLAs, assignees, custom fields)
+// belongs in a real ticketing tool (Zendesk, Linear). This is here to
+// make sure customers can reach us at all, not to replace those.
+
+enum SupportTicketStatus {
+  OPEN // newly opened, waiting on us
+  AWAITING_CUSTOMER // we replied, ball is in their court
+  RESOLVED // closed by either side
+}
+
+enum SupportTicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model SupportTicket {
+  id               String                @id @default(uuid())
+  tenantId         String // the tenant the ticket belongs to
+  openedByUserId   String // the user who opened it
+  openedByEmail    String // snapshot — guards against the user being deleted later
+  subject          String                @db.VarChar(200)
+  status           SupportTicketStatus   @default(OPEN)
+  priority         SupportTicketPriority @default(NORMAL)
+  category         String?               @db.VarChar(60) // optional free-text bucket (billing / bug / question)
+  resolvedAt       DateTime?
+  resolvedByUserId String? // super-admin who marked it resolved
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  messages SupportTicketMessage[]
+
+  @@index([tenantId, status])
+  @@index([status, createdAt])
+}
+
+model SupportTicketMessage {
+  id           String   @id @default(uuid())
+  ticketId     String
+  // authorRole = "CUSTOMER" or "SUPPORT" — kept as a string (not enum) so
+  // it survives a future role-rename without a schema migration.
+  authorRole   String
+  authorUserId String
+  authorEmail  String
+  body         String   @db.Text
+  isInternal   Boolean  @default(false) // super-admin "internal note" not visible to customer
+  createdAt    DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}

@@ -192,6 +192,32 @@ exports.Prisma.EmailTemplateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SupportTicketScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  openedByUserId: 'openedByUserId',
+  openedByEmail: 'openedByEmail',
+  subject: 'subject',
+  status: 'status',
+  priority: 'priority',
+  category: 'category',
+  resolvedAt: 'resolvedAt',
+  resolvedByUserId: 'resolvedByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SupportTicketMessageScalarFieldEnum = {
+  id: 'id',
+  ticketId: 'ticketId',
+  authorRole: 'authorRole',
+  authorUserId: 'authorUserId',
+  authorEmail: 'authorEmail',
+  body: 'body',
+  isInternal: 'isInternal',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -251,12 +277,27 @@ exports.HitlStatus = exports.$Enums.HitlStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.SupportTicketStatus = exports.$Enums.SupportTicketStatus = {
+  OPEN: 'OPEN',
+  AWAITING_CUSTOMER: 'AWAITING_CUSTOMER',
+  RESOLVED: 'RESOLVED'
+};
+
+exports.SupportTicketPriority = exports.$Enums.SupportTicketPriority = {
+  LOW: 'LOW',
+  NORMAL: 'NORMAL',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
+};
+
 exports.Prisma.ModelName = {
   Notification: 'Notification',
   NotificationDelivery: 'NotificationDelivery',
   HitlCheckpoint: 'HitlCheckpoint',
   TenantIntegration: 'TenantIntegration',
-  EmailTemplate: 'EmailTemplate'
+  EmailTemplate: 'EmailTemplate',
+  SupportTicket: 'SupportTicket',
+  SupportTicketMessage: 'SupportTicketMessage'
 };
 
 /**

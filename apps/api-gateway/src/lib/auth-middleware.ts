@@ -27,6 +27,8 @@ export function gatewayAuth(opts: { optional?: boolean } = {}): RequestHandler {
         tenantId: payload.tenantId,
         role: payload.role,
         email: payload.email,
+        // Phase 32a — surface the impersonator for downstream auditing.
+        ...(payload.actorUserId ? { actorUserId: payload.actorUserId } : {}),
       };
       next();
     } catch (err) {

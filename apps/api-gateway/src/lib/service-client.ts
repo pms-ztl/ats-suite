@@ -32,6 +32,9 @@ export interface CallOptions {
     role?: string;
     email?: string;
     requestId?: string;
+    // Phase 32a — set when the caller is impersonating; downstream services
+    // record the actor for audit.
+    actorUserId?: string;
   };
   /** Arbitrary extra headers (Phase 28 — IP + user-agent pass-through for SSO audit). */
   headers?: Record<string, string>;
@@ -61,6 +64,7 @@ export async function callService<T>(
     if (opts.userHeaders.role) headers["X-User-Role"] = opts.userHeaders.role;
     if (opts.userHeaders.email) headers["X-User-Email"] = opts.userHeaders.email;
     if (opts.userHeaders.requestId) headers["X-Request-Id"] = opts.userHeaders.requestId;
+    if (opts.userHeaders.actorUserId) headers["X-Actor-User-Id"] = opts.userHeaders.actorUserId;
   }
   if (opts.headers) Object.assign(headers, opts.headers);
 

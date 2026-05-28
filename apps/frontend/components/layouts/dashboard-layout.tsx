@@ -29,6 +29,7 @@ import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { refreshTokenIfNeeded, getTokenExpiryMs } from "@/lib/token-refresh";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
+import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
 /**
  * Hex → "h s% l%" tuple for CSS custom property `--primary` (Tailwind hsl format).
@@ -252,6 +253,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
+
+        {/* Phase 32a — bright-red impersonation banner. Renders FIRST so
+            it's the most visible thing on the page. */}
+        <ImpersonationBanner />
 
         {/* Phase 31b — dismissable confirm-email banner (top of every page) */}
         <VerifyEmailBanner />

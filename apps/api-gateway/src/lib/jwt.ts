@@ -23,22 +23,30 @@ export interface SignTokenInput {
   tenantId: string;
   email: string;
   role: Role;
+  // Phase 32a — when set, marks this token as an impersonation session.
+  // `userId` is the impersonated user; `actorUserId` is the SUPER_ADMIN
+  // running the session. We give impersonation tokens a SHORTER lifetime
+  // (1h instead of 24h) so an unattended super-admin laptop can't sustain
+  // tenant access overnight.
+  actorUserId?: string;
 }
 
 export async function signAccessToken(input: SignTokenInput): Promise<string> {
-  return new SignJWT({
+  const builder = new SignJWT({
     email: input.email,
     role: input.role,
     tenantId: input.tenantId,
     type: "access",
+    ...(input.actorUserId ? { actorUserId: input.actorUserId } : {}),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(input.userId)
     .setIssuer(ISSUER)
     .setAudience(AUDIENCE)
-    .setIssuedAt()
-    .setExpirationTime(ACCESS_EXPIRES)
-    .sign(SECRET);
+    .setIssuedAt();
+  // Shorter TTL for impersonation. Hard-coded 1h is intentional — making
+  // it configurable invites operators to set it too high.
+  return builder.setExpirationTime(input.actorUserId ? "1h" : ACCESS_EXPIRES).sign(SECRET);
 }
 
 export async function signRefreshToken(input: SignTokenInput): Promise<string> {

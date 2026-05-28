@@ -16,6 +16,11 @@ export interface AuthUser {
   email: string;
   role: string;
   tenantId: string;
+  // Phase 32a — when a SUPER_ADMIN is impersonating, `id` becomes the
+  // impersonated user (so scoping works transparently) and `actorUserId`
+  // is the super-admin actually driving the session. Backend services
+  // use this for audit ("acted by SUPER_ADMIN X on behalf of USER Y").
+  actorUserId?: string;
 }
 
 declare global {
@@ -47,13 +52,17 @@ export function readAuthHeaders(opts: AuthHeadersOptions = {}): RequestHandler {
     const tenantId = req.headers["x-tenant-id"] as string | undefined;
     const role = req.headers["x-user-role"] as string | undefined;
     const email = req.headers["x-user-email"] as string | undefined;
+    // Phase 32a — set by the gateway when the underlying JWT was signed
+    // for an impersonation session. Header form so backends that don't
+    // care about impersonation can ignore it.
+    const actorUserId = req.headers["x-actor-user-id"] as string | undefined;
 
     if (!userId || !tenantId || !role) {
       if (opts.optional) return next();
       return next(new AppError("UNAUTHORIZED", "Missing auth headers (request did not pass through gateway)", 401));
     }
 
-    req.user = { id: userId, tenantId, role, email: email ?? "" };
+    req.user = { id: userId, tenantId, role, email: email ?? "", ...(actorUserId ? { actorUserId } : {}) };
     next();
   };
 }
