@@ -1,0 +1,47 @@
+<!--
+  Phase 34f — popup shown when user clicks the extension toolbar icon.
+  Lets them paste their API key + their CDC ATS gateway URL (so people
+  on self-hosted instances can point at their own deploy).
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CDC ATS</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="" width="32" height="32" />
+    <h1>CDC ATS</h1>
+  </header>
+
+  <main>
+    <p class="muted">Save LinkedIn profiles to your candidate pool with one click.</p>
+
+    <label>
+      <span>API base URL</span>
+      <input id="api-base" type="url" placeholder="https://your-deploy.cdc-ats.com/api" />
+    </label>
+
+    <label>
+      <span>API key</span>
+      <input id="api-key" type="password" placeholder="ats_..." />
+      <small class="muted">Get one at <em>Settings → API keys</em> in your ATS dashboard.</small>
+    </label>
+
+    <div class="actions">
+      <button id="save" type="button">Save</button>
+      <button id="test" type="button" class="secondary">Test connection</button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </main>
+
+  <footer>
+    <span class="muted">v1.0.0</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

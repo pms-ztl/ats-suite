@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model TenantApiKey
+ * 
+ */
+export type TenantApiKey = $Result.DefaultSelection<Prisma.$TenantApiKeyPayload>
+/**
  * Model EmailVerification
  * 
  */
@@ -223,6 +228,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tenantApiKey`: Exposes CRUD operations for the **TenantApiKey** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenantApiKeys
+    * const tenantApiKeys = await prisma.tenantApiKey.findMany()
+    * ```
+    */
+  get tenantApiKey(): Prisma.TenantApiKeyDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.emailVerification`: Exposes CRUD operations for the **EmailVerification** model.
@@ -725,6 +740,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    TenantApiKey: 'TenantApiKey',
     EmailVerification: 'EmailVerification',
     PasswordReset: 'PasswordReset',
     InviteToken: 'InviteToken',
@@ -749,7 +765,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "emailVerification" | "passwordReset" | "inviteToken" | "auditEvent" | "tenantSso" | "ssoLoginAudit"
+      modelProps: "user" | "tenantApiKey" | "emailVerification" | "passwordReset" | "inviteToken" | "auditEvent" | "tenantSso" | "ssoLoginAudit"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -824,6 +840,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      TenantApiKey: {
+        payload: Prisma.$TenantApiKeyPayload<ExtArgs>
+        fields: Prisma.TenantApiKeyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenantApiKeyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenantApiKeyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          findFirst: {
+            args: Prisma.TenantApiKeyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenantApiKeyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          findMany: {
+            args: Prisma.TenantApiKeyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>[]
+          }
+          create: {
+            args: Prisma.TenantApiKeyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          createMany: {
+            args: Prisma.TenantApiKeyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenantApiKeyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>[]
+          }
+          delete: {
+            args: Prisma.TenantApiKeyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          update: {
+            args: Prisma.TenantApiKeyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenantApiKeyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenantApiKeyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenantApiKeyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>[]
+          }
+          upsert: {
+            args: Prisma.TenantApiKeyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantApiKeyPayload>
+          }
+          aggregate: {
+            args: Prisma.TenantApiKeyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenantApiKey>
+          }
+          groupBy: {
+            args: Prisma.TenantApiKeyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenantApiKeyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenantApiKeyCountArgs<ExtArgs>
+            result: $Utils.Optional<TenantApiKeyCountAggregateOutputType> | number
           }
         }
       }
@@ -1368,6 +1458,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    tenantApiKey?: TenantApiKeyOmit
     emailVerification?: EmailVerificationOmit
     passwordReset?: PasswordResetOmit
     inviteToken?: InviteTokenOmit
@@ -2794,6 +2885,1062 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TenantApiKey
+   */
+
+  export type AggregateTenantApiKey = {
+    _count: TenantApiKeyCountAggregateOutputType | null
+    _min: TenantApiKeyMinAggregateOutputType | null
+    _max: TenantApiKeyMaxAggregateOutputType | null
+  }
+
+  export type TenantApiKeyMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    keyPrefix: string | null
+    keyHash: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+    lastUsedAt: Date | null
+    revokedAt: Date | null
+  }
+
+  export type TenantApiKeyMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    keyPrefix: string | null
+    keyHash: string | null
+    createdByUserId: string | null
+    createdAt: Date | null
+    lastUsedAt: Date | null
+    revokedAt: Date | null
+  }
+
+  export type TenantApiKeyCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    keyPrefix: number
+    keyHash: number
+    createdByUserId: number
+    createdAt: number
+    lastUsedAt: number
+    revokedAt: number
+    scopes: number
+    _all: number
+  }
+
+
+  export type TenantApiKeyMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    keyPrefix?: true
+    keyHash?: true
+    createdByUserId?: true
+    createdAt?: true
+    lastUsedAt?: true
+    revokedAt?: true
+  }
+
+  export type TenantApiKeyMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    keyPrefix?: true
+    keyHash?: true
+    createdByUserId?: true
+    createdAt?: true
+    lastUsedAt?: true
+    revokedAt?: true
+  }
+
+  export type TenantApiKeyCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    keyPrefix?: true
+    keyHash?: true
+    createdByUserId?: true
+    createdAt?: true
+    lastUsedAt?: true
+    revokedAt?: true
+    scopes?: true
+    _all?: true
+  }
+
+  export type TenantApiKeyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantApiKey to aggregate.
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantApiKeys to fetch.
+     */
+    orderBy?: TenantApiKeyOrderByWithRelationInput | TenantApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenantApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenantApiKeys
+    **/
+    _count?: true | TenantApiKeyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenantApiKeyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenantApiKeyMaxAggregateInputType
+  }
+
+  export type GetTenantApiKeyAggregateType<T extends TenantApiKeyAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenantApiKey]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenantApiKey[P]>
+      : GetScalarType<T[P], AggregateTenantApiKey[P]>
+  }
+
+
+
+
+  export type TenantApiKeyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenantApiKeyWhereInput
+    orderBy?: TenantApiKeyOrderByWithAggregationInput | TenantApiKeyOrderByWithAggregationInput[]
+    by: TenantApiKeyScalarFieldEnum[] | TenantApiKeyScalarFieldEnum
+    having?: TenantApiKeyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenantApiKeyCountAggregateInputType | true
+    _min?: TenantApiKeyMinAggregateInputType
+    _max?: TenantApiKeyMaxAggregateInputType
+  }
+
+  export type TenantApiKeyGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    keyPrefix: string
+    keyHash: string
+    createdByUserId: string
+    createdAt: Date
+    lastUsedAt: Date | null
+    revokedAt: Date | null
+    scopes: string[]
+    _count: TenantApiKeyCountAggregateOutputType | null
+    _min: TenantApiKeyMinAggregateOutputType | null
+    _max: TenantApiKeyMaxAggregateOutputType | null
+  }
+
+  type GetTenantApiKeyGroupByPayload<T extends TenantApiKeyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenantApiKeyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenantApiKeyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenantApiKeyGroupByOutputType[P]>
+            : GetScalarType<T[P], TenantApiKeyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenantApiKeySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    keyPrefix?: boolean
+    keyHash?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    lastUsedAt?: boolean
+    revokedAt?: boolean
+    scopes?: boolean
+  }, ExtArgs["result"]["tenantApiKey"]>
+
+  export type TenantApiKeySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    keyPrefix?: boolean
+    keyHash?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    lastUsedAt?: boolean
+    revokedAt?: boolean
+    scopes?: boolean
+  }, ExtArgs["result"]["tenantApiKey"]>
+
+  export type TenantApiKeySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    keyPrefix?: boolean
+    keyHash?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    lastUsedAt?: boolean
+    revokedAt?: boolean
+    scopes?: boolean
+  }, ExtArgs["result"]["tenantApiKey"]>
+
+  export type TenantApiKeySelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    keyPrefix?: boolean
+    keyHash?: boolean
+    createdByUserId?: boolean
+    createdAt?: boolean
+    lastUsedAt?: boolean
+    revokedAt?: boolean
+    scopes?: boolean
+  }
+
+  export type TenantApiKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "keyPrefix" | "keyHash" | "createdByUserId" | "createdAt" | "lastUsedAt" | "revokedAt" | "scopes", ExtArgs["result"]["tenantApiKey"]>
+
+  export type $TenantApiKeyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenantApiKey"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      keyPrefix: string
+      keyHash: string
+      createdByUserId: string
+      createdAt: Date
+      lastUsedAt: Date | null
+      revokedAt: Date | null
+      scopes: string[]
+    }, ExtArgs["result"]["tenantApiKey"]>
+    composites: {}
+  }
+
+  type TenantApiKeyGetPayload<S extends boolean | null | undefined | TenantApiKeyDefaultArgs> = $Result.GetResult<Prisma.$TenantApiKeyPayload, S>
+
+  type TenantApiKeyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenantApiKeyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenantApiKeyCountAggregateInputType | true
+    }
+
+  export interface TenantApiKeyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenantApiKey'], meta: { name: 'TenantApiKey' } }
+    /**
+     * Find zero or one TenantApiKey that matches the filter.
+     * @param {TenantApiKeyFindUniqueArgs} args - Arguments to find a TenantApiKey
+     * @example
+     * // Get one TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenantApiKeyFindUniqueArgs>(args: SelectSubset<T, TenantApiKeyFindUniqueArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TenantApiKey that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenantApiKeyFindUniqueOrThrowArgs} args - Arguments to find a TenantApiKey
+     * @example
+     * // Get one TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenantApiKeyFindUniqueOrThrowArgs>(args: SelectSubset<T, TenantApiKeyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantApiKey that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyFindFirstArgs} args - Arguments to find a TenantApiKey
+     * @example
+     * // Get one TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenantApiKeyFindFirstArgs>(args?: SelectSubset<T, TenantApiKeyFindFirstArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantApiKey that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyFindFirstOrThrowArgs} args - Arguments to find a TenantApiKey
+     * @example
+     * // Get one TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenantApiKeyFindFirstOrThrowArgs>(args?: SelectSubset<T, TenantApiKeyFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TenantApiKeys that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenantApiKeys
+     * const tenantApiKeys = await prisma.tenantApiKey.findMany()
+     * 
+     * // Get first 10 TenantApiKeys
+     * const tenantApiKeys = await prisma.tenantApiKey.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenantApiKeyWithIdOnly = await prisma.tenantApiKey.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenantApiKeyFindManyArgs>(args?: SelectSubset<T, TenantApiKeyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TenantApiKey.
+     * @param {TenantApiKeyCreateArgs} args - Arguments to create a TenantApiKey.
+     * @example
+     * // Create one TenantApiKey
+     * const TenantApiKey = await prisma.tenantApiKey.create({
+     *   data: {
+     *     // ... data to create a TenantApiKey
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenantApiKeyCreateArgs>(args: SelectSubset<T, TenantApiKeyCreateArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TenantApiKeys.
+     * @param {TenantApiKeyCreateManyArgs} args - Arguments to create many TenantApiKeys.
+     * @example
+     * // Create many TenantApiKeys
+     * const tenantApiKey = await prisma.tenantApiKey.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenantApiKeyCreateManyArgs>(args?: SelectSubset<T, TenantApiKeyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenantApiKeys and returns the data saved in the database.
+     * @param {TenantApiKeyCreateManyAndReturnArgs} args - Arguments to create many TenantApiKeys.
+     * @example
+     * // Create many TenantApiKeys
+     * const tenantApiKey = await prisma.tenantApiKey.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenantApiKeys and only return the `id`
+     * const tenantApiKeyWithIdOnly = await prisma.tenantApiKey.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenantApiKeyCreateManyAndReturnArgs>(args?: SelectSubset<T, TenantApiKeyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TenantApiKey.
+     * @param {TenantApiKeyDeleteArgs} args - Arguments to delete one TenantApiKey.
+     * @example
+     * // Delete one TenantApiKey
+     * const TenantApiKey = await prisma.tenantApiKey.delete({
+     *   where: {
+     *     // ... filter to delete one TenantApiKey
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenantApiKeyDeleteArgs>(args: SelectSubset<T, TenantApiKeyDeleteArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TenantApiKey.
+     * @param {TenantApiKeyUpdateArgs} args - Arguments to update one TenantApiKey.
+     * @example
+     * // Update one TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenantApiKeyUpdateArgs>(args: SelectSubset<T, TenantApiKeyUpdateArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TenantApiKeys.
+     * @param {TenantApiKeyDeleteManyArgs} args - Arguments to filter TenantApiKeys to delete.
+     * @example
+     * // Delete a few TenantApiKeys
+     * const { count } = await prisma.tenantApiKey.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenantApiKeyDeleteManyArgs>(args?: SelectSubset<T, TenantApiKeyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantApiKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenantApiKeys
+     * const tenantApiKey = await prisma.tenantApiKey.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenantApiKeyUpdateManyArgs>(args: SelectSubset<T, TenantApiKeyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantApiKeys and returns the data updated in the database.
+     * @param {TenantApiKeyUpdateManyAndReturnArgs} args - Arguments to update many TenantApiKeys.
+     * @example
+     * // Update many TenantApiKeys
+     * const tenantApiKey = await prisma.tenantApiKey.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TenantApiKeys and only return the `id`
+     * const tenantApiKeyWithIdOnly = await prisma.tenantApiKey.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenantApiKeyUpdateManyAndReturnArgs>(args: SelectSubset<T, TenantApiKeyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TenantApiKey.
+     * @param {TenantApiKeyUpsertArgs} args - Arguments to update or create a TenantApiKey.
+     * @example
+     * // Update or create a TenantApiKey
+     * const tenantApiKey = await prisma.tenantApiKey.upsert({
+     *   create: {
+     *     // ... data to create a TenantApiKey
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenantApiKey we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenantApiKeyUpsertArgs>(args: SelectSubset<T, TenantApiKeyUpsertArgs<ExtArgs>>): Prisma__TenantApiKeyClient<$Result.GetResult<Prisma.$TenantApiKeyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TenantApiKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyCountArgs} args - Arguments to filter TenantApiKeys to count.
+     * @example
+     * // Count the number of TenantApiKeys
+     * const count = await prisma.tenantApiKey.count({
+     *   where: {
+     *     // ... the filter for the TenantApiKeys we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenantApiKeyCountArgs>(
+      args?: Subset<T, TenantApiKeyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenantApiKeyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenantApiKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenantApiKeyAggregateArgs>(args: Subset<T, TenantApiKeyAggregateArgs>): Prisma.PrismaPromise<GetTenantApiKeyAggregateType<T>>
+
+    /**
+     * Group by TenantApiKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantApiKeyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenantApiKeyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenantApiKeyGroupByArgs['orderBy'] }
+        : { orderBy?: TenantApiKeyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenantApiKeyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenantApiKeyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenantApiKey model
+   */
+  readonly fields: TenantApiKeyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenantApiKey.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenantApiKeyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenantApiKey model
+   */
+  interface TenantApiKeyFieldRefs {
+    readonly id: FieldRef<"TenantApiKey", 'String'>
+    readonly tenantId: FieldRef<"TenantApiKey", 'String'>
+    readonly name: FieldRef<"TenantApiKey", 'String'>
+    readonly keyPrefix: FieldRef<"TenantApiKey", 'String'>
+    readonly keyHash: FieldRef<"TenantApiKey", 'String'>
+    readonly createdByUserId: FieldRef<"TenantApiKey", 'String'>
+    readonly createdAt: FieldRef<"TenantApiKey", 'DateTime'>
+    readonly lastUsedAt: FieldRef<"TenantApiKey", 'DateTime'>
+    readonly revokedAt: FieldRef<"TenantApiKey", 'DateTime'>
+    readonly scopes: FieldRef<"TenantApiKey", 'String[]'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenantApiKey findUnique
+   */
+  export type TenantApiKeyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantApiKey to fetch.
+     */
+    where: TenantApiKeyWhereUniqueInput
+  }
+
+  /**
+   * TenantApiKey findUniqueOrThrow
+   */
+  export type TenantApiKeyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantApiKey to fetch.
+     */
+    where: TenantApiKeyWhereUniqueInput
+  }
+
+  /**
+   * TenantApiKey findFirst
+   */
+  export type TenantApiKeyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantApiKey to fetch.
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantApiKeys to fetch.
+     */
+    orderBy?: TenantApiKeyOrderByWithRelationInput | TenantApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantApiKeys.
+     */
+    cursor?: TenantApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantApiKeys.
+     */
+    distinct?: TenantApiKeyScalarFieldEnum | TenantApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * TenantApiKey findFirstOrThrow
+   */
+  export type TenantApiKeyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantApiKey to fetch.
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantApiKeys to fetch.
+     */
+    orderBy?: TenantApiKeyOrderByWithRelationInput | TenantApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantApiKeys.
+     */
+    cursor?: TenantApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantApiKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantApiKeys.
+     */
+    distinct?: TenantApiKeyScalarFieldEnum | TenantApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * TenantApiKey findMany
+   */
+  export type TenantApiKeyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantApiKeys to fetch.
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantApiKeys to fetch.
+     */
+    orderBy?: TenantApiKeyOrderByWithRelationInput | TenantApiKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenantApiKeys.
+     */
+    cursor?: TenantApiKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantApiKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantApiKeys.
+     */
+    skip?: number
+    distinct?: TenantApiKeyScalarFieldEnum | TenantApiKeyScalarFieldEnum[]
+  }
+
+  /**
+   * TenantApiKey create
+   */
+  export type TenantApiKeyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TenantApiKey.
+     */
+    data: XOR<TenantApiKeyCreateInput, TenantApiKeyUncheckedCreateInput>
+  }
+
+  /**
+   * TenantApiKey createMany
+   */
+  export type TenantApiKeyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenantApiKeys.
+     */
+    data: TenantApiKeyCreateManyInput | TenantApiKeyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantApiKey createManyAndReturn
+   */
+  export type TenantApiKeyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * The data used to create many TenantApiKeys.
+     */
+    data: TenantApiKeyCreateManyInput | TenantApiKeyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantApiKey update
+   */
+  export type TenantApiKeyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TenantApiKey.
+     */
+    data: XOR<TenantApiKeyUpdateInput, TenantApiKeyUncheckedUpdateInput>
+    /**
+     * Choose, which TenantApiKey to update.
+     */
+    where: TenantApiKeyWhereUniqueInput
+  }
+
+  /**
+   * TenantApiKey updateMany
+   */
+  export type TenantApiKeyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenantApiKeys.
+     */
+    data: XOR<TenantApiKeyUpdateManyMutationInput, TenantApiKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantApiKeys to update
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * Limit how many TenantApiKeys to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantApiKey updateManyAndReturn
+   */
+  export type TenantApiKeyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * The data used to update TenantApiKeys.
+     */
+    data: XOR<TenantApiKeyUpdateManyMutationInput, TenantApiKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantApiKeys to update
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * Limit how many TenantApiKeys to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantApiKey upsert
+   */
+  export type TenantApiKeyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TenantApiKey to update in case it exists.
+     */
+    where: TenantApiKeyWhereUniqueInput
+    /**
+     * In case the TenantApiKey found by the `where` argument doesn't exist, create a new TenantApiKey with this data.
+     */
+    create: XOR<TenantApiKeyCreateInput, TenantApiKeyUncheckedCreateInput>
+    /**
+     * In case the TenantApiKey was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenantApiKeyUpdateInput, TenantApiKeyUncheckedUpdateInput>
+  }
+
+  /**
+   * TenantApiKey delete
+   */
+  export type TenantApiKeyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
+    /**
+     * Filter which TenantApiKey to delete.
+     */
+    where: TenantApiKeyWhereUniqueInput
+  }
+
+  /**
+   * TenantApiKey deleteMany
+   */
+  export type TenantApiKeyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantApiKeys to delete
+     */
+    where?: TenantApiKeyWhereInput
+    /**
+     * Limit how many TenantApiKeys to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantApiKey without action
+   */
+  export type TenantApiKeyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantApiKey
+     */
+    select?: TenantApiKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantApiKey
+     */
+    omit?: TenantApiKeyOmit<ExtArgs> | null
   }
 
 
@@ -9359,6 +10506,22 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const TenantApiKeyScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    keyPrefix: 'keyPrefix',
+    keyHash: 'keyHash',
+    createdByUserId: 'createdByUserId',
+    createdAt: 'createdAt',
+    lastUsedAt: 'lastUsedAt',
+    revokedAt: 'revokedAt',
+    scopes: 'scopes'
+  };
+
+  export type TenantApiKeyScalarFieldEnum = (typeof TenantApiKeyScalarFieldEnum)[keyof typeof TenantApiKeyScalarFieldEnum]
+
+
   export const EmailVerificationScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -9732,6 +10895,83 @@ export namespace Prisma {
     emailVerifiedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type TenantApiKeyWhereInput = {
+    AND?: TenantApiKeyWhereInput | TenantApiKeyWhereInput[]
+    OR?: TenantApiKeyWhereInput[]
+    NOT?: TenantApiKeyWhereInput | TenantApiKeyWhereInput[]
+    id?: StringFilter<"TenantApiKey"> | string
+    tenantId?: StringFilter<"TenantApiKey"> | string
+    name?: StringFilter<"TenantApiKey"> | string
+    keyPrefix?: StringFilter<"TenantApiKey"> | string
+    keyHash?: StringFilter<"TenantApiKey"> | string
+    createdByUserId?: StringFilter<"TenantApiKey"> | string
+    createdAt?: DateTimeFilter<"TenantApiKey"> | Date | string
+    lastUsedAt?: DateTimeNullableFilter<"TenantApiKey"> | Date | string | null
+    revokedAt?: DateTimeNullableFilter<"TenantApiKey"> | Date | string | null
+    scopes?: StringNullableListFilter<"TenantApiKey">
+  }
+
+  export type TenantApiKeyOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    keyPrefix?: SortOrder
+    keyHash?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    scopes?: SortOrder
+  }
+
+  export type TenantApiKeyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TenantApiKeyWhereInput | TenantApiKeyWhereInput[]
+    OR?: TenantApiKeyWhereInput[]
+    NOT?: TenantApiKeyWhereInput | TenantApiKeyWhereInput[]
+    tenantId?: StringFilter<"TenantApiKey"> | string
+    name?: StringFilter<"TenantApiKey"> | string
+    keyPrefix?: StringFilter<"TenantApiKey"> | string
+    keyHash?: StringFilter<"TenantApiKey"> | string
+    createdByUserId?: StringFilter<"TenantApiKey"> | string
+    createdAt?: DateTimeFilter<"TenantApiKey"> | Date | string
+    lastUsedAt?: DateTimeNullableFilter<"TenantApiKey"> | Date | string | null
+    revokedAt?: DateTimeNullableFilter<"TenantApiKey"> | Date | string | null
+    scopes?: StringNullableListFilter<"TenantApiKey">
+  }, "id">
+
+  export type TenantApiKeyOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    keyPrefix?: SortOrder
+    keyHash?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    revokedAt?: SortOrderInput | SortOrder
+    scopes?: SortOrder
+    _count?: TenantApiKeyCountOrderByAggregateInput
+    _max?: TenantApiKeyMaxOrderByAggregateInput
+    _min?: TenantApiKeyMinOrderByAggregateInput
+  }
+
+  export type TenantApiKeyScalarWhereWithAggregatesInput = {
+    AND?: TenantApiKeyScalarWhereWithAggregatesInput | TenantApiKeyScalarWhereWithAggregatesInput[]
+    OR?: TenantApiKeyScalarWhereWithAggregatesInput[]
+    NOT?: TenantApiKeyScalarWhereWithAggregatesInput | TenantApiKeyScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    tenantId?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    name?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    keyPrefix?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    keyHash?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    createdByUserId?: StringWithAggregatesFilter<"TenantApiKey"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"TenantApiKey"> | Date | string
+    lastUsedAt?: DateTimeNullableWithAggregatesFilter<"TenantApiKey"> | Date | string | null
+    revokedAt?: DateTimeNullableWithAggregatesFilter<"TenantApiKey"> | Date | string | null
+    scopes?: StringNullableListFilter<"TenantApiKey">
   }
 
   export type EmailVerificationWhereInput = {
@@ -10357,6 +11597,97 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantApiKeyCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    keyPrefix: string
+    keyHash: string
+    createdByUserId: string
+    createdAt?: Date | string
+    lastUsedAt?: Date | string | null
+    revokedAt?: Date | string | null
+    scopes?: TenantApiKeyCreatescopesInput | string[]
+  }
+
+  export type TenantApiKeyUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    keyPrefix: string
+    keyHash: string
+    createdByUserId: string
+    createdAt?: Date | string
+    lastUsedAt?: Date | string | null
+    revokedAt?: Date | string | null
+    scopes?: TenantApiKeyCreatescopesInput | string[]
+  }
+
+  export type TenantApiKeyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    keyPrefix?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    scopes?: TenantApiKeyUpdatescopesInput | string[]
+  }
+
+  export type TenantApiKeyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    keyPrefix?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    scopes?: TenantApiKeyUpdatescopesInput | string[]
+  }
+
+  export type TenantApiKeyCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    keyPrefix: string
+    keyHash: string
+    createdByUserId: string
+    createdAt?: Date | string
+    lastUsedAt?: Date | string | null
+    revokedAt?: Date | string | null
+    scopes?: TenantApiKeyCreatescopesInput | string[]
+  }
+
+  export type TenantApiKeyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    keyPrefix?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    scopes?: TenantApiKeyUpdatescopesInput | string[]
+  }
+
+  export type TenantApiKeyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    keyPrefix?: StringFieldUpdateOperationsInput | string
+    keyHash?: StringFieldUpdateOperationsInput | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    scopes?: TenantApiKeyUpdatescopesInput | string[]
   }
 
   export type EmailVerificationCreateInput = {
@@ -11144,6 +12475,51 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type TenantApiKeyCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    keyPrefix?: SortOrder
+    keyHash?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    lastUsedAt?: SortOrder
+    revokedAt?: SortOrder
+    scopes?: SortOrder
+  }
+
+  export type TenantApiKeyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    keyPrefix?: SortOrder
+    keyHash?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    lastUsedAt?: SortOrder
+    revokedAt?: SortOrder
+  }
+
+  export type TenantApiKeyMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    keyPrefix?: SortOrder
+    keyHash?: SortOrder
+    createdByUserId?: SortOrder
+    createdAt?: SortOrder
+    lastUsedAt?: SortOrder
+    revokedAt?: SortOrder
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -11337,14 +12713,6 @@ export namespace Prisma {
     in?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumSsoStatusFilter<$PrismaModel> | $Enums.SsoStatus
-  }
-
-  export type StringNullableListFilter<$PrismaModel = never> = {
-    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    has?: string | StringFieldRefInput<$PrismaModel> | null
-    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
-    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
-    isEmpty?: boolean
   }
 
   export type TenantSsoCountOrderByAggregateInput = {
@@ -11613,6 +12981,15 @@ export namespace Prisma {
     update?: EmailVerificationUpdateWithWhereUniqueWithoutUserInput | EmailVerificationUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: EmailVerificationUpdateManyWithWhereWithoutUserInput | EmailVerificationUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: EmailVerificationScalarWhereInput | EmailVerificationScalarWhereInput[]
+  }
+
+  export type TenantApiKeyCreatescopesInput = {
+    set: string[]
+  }
+
+  export type TenantApiKeyUpdatescopesInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type UserCreateNestedOneWithoutEmailVerificationsInput = {

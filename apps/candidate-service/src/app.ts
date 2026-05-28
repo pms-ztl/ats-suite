@@ -11,6 +11,7 @@ import sourcingRouter from "./routes/agent-sourcing.js";
 import offerRouter from "./routes/agent-offer.js";
 import experienceRouter from "./routes/agent-experience.js";
 import gdprRouter from "./routes/gdpr.js";
+import importRouter from "./routes/import.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -38,6 +39,8 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/offer", readAuthHeaders(), offerRouter);
   app.use("/internal/candidate-experience", readAuthHeaders(), experienceRouter);
   app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
+  // Phase 34a — CSV/Excel bulk candidate import.
+  app.use("/internal/candidates/import", readAuthHeaders(), importRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

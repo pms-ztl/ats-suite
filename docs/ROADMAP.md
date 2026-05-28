@@ -55,6 +55,7 @@ Every phase has a git commit; SHA is canonical.
 | 31a–e | Invite emails, email verification, tenant export, alerts, backup runbook | `508e3f4` |
 | 32a–f | Impersonation, support tickets, audit viewer, SECURITY.md, k6 + SLO, axe a11y | `24687e7` |
 | 33a–c | Gate Stripe behind super-admin approval; super-admin notify on every plan-changed event; public candidate-portal tenant branding | `a5fcbbb` |
+| 34a–f | 6 new resume input methods: CSV import, public ingest API + keys, email-to-apply, Drive/Dropbox sync, SMS/WhatsApp (Twilio), LinkedIn Chrome extension | (this commit) |
 
 ---
 

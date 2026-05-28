@@ -192,6 +192,22 @@ exports.Prisma.EmailTemplateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SmsConversationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  fromNumber: 'fromNumber',
+  toNumber: 'toNumber',
+  channel: 'channel',
+  step: 'step',
+  collectedName: 'collectedName',
+  collectedEmail: 'collectedEmail',
+  collectedResumeUrl: 'collectedResumeUrl',
+  candidateId: 'candidateId',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SupportTicketScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -277,6 +293,14 @@ exports.HitlStatus = exports.$Enums.HitlStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.SmsConvoStep = exports.$Enums.SmsConvoStep = {
+  GREETING: 'GREETING',
+  AWAITING_NAME: 'AWAITING_NAME',
+  AWAITING_EMAIL: 'AWAITING_EMAIL',
+  AWAITING_RESUME: 'AWAITING_RESUME',
+  COMPLETED: 'COMPLETED'
+};
+
 exports.SupportTicketStatus = exports.$Enums.SupportTicketStatus = {
   OPEN: 'OPEN',
   AWAITING_CUSTOMER: 'AWAITING_CUSTOMER',
@@ -296,6 +320,7 @@ exports.Prisma.ModelName = {
   HitlCheckpoint: 'HitlCheckpoint',
   TenantIntegration: 'TenantIntegration',
   EmailTemplate: 'EmailTemplate',
+  SmsConversation: 'SmsConversation',
   SupportTicket: 'SupportTicket',
   SupportTicketMessage: 'SupportTicketMessage'
 };

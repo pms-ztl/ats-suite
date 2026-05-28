@@ -10,6 +10,9 @@ import integrationsRouter from "./routes/integrations.js";
 import hitlRouter from "./routes/hitl.js";
 import emailTemplatesRouter from "./routes/email-templates.js";
 import supportRouter from "./routes/support.js";
+import inboundEmailRouter from "./routes/inbound-email.js";
+import cloudSyncRouter from "./routes/cloud-sync.js";
+import smsApplyRouter from "./routes/sms-apply.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -36,6 +39,15 @@ export function createApp(logger: Logger): Express {
   // Phase 32b — in-app support tickets. Tenant + super-admin routes share
   // this router; gates inside each handler.
   app.use("/internal/support", readAuthHeaders(), supportRouter);
+  // Phase 34c — email-to-apply. Public webhook endpoints (no auth header;
+  // each route validates its own provider-specific signature).
+  app.use("/internal/inbound-email", inboundEmailRouter);
+  // Phase 34d — Google Drive + Dropbox OAuth + folder picker.
+  app.use("/internal/cloud-sync", readAuthHeaders({ optional: true }), cloudSyncRouter);
+  // Phase 34e — Twilio SMS / WhatsApp apply. Webhooks (/sms, /whatsapp) are
+  // public but verify Twilio signature; /config and /conversations are auth-gated.
+  // express.urlencoded needed for Twilio's form-encoded webhook payloads.
+  app.use("/internal/twilio", express.urlencoded({ extended: false }), readAuthHeaders({ optional: true }), smsApplyRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

@@ -40,6 +40,12 @@ async function main() {
   const app = createApp(logger);
   const server = app.listen(PORT, () => logger.info({ port: PORT }, "notification-service listening"));
 
+  // Phase 34d — kick off the cloud-sync polling worker. Pull every 5 min,
+  // import any new resume files from connected Google Drive / Dropbox folders.
+  // Disable in tests / single-shot deploys with DISABLE_CLOUD_SYNC_WORKER=true.
+  const { startCloudSyncWorker } = await import("./lib/cloud-sync-worker.js");
+  startCloudSyncWorker();
+
   registerGracefulShutdown({
     logger,
     server,

@@ -16,19 +16,25 @@
     "@cdc-ats/nats-client": "*",
     "@prisma/client": "^6.0.0",
     "bullmq": "^5.34.0",
+    "dropbox": "^10.34.0",
     "express": "^4.21.2",
+    "form-data": "^4.0.5",
+    "googleapis": "^172.0.0",
     "ioredis": "^5.4.2",
+    "multer": "^2.1.1",
     "nodemailer": "^6.9.16",
     "pino": "^9.5.0",
+    "twilio": "^6.0.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/nodemailer": "^6.4.17",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.5",
+    "@types/nodemailer": "^6.4.17",
     "prisma": "^6.0.0",
+    "rimraf": "^6.0.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "rimraf": "^6.0.1"
+    "typescript": "^5.7.2"
   }
 }

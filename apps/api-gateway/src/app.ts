@@ -33,6 +33,7 @@ import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-
 import { gatewayAuth } from "./lib/auth-middleware.js";
 import authRouter from "./routes/auth.js";
 import impersonateRouter from "./routes/impersonate.js";
+import { publicIngestRouter } from "./routes/public-ingest.js";
 import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
 import { aggregatorRouter } from "./routes/aggregators.js";
@@ -371,6 +372,59 @@ export function createApp(logger: Logger): Express {
   // Phase 32c — audit log viewer. Read-only super-admin path proxied
   // straight to identity-service /internal/audit (GET only).
   app.use("/api/super-admin/audit", gatewayAuth(), requireSuperAdmin, forwardHeaders(identityUrl, "/internal/audit"));
+
+  // Phase 34b — public ingest API. NO gatewayAuth (it uses tenant API keys,
+  // verified inside the router via identity-service /api-keys/verify).
+  // Versioned /v1/* so future schema changes can land at /v2/*.
+  app.use("/api/v1", express.json({ limit: "2mb" }), publicIngestRouter);
+
+  // Tenant-side CRUD for those keys.
+  app.use("/api/api-keys", gatewayAuth(), forwardHeaders(identityUrl, "/internal/api-keys"));
+
+  // Phase 34c — inbound email webhooks (SendGrid/Mailgun/Postmark).
+  // Public; signature verified inside the notification-service routes.
+  // Mounted as a raw proxy without express.json() — we need the multipart
+  // body to flow through untouched (SendGrid sends multipart/form-data).
+  app.use(
+    "/api/inbound-email",
+    createProxyMiddleware({
+      target: notificationUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/inbound-email${path}`,
+      logger,
+    })
+  );
+
+  // Phase 34d — cloud sync OAuth. /callback is public (no JWT — the OAuth
+  // state param carries the tenantId). Everything else is auth-gated.
+  app.use(
+    "/api/cloud-sync",
+    (req: Request, res: Response, next: NextFunction) => {
+      // Skip auth for OAuth callbacks (the provider redirects here)
+      if (req.path.endsWith("/callback")) return next();
+      return gatewayAuth()(req, res, next);
+    },
+    forwardHeaders(notificationUrl, "/internal/cloud-sync"),
+  );
+
+  // Phase 34e — Twilio webhook ingress. Public + raw-body proxy so Twilio's
+  // form-encoded payload + signature header pass through untouched.
+  app.use(
+    "/api/twilio/sms",
+    createProxyMiddleware({
+      target: notificationUrl, changeOrigin: true,
+      pathRewrite: () => "/internal/twilio/sms", logger,
+    })
+  );
+  app.use(
+    "/api/twilio/whatsapp",
+    createProxyMiddleware({
+      target: notificationUrl, changeOrigin: true,
+      pathRewrite: () => "/internal/twilio/whatsapp", logger,
+    })
+  );
+  // Tenant-facing Twilio config + conversation log.
+  app.use("/api/twilio", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/twilio"));
 
   // Phase 32b — support tickets. Tenant side (open / list / reply) is
   // standard auth; super-admin side is gated inside the router.

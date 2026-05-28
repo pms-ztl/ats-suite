@@ -142,6 +142,19 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TenantApiKeyScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  name: 'name',
+  keyPrefix: 'keyPrefix',
+  keyHash: 'keyHash',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt',
+  revokedAt: 'revokedAt',
+  scopes: 'scopes'
+};
+
 exports.Prisma.EmailVerificationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -266,6 +279,7 @@ exports.SsoStatus = exports.$Enums.SsoStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  TenantApiKey: 'TenantApiKey',
   EmailVerification: 'EmailVerification',
   PasswordReset: 'PasswordReset',
   InviteToken: 'InviteToken',

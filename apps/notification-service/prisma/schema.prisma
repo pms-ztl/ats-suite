@@ -149,6 +149,45 @@ model EmailTemplate {
   @@index([tenantId])
 }
 
+// Phase 34e — SMS / WhatsApp apply conversation state.
+//
+// One row per (tenantId, fromNumber) — tracks where this applicant is in
+// the multi-turn flow. Conversations time out after 24h of inactivity
+// (worker prunes; we just check completedAt + updatedAt in queries).
+//
+// Flow:
+//   step=GREETING    → we sent the welcome, waiting for name
+//   step=AWAITING_NAME → got first message, asked for full name
+//   step=AWAITING_EMAIL → got name, asked for email
+//   step=AWAITING_RESUME → got email, asked them to text resume URL
+//   step=COMPLETED   → candidate created
+enum SmsConvoStep {
+  GREETING
+  AWAITING_NAME
+  AWAITING_EMAIL
+  AWAITING_RESUME
+  COMPLETED
+}
+
+model SmsConversation {
+  id           String         @id @default(uuid())
+  tenantId     String
+  fromNumber   String                                  // E.164 format
+  toNumber     String                                  // our Twilio number for this tenant
+  channel      String                                  // "sms" | "whatsapp"
+  step         SmsConvoStep   @default(GREETING)
+  collectedName  String?
+  collectedEmail String?
+  collectedResumeUrl String?
+  candidateId  String?                                 // set when conversation completes
+  completedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([tenantId, fromNumber])
+  @@index([tenantId, completedAt])
+}
+
 // Phase 32b — in-app support tickets.
 //
 // Tenants open tickets via /support; super-admins triage them via

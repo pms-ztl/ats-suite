@@ -14,6 +14,7 @@ import authPolishRouter from "./routes/auth-polish.js";
 import ssoRouter from "./routes/sso.js";
 import gdprRouter from "./routes/gdpr.js";
 import auditRouter from "./routes/audit.js";
+import apiKeysRouter from "./routes/api-keys.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -64,6 +65,9 @@ export function createApp(logger: Logger): Express {
   // — only the gateway/services should hit it); GET is super-admin only
   // (enforced inside the router via requireSuperAdmin).
   app.use("/internal/audit", readAuthHeaders({ optional: true }), auditRouter);
+  // Phase 34b — tenant API keys. CRUD requires tenant-admin (enforced inside);
+  // /verify is unauthenticated (the bearer key IS the auth).
+  app.use("/internal/api-keys", readAuthHeaders({ optional: true }), apiKeysRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

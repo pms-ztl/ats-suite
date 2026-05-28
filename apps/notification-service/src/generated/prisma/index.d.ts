@@ -39,6 +39,11 @@ export type TenantIntegration = $Result.DefaultSelection<Prisma.$TenantIntegrati
  */
 export type EmailTemplate = $Result.DefaultSelection<Prisma.$EmailTemplatePayload>
 /**
+ * Model SmsConversation
+ * 
+ */
+export type SmsConversation = $Result.DefaultSelection<Prisma.$SmsConversationPayload>
+/**
  * Model SupportTicket
  * 
  */
@@ -95,6 +100,17 @@ export const HitlStatus: {
 export type HitlStatus = (typeof HitlStatus)[keyof typeof HitlStatus]
 
 
+export const SmsConvoStep: {
+  GREETING: 'GREETING',
+  AWAITING_NAME: 'AWAITING_NAME',
+  AWAITING_EMAIL: 'AWAITING_EMAIL',
+  AWAITING_RESUME: 'AWAITING_RESUME',
+  COMPLETED: 'COMPLETED'
+};
+
+export type SmsConvoStep = (typeof SmsConvoStep)[keyof typeof SmsConvoStep]
+
+
 export const SupportTicketStatus: {
   OPEN: 'OPEN',
   AWAITING_CUSTOMER: 'AWAITING_CUSTOMER',
@@ -130,6 +146,10 @@ export const DeliveryStatus: typeof $Enums.DeliveryStatus
 export type HitlStatus = $Enums.HitlStatus
 
 export const HitlStatus: typeof $Enums.HitlStatus
+
+export type SmsConvoStep = $Enums.SmsConvoStep
+
+export const SmsConvoStep: typeof $Enums.SmsConvoStep
 
 export type SupportTicketStatus = $Enums.SupportTicketStatus
 
@@ -306,6 +326,16 @@ export class PrismaClient<
     * ```
     */
   get emailTemplate(): Prisma.EmailTemplateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.smsConversation`: Exposes CRUD operations for the **SmsConversation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SmsConversations
+    * const smsConversations = await prisma.smsConversation.findMany()
+    * ```
+    */
+  get smsConversation(): Prisma.SmsConversationDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.supportTicket`: Exposes CRUD operations for the **SupportTicket** model.
@@ -772,6 +802,7 @@ export namespace Prisma {
     HitlCheckpoint: 'HitlCheckpoint',
     TenantIntegration: 'TenantIntegration',
     EmailTemplate: 'EmailTemplate',
+    SmsConversation: 'SmsConversation',
     SupportTicket: 'SupportTicket',
     SupportTicketMessage: 'SupportTicketMessage'
   };
@@ -792,7 +823,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "notification" | "notificationDelivery" | "hitlCheckpoint" | "tenantIntegration" | "emailTemplate" | "supportTicket" | "supportTicketMessage"
+      modelProps: "notification" | "notificationDelivery" | "hitlCheckpoint" | "tenantIntegration" | "emailTemplate" | "smsConversation" | "supportTicket" | "supportTicketMessage"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1166,6 +1197,80 @@ export namespace Prisma {
           }
         }
       }
+      SmsConversation: {
+        payload: Prisma.$SmsConversationPayload<ExtArgs>
+        fields: Prisma.SmsConversationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SmsConversationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SmsConversationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          findFirst: {
+            args: Prisma.SmsConversationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SmsConversationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          findMany: {
+            args: Prisma.SmsConversationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>[]
+          }
+          create: {
+            args: Prisma.SmsConversationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          createMany: {
+            args: Prisma.SmsConversationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SmsConversationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>[]
+          }
+          delete: {
+            args: Prisma.SmsConversationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          update: {
+            args: Prisma.SmsConversationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          deleteMany: {
+            args: Prisma.SmsConversationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SmsConversationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SmsConversationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>[]
+          }
+          upsert: {
+            args: Prisma.SmsConversationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SmsConversationPayload>
+          }
+          aggregate: {
+            args: Prisma.SmsConversationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSmsConversation>
+          }
+          groupBy: {
+            args: Prisma.SmsConversationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SmsConversationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SmsConversationCountArgs<ExtArgs>
+            result: $Utils.Optional<SmsConversationCountAggregateOutputType> | number
+          }
+        }
+      }
       SupportTicket: {
         payload: Prisma.$SupportTicketPayload<ExtArgs>
         fields: Prisma.SupportTicketFieldRefs
@@ -1415,6 +1520,7 @@ export namespace Prisma {
     hitlCheckpoint?: HitlCheckpointOmit
     tenantIntegration?: TenantIntegrationOmit
     emailTemplate?: EmailTemplateOmit
+    smsConversation?: SmsConversationOmit
     supportTicket?: SupportTicketOmit
     supportTicketMessage?: SupportTicketMessageOmit
   }
@@ -7119,6 +7225,1105 @@ export namespace Prisma {
 
 
   /**
+   * Model SmsConversation
+   */
+
+  export type AggregateSmsConversation = {
+    _count: SmsConversationCountAggregateOutputType | null
+    _min: SmsConversationMinAggregateOutputType | null
+    _max: SmsConversationMaxAggregateOutputType | null
+  }
+
+  export type SmsConversationMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    fromNumber: string | null
+    toNumber: string | null
+    channel: string | null
+    step: $Enums.SmsConvoStep | null
+    collectedName: string | null
+    collectedEmail: string | null
+    collectedResumeUrl: string | null
+    candidateId: string | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SmsConversationMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    fromNumber: string | null
+    toNumber: string | null
+    channel: string | null
+    step: $Enums.SmsConvoStep | null
+    collectedName: string | null
+    collectedEmail: string | null
+    collectedResumeUrl: string | null
+    candidateId: string | null
+    completedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SmsConversationCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    fromNumber: number
+    toNumber: number
+    channel: number
+    step: number
+    collectedName: number
+    collectedEmail: number
+    collectedResumeUrl: number
+    candidateId: number
+    completedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SmsConversationMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    fromNumber?: true
+    toNumber?: true
+    channel?: true
+    step?: true
+    collectedName?: true
+    collectedEmail?: true
+    collectedResumeUrl?: true
+    candidateId?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SmsConversationMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    fromNumber?: true
+    toNumber?: true
+    channel?: true
+    step?: true
+    collectedName?: true
+    collectedEmail?: true
+    collectedResumeUrl?: true
+    candidateId?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SmsConversationCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    fromNumber?: true
+    toNumber?: true
+    channel?: true
+    step?: true
+    collectedName?: true
+    collectedEmail?: true
+    collectedResumeUrl?: true
+    candidateId?: true
+    completedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SmsConversationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SmsConversation to aggregate.
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SmsConversations to fetch.
+     */
+    orderBy?: SmsConversationOrderByWithRelationInput | SmsConversationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SmsConversationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SmsConversations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SmsConversations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SmsConversations
+    **/
+    _count?: true | SmsConversationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SmsConversationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SmsConversationMaxAggregateInputType
+  }
+
+  export type GetSmsConversationAggregateType<T extends SmsConversationAggregateArgs> = {
+        [P in keyof T & keyof AggregateSmsConversation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSmsConversation[P]>
+      : GetScalarType<T[P], AggregateSmsConversation[P]>
+  }
+
+
+
+
+  export type SmsConversationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SmsConversationWhereInput
+    orderBy?: SmsConversationOrderByWithAggregationInput | SmsConversationOrderByWithAggregationInput[]
+    by: SmsConversationScalarFieldEnum[] | SmsConversationScalarFieldEnum
+    having?: SmsConversationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SmsConversationCountAggregateInputType | true
+    _min?: SmsConversationMinAggregateInputType
+    _max?: SmsConversationMaxAggregateInputType
+  }
+
+  export type SmsConversationGroupByOutputType = {
+    id: string
+    tenantId: string
+    fromNumber: string
+    toNumber: string
+    channel: string
+    step: $Enums.SmsConvoStep
+    collectedName: string | null
+    collectedEmail: string | null
+    collectedResumeUrl: string | null
+    candidateId: string | null
+    completedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SmsConversationCountAggregateOutputType | null
+    _min: SmsConversationMinAggregateOutputType | null
+    _max: SmsConversationMaxAggregateOutputType | null
+  }
+
+  type GetSmsConversationGroupByPayload<T extends SmsConversationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SmsConversationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SmsConversationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SmsConversationGroupByOutputType[P]>
+            : GetScalarType<T[P], SmsConversationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SmsConversationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    fromNumber?: boolean
+    toNumber?: boolean
+    channel?: boolean
+    step?: boolean
+    collectedName?: boolean
+    collectedEmail?: boolean
+    collectedResumeUrl?: boolean
+    candidateId?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["smsConversation"]>
+
+  export type SmsConversationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    fromNumber?: boolean
+    toNumber?: boolean
+    channel?: boolean
+    step?: boolean
+    collectedName?: boolean
+    collectedEmail?: boolean
+    collectedResumeUrl?: boolean
+    candidateId?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["smsConversation"]>
+
+  export type SmsConversationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    fromNumber?: boolean
+    toNumber?: boolean
+    channel?: boolean
+    step?: boolean
+    collectedName?: boolean
+    collectedEmail?: boolean
+    collectedResumeUrl?: boolean
+    candidateId?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["smsConversation"]>
+
+  export type SmsConversationSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    fromNumber?: boolean
+    toNumber?: boolean
+    channel?: boolean
+    step?: boolean
+    collectedName?: boolean
+    collectedEmail?: boolean
+    collectedResumeUrl?: boolean
+    candidateId?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SmsConversationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "fromNumber" | "toNumber" | "channel" | "step" | "collectedName" | "collectedEmail" | "collectedResumeUrl" | "candidateId" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["smsConversation"]>
+
+  export type $SmsConversationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SmsConversation"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      fromNumber: string
+      toNumber: string
+      channel: string
+      step: $Enums.SmsConvoStep
+      collectedName: string | null
+      collectedEmail: string | null
+      collectedResumeUrl: string | null
+      candidateId: string | null
+      completedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["smsConversation"]>
+    composites: {}
+  }
+
+  type SmsConversationGetPayload<S extends boolean | null | undefined | SmsConversationDefaultArgs> = $Result.GetResult<Prisma.$SmsConversationPayload, S>
+
+  type SmsConversationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SmsConversationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SmsConversationCountAggregateInputType | true
+    }
+
+  export interface SmsConversationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SmsConversation'], meta: { name: 'SmsConversation' } }
+    /**
+     * Find zero or one SmsConversation that matches the filter.
+     * @param {SmsConversationFindUniqueArgs} args - Arguments to find a SmsConversation
+     * @example
+     * // Get one SmsConversation
+     * const smsConversation = await prisma.smsConversation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SmsConversationFindUniqueArgs>(args: SelectSubset<T, SmsConversationFindUniqueArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SmsConversation that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SmsConversationFindUniqueOrThrowArgs} args - Arguments to find a SmsConversation
+     * @example
+     * // Get one SmsConversation
+     * const smsConversation = await prisma.smsConversation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SmsConversationFindUniqueOrThrowArgs>(args: SelectSubset<T, SmsConversationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SmsConversation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationFindFirstArgs} args - Arguments to find a SmsConversation
+     * @example
+     * // Get one SmsConversation
+     * const smsConversation = await prisma.smsConversation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SmsConversationFindFirstArgs>(args?: SelectSubset<T, SmsConversationFindFirstArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SmsConversation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationFindFirstOrThrowArgs} args - Arguments to find a SmsConversation
+     * @example
+     * // Get one SmsConversation
+     * const smsConversation = await prisma.smsConversation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SmsConversationFindFirstOrThrowArgs>(args?: SelectSubset<T, SmsConversationFindFirstOrThrowArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SmsConversations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SmsConversations
+     * const smsConversations = await prisma.smsConversation.findMany()
+     * 
+     * // Get first 10 SmsConversations
+     * const smsConversations = await prisma.smsConversation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const smsConversationWithIdOnly = await prisma.smsConversation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SmsConversationFindManyArgs>(args?: SelectSubset<T, SmsConversationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SmsConversation.
+     * @param {SmsConversationCreateArgs} args - Arguments to create a SmsConversation.
+     * @example
+     * // Create one SmsConversation
+     * const SmsConversation = await prisma.smsConversation.create({
+     *   data: {
+     *     // ... data to create a SmsConversation
+     *   }
+     * })
+     * 
+     */
+    create<T extends SmsConversationCreateArgs>(args: SelectSubset<T, SmsConversationCreateArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SmsConversations.
+     * @param {SmsConversationCreateManyArgs} args - Arguments to create many SmsConversations.
+     * @example
+     * // Create many SmsConversations
+     * const smsConversation = await prisma.smsConversation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SmsConversationCreateManyArgs>(args?: SelectSubset<T, SmsConversationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SmsConversations and returns the data saved in the database.
+     * @param {SmsConversationCreateManyAndReturnArgs} args - Arguments to create many SmsConversations.
+     * @example
+     * // Create many SmsConversations
+     * const smsConversation = await prisma.smsConversation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SmsConversations and only return the `id`
+     * const smsConversationWithIdOnly = await prisma.smsConversation.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SmsConversationCreateManyAndReturnArgs>(args?: SelectSubset<T, SmsConversationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SmsConversation.
+     * @param {SmsConversationDeleteArgs} args - Arguments to delete one SmsConversation.
+     * @example
+     * // Delete one SmsConversation
+     * const SmsConversation = await prisma.smsConversation.delete({
+     *   where: {
+     *     // ... filter to delete one SmsConversation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SmsConversationDeleteArgs>(args: SelectSubset<T, SmsConversationDeleteArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SmsConversation.
+     * @param {SmsConversationUpdateArgs} args - Arguments to update one SmsConversation.
+     * @example
+     * // Update one SmsConversation
+     * const smsConversation = await prisma.smsConversation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SmsConversationUpdateArgs>(args: SelectSubset<T, SmsConversationUpdateArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SmsConversations.
+     * @param {SmsConversationDeleteManyArgs} args - Arguments to filter SmsConversations to delete.
+     * @example
+     * // Delete a few SmsConversations
+     * const { count } = await prisma.smsConversation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SmsConversationDeleteManyArgs>(args?: SelectSubset<T, SmsConversationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SmsConversations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SmsConversations
+     * const smsConversation = await prisma.smsConversation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SmsConversationUpdateManyArgs>(args: SelectSubset<T, SmsConversationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SmsConversations and returns the data updated in the database.
+     * @param {SmsConversationUpdateManyAndReturnArgs} args - Arguments to update many SmsConversations.
+     * @example
+     * // Update many SmsConversations
+     * const smsConversation = await prisma.smsConversation.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SmsConversations and only return the `id`
+     * const smsConversationWithIdOnly = await prisma.smsConversation.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SmsConversationUpdateManyAndReturnArgs>(args: SelectSubset<T, SmsConversationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SmsConversation.
+     * @param {SmsConversationUpsertArgs} args - Arguments to update or create a SmsConversation.
+     * @example
+     * // Update or create a SmsConversation
+     * const smsConversation = await prisma.smsConversation.upsert({
+     *   create: {
+     *     // ... data to create a SmsConversation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SmsConversation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SmsConversationUpsertArgs>(args: SelectSubset<T, SmsConversationUpsertArgs<ExtArgs>>): Prisma__SmsConversationClient<$Result.GetResult<Prisma.$SmsConversationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SmsConversations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationCountArgs} args - Arguments to filter SmsConversations to count.
+     * @example
+     * // Count the number of SmsConversations
+     * const count = await prisma.smsConversation.count({
+     *   where: {
+     *     // ... the filter for the SmsConversations we want to count
+     *   }
+     * })
+    **/
+    count<T extends SmsConversationCountArgs>(
+      args?: Subset<T, SmsConversationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SmsConversationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SmsConversation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SmsConversationAggregateArgs>(args: Subset<T, SmsConversationAggregateArgs>): Prisma.PrismaPromise<GetSmsConversationAggregateType<T>>
+
+    /**
+     * Group by SmsConversation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SmsConversationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SmsConversationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SmsConversationGroupByArgs['orderBy'] }
+        : { orderBy?: SmsConversationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SmsConversationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSmsConversationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SmsConversation model
+   */
+  readonly fields: SmsConversationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SmsConversation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SmsConversationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SmsConversation model
+   */
+  interface SmsConversationFieldRefs {
+    readonly id: FieldRef<"SmsConversation", 'String'>
+    readonly tenantId: FieldRef<"SmsConversation", 'String'>
+    readonly fromNumber: FieldRef<"SmsConversation", 'String'>
+    readonly toNumber: FieldRef<"SmsConversation", 'String'>
+    readonly channel: FieldRef<"SmsConversation", 'String'>
+    readonly step: FieldRef<"SmsConversation", 'SmsConvoStep'>
+    readonly collectedName: FieldRef<"SmsConversation", 'String'>
+    readonly collectedEmail: FieldRef<"SmsConversation", 'String'>
+    readonly collectedResumeUrl: FieldRef<"SmsConversation", 'String'>
+    readonly candidateId: FieldRef<"SmsConversation", 'String'>
+    readonly completedAt: FieldRef<"SmsConversation", 'DateTime'>
+    readonly createdAt: FieldRef<"SmsConversation", 'DateTime'>
+    readonly updatedAt: FieldRef<"SmsConversation", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SmsConversation findUnique
+   */
+  export type SmsConversationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter, which SmsConversation to fetch.
+     */
+    where: SmsConversationWhereUniqueInput
+  }
+
+  /**
+   * SmsConversation findUniqueOrThrow
+   */
+  export type SmsConversationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter, which SmsConversation to fetch.
+     */
+    where: SmsConversationWhereUniqueInput
+  }
+
+  /**
+   * SmsConversation findFirst
+   */
+  export type SmsConversationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter, which SmsConversation to fetch.
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SmsConversations to fetch.
+     */
+    orderBy?: SmsConversationOrderByWithRelationInput | SmsConversationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SmsConversations.
+     */
+    cursor?: SmsConversationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SmsConversations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SmsConversations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SmsConversations.
+     */
+    distinct?: SmsConversationScalarFieldEnum | SmsConversationScalarFieldEnum[]
+  }
+
+  /**
+   * SmsConversation findFirstOrThrow
+   */
+  export type SmsConversationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter, which SmsConversation to fetch.
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SmsConversations to fetch.
+     */
+    orderBy?: SmsConversationOrderByWithRelationInput | SmsConversationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SmsConversations.
+     */
+    cursor?: SmsConversationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SmsConversations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SmsConversations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SmsConversations.
+     */
+    distinct?: SmsConversationScalarFieldEnum | SmsConversationScalarFieldEnum[]
+  }
+
+  /**
+   * SmsConversation findMany
+   */
+  export type SmsConversationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter, which SmsConversations to fetch.
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SmsConversations to fetch.
+     */
+    orderBy?: SmsConversationOrderByWithRelationInput | SmsConversationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SmsConversations.
+     */
+    cursor?: SmsConversationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SmsConversations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SmsConversations.
+     */
+    skip?: number
+    distinct?: SmsConversationScalarFieldEnum | SmsConversationScalarFieldEnum[]
+  }
+
+  /**
+   * SmsConversation create
+   */
+  export type SmsConversationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SmsConversation.
+     */
+    data: XOR<SmsConversationCreateInput, SmsConversationUncheckedCreateInput>
+  }
+
+  /**
+   * SmsConversation createMany
+   */
+  export type SmsConversationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SmsConversations.
+     */
+    data: SmsConversationCreateManyInput | SmsConversationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SmsConversation createManyAndReturn
+   */
+  export type SmsConversationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * The data used to create many SmsConversations.
+     */
+    data: SmsConversationCreateManyInput | SmsConversationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SmsConversation update
+   */
+  export type SmsConversationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SmsConversation.
+     */
+    data: XOR<SmsConversationUpdateInput, SmsConversationUncheckedUpdateInput>
+    /**
+     * Choose, which SmsConversation to update.
+     */
+    where: SmsConversationWhereUniqueInput
+  }
+
+  /**
+   * SmsConversation updateMany
+   */
+  export type SmsConversationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SmsConversations.
+     */
+    data: XOR<SmsConversationUpdateManyMutationInput, SmsConversationUncheckedUpdateManyInput>
+    /**
+     * Filter which SmsConversations to update
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * Limit how many SmsConversations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SmsConversation updateManyAndReturn
+   */
+  export type SmsConversationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * The data used to update SmsConversations.
+     */
+    data: XOR<SmsConversationUpdateManyMutationInput, SmsConversationUncheckedUpdateManyInput>
+    /**
+     * Filter which SmsConversations to update
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * Limit how many SmsConversations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SmsConversation upsert
+   */
+  export type SmsConversationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SmsConversation to update in case it exists.
+     */
+    where: SmsConversationWhereUniqueInput
+    /**
+     * In case the SmsConversation found by the `where` argument doesn't exist, create a new SmsConversation with this data.
+     */
+    create: XOR<SmsConversationCreateInput, SmsConversationUncheckedCreateInput>
+    /**
+     * In case the SmsConversation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SmsConversationUpdateInput, SmsConversationUncheckedUpdateInput>
+  }
+
+  /**
+   * SmsConversation delete
+   */
+  export type SmsConversationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+    /**
+     * Filter which SmsConversation to delete.
+     */
+    where: SmsConversationWhereUniqueInput
+  }
+
+  /**
+   * SmsConversation deleteMany
+   */
+  export type SmsConversationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SmsConversations to delete
+     */
+    where?: SmsConversationWhereInput
+    /**
+     * Limit how many SmsConversations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SmsConversation without action
+   */
+  export type SmsConversationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SmsConversation
+     */
+    select?: SmsConversationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SmsConversation
+     */
+    omit?: SmsConversationOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model SupportTicket
    */
 
@@ -9476,6 +10681,25 @@ export namespace Prisma {
   export type EmailTemplateScalarFieldEnum = (typeof EmailTemplateScalarFieldEnum)[keyof typeof EmailTemplateScalarFieldEnum]
 
 
+  export const SmsConversationScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    fromNumber: 'fromNumber',
+    toNumber: 'toNumber',
+    channel: 'channel',
+    step: 'step',
+    collectedName: 'collectedName',
+    collectedEmail: 'collectedEmail',
+    collectedResumeUrl: 'collectedResumeUrl',
+    candidateId: 'candidateId',
+    completedAt: 'completedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SmsConversationScalarFieldEnum = (typeof SmsConversationScalarFieldEnum)[keyof typeof SmsConversationScalarFieldEnum]
+
+
   export const SupportTicketScalarFieldEnum: {
     id: 'id',
     tenantId: 'tenantId',
@@ -9677,6 +10901,20 @@ export namespace Prisma {
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'SmsConvoStep'
+   */
+  export type EnumSmsConvoStepFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SmsConvoStep'>
+    
+
+
+  /**
+   * Reference to a field of type 'SmsConvoStep[]'
+   */
+  export type ListEnumSmsConvoStepFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SmsConvoStep[]'>
     
 
 
@@ -10150,6 +11388,99 @@ export namespace Prisma {
     enabled?: BoolWithAggregatesFilter<"EmailTemplate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"EmailTemplate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"EmailTemplate"> | Date | string
+  }
+
+  export type SmsConversationWhereInput = {
+    AND?: SmsConversationWhereInput | SmsConversationWhereInput[]
+    OR?: SmsConversationWhereInput[]
+    NOT?: SmsConversationWhereInput | SmsConversationWhereInput[]
+    id?: StringFilter<"SmsConversation"> | string
+    tenantId?: StringFilter<"SmsConversation"> | string
+    fromNumber?: StringFilter<"SmsConversation"> | string
+    toNumber?: StringFilter<"SmsConversation"> | string
+    channel?: StringFilter<"SmsConversation"> | string
+    step?: EnumSmsConvoStepFilter<"SmsConversation"> | $Enums.SmsConvoStep
+    collectedName?: StringNullableFilter<"SmsConversation"> | string | null
+    collectedEmail?: StringNullableFilter<"SmsConversation"> | string | null
+    collectedResumeUrl?: StringNullableFilter<"SmsConversation"> | string | null
+    candidateId?: StringNullableFilter<"SmsConversation"> | string | null
+    completedAt?: DateTimeNullableFilter<"SmsConversation"> | Date | string | null
+    createdAt?: DateTimeFilter<"SmsConversation"> | Date | string
+    updatedAt?: DateTimeFilter<"SmsConversation"> | Date | string
+  }
+
+  export type SmsConversationOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    fromNumber?: SortOrder
+    toNumber?: SortOrder
+    channel?: SortOrder
+    step?: SortOrder
+    collectedName?: SortOrderInput | SortOrder
+    collectedEmail?: SortOrderInput | SortOrder
+    collectedResumeUrl?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SmsConversationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId_fromNumber?: SmsConversationTenantIdFromNumberCompoundUniqueInput
+    AND?: SmsConversationWhereInput | SmsConversationWhereInput[]
+    OR?: SmsConversationWhereInput[]
+    NOT?: SmsConversationWhereInput | SmsConversationWhereInput[]
+    tenantId?: StringFilter<"SmsConversation"> | string
+    fromNumber?: StringFilter<"SmsConversation"> | string
+    toNumber?: StringFilter<"SmsConversation"> | string
+    channel?: StringFilter<"SmsConversation"> | string
+    step?: EnumSmsConvoStepFilter<"SmsConversation"> | $Enums.SmsConvoStep
+    collectedName?: StringNullableFilter<"SmsConversation"> | string | null
+    collectedEmail?: StringNullableFilter<"SmsConversation"> | string | null
+    collectedResumeUrl?: StringNullableFilter<"SmsConversation"> | string | null
+    candidateId?: StringNullableFilter<"SmsConversation"> | string | null
+    completedAt?: DateTimeNullableFilter<"SmsConversation"> | Date | string | null
+    createdAt?: DateTimeFilter<"SmsConversation"> | Date | string
+    updatedAt?: DateTimeFilter<"SmsConversation"> | Date | string
+  }, "id" | "tenantId_fromNumber">
+
+  export type SmsConversationOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    fromNumber?: SortOrder
+    toNumber?: SortOrder
+    channel?: SortOrder
+    step?: SortOrder
+    collectedName?: SortOrderInput | SortOrder
+    collectedEmail?: SortOrderInput | SortOrder
+    collectedResumeUrl?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SmsConversationCountOrderByAggregateInput
+    _max?: SmsConversationMaxOrderByAggregateInput
+    _min?: SmsConversationMinOrderByAggregateInput
+  }
+
+  export type SmsConversationScalarWhereWithAggregatesInput = {
+    AND?: SmsConversationScalarWhereWithAggregatesInput | SmsConversationScalarWhereWithAggregatesInput[]
+    OR?: SmsConversationScalarWhereWithAggregatesInput[]
+    NOT?: SmsConversationScalarWhereWithAggregatesInput | SmsConversationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SmsConversation"> | string
+    tenantId?: StringWithAggregatesFilter<"SmsConversation"> | string
+    fromNumber?: StringWithAggregatesFilter<"SmsConversation"> | string
+    toNumber?: StringWithAggregatesFilter<"SmsConversation"> | string
+    channel?: StringWithAggregatesFilter<"SmsConversation"> | string
+    step?: EnumSmsConvoStepWithAggregatesFilter<"SmsConversation"> | $Enums.SmsConvoStep
+    collectedName?: StringNullableWithAggregatesFilter<"SmsConversation"> | string | null
+    collectedEmail?: StringNullableWithAggregatesFilter<"SmsConversation"> | string | null
+    collectedResumeUrl?: StringNullableWithAggregatesFilter<"SmsConversation"> | string | null
+    candidateId?: StringNullableWithAggregatesFilter<"SmsConversation"> | string | null
+    completedAt?: DateTimeNullableWithAggregatesFilter<"SmsConversation"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SmsConversation"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SmsConversation"> | Date | string
   }
 
   export type SupportTicketWhereInput = {
@@ -10808,6 +12139,118 @@ export namespace Prisma {
     bodyText?: StringFieldUpdateOperationsInput | string
     variables?: JsonNullValueInput | InputJsonValue
     enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SmsConversationCreateInput = {
+    id?: string
+    tenantId: string
+    fromNumber: string
+    toNumber: string
+    channel: string
+    step?: $Enums.SmsConvoStep
+    collectedName?: string | null
+    collectedEmail?: string | null
+    collectedResumeUrl?: string | null
+    candidateId?: string | null
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SmsConversationUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    fromNumber: string
+    toNumber: string
+    channel: string
+    step?: $Enums.SmsConvoStep
+    collectedName?: string | null
+    collectedEmail?: string | null
+    collectedResumeUrl?: string | null
+    candidateId?: string | null
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SmsConversationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fromNumber?: StringFieldUpdateOperationsInput | string
+    toNumber?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    step?: EnumSmsConvoStepFieldUpdateOperationsInput | $Enums.SmsConvoStep
+    collectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedResumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SmsConversationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fromNumber?: StringFieldUpdateOperationsInput | string
+    toNumber?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    step?: EnumSmsConvoStepFieldUpdateOperationsInput | $Enums.SmsConvoStep
+    collectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedResumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SmsConversationCreateManyInput = {
+    id?: string
+    tenantId: string
+    fromNumber: string
+    toNumber: string
+    channel: string
+    step?: $Enums.SmsConvoStep
+    collectedName?: string | null
+    collectedEmail?: string | null
+    collectedResumeUrl?: string | null
+    candidateId?: string | null
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SmsConversationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fromNumber?: StringFieldUpdateOperationsInput | string
+    toNumber?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    step?: EnumSmsConvoStepFieldUpdateOperationsInput | $Enums.SmsConvoStep
+    collectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedResumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SmsConversationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fromNumber?: StringFieldUpdateOperationsInput | string
+    toNumber?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    step?: EnumSmsConvoStepFieldUpdateOperationsInput | $Enums.SmsConvoStep
+    collectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    collectedResumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11574,6 +13017,76 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type EnumSmsConvoStepFilter<$PrismaModel = never> = {
+    equals?: $Enums.SmsConvoStep | EnumSmsConvoStepFieldRefInput<$PrismaModel>
+    in?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    not?: NestedEnumSmsConvoStepFilter<$PrismaModel> | $Enums.SmsConvoStep
+  }
+
+  export type SmsConversationTenantIdFromNumberCompoundUniqueInput = {
+    tenantId: string
+    fromNumber: string
+  }
+
+  export type SmsConversationCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    fromNumber?: SortOrder
+    toNumber?: SortOrder
+    channel?: SortOrder
+    step?: SortOrder
+    collectedName?: SortOrder
+    collectedEmail?: SortOrder
+    collectedResumeUrl?: SortOrder
+    candidateId?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SmsConversationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    fromNumber?: SortOrder
+    toNumber?: SortOrder
+    channel?: SortOrder
+    step?: SortOrder
+    collectedName?: SortOrder
+    collectedEmail?: SortOrder
+    collectedResumeUrl?: SortOrder
+    candidateId?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SmsConversationMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    fromNumber?: SortOrder
+    toNumber?: SortOrder
+    channel?: SortOrder
+    step?: SortOrder
+    collectedName?: SortOrder
+    collectedEmail?: SortOrder
+    collectedResumeUrl?: SortOrder
+    candidateId?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumSmsConvoStepWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SmsConvoStep | EnumSmsConvoStepFieldRefInput<$PrismaModel>
+    in?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    not?: NestedEnumSmsConvoStepWithAggregatesFilter<$PrismaModel> | $Enums.SmsConvoStep
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSmsConvoStepFilter<$PrismaModel>
+    _max?: NestedEnumSmsConvoStepFilter<$PrismaModel>
+  }
+
   export type EnumSupportTicketStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.SupportTicketStatus | EnumSupportTicketStatusFieldRefInput<$PrismaModel>
     in?: $Enums.SupportTicketStatus[] | ListEnumSupportTicketStatusFieldRefInput<$PrismaModel>
@@ -11808,6 +13321,10 @@ export namespace Prisma {
 
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
+  }
+
+  export type EnumSmsConvoStepFieldUpdateOperationsInput = {
+    set?: $Enums.SmsConvoStep
   }
 
   export type SupportTicketMessageCreateNestedManyWithoutTicketInput = {
@@ -12160,6 +13677,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSmsConvoStepFilter<$PrismaModel = never> = {
+    equals?: $Enums.SmsConvoStep | EnumSmsConvoStepFieldRefInput<$PrismaModel>
+    in?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    not?: NestedEnumSmsConvoStepFilter<$PrismaModel> | $Enums.SmsConvoStep
+  }
+
+  export type NestedEnumSmsConvoStepWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SmsConvoStep | EnumSmsConvoStepFieldRefInput<$PrismaModel>
+    in?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SmsConvoStep[] | ListEnumSmsConvoStepFieldRefInput<$PrismaModel>
+    not?: NestedEnumSmsConvoStepWithAggregatesFilter<$PrismaModel> | $Enums.SmsConvoStep
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSmsConvoStepFilter<$PrismaModel>
+    _max?: NestedEnumSmsConvoStepFilter<$PrismaModel>
   }
 
   export type NestedEnumSupportTicketStatusFilter<$PrismaModel = never> = {

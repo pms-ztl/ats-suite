@@ -60,6 +60,38 @@ model User {
   @@index([externalId])
 }
 
+// Phase 34b — per-tenant API keys for the public ingest API.
+//
+// Tenants generate one or more keys (via /settings/api-keys) and hand them
+// to external systems (job boards, the Chrome extension, scripts). Every
+// request to /api/v1/* carries Authorization: Bearer <key>.
+//
+// Security:
+//   - Only the prefix (first 8 chars) is shown after creation; the full
+//     key is shown ONCE at creation time and never again
+//   - keyHash stores argon2id(key); we never store the plaintext
+//   - revokedAt: when set, key is rejected immediately (no need to delete)
+//   - lastUsedAt: updated on each successful auth so tenants can see
+//     which keys are dormant
+//   - Per-key rate-limit counters live in Redis (not in this schema)
+model TenantApiKey {
+  id           String    @id @default(uuid())
+  tenantId     String
+  name         String    @db.VarChar(80)        // human label, e.g. "LinkedIn extension"
+  keyPrefix    String                            // first 8 chars of plaintext, e.g. "ats_abcd"
+  keyHash      String                            // argon2id hash of the full plaintext key
+  createdByUserId String
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+  // Scopes — array of strings like "candidates:write". Empty = no permission.
+  // For v1 we ship one scope "candidates:write"; future-proofing the column.
+  scopes       String[]  @default([])
+
+  @@index([tenantId, revokedAt])
+  @@index([keyPrefix])
+}
+
 // Phase 31b — email verification tokens. Created by /register-company and
 // /resend-verification. Consumed by /verify-email. Single-use, 24h expiry
 // (longer than password resets — users often don't see the email for hours).
