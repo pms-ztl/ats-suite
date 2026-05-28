@@ -1,19 +1,18 @@
 /**
- * Phase 35a — real text extraction from PDF / DOC / DOCX / TXT.
- *
- * Before 35a: `buffer.toString("utf-8")` produced gibberish on PDFs.
- * Now: per-mime-type extractor with proper libraries.
+ * Phase 35a + 36a/b — text extraction from PDF / DOC / DOCX / TXT.
  *
  * Libraries:
- *   - pdf-parse — pure-JS PDF parser, works in Node without native deps
+ *   - pdf-parse — pure-JS PDF parser (text PDFs)
+ *   - tesseract.js (via ocr.ts) — OCR fallback for scanned-image PDFs
+ *     (Phase 36a; opt-in via ENABLE_OCR=true)
  *   - mammoth — DOCX → plain text + HTML; we use plain text
- *   - .doc (legacy Word) is best-effort via mammoth's fallback; very old
- *     binary .doc files may still produce garbage. Modern .docx works fine.
+ *   - word-extractor — pre-2007 binary .doc (Phase 36b, pure JS)
  *
  * The extractor returns up to MAX_CHARS to bound LLM token usage. Most
  * resumes are < 4000 chars; the cap is generous.
  */
 import { createLogger } from "@cdc-ats/common";
+import { isOcrEnabled, ocrPdf } from "./ocr.js";
 
 const logger = createLogger({ serviceName: "resume-service:extract" });
 
@@ -55,8 +54,22 @@ export async function extractResumeText(
       const result = await pdfParse(buffer);
       text = result.text ?? "";
       pageCount = result.numpages;
-      if (!text.trim()) {
-        warnings.push("PDF contained no extractable text — possibly a scanned image. OCR not yet wired.");
+
+      // Phase 36a — OCR fallback for scanned-image PDFs. When pdf-parse
+      // extracts nothing (or near-nothing), the PDF is most likely an
+      // image-only scan. Render each page and run tesseract. Opt-in via
+      // ENABLE_OCR=true because OCR is slow + downloads a ~12MB WASM model.
+      if (text.trim().length < 50) {
+        if (isOcrEnabled()) {
+          logger.info({ fileName, pdfPages: pageCount }, "pdf-parse returned empty; falling back to OCR");
+          const ocr = await ocrPdf(buffer);
+          text = ocr.text;
+          warnings.push(`Used OCR on ${ocr.pagesOcred} page(s) — accuracy may be lower than text PDFs.`);
+          if (ocr.truncated) warnings.push("OCR was capped at 10 pages; remaining pages skipped.");
+          for (const w of ocr.warnings) warnings.push(w);
+        } else {
+          warnings.push("PDF contained no extractable text — likely a scanned image. Set ENABLE_OCR=true on resume-service to enable OCR fallback.");
+        }
       }
     } else if (mimeType === MIME_DOCX) {
       const mammoth = await import("mammoth");
@@ -68,15 +81,23 @@ export async function extractResumeText(
         warnings.push(`${m.type}: ${m.message}`);
       }
     } else if (mimeType === MIME_DOC) {
-      // Legacy .doc — mammoth supports a SUBSET. For full coverage we'd need
-      // antiword or LibreOffice headless. Try mammoth; if it produces nothing,
-      // tell the user.
+      // Phase 36b — pre-2007 binary .doc via word-extractor (pure JS).
+      // mammoth handles a subset of .doc but often produces empty output;
+      // word-extractor is specifically built for the binary OLE format.
+      // Strategy: try word-extractor first, fall back to mammoth.
       try {
-        const mammoth = await import("mammoth");
-        const result = await mammoth.extractRawText({ buffer });
-        text = result.value ?? "";
+        const WordExtractor = (await import("word-extractor")).default;
+        const extractor = new WordExtractor();
+        const doc = await extractor.extract(buffer);
+        text = doc.getBody() ?? "";
         if (!text.trim()) {
-          warnings.push("Legacy .doc format not fully supported — re-save as .docx for best results.");
+          // word-extractor returned empty — try mammoth as a long-shot fallback
+          const mammoth = await import("mammoth");
+          const result = await mammoth.extractRawText({ buffer });
+          text = result.value ?? "";
+        }
+        if (!text.trim()) {
+          warnings.push("Legacy .doc file produced no text — possibly password-protected or corrupted.");
         }
       } catch (err) {
         warnings.push(`Couldn't parse legacy .doc: ${err instanceof Error ? err.message : String(err)}`);
