@@ -367,6 +367,20 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/settings/sso" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Key className="h-4 w-4" /> Single Sign-On (SAML / OIDC)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Route users through your IdP (Okta, Google Workspace, Azure AD). Required for enterprise customers.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

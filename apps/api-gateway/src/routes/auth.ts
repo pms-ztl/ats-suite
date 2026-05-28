@@ -375,4 +375,105 @@ for (const action of ["setup", "verify", "disable"] as const) {
   });
 }
 
+// ─── Phase 28 — Enterprise SSO ───────────────────────────────────────────
+
+/**
+ * POST /api/auth/sso/discover — body { email } → { tenantId, protocol, initiateUrl } | null
+ * Public. Used by login pages on email-blur.
+ */
+router.post("/sso/discover", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = z.object({ email: z.string().email() }).parse(req.body);
+    const result = await callService<{ tenantId: string; protocol: string; initiateUrl: string } | null>("identity", {
+      method: "POST",
+      path: "/internal/sso/discover",
+      body,
+    });
+    ok(res, result);
+  } catch (err) { next(err); }
+});
+
+/**
+ * GET /api/auth/sso/{saml|oidc}/:tenantId/initiate — 302 to IdP
+ * Public. We just proxy identity-service's 302 back to the browser.
+ */
+router.get("/sso/:protocol/:tenantId/initiate", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const protocol = req.params["protocol"];
+    if (protocol !== "saml" && protocol !== "oidc") throw Errors.notFound("protocol");
+    // We can't use callService here because it doesn't handle 302 redirects.
+    // Just construct the identity-service URL and 307-redirect the browser
+    // there; identity-service will then 302 to the IdP.
+    const identityUrl = process.env["IDENTITY_SERVICE_URL"] ?? "http://localhost:4001";
+    res.redirect(307, `${identityUrl}/internal/sso/${protocol}/${req.params["tenantId"]}/initiate`);
+  } catch (err) { next(err); }
+});
+
+/**
+ * POST /api/auth/sso/saml/:tenantId/callback — receive IdP SAML POST
+ * Public. After identity-service validates the assertion, we sign a JWT
+ * + set the httpOnly cookie + redirect to /sso-callback (which redirects
+ * to / via the role dispatcher).
+ */
+router.post("/sso/saml/:tenantId/callback", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.params["tenantId"]!;
+    const result = await callService<{
+      mode?: "test";
+      assertion?: unknown;
+      user?: { id: string; tenantId: string; email: string; role: string };
+      externalId?: string;
+    }>("identity", {
+      method: "POST",
+      path: `/internal/sso/saml/${tenantId}/callback`,
+      body: req.body,
+      headers: { "x-forwarded-for": req.ip ?? "", "user-agent": req.get("user-agent") ?? "" },
+    });
+    if (result.mode === "test") {
+      // DRAFT mode — show the parsed assertion in JSON for the tenant admin.
+      return ok(res, result);
+    }
+    if (!result.user) throw Errors.unauthorized("SSO callback returned no user");
+    const accessToken = await signAccessToken({
+      userId: result.user.id, tenantId: result.user.tenantId,
+      email: result.user.email, role: result.user.role as any,
+    });
+    res.cookie("ats-token", accessToken, { ...COOKIE_OPTS, maxAge: 24 * 60 * 60 * 1000 });
+    res.redirect(302, "/sso-callback");
+  } catch (err) { next(err); }
+});
+
+/**
+ * GET /api/auth/sso/oidc/:tenantId/callback — receive IdP OIDC redirect
+ * Same JWT + cookie + redirect flow as SAML.
+ */
+router.get("/sso/oidc/:tenantId/callback", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.params["tenantId"]!;
+    // Pass through the query params (code, state) as a query string
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(req.query)) {
+      if (typeof v === "string") qs.set(k, v);
+    }
+    const result = await callService<{
+      mode?: "test";
+      assertion?: unknown;
+      user?: { id: string; tenantId: string; email: string; role: string };
+      externalId?: string;
+    }>("identity", {
+      method: "GET",
+      path: `/internal/sso/oidc/${tenantId}/callback?${qs.toString()}`,
+      headers: { "x-forwarded-for": req.ip ?? "", "user-agent": req.get("user-agent") ?? "" },
+    });
+    if (result.mode === "test") return ok(res, result);
+    if (!result.user) throw Errors.unauthorized("SSO callback returned no user");
+    const accessToken = await signAccessToken({
+      userId: result.user.id, tenantId: result.user.tenantId,
+      email: result.user.email, role: result.user.role as any,
+    });
+    res.cookie("ats-token", accessToken, { ...COOKIE_OPTS, maxAge: 24 * 60 * 60 * 1000 });
+    res.redirect(302, "/sso-callback");
+  } catch (err) { next(err); }
+});
+
 export default router;

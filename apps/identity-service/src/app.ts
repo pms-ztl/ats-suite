@@ -11,13 +11,18 @@ import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import usersRouter from "./routes/users.js";
 import authPolishRouter from "./routes/auth-polish.js";
+import ssoRouter from "./routes/sso.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
   const metrics = createMetrics("identity-service");
 
   app.use(requestId());
-  app.use(requestTimeout({ defaultMs: 30_000 }));  app.use(express.json({ limit: "1mb" }));
+  app.use(requestTimeout({ defaultMs: 30_000 }));
+  app.use(express.json({ limit: "1mb" }));
+  // SAML POST callback is form-urlencoded, not JSON. Mount the parser globally
+  // (cheap; only applies when Content-Type matches).
+  app.use(express.urlencoded({ extended: false, limit: "1mb" }));
   app.use(metrics.middleware);
 
   // Health endpoints (k8s probes hit these)
@@ -48,6 +53,10 @@ export function createApp(logger: Logger): Express {
   // Auth polish — forgot/reset password are unauthenticated; the others
   // (change-password, mfa/*) require X-User-Id from a logged-in JWT.
   app.use("/internal/auth", readAuthHeaders({ optional: true }), authPolishRouter);
+  // Phase 28 — SSO. Routes split internally between public (discover,
+  // initiate, callback) and auth-gated config (gateway adds requireTenantAdmin
+  // when proxying /api/sso/config/*).
+  app.use("/internal/sso", readAuthHeaders({ optional: true }), ssoRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

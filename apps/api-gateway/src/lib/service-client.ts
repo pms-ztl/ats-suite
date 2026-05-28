@@ -33,6 +33,8 @@ export interface CallOptions {
     email?: string;
     requestId?: string;
   };
+  /** Arbitrary extra headers (Phase 28 — IP + user-agent pass-through for SSO audit). */
+  headers?: Record<string, string>;
   /** Per-request timeout in ms (default 5000). */
   timeoutMs?: number;
 }
@@ -60,6 +62,7 @@ export async function callService<T>(
     if (opts.userHeaders.email) headers["X-User-Email"] = opts.userHeaders.email;
     if (opts.userHeaders.requestId) headers["X-Request-Id"] = opts.userHeaders.requestId;
   }
+  if (opts.headers) Object.assign(headers, opts.headers);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 5000);

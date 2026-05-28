@@ -134,6 +134,8 @@ exports.Prisma.UserScalarFieldEnum = {
   lastLoginAt: 'lastLoginAt',
   mfaSecret: 'mfaSecret',
   mfaEnabled: 'mfaEnabled',
+  externalId: 'externalId',
+  ssoLastLogin: 'ssoLastLogin',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -171,6 +173,40 @@ exports.Prisma.AuditEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.TenantSsoScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  protocol: 'protocol',
+  status: 'status',
+  samlEntryPoint: 'samlEntryPoint',
+  samlIssuer: 'samlIssuer',
+  samlCertificate: 'samlCertificate',
+  oidcIssuerUrl: 'oidcIssuerUrl',
+  oidcClientId: 'oidcClientId',
+  oidcClientSecret: 'oidcClientSecret',
+  emailDomains: 'emailDomains',
+  attrEmail: 'attrEmail',
+  attrFirstName: 'attrFirstName',
+  attrLastName: 'attrLastName',
+  attrGroups: 'attrGroups',
+  roleMap: 'roleMap',
+  defaultRole: 'defaultRole',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SsoLoginAuditScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  email: 'email',
+  protocol: 'protocol',
+  outcome: 'outcome',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  userId: 'userId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -205,11 +241,24 @@ exports.UserRole = exports.$Enums.UserRole = {
   CANDIDATE: 'CANDIDATE'
 };
 
+exports.SsoProtocol = exports.$Enums.SsoProtocol = {
+  SAML: 'SAML',
+  OIDC: 'OIDC'
+};
+
+exports.SsoStatus = exports.$Enums.SsoStatus = {
+  DRAFT: 'DRAFT',
+  ENABLED: 'ENABLED',
+  DISABLED: 'DISABLED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   PasswordReset: 'PasswordReset',
   InviteToken: 'InviteToken',
-  AuditEvent: 'AuditEvent'
+  AuditEvent: 'AuditEvent',
+  TenantSso: 'TenantSso',
+  SsoLoginAudit: 'SsoLoginAudit'
 };
 
 /**

@@ -33,6 +33,16 @@ export type InviteToken = $Result.DefaultSelection<Prisma.$InviteTokenPayload>
  * 
  */
 export type AuditEvent = $Result.DefaultSelection<Prisma.$AuditEventPayload>
+/**
+ * Model TenantSso
+ * 
+ */
+export type TenantSso = $Result.DefaultSelection<Prisma.$TenantSsoPayload>
+/**
+ * Model SsoLoginAudit
+ * 
+ */
+export type SsoLoginAudit = $Result.DefaultSelection<Prisma.$SsoLoginAuditPayload>
 
 /**
  * Enums
@@ -50,11 +60,36 @@ export namespace $Enums {
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
+
+export const SsoProtocol: {
+  SAML: 'SAML',
+  OIDC: 'OIDC'
+};
+
+export type SsoProtocol = (typeof SsoProtocol)[keyof typeof SsoProtocol]
+
+
+export const SsoStatus: {
+  DRAFT: 'DRAFT',
+  ENABLED: 'ENABLED',
+  DISABLED: 'DISABLED'
+};
+
+export type SsoStatus = (typeof SsoStatus)[keyof typeof SsoStatus]
+
 }
 
 export type UserRole = $Enums.UserRole
 
 export const UserRole: typeof $Enums.UserRole
+
+export type SsoProtocol = $Enums.SsoProtocol
+
+export const SsoProtocol: typeof $Enums.SsoProtocol
+
+export type SsoStatus = $Enums.SsoStatus
+
+export const SsoStatus: typeof $Enums.SsoStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -213,6 +248,26 @@ export class PrismaClient<
     * ```
     */
   get auditEvent(): Prisma.AuditEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tenantSso`: Exposes CRUD operations for the **TenantSso** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenantSsos
+    * const tenantSsos = await prisma.tenantSso.findMany()
+    * ```
+    */
+  get tenantSso(): Prisma.TenantSsoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.ssoLoginAudit`: Exposes CRUD operations for the **SsoLoginAudit** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SsoLoginAudits
+    * const ssoLoginAudits = await prisma.ssoLoginAudit.findMany()
+    * ```
+    */
+  get ssoLoginAudit(): Prisma.SsoLoginAuditDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -657,7 +712,9 @@ export namespace Prisma {
     User: 'User',
     PasswordReset: 'PasswordReset',
     InviteToken: 'InviteToken',
-    AuditEvent: 'AuditEvent'
+    AuditEvent: 'AuditEvent',
+    TenantSso: 'TenantSso',
+    SsoLoginAudit: 'SsoLoginAudit'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -676,7 +733,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "passwordReset" | "inviteToken" | "auditEvent"
+      modelProps: "user" | "passwordReset" | "inviteToken" | "auditEvent" | "tenantSso" | "ssoLoginAudit"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -976,6 +1033,154 @@ export namespace Prisma {
           }
         }
       }
+      TenantSso: {
+        payload: Prisma.$TenantSsoPayload<ExtArgs>
+        fields: Prisma.TenantSsoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenantSsoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenantSsoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          findFirst: {
+            args: Prisma.TenantSsoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenantSsoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          findMany: {
+            args: Prisma.TenantSsoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>[]
+          }
+          create: {
+            args: Prisma.TenantSsoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          createMany: {
+            args: Prisma.TenantSsoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenantSsoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>[]
+          }
+          delete: {
+            args: Prisma.TenantSsoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          update: {
+            args: Prisma.TenantSsoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenantSsoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenantSsoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenantSsoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>[]
+          }
+          upsert: {
+            args: Prisma.TenantSsoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantSsoPayload>
+          }
+          aggregate: {
+            args: Prisma.TenantSsoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenantSso>
+          }
+          groupBy: {
+            args: Prisma.TenantSsoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenantSsoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenantSsoCountArgs<ExtArgs>
+            result: $Utils.Optional<TenantSsoCountAggregateOutputType> | number
+          }
+        }
+      }
+      SsoLoginAudit: {
+        payload: Prisma.$SsoLoginAuditPayload<ExtArgs>
+        fields: Prisma.SsoLoginAuditFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SsoLoginAuditFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SsoLoginAuditFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          findFirst: {
+            args: Prisma.SsoLoginAuditFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SsoLoginAuditFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          findMany: {
+            args: Prisma.SsoLoginAuditFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>[]
+          }
+          create: {
+            args: Prisma.SsoLoginAuditCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          createMany: {
+            args: Prisma.SsoLoginAuditCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SsoLoginAuditCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>[]
+          }
+          delete: {
+            args: Prisma.SsoLoginAuditDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          update: {
+            args: Prisma.SsoLoginAuditUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          deleteMany: {
+            args: Prisma.SsoLoginAuditDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SsoLoginAuditUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SsoLoginAuditUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>[]
+          }
+          upsert: {
+            args: Prisma.SsoLoginAuditUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SsoLoginAuditPayload>
+          }
+          aggregate: {
+            args: Prisma.SsoLoginAuditAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSsoLoginAudit>
+          }
+          groupBy: {
+            args: Prisma.SsoLoginAuditGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SsoLoginAuditGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SsoLoginAuditCountArgs<ExtArgs>
+            result: $Utils.Optional<SsoLoginAuditCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1076,6 +1281,8 @@ export namespace Prisma {
     passwordReset?: PasswordResetOmit
     inviteToken?: InviteTokenOmit
     auditEvent?: AuditEventOmit
+    tenantSso?: TenantSsoOmit
+    ssoLoginAudit?: SsoLoginAuditOmit
   }
 
   /* Types for Logging */
@@ -1218,6 +1425,8 @@ export namespace Prisma {
     lastLoginAt: Date | null
     mfaSecret: string | null
     mfaEnabled: boolean | null
+    externalId: string | null
+    ssoLastLogin: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1235,6 +1444,8 @@ export namespace Prisma {
     lastLoginAt: Date | null
     mfaSecret: string | null
     mfaEnabled: boolean | null
+    externalId: string | null
+    ssoLastLogin: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1252,6 +1463,8 @@ export namespace Prisma {
     lastLoginAt: number
     mfaSecret: number
     mfaEnabled: number
+    externalId: number
+    ssoLastLogin: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1271,6 +1484,8 @@ export namespace Prisma {
     lastLoginAt?: true
     mfaSecret?: true
     mfaEnabled?: true
+    externalId?: true
+    ssoLastLogin?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1288,6 +1503,8 @@ export namespace Prisma {
     lastLoginAt?: true
     mfaSecret?: true
     mfaEnabled?: true
+    externalId?: true
+    ssoLastLogin?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1305,6 +1522,8 @@ export namespace Prisma {
     lastLoginAt?: true
     mfaSecret?: true
     mfaEnabled?: true
+    externalId?: true
+    ssoLastLogin?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1395,6 +1614,8 @@ export namespace Prisma {
     lastLoginAt: Date | null
     mfaSecret: string | null
     mfaEnabled: boolean
+    externalId: string | null
+    ssoLastLogin: Date | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1429,6 +1650,8 @@ export namespace Prisma {
     lastLoginAt?: boolean
     mfaSecret?: boolean
     mfaEnabled?: boolean
+    externalId?: boolean
+    ssoLastLogin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
@@ -1449,6 +1672,8 @@ export namespace Prisma {
     lastLoginAt?: boolean
     mfaSecret?: boolean
     mfaEnabled?: boolean
+    externalId?: boolean
+    ssoLastLogin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1466,6 +1691,8 @@ export namespace Prisma {
     lastLoginAt?: boolean
     mfaSecret?: boolean
     mfaEnabled?: boolean
+    externalId?: boolean
+    ssoLastLogin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1483,11 +1710,13 @@ export namespace Prisma {
     lastLoginAt?: boolean
     mfaSecret?: boolean
     mfaEnabled?: boolean
+    externalId?: boolean
+    ssoLastLogin?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "externalId" | "ssoLastLogin" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
     passwordResets?: boolean | User$passwordResetsArgs<ExtArgs>
@@ -1515,6 +1744,8 @@ export namespace Prisma {
       lastLoginAt: Date | null
       mfaSecret: string | null
       mfaEnabled: boolean
+      externalId: string | null
+      ssoLastLogin: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1954,6 +2185,8 @@ export namespace Prisma {
     readonly lastLoginAt: FieldRef<"User", 'DateTime'>
     readonly mfaSecret: FieldRef<"User", 'String'>
     readonly mfaEnabled: FieldRef<"User", 'Boolean'>
+    readonly externalId: FieldRef<"User", 'String'>
+    readonly ssoLastLogin: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -5635,6 +5868,2222 @@ export namespace Prisma {
 
 
   /**
+   * Model TenantSso
+   */
+
+  export type AggregateTenantSso = {
+    _count: TenantSsoCountAggregateOutputType | null
+    _min: TenantSsoMinAggregateOutputType | null
+    _max: TenantSsoMaxAggregateOutputType | null
+  }
+
+  export type TenantSsoMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    protocol: $Enums.SsoProtocol | null
+    status: $Enums.SsoStatus | null
+    samlEntryPoint: string | null
+    samlIssuer: string | null
+    samlCertificate: string | null
+    oidcIssuerUrl: string | null
+    oidcClientId: string | null
+    oidcClientSecret: string | null
+    attrEmail: string | null
+    attrFirstName: string | null
+    attrLastName: string | null
+    attrGroups: string | null
+    defaultRole: $Enums.UserRole | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantSsoMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    protocol: $Enums.SsoProtocol | null
+    status: $Enums.SsoStatus | null
+    samlEntryPoint: string | null
+    samlIssuer: string | null
+    samlCertificate: string | null
+    oidcIssuerUrl: string | null
+    oidcClientId: string | null
+    oidcClientSecret: string | null
+    attrEmail: string | null
+    attrFirstName: string | null
+    attrLastName: string | null
+    attrGroups: string | null
+    defaultRole: $Enums.UserRole | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantSsoCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    protocol: number
+    status: number
+    samlEntryPoint: number
+    samlIssuer: number
+    samlCertificate: number
+    oidcIssuerUrl: number
+    oidcClientId: number
+    oidcClientSecret: number
+    emailDomains: number
+    attrEmail: number
+    attrFirstName: number
+    attrLastName: number
+    attrGroups: number
+    roleMap: number
+    defaultRole: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TenantSsoMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    protocol?: true
+    status?: true
+    samlEntryPoint?: true
+    samlIssuer?: true
+    samlCertificate?: true
+    oidcIssuerUrl?: true
+    oidcClientId?: true
+    oidcClientSecret?: true
+    attrEmail?: true
+    attrFirstName?: true
+    attrLastName?: true
+    attrGroups?: true
+    defaultRole?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantSsoMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    protocol?: true
+    status?: true
+    samlEntryPoint?: true
+    samlIssuer?: true
+    samlCertificate?: true
+    oidcIssuerUrl?: true
+    oidcClientId?: true
+    oidcClientSecret?: true
+    attrEmail?: true
+    attrFirstName?: true
+    attrLastName?: true
+    attrGroups?: true
+    defaultRole?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantSsoCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    protocol?: true
+    status?: true
+    samlEntryPoint?: true
+    samlIssuer?: true
+    samlCertificate?: true
+    oidcIssuerUrl?: true
+    oidcClientId?: true
+    oidcClientSecret?: true
+    emailDomains?: true
+    attrEmail?: true
+    attrFirstName?: true
+    attrLastName?: true
+    attrGroups?: true
+    roleMap?: true
+    defaultRole?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TenantSsoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantSso to aggregate.
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantSsos to fetch.
+     */
+    orderBy?: TenantSsoOrderByWithRelationInput | TenantSsoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenantSsoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantSsos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantSsos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenantSsos
+    **/
+    _count?: true | TenantSsoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenantSsoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenantSsoMaxAggregateInputType
+  }
+
+  export type GetTenantSsoAggregateType<T extends TenantSsoAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenantSso]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenantSso[P]>
+      : GetScalarType<T[P], AggregateTenantSso[P]>
+  }
+
+
+
+
+  export type TenantSsoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenantSsoWhereInput
+    orderBy?: TenantSsoOrderByWithAggregationInput | TenantSsoOrderByWithAggregationInput[]
+    by: TenantSsoScalarFieldEnum[] | TenantSsoScalarFieldEnum
+    having?: TenantSsoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenantSsoCountAggregateInputType | true
+    _min?: TenantSsoMinAggregateInputType
+    _max?: TenantSsoMaxAggregateInputType
+  }
+
+  export type TenantSsoGroupByOutputType = {
+    id: string
+    tenantId: string
+    protocol: $Enums.SsoProtocol
+    status: $Enums.SsoStatus
+    samlEntryPoint: string | null
+    samlIssuer: string | null
+    samlCertificate: string | null
+    oidcIssuerUrl: string | null
+    oidcClientId: string | null
+    oidcClientSecret: string | null
+    emailDomains: string[]
+    attrEmail: string
+    attrFirstName: string
+    attrLastName: string
+    attrGroups: string
+    roleMap: JsonValue
+    defaultRole: $Enums.UserRole
+    createdAt: Date
+    updatedAt: Date
+    _count: TenantSsoCountAggregateOutputType | null
+    _min: TenantSsoMinAggregateOutputType | null
+    _max: TenantSsoMaxAggregateOutputType | null
+  }
+
+  type GetTenantSsoGroupByPayload<T extends TenantSsoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenantSsoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenantSsoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenantSsoGroupByOutputType[P]>
+            : GetScalarType<T[P], TenantSsoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenantSsoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    protocol?: boolean
+    status?: boolean
+    samlEntryPoint?: boolean
+    samlIssuer?: boolean
+    samlCertificate?: boolean
+    oidcIssuerUrl?: boolean
+    oidcClientId?: boolean
+    oidcClientSecret?: boolean
+    emailDomains?: boolean
+    attrEmail?: boolean
+    attrFirstName?: boolean
+    attrLastName?: boolean
+    attrGroups?: boolean
+    roleMap?: boolean
+    defaultRole?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantSso"]>
+
+  export type TenantSsoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    protocol?: boolean
+    status?: boolean
+    samlEntryPoint?: boolean
+    samlIssuer?: boolean
+    samlCertificate?: boolean
+    oidcIssuerUrl?: boolean
+    oidcClientId?: boolean
+    oidcClientSecret?: boolean
+    emailDomains?: boolean
+    attrEmail?: boolean
+    attrFirstName?: boolean
+    attrLastName?: boolean
+    attrGroups?: boolean
+    roleMap?: boolean
+    defaultRole?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantSso"]>
+
+  export type TenantSsoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    protocol?: boolean
+    status?: boolean
+    samlEntryPoint?: boolean
+    samlIssuer?: boolean
+    samlCertificate?: boolean
+    oidcIssuerUrl?: boolean
+    oidcClientId?: boolean
+    oidcClientSecret?: boolean
+    emailDomains?: boolean
+    attrEmail?: boolean
+    attrFirstName?: boolean
+    attrLastName?: boolean
+    attrGroups?: boolean
+    roleMap?: boolean
+    defaultRole?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantSso"]>
+
+  export type TenantSsoSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    protocol?: boolean
+    status?: boolean
+    samlEntryPoint?: boolean
+    samlIssuer?: boolean
+    samlCertificate?: boolean
+    oidcIssuerUrl?: boolean
+    oidcClientId?: boolean
+    oidcClientSecret?: boolean
+    emailDomains?: boolean
+    attrEmail?: boolean
+    attrFirstName?: boolean
+    attrLastName?: boolean
+    attrGroups?: boolean
+    roleMap?: boolean
+    defaultRole?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TenantSsoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "protocol" | "status" | "samlEntryPoint" | "samlIssuer" | "samlCertificate" | "oidcIssuerUrl" | "oidcClientId" | "oidcClientSecret" | "emailDomains" | "attrEmail" | "attrFirstName" | "attrLastName" | "attrGroups" | "roleMap" | "defaultRole" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantSso"]>
+
+  export type $TenantSsoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenantSso"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      protocol: $Enums.SsoProtocol
+      status: $Enums.SsoStatus
+      samlEntryPoint: string | null
+      samlIssuer: string | null
+      samlCertificate: string | null
+      oidcIssuerUrl: string | null
+      oidcClientId: string | null
+      oidcClientSecret: string | null
+      emailDomains: string[]
+      attrEmail: string
+      attrFirstName: string
+      attrLastName: string
+      attrGroups: string
+      roleMap: Prisma.JsonValue
+      defaultRole: $Enums.UserRole
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tenantSso"]>
+    composites: {}
+  }
+
+  type TenantSsoGetPayload<S extends boolean | null | undefined | TenantSsoDefaultArgs> = $Result.GetResult<Prisma.$TenantSsoPayload, S>
+
+  type TenantSsoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenantSsoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenantSsoCountAggregateInputType | true
+    }
+
+  export interface TenantSsoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenantSso'], meta: { name: 'TenantSso' } }
+    /**
+     * Find zero or one TenantSso that matches the filter.
+     * @param {TenantSsoFindUniqueArgs} args - Arguments to find a TenantSso
+     * @example
+     * // Get one TenantSso
+     * const tenantSso = await prisma.tenantSso.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenantSsoFindUniqueArgs>(args: SelectSubset<T, TenantSsoFindUniqueArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TenantSso that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenantSsoFindUniqueOrThrowArgs} args - Arguments to find a TenantSso
+     * @example
+     * // Get one TenantSso
+     * const tenantSso = await prisma.tenantSso.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenantSsoFindUniqueOrThrowArgs>(args: SelectSubset<T, TenantSsoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantSso that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoFindFirstArgs} args - Arguments to find a TenantSso
+     * @example
+     * // Get one TenantSso
+     * const tenantSso = await prisma.tenantSso.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenantSsoFindFirstArgs>(args?: SelectSubset<T, TenantSsoFindFirstArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantSso that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoFindFirstOrThrowArgs} args - Arguments to find a TenantSso
+     * @example
+     * // Get one TenantSso
+     * const tenantSso = await prisma.tenantSso.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenantSsoFindFirstOrThrowArgs>(args?: SelectSubset<T, TenantSsoFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TenantSsos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenantSsos
+     * const tenantSsos = await prisma.tenantSso.findMany()
+     * 
+     * // Get first 10 TenantSsos
+     * const tenantSsos = await prisma.tenantSso.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenantSsoWithIdOnly = await prisma.tenantSso.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenantSsoFindManyArgs>(args?: SelectSubset<T, TenantSsoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TenantSso.
+     * @param {TenantSsoCreateArgs} args - Arguments to create a TenantSso.
+     * @example
+     * // Create one TenantSso
+     * const TenantSso = await prisma.tenantSso.create({
+     *   data: {
+     *     // ... data to create a TenantSso
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenantSsoCreateArgs>(args: SelectSubset<T, TenantSsoCreateArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TenantSsos.
+     * @param {TenantSsoCreateManyArgs} args - Arguments to create many TenantSsos.
+     * @example
+     * // Create many TenantSsos
+     * const tenantSso = await prisma.tenantSso.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenantSsoCreateManyArgs>(args?: SelectSubset<T, TenantSsoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenantSsos and returns the data saved in the database.
+     * @param {TenantSsoCreateManyAndReturnArgs} args - Arguments to create many TenantSsos.
+     * @example
+     * // Create many TenantSsos
+     * const tenantSso = await prisma.tenantSso.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenantSsos and only return the `id`
+     * const tenantSsoWithIdOnly = await prisma.tenantSso.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenantSsoCreateManyAndReturnArgs>(args?: SelectSubset<T, TenantSsoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TenantSso.
+     * @param {TenantSsoDeleteArgs} args - Arguments to delete one TenantSso.
+     * @example
+     * // Delete one TenantSso
+     * const TenantSso = await prisma.tenantSso.delete({
+     *   where: {
+     *     // ... filter to delete one TenantSso
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenantSsoDeleteArgs>(args: SelectSubset<T, TenantSsoDeleteArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TenantSso.
+     * @param {TenantSsoUpdateArgs} args - Arguments to update one TenantSso.
+     * @example
+     * // Update one TenantSso
+     * const tenantSso = await prisma.tenantSso.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenantSsoUpdateArgs>(args: SelectSubset<T, TenantSsoUpdateArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TenantSsos.
+     * @param {TenantSsoDeleteManyArgs} args - Arguments to filter TenantSsos to delete.
+     * @example
+     * // Delete a few TenantSsos
+     * const { count } = await prisma.tenantSso.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenantSsoDeleteManyArgs>(args?: SelectSubset<T, TenantSsoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantSsos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenantSsos
+     * const tenantSso = await prisma.tenantSso.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenantSsoUpdateManyArgs>(args: SelectSubset<T, TenantSsoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantSsos and returns the data updated in the database.
+     * @param {TenantSsoUpdateManyAndReturnArgs} args - Arguments to update many TenantSsos.
+     * @example
+     * // Update many TenantSsos
+     * const tenantSso = await prisma.tenantSso.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TenantSsos and only return the `id`
+     * const tenantSsoWithIdOnly = await prisma.tenantSso.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenantSsoUpdateManyAndReturnArgs>(args: SelectSubset<T, TenantSsoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TenantSso.
+     * @param {TenantSsoUpsertArgs} args - Arguments to update or create a TenantSso.
+     * @example
+     * // Update or create a TenantSso
+     * const tenantSso = await prisma.tenantSso.upsert({
+     *   create: {
+     *     // ... data to create a TenantSso
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenantSso we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenantSsoUpsertArgs>(args: SelectSubset<T, TenantSsoUpsertArgs<ExtArgs>>): Prisma__TenantSsoClient<$Result.GetResult<Prisma.$TenantSsoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TenantSsos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoCountArgs} args - Arguments to filter TenantSsos to count.
+     * @example
+     * // Count the number of TenantSsos
+     * const count = await prisma.tenantSso.count({
+     *   where: {
+     *     // ... the filter for the TenantSsos we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenantSsoCountArgs>(
+      args?: Subset<T, TenantSsoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenantSsoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenantSso.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenantSsoAggregateArgs>(args: Subset<T, TenantSsoAggregateArgs>): Prisma.PrismaPromise<GetTenantSsoAggregateType<T>>
+
+    /**
+     * Group by TenantSso.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantSsoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenantSsoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenantSsoGroupByArgs['orderBy'] }
+        : { orderBy?: TenantSsoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenantSsoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenantSsoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenantSso model
+   */
+  readonly fields: TenantSsoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenantSso.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenantSsoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenantSso model
+   */
+  interface TenantSsoFieldRefs {
+    readonly id: FieldRef<"TenantSso", 'String'>
+    readonly tenantId: FieldRef<"TenantSso", 'String'>
+    readonly protocol: FieldRef<"TenantSso", 'SsoProtocol'>
+    readonly status: FieldRef<"TenantSso", 'SsoStatus'>
+    readonly samlEntryPoint: FieldRef<"TenantSso", 'String'>
+    readonly samlIssuer: FieldRef<"TenantSso", 'String'>
+    readonly samlCertificate: FieldRef<"TenantSso", 'String'>
+    readonly oidcIssuerUrl: FieldRef<"TenantSso", 'String'>
+    readonly oidcClientId: FieldRef<"TenantSso", 'String'>
+    readonly oidcClientSecret: FieldRef<"TenantSso", 'String'>
+    readonly emailDomains: FieldRef<"TenantSso", 'String[]'>
+    readonly attrEmail: FieldRef<"TenantSso", 'String'>
+    readonly attrFirstName: FieldRef<"TenantSso", 'String'>
+    readonly attrLastName: FieldRef<"TenantSso", 'String'>
+    readonly attrGroups: FieldRef<"TenantSso", 'String'>
+    readonly roleMap: FieldRef<"TenantSso", 'Json'>
+    readonly defaultRole: FieldRef<"TenantSso", 'UserRole'>
+    readonly createdAt: FieldRef<"TenantSso", 'DateTime'>
+    readonly updatedAt: FieldRef<"TenantSso", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenantSso findUnique
+   */
+  export type TenantSsoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantSso to fetch.
+     */
+    where: TenantSsoWhereUniqueInput
+  }
+
+  /**
+   * TenantSso findUniqueOrThrow
+   */
+  export type TenantSsoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantSso to fetch.
+     */
+    where: TenantSsoWhereUniqueInput
+  }
+
+  /**
+   * TenantSso findFirst
+   */
+  export type TenantSsoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantSso to fetch.
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantSsos to fetch.
+     */
+    orderBy?: TenantSsoOrderByWithRelationInput | TenantSsoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantSsos.
+     */
+    cursor?: TenantSsoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantSsos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantSsos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantSsos.
+     */
+    distinct?: TenantSsoScalarFieldEnum | TenantSsoScalarFieldEnum[]
+  }
+
+  /**
+   * TenantSso findFirstOrThrow
+   */
+  export type TenantSsoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantSso to fetch.
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantSsos to fetch.
+     */
+    orderBy?: TenantSsoOrderByWithRelationInput | TenantSsoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantSsos.
+     */
+    cursor?: TenantSsoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantSsos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantSsos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantSsos.
+     */
+    distinct?: TenantSsoScalarFieldEnum | TenantSsoScalarFieldEnum[]
+  }
+
+  /**
+   * TenantSso findMany
+   */
+  export type TenantSsoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantSsos to fetch.
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantSsos to fetch.
+     */
+    orderBy?: TenantSsoOrderByWithRelationInput | TenantSsoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenantSsos.
+     */
+    cursor?: TenantSsoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantSsos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantSsos.
+     */
+    skip?: number
+    distinct?: TenantSsoScalarFieldEnum | TenantSsoScalarFieldEnum[]
+  }
+
+  /**
+   * TenantSso create
+   */
+  export type TenantSsoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TenantSso.
+     */
+    data: XOR<TenantSsoCreateInput, TenantSsoUncheckedCreateInput>
+  }
+
+  /**
+   * TenantSso createMany
+   */
+  export type TenantSsoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenantSsos.
+     */
+    data: TenantSsoCreateManyInput | TenantSsoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantSso createManyAndReturn
+   */
+  export type TenantSsoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * The data used to create many TenantSsos.
+     */
+    data: TenantSsoCreateManyInput | TenantSsoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantSso update
+   */
+  export type TenantSsoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TenantSso.
+     */
+    data: XOR<TenantSsoUpdateInput, TenantSsoUncheckedUpdateInput>
+    /**
+     * Choose, which TenantSso to update.
+     */
+    where: TenantSsoWhereUniqueInput
+  }
+
+  /**
+   * TenantSso updateMany
+   */
+  export type TenantSsoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenantSsos.
+     */
+    data: XOR<TenantSsoUpdateManyMutationInput, TenantSsoUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantSsos to update
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * Limit how many TenantSsos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantSso updateManyAndReturn
+   */
+  export type TenantSsoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * The data used to update TenantSsos.
+     */
+    data: XOR<TenantSsoUpdateManyMutationInput, TenantSsoUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantSsos to update
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * Limit how many TenantSsos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantSso upsert
+   */
+  export type TenantSsoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TenantSso to update in case it exists.
+     */
+    where: TenantSsoWhereUniqueInput
+    /**
+     * In case the TenantSso found by the `where` argument doesn't exist, create a new TenantSso with this data.
+     */
+    create: XOR<TenantSsoCreateInput, TenantSsoUncheckedCreateInput>
+    /**
+     * In case the TenantSso was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenantSsoUpdateInput, TenantSsoUncheckedUpdateInput>
+  }
+
+  /**
+   * TenantSso delete
+   */
+  export type TenantSsoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+    /**
+     * Filter which TenantSso to delete.
+     */
+    where: TenantSsoWhereUniqueInput
+  }
+
+  /**
+   * TenantSso deleteMany
+   */
+  export type TenantSsoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantSsos to delete
+     */
+    where?: TenantSsoWhereInput
+    /**
+     * Limit how many TenantSsos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantSso without action
+   */
+  export type TenantSsoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantSso
+     */
+    select?: TenantSsoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantSso
+     */
+    omit?: TenantSsoOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SsoLoginAudit
+   */
+
+  export type AggregateSsoLoginAudit = {
+    _count: SsoLoginAuditCountAggregateOutputType | null
+    _min: SsoLoginAuditMinAggregateOutputType | null
+    _max: SsoLoginAuditMaxAggregateOutputType | null
+  }
+
+  export type SsoLoginAuditMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    email: string | null
+    protocol: $Enums.SsoProtocol | null
+    outcome: string | null
+    ipAddress: string | null
+    userAgent: string | null
+    userId: string | null
+    createdAt: Date | null
+  }
+
+  export type SsoLoginAuditMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    email: string | null
+    protocol: $Enums.SsoProtocol | null
+    outcome: string | null
+    ipAddress: string | null
+    userAgent: string | null
+    userId: string | null
+    createdAt: Date | null
+  }
+
+  export type SsoLoginAuditCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    email: number
+    protocol: number
+    outcome: number
+    ipAddress: number
+    userAgent: number
+    userId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SsoLoginAuditMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    email?: true
+    protocol?: true
+    outcome?: true
+    ipAddress?: true
+    userAgent?: true
+    userId?: true
+    createdAt?: true
+  }
+
+  export type SsoLoginAuditMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    email?: true
+    protocol?: true
+    outcome?: true
+    ipAddress?: true
+    userAgent?: true
+    userId?: true
+    createdAt?: true
+  }
+
+  export type SsoLoginAuditCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    email?: true
+    protocol?: true
+    outcome?: true
+    ipAddress?: true
+    userAgent?: true
+    userId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SsoLoginAuditAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SsoLoginAudit to aggregate.
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SsoLoginAudits to fetch.
+     */
+    orderBy?: SsoLoginAuditOrderByWithRelationInput | SsoLoginAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SsoLoginAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SsoLoginAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SsoLoginAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SsoLoginAudits
+    **/
+    _count?: true | SsoLoginAuditCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SsoLoginAuditMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SsoLoginAuditMaxAggregateInputType
+  }
+
+  export type GetSsoLoginAuditAggregateType<T extends SsoLoginAuditAggregateArgs> = {
+        [P in keyof T & keyof AggregateSsoLoginAudit]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSsoLoginAudit[P]>
+      : GetScalarType<T[P], AggregateSsoLoginAudit[P]>
+  }
+
+
+
+
+  export type SsoLoginAuditGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SsoLoginAuditWhereInput
+    orderBy?: SsoLoginAuditOrderByWithAggregationInput | SsoLoginAuditOrderByWithAggregationInput[]
+    by: SsoLoginAuditScalarFieldEnum[] | SsoLoginAuditScalarFieldEnum
+    having?: SsoLoginAuditScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SsoLoginAuditCountAggregateInputType | true
+    _min?: SsoLoginAuditMinAggregateInputType
+    _max?: SsoLoginAuditMaxAggregateInputType
+  }
+
+  export type SsoLoginAuditGroupByOutputType = {
+    id: string
+    tenantId: string
+    email: string
+    protocol: $Enums.SsoProtocol
+    outcome: string
+    ipAddress: string | null
+    userAgent: string | null
+    userId: string | null
+    createdAt: Date
+    _count: SsoLoginAuditCountAggregateOutputType | null
+    _min: SsoLoginAuditMinAggregateOutputType | null
+    _max: SsoLoginAuditMaxAggregateOutputType | null
+  }
+
+  type GetSsoLoginAuditGroupByPayload<T extends SsoLoginAuditGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SsoLoginAuditGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SsoLoginAuditGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SsoLoginAuditGroupByOutputType[P]>
+            : GetScalarType<T[P], SsoLoginAuditGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SsoLoginAuditSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    email?: boolean
+    protocol?: boolean
+    outcome?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    userId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["ssoLoginAudit"]>
+
+  export type SsoLoginAuditSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    email?: boolean
+    protocol?: boolean
+    outcome?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    userId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["ssoLoginAudit"]>
+
+  export type SsoLoginAuditSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    email?: boolean
+    protocol?: boolean
+    outcome?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    userId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["ssoLoginAudit"]>
+
+  export type SsoLoginAuditSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    email?: boolean
+    protocol?: boolean
+    outcome?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    userId?: boolean
+    createdAt?: boolean
+  }
+
+  export type SsoLoginAuditOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "protocol" | "outcome" | "ipAddress" | "userAgent" | "userId" | "createdAt", ExtArgs["result"]["ssoLoginAudit"]>
+
+  export type $SsoLoginAuditPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SsoLoginAudit"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      email: string
+      protocol: $Enums.SsoProtocol
+      outcome: string
+      ipAddress: string | null
+      userAgent: string | null
+      userId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["ssoLoginAudit"]>
+    composites: {}
+  }
+
+  type SsoLoginAuditGetPayload<S extends boolean | null | undefined | SsoLoginAuditDefaultArgs> = $Result.GetResult<Prisma.$SsoLoginAuditPayload, S>
+
+  type SsoLoginAuditCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SsoLoginAuditFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SsoLoginAuditCountAggregateInputType | true
+    }
+
+  export interface SsoLoginAuditDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SsoLoginAudit'], meta: { name: 'SsoLoginAudit' } }
+    /**
+     * Find zero or one SsoLoginAudit that matches the filter.
+     * @param {SsoLoginAuditFindUniqueArgs} args - Arguments to find a SsoLoginAudit
+     * @example
+     * // Get one SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SsoLoginAuditFindUniqueArgs>(args: SelectSubset<T, SsoLoginAuditFindUniqueArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SsoLoginAudit that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SsoLoginAuditFindUniqueOrThrowArgs} args - Arguments to find a SsoLoginAudit
+     * @example
+     * // Get one SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SsoLoginAuditFindUniqueOrThrowArgs>(args: SelectSubset<T, SsoLoginAuditFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SsoLoginAudit that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditFindFirstArgs} args - Arguments to find a SsoLoginAudit
+     * @example
+     * // Get one SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SsoLoginAuditFindFirstArgs>(args?: SelectSubset<T, SsoLoginAuditFindFirstArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SsoLoginAudit that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditFindFirstOrThrowArgs} args - Arguments to find a SsoLoginAudit
+     * @example
+     * // Get one SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SsoLoginAuditFindFirstOrThrowArgs>(args?: SelectSubset<T, SsoLoginAuditFindFirstOrThrowArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SsoLoginAudits that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SsoLoginAudits
+     * const ssoLoginAudits = await prisma.ssoLoginAudit.findMany()
+     * 
+     * // Get first 10 SsoLoginAudits
+     * const ssoLoginAudits = await prisma.ssoLoginAudit.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const ssoLoginAuditWithIdOnly = await prisma.ssoLoginAudit.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SsoLoginAuditFindManyArgs>(args?: SelectSubset<T, SsoLoginAuditFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SsoLoginAudit.
+     * @param {SsoLoginAuditCreateArgs} args - Arguments to create a SsoLoginAudit.
+     * @example
+     * // Create one SsoLoginAudit
+     * const SsoLoginAudit = await prisma.ssoLoginAudit.create({
+     *   data: {
+     *     // ... data to create a SsoLoginAudit
+     *   }
+     * })
+     * 
+     */
+    create<T extends SsoLoginAuditCreateArgs>(args: SelectSubset<T, SsoLoginAuditCreateArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SsoLoginAudits.
+     * @param {SsoLoginAuditCreateManyArgs} args - Arguments to create many SsoLoginAudits.
+     * @example
+     * // Create many SsoLoginAudits
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SsoLoginAuditCreateManyArgs>(args?: SelectSubset<T, SsoLoginAuditCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SsoLoginAudits and returns the data saved in the database.
+     * @param {SsoLoginAuditCreateManyAndReturnArgs} args - Arguments to create many SsoLoginAudits.
+     * @example
+     * // Create many SsoLoginAudits
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SsoLoginAudits and only return the `id`
+     * const ssoLoginAuditWithIdOnly = await prisma.ssoLoginAudit.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SsoLoginAuditCreateManyAndReturnArgs>(args?: SelectSubset<T, SsoLoginAuditCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SsoLoginAudit.
+     * @param {SsoLoginAuditDeleteArgs} args - Arguments to delete one SsoLoginAudit.
+     * @example
+     * // Delete one SsoLoginAudit
+     * const SsoLoginAudit = await prisma.ssoLoginAudit.delete({
+     *   where: {
+     *     // ... filter to delete one SsoLoginAudit
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SsoLoginAuditDeleteArgs>(args: SelectSubset<T, SsoLoginAuditDeleteArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SsoLoginAudit.
+     * @param {SsoLoginAuditUpdateArgs} args - Arguments to update one SsoLoginAudit.
+     * @example
+     * // Update one SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SsoLoginAuditUpdateArgs>(args: SelectSubset<T, SsoLoginAuditUpdateArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SsoLoginAudits.
+     * @param {SsoLoginAuditDeleteManyArgs} args - Arguments to filter SsoLoginAudits to delete.
+     * @example
+     * // Delete a few SsoLoginAudits
+     * const { count } = await prisma.ssoLoginAudit.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SsoLoginAuditDeleteManyArgs>(args?: SelectSubset<T, SsoLoginAuditDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SsoLoginAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SsoLoginAudits
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SsoLoginAuditUpdateManyArgs>(args: SelectSubset<T, SsoLoginAuditUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SsoLoginAudits and returns the data updated in the database.
+     * @param {SsoLoginAuditUpdateManyAndReturnArgs} args - Arguments to update many SsoLoginAudits.
+     * @example
+     * // Update many SsoLoginAudits
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SsoLoginAudits and only return the `id`
+     * const ssoLoginAuditWithIdOnly = await prisma.ssoLoginAudit.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SsoLoginAuditUpdateManyAndReturnArgs>(args: SelectSubset<T, SsoLoginAuditUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SsoLoginAudit.
+     * @param {SsoLoginAuditUpsertArgs} args - Arguments to update or create a SsoLoginAudit.
+     * @example
+     * // Update or create a SsoLoginAudit
+     * const ssoLoginAudit = await prisma.ssoLoginAudit.upsert({
+     *   create: {
+     *     // ... data to create a SsoLoginAudit
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SsoLoginAudit we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SsoLoginAuditUpsertArgs>(args: SelectSubset<T, SsoLoginAuditUpsertArgs<ExtArgs>>): Prisma__SsoLoginAuditClient<$Result.GetResult<Prisma.$SsoLoginAuditPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SsoLoginAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditCountArgs} args - Arguments to filter SsoLoginAudits to count.
+     * @example
+     * // Count the number of SsoLoginAudits
+     * const count = await prisma.ssoLoginAudit.count({
+     *   where: {
+     *     // ... the filter for the SsoLoginAudits we want to count
+     *   }
+     * })
+    **/
+    count<T extends SsoLoginAuditCountArgs>(
+      args?: Subset<T, SsoLoginAuditCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SsoLoginAuditCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SsoLoginAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SsoLoginAuditAggregateArgs>(args: Subset<T, SsoLoginAuditAggregateArgs>): Prisma.PrismaPromise<GetSsoLoginAuditAggregateType<T>>
+
+    /**
+     * Group by SsoLoginAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SsoLoginAuditGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SsoLoginAuditGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SsoLoginAuditGroupByArgs['orderBy'] }
+        : { orderBy?: SsoLoginAuditGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SsoLoginAuditGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSsoLoginAuditGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SsoLoginAudit model
+   */
+  readonly fields: SsoLoginAuditFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SsoLoginAudit.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SsoLoginAuditClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SsoLoginAudit model
+   */
+  interface SsoLoginAuditFieldRefs {
+    readonly id: FieldRef<"SsoLoginAudit", 'String'>
+    readonly tenantId: FieldRef<"SsoLoginAudit", 'String'>
+    readonly email: FieldRef<"SsoLoginAudit", 'String'>
+    readonly protocol: FieldRef<"SsoLoginAudit", 'SsoProtocol'>
+    readonly outcome: FieldRef<"SsoLoginAudit", 'String'>
+    readonly ipAddress: FieldRef<"SsoLoginAudit", 'String'>
+    readonly userAgent: FieldRef<"SsoLoginAudit", 'String'>
+    readonly userId: FieldRef<"SsoLoginAudit", 'String'>
+    readonly createdAt: FieldRef<"SsoLoginAudit", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SsoLoginAudit findUnique
+   */
+  export type SsoLoginAuditFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which SsoLoginAudit to fetch.
+     */
+    where: SsoLoginAuditWhereUniqueInput
+  }
+
+  /**
+   * SsoLoginAudit findUniqueOrThrow
+   */
+  export type SsoLoginAuditFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which SsoLoginAudit to fetch.
+     */
+    where: SsoLoginAuditWhereUniqueInput
+  }
+
+  /**
+   * SsoLoginAudit findFirst
+   */
+  export type SsoLoginAuditFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which SsoLoginAudit to fetch.
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SsoLoginAudits to fetch.
+     */
+    orderBy?: SsoLoginAuditOrderByWithRelationInput | SsoLoginAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SsoLoginAudits.
+     */
+    cursor?: SsoLoginAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SsoLoginAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SsoLoginAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SsoLoginAudits.
+     */
+    distinct?: SsoLoginAuditScalarFieldEnum | SsoLoginAuditScalarFieldEnum[]
+  }
+
+  /**
+   * SsoLoginAudit findFirstOrThrow
+   */
+  export type SsoLoginAuditFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which SsoLoginAudit to fetch.
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SsoLoginAudits to fetch.
+     */
+    orderBy?: SsoLoginAuditOrderByWithRelationInput | SsoLoginAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SsoLoginAudits.
+     */
+    cursor?: SsoLoginAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SsoLoginAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SsoLoginAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SsoLoginAudits.
+     */
+    distinct?: SsoLoginAuditScalarFieldEnum | SsoLoginAuditScalarFieldEnum[]
+  }
+
+  /**
+   * SsoLoginAudit findMany
+   */
+  export type SsoLoginAuditFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which SsoLoginAudits to fetch.
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SsoLoginAudits to fetch.
+     */
+    orderBy?: SsoLoginAuditOrderByWithRelationInput | SsoLoginAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SsoLoginAudits.
+     */
+    cursor?: SsoLoginAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SsoLoginAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SsoLoginAudits.
+     */
+    skip?: number
+    distinct?: SsoLoginAuditScalarFieldEnum | SsoLoginAuditScalarFieldEnum[]
+  }
+
+  /**
+   * SsoLoginAudit create
+   */
+  export type SsoLoginAuditCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SsoLoginAudit.
+     */
+    data: XOR<SsoLoginAuditCreateInput, SsoLoginAuditUncheckedCreateInput>
+  }
+
+  /**
+   * SsoLoginAudit createMany
+   */
+  export type SsoLoginAuditCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SsoLoginAudits.
+     */
+    data: SsoLoginAuditCreateManyInput | SsoLoginAuditCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SsoLoginAudit createManyAndReturn
+   */
+  export type SsoLoginAuditCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * The data used to create many SsoLoginAudits.
+     */
+    data: SsoLoginAuditCreateManyInput | SsoLoginAuditCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SsoLoginAudit update
+   */
+  export type SsoLoginAuditUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SsoLoginAudit.
+     */
+    data: XOR<SsoLoginAuditUpdateInput, SsoLoginAuditUncheckedUpdateInput>
+    /**
+     * Choose, which SsoLoginAudit to update.
+     */
+    where: SsoLoginAuditWhereUniqueInput
+  }
+
+  /**
+   * SsoLoginAudit updateMany
+   */
+  export type SsoLoginAuditUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SsoLoginAudits.
+     */
+    data: XOR<SsoLoginAuditUpdateManyMutationInput, SsoLoginAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which SsoLoginAudits to update
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * Limit how many SsoLoginAudits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SsoLoginAudit updateManyAndReturn
+   */
+  export type SsoLoginAuditUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * The data used to update SsoLoginAudits.
+     */
+    data: XOR<SsoLoginAuditUpdateManyMutationInput, SsoLoginAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which SsoLoginAudits to update
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * Limit how many SsoLoginAudits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SsoLoginAudit upsert
+   */
+  export type SsoLoginAuditUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SsoLoginAudit to update in case it exists.
+     */
+    where: SsoLoginAuditWhereUniqueInput
+    /**
+     * In case the SsoLoginAudit found by the `where` argument doesn't exist, create a new SsoLoginAudit with this data.
+     */
+    create: XOR<SsoLoginAuditCreateInput, SsoLoginAuditUncheckedCreateInput>
+    /**
+     * In case the SsoLoginAudit was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SsoLoginAuditUpdateInput, SsoLoginAuditUncheckedUpdateInput>
+  }
+
+  /**
+   * SsoLoginAudit delete
+   */
+  export type SsoLoginAuditDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+    /**
+     * Filter which SsoLoginAudit to delete.
+     */
+    where: SsoLoginAuditWhereUniqueInput
+  }
+
+  /**
+   * SsoLoginAudit deleteMany
+   */
+  export type SsoLoginAuditDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SsoLoginAudits to delete
+     */
+    where?: SsoLoginAuditWhereInput
+    /**
+     * Limit how many SsoLoginAudits to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SsoLoginAudit without action
+   */
+  export type SsoLoginAuditDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SsoLoginAudit
+     */
+    select?: SsoLoginAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SsoLoginAudit
+     */
+    omit?: SsoLoginAuditOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -5661,6 +8110,8 @@ export namespace Prisma {
     lastLoginAt: 'lastLoginAt',
     mfaSecret: 'mfaSecret',
     mfaEnabled: 'mfaEnabled',
+    externalId: 'externalId',
+    ssoLastLogin: 'ssoLastLogin',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -5708,6 +8159,46 @@ export namespace Prisma {
   };
 
   export type AuditEventScalarFieldEnum = (typeof AuditEventScalarFieldEnum)[keyof typeof AuditEventScalarFieldEnum]
+
+
+  export const TenantSsoScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    protocol: 'protocol',
+    status: 'status',
+    samlEntryPoint: 'samlEntryPoint',
+    samlIssuer: 'samlIssuer',
+    samlCertificate: 'samlCertificate',
+    oidcIssuerUrl: 'oidcIssuerUrl',
+    oidcClientId: 'oidcClientId',
+    oidcClientSecret: 'oidcClientSecret',
+    emailDomains: 'emailDomains',
+    attrEmail: 'attrEmail',
+    attrFirstName: 'attrFirstName',
+    attrLastName: 'attrLastName',
+    attrGroups: 'attrGroups',
+    roleMap: 'roleMap',
+    defaultRole: 'defaultRole',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TenantSsoScalarFieldEnum = (typeof TenantSsoScalarFieldEnum)[keyof typeof TenantSsoScalarFieldEnum]
+
+
+  export const SsoLoginAuditScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    email: 'email',
+    protocol: 'protocol',
+    outcome: 'outcome',
+    ipAddress: 'ipAddress',
+    userAgent: 'userAgent',
+    userId: 'userId',
+    createdAt: 'createdAt'
+  };
+
+  export type SsoLoginAuditScalarFieldEnum = (typeof SsoLoginAuditScalarFieldEnum)[keyof typeof SsoLoginAuditScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -5819,6 +8310,34 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'SsoProtocol'
+   */
+  export type EnumSsoProtocolFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SsoProtocol'>
+    
+
+
+  /**
+   * Reference to a field of type 'SsoProtocol[]'
+   */
+  export type ListEnumSsoProtocolFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SsoProtocol[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SsoStatus'
+   */
+  export type EnumSsoStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SsoStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SsoStatus[]'
+   */
+  export type ListEnumSsoStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SsoStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -5851,6 +8370,8 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     mfaSecret?: StringNullableFilter<"User"> | string | null
     mfaEnabled?: BoolFilter<"User"> | boolean
+    externalId?: StringNullableFilter<"User"> | string | null
+    ssoLastLogin?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     inviteTokens?: InviteTokenListRelationFilter
@@ -5870,6 +8391,8 @@ export namespace Prisma {
     lastLoginAt?: SortOrderInput | SortOrder
     mfaSecret?: SortOrderInput | SortOrder
     mfaEnabled?: SortOrder
+    externalId?: SortOrderInput | SortOrder
+    ssoLastLogin?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     inviteTokens?: InviteTokenOrderByRelationAggregateInput
@@ -5878,6 +8401,7 @@ export namespace Prisma {
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    externalId?: string
     tenantId_email?: UserTenantIdEmailCompoundUniqueInput
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
@@ -5893,11 +8417,12 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     mfaSecret?: StringNullableFilter<"User"> | string | null
     mfaEnabled?: BoolFilter<"User"> | boolean
+    ssoLastLogin?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     inviteTokens?: InviteTokenListRelationFilter
     passwordResets?: PasswordResetListRelationFilter
-  }, "id" | "tenantId_email">
+  }, "id" | "externalId" | "tenantId_email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -5912,6 +8437,8 @@ export namespace Prisma {
     lastLoginAt?: SortOrderInput | SortOrder
     mfaSecret?: SortOrderInput | SortOrder
     mfaEnabled?: SortOrder
+    externalId?: SortOrderInput | SortOrder
+    ssoLastLogin?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -5935,6 +8462,8 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     mfaSecret?: StringNullableWithAggregatesFilter<"User"> | string | null
     mfaEnabled?: BoolWithAggregatesFilter<"User"> | boolean
+    externalId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    ssoLastLogin?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -6146,6 +8675,200 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AuditEvent"> | Date | string
   }
 
+  export type TenantSsoWhereInput = {
+    AND?: TenantSsoWhereInput | TenantSsoWhereInput[]
+    OR?: TenantSsoWhereInput[]
+    NOT?: TenantSsoWhereInput | TenantSsoWhereInput[]
+    id?: StringFilter<"TenantSso"> | string
+    tenantId?: StringFilter<"TenantSso"> | string
+    protocol?: EnumSsoProtocolFilter<"TenantSso"> | $Enums.SsoProtocol
+    status?: EnumSsoStatusFilter<"TenantSso"> | $Enums.SsoStatus
+    samlEntryPoint?: StringNullableFilter<"TenantSso"> | string | null
+    samlIssuer?: StringNullableFilter<"TenantSso"> | string | null
+    samlCertificate?: StringNullableFilter<"TenantSso"> | string | null
+    oidcIssuerUrl?: StringNullableFilter<"TenantSso"> | string | null
+    oidcClientId?: StringNullableFilter<"TenantSso"> | string | null
+    oidcClientSecret?: StringNullableFilter<"TenantSso"> | string | null
+    emailDomains?: StringNullableListFilter<"TenantSso">
+    attrEmail?: StringFilter<"TenantSso"> | string
+    attrFirstName?: StringFilter<"TenantSso"> | string
+    attrLastName?: StringFilter<"TenantSso"> | string
+    attrGroups?: StringFilter<"TenantSso"> | string
+    roleMap?: JsonFilter<"TenantSso">
+    defaultRole?: EnumUserRoleFilter<"TenantSso"> | $Enums.UserRole
+    createdAt?: DateTimeFilter<"TenantSso"> | Date | string
+    updatedAt?: DateTimeFilter<"TenantSso"> | Date | string
+  }
+
+  export type TenantSsoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    protocol?: SortOrder
+    status?: SortOrder
+    samlEntryPoint?: SortOrderInput | SortOrder
+    samlIssuer?: SortOrderInput | SortOrder
+    samlCertificate?: SortOrderInput | SortOrder
+    oidcIssuerUrl?: SortOrderInput | SortOrder
+    oidcClientId?: SortOrderInput | SortOrder
+    oidcClientSecret?: SortOrderInput | SortOrder
+    emailDomains?: SortOrder
+    attrEmail?: SortOrder
+    attrFirstName?: SortOrder
+    attrLastName?: SortOrder
+    attrGroups?: SortOrder
+    roleMap?: SortOrder
+    defaultRole?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantSsoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId?: string
+    AND?: TenantSsoWhereInput | TenantSsoWhereInput[]
+    OR?: TenantSsoWhereInput[]
+    NOT?: TenantSsoWhereInput | TenantSsoWhereInput[]
+    protocol?: EnumSsoProtocolFilter<"TenantSso"> | $Enums.SsoProtocol
+    status?: EnumSsoStatusFilter<"TenantSso"> | $Enums.SsoStatus
+    samlEntryPoint?: StringNullableFilter<"TenantSso"> | string | null
+    samlIssuer?: StringNullableFilter<"TenantSso"> | string | null
+    samlCertificate?: StringNullableFilter<"TenantSso"> | string | null
+    oidcIssuerUrl?: StringNullableFilter<"TenantSso"> | string | null
+    oidcClientId?: StringNullableFilter<"TenantSso"> | string | null
+    oidcClientSecret?: StringNullableFilter<"TenantSso"> | string | null
+    emailDomains?: StringNullableListFilter<"TenantSso">
+    attrEmail?: StringFilter<"TenantSso"> | string
+    attrFirstName?: StringFilter<"TenantSso"> | string
+    attrLastName?: StringFilter<"TenantSso"> | string
+    attrGroups?: StringFilter<"TenantSso"> | string
+    roleMap?: JsonFilter<"TenantSso">
+    defaultRole?: EnumUserRoleFilter<"TenantSso"> | $Enums.UserRole
+    createdAt?: DateTimeFilter<"TenantSso"> | Date | string
+    updatedAt?: DateTimeFilter<"TenantSso"> | Date | string
+  }, "id" | "tenantId">
+
+  export type TenantSsoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    protocol?: SortOrder
+    status?: SortOrder
+    samlEntryPoint?: SortOrderInput | SortOrder
+    samlIssuer?: SortOrderInput | SortOrder
+    samlCertificate?: SortOrderInput | SortOrder
+    oidcIssuerUrl?: SortOrderInput | SortOrder
+    oidcClientId?: SortOrderInput | SortOrder
+    oidcClientSecret?: SortOrderInput | SortOrder
+    emailDomains?: SortOrder
+    attrEmail?: SortOrder
+    attrFirstName?: SortOrder
+    attrLastName?: SortOrder
+    attrGroups?: SortOrder
+    roleMap?: SortOrder
+    defaultRole?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TenantSsoCountOrderByAggregateInput
+    _max?: TenantSsoMaxOrderByAggregateInput
+    _min?: TenantSsoMinOrderByAggregateInput
+  }
+
+  export type TenantSsoScalarWhereWithAggregatesInput = {
+    AND?: TenantSsoScalarWhereWithAggregatesInput | TenantSsoScalarWhereWithAggregatesInput[]
+    OR?: TenantSsoScalarWhereWithAggregatesInput[]
+    NOT?: TenantSsoScalarWhereWithAggregatesInput | TenantSsoScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TenantSso"> | string
+    tenantId?: StringWithAggregatesFilter<"TenantSso"> | string
+    protocol?: EnumSsoProtocolWithAggregatesFilter<"TenantSso"> | $Enums.SsoProtocol
+    status?: EnumSsoStatusWithAggregatesFilter<"TenantSso"> | $Enums.SsoStatus
+    samlEntryPoint?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    samlIssuer?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    samlCertificate?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    oidcIssuerUrl?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    oidcClientId?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    oidcClientSecret?: StringNullableWithAggregatesFilter<"TenantSso"> | string | null
+    emailDomains?: StringNullableListFilter<"TenantSso">
+    attrEmail?: StringWithAggregatesFilter<"TenantSso"> | string
+    attrFirstName?: StringWithAggregatesFilter<"TenantSso"> | string
+    attrLastName?: StringWithAggregatesFilter<"TenantSso"> | string
+    attrGroups?: StringWithAggregatesFilter<"TenantSso"> | string
+    roleMap?: JsonWithAggregatesFilter<"TenantSso">
+    defaultRole?: EnumUserRoleWithAggregatesFilter<"TenantSso"> | $Enums.UserRole
+    createdAt?: DateTimeWithAggregatesFilter<"TenantSso"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TenantSso"> | Date | string
+  }
+
+  export type SsoLoginAuditWhereInput = {
+    AND?: SsoLoginAuditWhereInput | SsoLoginAuditWhereInput[]
+    OR?: SsoLoginAuditWhereInput[]
+    NOT?: SsoLoginAuditWhereInput | SsoLoginAuditWhereInput[]
+    id?: StringFilter<"SsoLoginAudit"> | string
+    tenantId?: StringFilter<"SsoLoginAudit"> | string
+    email?: StringFilter<"SsoLoginAudit"> | string
+    protocol?: EnumSsoProtocolFilter<"SsoLoginAudit"> | $Enums.SsoProtocol
+    outcome?: StringFilter<"SsoLoginAudit"> | string
+    ipAddress?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    userAgent?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    userId?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    createdAt?: DateTimeFilter<"SsoLoginAudit"> | Date | string
+  }
+
+  export type SsoLoginAuditOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    email?: SortOrder
+    protocol?: SortOrder
+    outcome?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SsoLoginAuditWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SsoLoginAuditWhereInput | SsoLoginAuditWhereInput[]
+    OR?: SsoLoginAuditWhereInput[]
+    NOT?: SsoLoginAuditWhereInput | SsoLoginAuditWhereInput[]
+    tenantId?: StringFilter<"SsoLoginAudit"> | string
+    email?: StringFilter<"SsoLoginAudit"> | string
+    protocol?: EnumSsoProtocolFilter<"SsoLoginAudit"> | $Enums.SsoProtocol
+    outcome?: StringFilter<"SsoLoginAudit"> | string
+    ipAddress?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    userAgent?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    userId?: StringNullableFilter<"SsoLoginAudit"> | string | null
+    createdAt?: DateTimeFilter<"SsoLoginAudit"> | Date | string
+  }, "id">
+
+  export type SsoLoginAuditOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    email?: SortOrder
+    protocol?: SortOrder
+    outcome?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: SsoLoginAuditCountOrderByAggregateInput
+    _max?: SsoLoginAuditMaxOrderByAggregateInput
+    _min?: SsoLoginAuditMinOrderByAggregateInput
+  }
+
+  export type SsoLoginAuditScalarWhereWithAggregatesInput = {
+    AND?: SsoLoginAuditScalarWhereWithAggregatesInput | SsoLoginAuditScalarWhereWithAggregatesInput[]
+    OR?: SsoLoginAuditScalarWhereWithAggregatesInput[]
+    NOT?: SsoLoginAuditScalarWhereWithAggregatesInput | SsoLoginAuditScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SsoLoginAudit"> | string
+    tenantId?: StringWithAggregatesFilter<"SsoLoginAudit"> | string
+    email?: StringWithAggregatesFilter<"SsoLoginAudit"> | string
+    protocol?: EnumSsoProtocolWithAggregatesFilter<"SsoLoginAudit"> | $Enums.SsoProtocol
+    outcome?: StringWithAggregatesFilter<"SsoLoginAudit"> | string
+    ipAddress?: StringNullableWithAggregatesFilter<"SsoLoginAudit"> | string | null
+    userAgent?: StringNullableWithAggregatesFilter<"SsoLoginAudit"> | string | null
+    userId?: StringNullableWithAggregatesFilter<"SsoLoginAudit"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SsoLoginAudit"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     tenantId: string
@@ -6159,6 +8882,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
@@ -6178,6 +8903,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
@@ -6197,6 +8924,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
@@ -6216,6 +8945,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
@@ -6235,6 +8966,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6252,6 +8985,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6269,6 +9004,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6502,6 +9239,244 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TenantSsoCreateInput = {
+    id?: string
+    tenantId: string
+    protocol: $Enums.SsoProtocol
+    status?: $Enums.SsoStatus
+    samlEntryPoint?: string | null
+    samlIssuer?: string | null
+    samlCertificate?: string | null
+    oidcIssuerUrl?: string | null
+    oidcClientId?: string | null
+    oidcClientSecret?: string | null
+    emailDomains?: TenantSsoCreateemailDomainsInput | string[]
+    attrEmail?: string
+    attrFirstName?: string
+    attrLastName?: string
+    attrGroups?: string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: $Enums.UserRole
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantSsoUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    protocol: $Enums.SsoProtocol
+    status?: $Enums.SsoStatus
+    samlEntryPoint?: string | null
+    samlIssuer?: string | null
+    samlCertificate?: string | null
+    oidcIssuerUrl?: string | null
+    oidcClientId?: string | null
+    oidcClientSecret?: string | null
+    emailDomains?: TenantSsoCreateemailDomainsInput | string[]
+    attrEmail?: string
+    attrFirstName?: string
+    attrLastName?: string
+    attrGroups?: string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: $Enums.UserRole
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantSsoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    status?: EnumSsoStatusFieldUpdateOperationsInput | $Enums.SsoStatus
+    samlEntryPoint?: NullableStringFieldUpdateOperationsInput | string | null
+    samlIssuer?: NullableStringFieldUpdateOperationsInput | string | null
+    samlCertificate?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcIssuerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    emailDomains?: TenantSsoUpdateemailDomainsInput | string[]
+    attrEmail?: StringFieldUpdateOperationsInput | string
+    attrFirstName?: StringFieldUpdateOperationsInput | string
+    attrLastName?: StringFieldUpdateOperationsInput | string
+    attrGroups?: StringFieldUpdateOperationsInput | string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantSsoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    status?: EnumSsoStatusFieldUpdateOperationsInput | $Enums.SsoStatus
+    samlEntryPoint?: NullableStringFieldUpdateOperationsInput | string | null
+    samlIssuer?: NullableStringFieldUpdateOperationsInput | string | null
+    samlCertificate?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcIssuerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    emailDomains?: TenantSsoUpdateemailDomainsInput | string[]
+    attrEmail?: StringFieldUpdateOperationsInput | string
+    attrFirstName?: StringFieldUpdateOperationsInput | string
+    attrLastName?: StringFieldUpdateOperationsInput | string
+    attrGroups?: StringFieldUpdateOperationsInput | string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantSsoCreateManyInput = {
+    id?: string
+    tenantId: string
+    protocol: $Enums.SsoProtocol
+    status?: $Enums.SsoStatus
+    samlEntryPoint?: string | null
+    samlIssuer?: string | null
+    samlCertificate?: string | null
+    oidcIssuerUrl?: string | null
+    oidcClientId?: string | null
+    oidcClientSecret?: string | null
+    emailDomains?: TenantSsoCreateemailDomainsInput | string[]
+    attrEmail?: string
+    attrFirstName?: string
+    attrLastName?: string
+    attrGroups?: string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: $Enums.UserRole
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantSsoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    status?: EnumSsoStatusFieldUpdateOperationsInput | $Enums.SsoStatus
+    samlEntryPoint?: NullableStringFieldUpdateOperationsInput | string | null
+    samlIssuer?: NullableStringFieldUpdateOperationsInput | string | null
+    samlCertificate?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcIssuerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    emailDomains?: TenantSsoUpdateemailDomainsInput | string[]
+    attrEmail?: StringFieldUpdateOperationsInput | string
+    attrFirstName?: StringFieldUpdateOperationsInput | string
+    attrLastName?: StringFieldUpdateOperationsInput | string
+    attrGroups?: StringFieldUpdateOperationsInput | string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantSsoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    status?: EnumSsoStatusFieldUpdateOperationsInput | $Enums.SsoStatus
+    samlEntryPoint?: NullableStringFieldUpdateOperationsInput | string | null
+    samlIssuer?: NullableStringFieldUpdateOperationsInput | string | null
+    samlCertificate?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcIssuerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    oidcClientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    emailDomains?: TenantSsoUpdateemailDomainsInput | string[]
+    attrEmail?: StringFieldUpdateOperationsInput | string
+    attrFirstName?: StringFieldUpdateOperationsInput | string
+    attrLastName?: StringFieldUpdateOperationsInput | string
+    attrGroups?: StringFieldUpdateOperationsInput | string
+    roleMap?: JsonNullValueInput | InputJsonValue
+    defaultRole?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SsoLoginAuditCreateInput = {
+    id?: string
+    tenantId: string
+    email: string
+    protocol: $Enums.SsoProtocol
+    outcome: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    userId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SsoLoginAuditUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    email: string
+    protocol: $Enums.SsoProtocol
+    outcome: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    userId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SsoLoginAuditUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    outcome?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SsoLoginAuditUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    outcome?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SsoLoginAuditCreateManyInput = {
+    id?: string
+    tenantId: string
+    email: string
+    protocol: $Enums.SsoProtocol
+    outcome: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    userId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SsoLoginAuditUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    outcome?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SsoLoginAuditUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    protocol?: EnumSsoProtocolFieldUpdateOperationsInput | $Enums.SsoProtocol
+    outcome?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -6609,6 +9584,8 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     mfaSecret?: SortOrder
     mfaEnabled?: SortOrder
+    externalId?: SortOrder
+    ssoLastLogin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6626,6 +9603,8 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     mfaSecret?: SortOrder
     mfaEnabled?: SortOrder
+    externalId?: SortOrder
+    ssoLastLogin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6643,6 +9622,8 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     mfaSecret?: SortOrder
     mfaEnabled?: SortOrder
+    externalId?: SortOrder
+    ssoLastLogin?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6880,6 +9861,146 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type EnumSsoProtocolFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoProtocol | EnumSsoProtocolFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoProtocolFilter<$PrismaModel> | $Enums.SsoProtocol
+  }
+
+  export type EnumSsoStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoStatus | EnumSsoStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoStatusFilter<$PrismaModel> | $Enums.SsoStatus
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type TenantSsoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    protocol?: SortOrder
+    status?: SortOrder
+    samlEntryPoint?: SortOrder
+    samlIssuer?: SortOrder
+    samlCertificate?: SortOrder
+    oidcIssuerUrl?: SortOrder
+    oidcClientId?: SortOrder
+    oidcClientSecret?: SortOrder
+    emailDomains?: SortOrder
+    attrEmail?: SortOrder
+    attrFirstName?: SortOrder
+    attrLastName?: SortOrder
+    attrGroups?: SortOrder
+    roleMap?: SortOrder
+    defaultRole?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantSsoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    protocol?: SortOrder
+    status?: SortOrder
+    samlEntryPoint?: SortOrder
+    samlIssuer?: SortOrder
+    samlCertificate?: SortOrder
+    oidcIssuerUrl?: SortOrder
+    oidcClientId?: SortOrder
+    oidcClientSecret?: SortOrder
+    attrEmail?: SortOrder
+    attrFirstName?: SortOrder
+    attrLastName?: SortOrder
+    attrGroups?: SortOrder
+    defaultRole?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantSsoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    protocol?: SortOrder
+    status?: SortOrder
+    samlEntryPoint?: SortOrder
+    samlIssuer?: SortOrder
+    samlCertificate?: SortOrder
+    oidcIssuerUrl?: SortOrder
+    oidcClientId?: SortOrder
+    oidcClientSecret?: SortOrder
+    attrEmail?: SortOrder
+    attrFirstName?: SortOrder
+    attrLastName?: SortOrder
+    attrGroups?: SortOrder
+    defaultRole?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumSsoProtocolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoProtocol | EnumSsoProtocolFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoProtocolWithAggregatesFilter<$PrismaModel> | $Enums.SsoProtocol
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSsoProtocolFilter<$PrismaModel>
+    _max?: NestedEnumSsoProtocolFilter<$PrismaModel>
+  }
+
+  export type EnumSsoStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoStatus | EnumSsoStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoStatusWithAggregatesFilter<$PrismaModel> | $Enums.SsoStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSsoStatusFilter<$PrismaModel>
+    _max?: NestedEnumSsoStatusFilter<$PrismaModel>
+  }
+
+  export type SsoLoginAuditCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    email?: SortOrder
+    protocol?: SortOrder
+    outcome?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SsoLoginAuditMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    email?: SortOrder
+    protocol?: SortOrder
+    outcome?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SsoLoginAuditMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    email?: SortOrder
+    protocol?: SortOrder
+    outcome?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+  }
+
   export type InviteTokenCreateNestedManyWithoutInvitedByInput = {
     create?: XOR<InviteTokenCreateWithoutInvitedByInput, InviteTokenUncheckedCreateWithoutInvitedByInput> | InviteTokenCreateWithoutInvitedByInput[] | InviteTokenUncheckedCreateWithoutInvitedByInput[]
     connectOrCreate?: InviteTokenCreateOrConnectWithoutInvitedByInput | InviteTokenCreateOrConnectWithoutInvitedByInput[]
@@ -7014,6 +10135,23 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutInviteTokensInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutInviteTokensInput, UserUpdateWithoutInviteTokensInput>, UserUncheckedUpdateWithoutInviteTokensInput>
+  }
+
+  export type TenantSsoCreateemailDomainsInput = {
+    set: string[]
+  }
+
+  export type EnumSsoProtocolFieldUpdateOperationsInput = {
+    set?: $Enums.SsoProtocol
+  }
+
+  export type EnumSsoStatusFieldUpdateOperationsInput = {
+    set?: $Enums.SsoStatus
+  }
+
+  export type TenantSsoUpdateemailDomainsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -7203,6 +10341,40 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumSsoProtocolFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoProtocol | EnumSsoProtocolFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoProtocolFilter<$PrismaModel> | $Enums.SsoProtocol
+  }
+
+  export type NestedEnumSsoStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoStatus | EnumSsoStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoStatusFilter<$PrismaModel> | $Enums.SsoStatus
+  }
+
+  export type NestedEnumSsoProtocolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoProtocol | EnumSsoProtocolFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoProtocol[] | ListEnumSsoProtocolFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoProtocolWithAggregatesFilter<$PrismaModel> | $Enums.SsoProtocol
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSsoProtocolFilter<$PrismaModel>
+    _max?: NestedEnumSsoProtocolFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSsoStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SsoStatus | EnumSsoStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SsoStatus[] | ListEnumSsoStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSsoStatusWithAggregatesFilter<$PrismaModel> | $Enums.SsoStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSsoStatusFilter<$PrismaModel>
+    _max?: NestedEnumSsoStatusFilter<$PrismaModel>
+  }
+
   export type InviteTokenCreateWithoutInvitedByInput = {
     id?: string
     tenantId: string
@@ -7333,6 +10505,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
@@ -7351,6 +10525,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
@@ -7385,6 +10561,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
@@ -7403,6 +10581,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
@@ -7421,6 +10601,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
@@ -7439,6 +10621,8 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     mfaSecret?: string | null
     mfaEnabled?: boolean
+    externalId?: string | null
+    ssoLastLogin?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
@@ -7473,6 +10657,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
@@ -7491,6 +10677,8 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
     mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    ssoLastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput

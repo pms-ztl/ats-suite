@@ -106,6 +106,8 @@ exports.Prisma.UserScalarFieldEnum = {
   lastLoginAt: 'lastLoginAt',
   mfaSecret: 'mfaSecret',
   mfaEnabled: 'mfaEnabled',
+  externalId: 'externalId',
+  ssoLastLogin: 'ssoLastLogin',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -143,6 +145,40 @@ exports.Prisma.AuditEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.TenantSsoScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  protocol: 'protocol',
+  status: 'status',
+  samlEntryPoint: 'samlEntryPoint',
+  samlIssuer: 'samlIssuer',
+  samlCertificate: 'samlCertificate',
+  oidcIssuerUrl: 'oidcIssuerUrl',
+  oidcClientId: 'oidcClientId',
+  oidcClientSecret: 'oidcClientSecret',
+  emailDomains: 'emailDomains',
+  attrEmail: 'attrEmail',
+  attrFirstName: 'attrFirstName',
+  attrLastName: 'attrLastName',
+  attrGroups: 'attrGroups',
+  roleMap: 'roleMap',
+  defaultRole: 'defaultRole',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SsoLoginAuditScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  email: 'email',
+  protocol: 'protocol',
+  outcome: 'outcome',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  userId: 'userId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -177,11 +213,24 @@ exports.UserRole = exports.$Enums.UserRole = {
   CANDIDATE: 'CANDIDATE'
 };
 
+exports.SsoProtocol = exports.$Enums.SsoProtocol = {
+  SAML: 'SAML',
+  OIDC: 'OIDC'
+};
+
+exports.SsoStatus = exports.$Enums.SsoStatus = {
+  DRAFT: 'DRAFT',
+  ENABLED: 'ENABLED',
+  DISABLED: 'DISABLED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   PasswordReset: 'PasswordReset',
   InviteToken: 'InviteToken',
-  AuditEvent: 'AuditEvent'
+  AuditEvent: 'AuditEvent',
+  TenantSso: 'TenantSso',
+  SsoLoginAudit: 'SsoLoginAudit'
 };
 /**
  * Create the Client
@@ -194,7 +243,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\CDC\\ATS-microservices\\apps\\identity-service\\src\\generated\\prisma",
+      "value": "D:\\CDC\\ATS\\apps\\identity-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -208,7 +257,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\CDC\\ATS-microservices\\apps\\identity-service\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\CDC\\ATS\\apps\\identity-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -221,6 +270,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -229,13 +279,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"IDENTITY_DATABASE_URL\")\n}\n\n// ── Identity-service local read model of UserRole.\n// Mirrors @cdc-ats/contracts UserRoleSchema. Single source of truth at\n// the Zod level — Prisma enum exists only so the column type is constrained.\nenum UserRole {\n  SUPER_ADMIN\n  ADMIN\n  RECRUITER\n  HIRING_MANAGER\n  COMPLIANCE_OFFICER\n  INTERVIEWER\n  CANDIDATE\n}\n\nmodel User {\n  id           String    @id @default(uuid())\n  tenantId     String // FK semantically to tenant-service's Tenant.id, but NO Prisma relation (cross-service)\n  email        String\n  passwordHash String\n  firstName    String\n  lastName     String\n  role         UserRole  @default(RECRUITER)\n  department   String?\n  isActive     Boolean   @default(true)\n  lastLoginAt  DateTime?\n  // TOTP MFA — opt-in per user. Secret is base32 (32 chars); only set\n  // when the user completes the enrolment flow + verifies one code.\n  mfaSecret    String?\n  mfaEnabled   Boolean   @default(false)\n  createdAt    DateTime  @default(now())\n  updatedAt    DateTime  @updatedAt\n\n  inviteTokens   InviteToken[]\n  passwordResets PasswordReset[]\n\n  @@unique([tenantId, email])\n  @@index([tenantId])\n  @@index([email])\n}\n\n// Password reset request — created by /auth/forgot-password, consumed by\n// /auth/reset-password. Tokens are single-use, expire after 1h.\nmodel PasswordReset {\n  id        String    @id @default(uuid())\n  userId    String\n  token     String    @unique @default(uuid())\n  expiresAt DateTime\n  usedAt    DateTime?\n  createdAt DateTime  @default(now())\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([token])\n  @@index([userId])\n}\n\nmodel InviteToken {\n  id              String    @id @default(uuid())\n  tenantId        String\n  email           String\n  role            UserRole  @default(RECRUITER)\n  token           String    @unique @default(uuid())\n  expiresAt       DateTime\n  usedAt          DateTime?\n  invitedByUserId String\n  createdAt       DateTime  @default(now())\n\n  invitedBy User @relation(fields: [invitedByUserId], references: [id])\n\n  @@index([tenantId])\n  @@index([token])\n}\n\n// Local audit trail for identity events (logins, role changes, invites).\n// Other services keep their own audit trails; the gateway can aggregate.\nmodel AuditEvent {\n  id           String   @id @default(uuid())\n  tenantId     String?\n  actorUserId  String?\n  action       String // \"USER_LOGIN\", \"USER_INVITED\", \"USER_ROLE_CHANGED\", ...\n  resourceType String\n  resourceId   String\n  metadata     Json     @default(\"{}\")\n  ipAddress    String?\n  createdAt    DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n  @@index([actorUserId])\n}\n",
-  "inlineSchemaHash": "bda0242336b74e7610c2434db62ff5a3541a1fbac7b8a8849d4692fdbc8573f0",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"IDENTITY_DATABASE_URL\")\n}\n\n// ── Identity-service local read model of UserRole.\n// Mirrors @cdc-ats/contracts UserRoleSchema. Single source of truth at\n// the Zod level — Prisma enum exists only so the column type is constrained.\nenum UserRole {\n  SUPER_ADMIN\n  ADMIN\n  RECRUITER\n  HIRING_MANAGER\n  COMPLIANCE_OFFICER\n  INTERVIEWER\n  CANDIDATE\n}\n\nmodel User {\n  id           String    @id @default(uuid())\n  tenantId     String // FK semantically to tenant-service's Tenant.id, but NO Prisma relation (cross-service)\n  email        String\n  passwordHash String\n  firstName    String\n  lastName     String\n  role         UserRole  @default(RECRUITER)\n  department   String?\n  isActive     Boolean   @default(true)\n  lastLoginAt  DateTime?\n  // TOTP MFA — opt-in per user. Secret is base32 (32 chars); only set\n  // when the user completes the enrolment flow + verifies one code.\n  mfaSecret    String?\n  mfaEnabled   Boolean   @default(false)\n  // Phase 28 — SSO: stable IdP-provided identifier (SAML nameID, OIDC sub).\n  // When set, this user authenticated via SSO last time. Unique across\n  // tenants because real-world IdPs guarantee uniqueness per IdP.\n  externalId   String?   @unique\n  ssoLastLogin DateTime?\n  createdAt    DateTime  @default(now())\n  updatedAt    DateTime  @updatedAt\n\n  inviteTokens   InviteToken[]\n  passwordResets PasswordReset[]\n\n  @@unique([tenantId, email])\n  @@index([tenantId])\n  @@index([email])\n  @@index([externalId])\n}\n\n// Password reset request — created by /auth/forgot-password, consumed by\n// /auth/reset-password. Tokens are single-use, expire after 1h.\nmodel PasswordReset {\n  id        String    @id @default(uuid())\n  userId    String\n  token     String    @unique @default(uuid())\n  expiresAt DateTime\n  usedAt    DateTime?\n  createdAt DateTime  @default(now())\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([token])\n  @@index([userId])\n}\n\nmodel InviteToken {\n  id              String    @id @default(uuid())\n  tenantId        String\n  email           String\n  role            UserRole  @default(RECRUITER)\n  token           String    @unique @default(uuid())\n  expiresAt       DateTime\n  usedAt          DateTime?\n  invitedByUserId String\n  createdAt       DateTime  @default(now())\n\n  invitedBy User @relation(fields: [invitedByUserId], references: [id])\n\n  @@index([tenantId])\n  @@index([token])\n}\n\n// Local audit trail for identity events (logins, role changes, invites).\n// Other services keep their own audit trails; the gateway can aggregate.\nmodel AuditEvent {\n  id           String   @id @default(uuid())\n  tenantId     String?\n  actorUserId  String?\n  action       String // \"USER_LOGIN\", \"USER_INVITED\", \"USER_ROLE_CHANGED\", ...\n  resourceType String\n  resourceId   String\n  metadata     Json     @default(\"{}\")\n  ipAddress    String?\n  createdAt    DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n  @@index([actorUserId])\n}\n\n// ── Phase 28 — Enterprise SSO ──────────────────────────────────────────────\n\nenum SsoProtocol {\n  SAML\n  OIDC\n}\n\nenum SsoStatus {\n  DRAFT\n  ENABLED\n  DISABLED\n}\n\n// Per-tenant SSO config. One row per tenant max.\n// Status flow: DRAFT (test login only, no real provisioning) → ENABLED\n// (full provisioning + login) → DISABLED (config retained but rejected).\nmodel TenantSso {\n  id       String      @id @default(uuid())\n  tenantId String      @unique\n  protocol SsoProtocol\n  status   SsoStatus   @default(DRAFT)\n\n  // SAML 2.0 config (null when protocol = OIDC)\n  samlEntryPoint  String? // IdP SSO URL where we send AuthnRequest\n  samlIssuer      String? // Our entity ID (auto-derived from tenant slug)\n  samlCertificate String? @db.Text // IdP signing cert PEM (validates assertions)\n\n  // OIDC config (null when protocol = SAML)\n  oidcIssuerUrl    String? // e.g. https://accounts.google.com — used for IdP discovery\n  oidcClientId     String?\n  oidcClientSecret String? @db.Text // stored plaintext in dev; KMS-encrypted in prod (Phase 32)\n\n  // Common: which email domains route here for /sso/discover\n  emailDomains String[] @default([]) // e.g. [\"hcl.com\", \"hcltech.com\"]\n\n  // IdP claim names — defaults match Okta/Workspace/Azure AD common shapes\n  attrEmail     String @default(\"email\")\n  attrFirstName String @default(\"firstName\")\n  attrLastName  String @default(\"lastName\")\n  attrGroups    String @default(\"groups\")\n\n  // Role mapping: {IdP group value → our UserRole}\n  // Default (no group match) lands in defaultRole.\n  roleMap     Json     @default(\"{}\")\n  defaultRole UserRole @default(RECRUITER)\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([status])\n}\n\n// Append-only audit of every SSO login attempt. Powers the /settings/sso\n// audit panel + feeds platform security telemetry.\nmodel SsoLoginAudit {\n  id        String      @id @default(uuid())\n  tenantId  String\n  email     String\n  protocol  SsoProtocol\n  outcome   String // \"success\" | \"fail:bad_signature\" | \"fail:no_email\" | ...\n  ipAddress String?\n  userAgent String?\n  userId    String? // populated when user found/created\n  createdAt DateTime    @default(now())\n\n  @@index([tenantId, createdAt])\n  @@index([email, createdAt])\n}\n",
+  "inlineSchemaHash": "2275f28e0c9957f749012af1eaa3bd262917f3e13be08f229608c923fb5785db",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"department\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"lastLoginAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"mfaSecret\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mfaEnabled\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"inviteTokens\",\"kind\":\"object\",\"type\":\"InviteToken\",\"relationName\":\"InviteTokenToUser\"},{\"name\":\"passwordResets\",\"kind\":\"object\",\"type\":\"PasswordReset\",\"relationName\":\"PasswordResetToUser\"}],\"dbName\":null},\"PasswordReset\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"usedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PasswordResetToUser\"}],\"dbName\":null},\"InviteToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"usedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"invitedByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"invitedBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"InviteTokenToUser\"}],\"dbName\":null},\"AuditEvent\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"action\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"resourceType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"resourceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"ipAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"department\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"lastLoginAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"mfaSecret\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mfaEnabled\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"externalId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ssoLastLogin\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"inviteTokens\",\"kind\":\"object\",\"type\":\"InviteToken\",\"relationName\":\"InviteTokenToUser\"},{\"name\":\"passwordResets\",\"kind\":\"object\",\"type\":\"PasswordReset\",\"relationName\":\"PasswordResetToUser\"}],\"dbName\":null},\"PasswordReset\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"usedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PasswordResetToUser\"}],\"dbName\":null},\"InviteToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"usedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"invitedByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"invitedBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"InviteTokenToUser\"}],\"dbName\":null},\"AuditEvent\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"action\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"resourceType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"resourceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"ipAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TenantSso\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"protocol\",\"kind\":\"enum\",\"type\":\"SsoProtocol\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"SsoStatus\"},{\"name\":\"samlEntryPoint\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"samlIssuer\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"samlCertificate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"oidcIssuerUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"oidcClientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"oidcClientSecret\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailDomains\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attrEmail\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attrFirstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attrLastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attrGroups\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"roleMap\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"defaultRole\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"SsoLoginAudit\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"protocol\",\"kind\":\"enum\",\"type\":\"SsoProtocol\"},{\"name\":\"outcome\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ipAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userAgent\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

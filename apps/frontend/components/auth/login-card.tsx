@@ -53,6 +53,35 @@ export function LoginCard(props: LoginCardProps) {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<React.ReactNode>("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  // Phase 28 — SSO discovery. When the user's email matches a tenant with
+  // SSO enabled, we hide the password field and show a "Continue with SSO"
+  // button that navigates to the tenant's initiate URL.
+  const [ssoTarget, setSsoTarget] = useState<{ initiateUrl: string; protocol: string } | null>(null);
+  const [ssoChecking, setSsoChecking] = useState(false);
+
+  async function checkSso(emailValue: string) {
+    if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      setSsoTarget(null);
+      return;
+    }
+    setSsoChecking(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const res = await fetch(`${apiBase}/auth/sso/discover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailValue }),
+      });
+      if (!res.ok) { setSsoTarget(null); return; }
+      const body = await res.json();
+      const data = body.data ?? body;
+      setSsoTarget(data && data.initiateUrl ? { initiateUrl: data.initiateUrl, protocol: data.protocol } : null);
+    } catch {
+      setSsoTarget(null);
+    } finally {
+      setSsoChecking(false);
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,35 +181,60 @@ export function LoginCard(props: LoginCardProps) {
                   onChange={e => {
                     setEmail(e.target.value);
                     if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined }));
+                    // Reset SSO state when email changes — user might be typing a different domain.
+                    if (ssoTarget) setSsoTarget(null);
                   }}
+                  onBlur={(e) => void checkSso(e.target.value)}
                   autoComplete="email"
                   className={fieldErrors.email ? "border-destructive" : ""}
                 />
                 {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
+                {ssoChecking && <p className="text-xs text-muted-foreground">Checking for SSO…</p>}
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
-                  <Link href="/forgot-password" className="text-2xs text-primary hover:underline">Forgot password?</Link>
+              {/* Phase 28 — show password input ONLY when no SSO target detected for this email. */}
+              {!ssoTarget && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
+                    <Link href="/forgot-password" className="text-2xs text-primary hover:underline">Forgot password?</Link>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: undefined }));
+                    }}
+                    autoComplete="current-password"
+                    className={fieldErrors.password ? "border-destructive" : ""}
+                  />
+                  {fieldErrors.password && <p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>}
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={e => {
-                    setPassword(e.target.value);
-                    if (fieldErrors.password) setFieldErrors(p => ({ ...p, password: undefined }));
-                  }}
-                  autoComplete="current-password"
-                  className={fieldErrors.password ? "border-destructive" : ""}
-                />
-                {fieldErrors.password && <p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>}
-              </div>
+              )}
+              {ssoTarget && (
+                <div className="rounded-md bg-primary/10 border border-primary/30 p-3 text-sm">
+                  <p className="font-medium">Sign in with your organization&apos;s identity provider</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your email is configured to use {ssoTarget.protocol} SSO. Click below to continue at your IdP.
+                  </p>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
-              <Button type="submit" className="w-full h-10 font-semibold" disabled={loading}>
-                {loading ? "Signing in…" : `Sign In to ${props.tierLabel}`}
-              </Button>
+              {ssoTarget ? (
+                <Button
+                  type="button"
+                  className="w-full h-10 font-semibold"
+                  onClick={() => { window.location.href = ssoTarget.initiateUrl; }}
+                >
+                  Continue with {ssoTarget.protocol}
+                </Button>
+              ) : (
+                <Button type="submit" className="w-full h-10 font-semibold" disabled={loading}>
+                  {loading ? "Signing in…" : `Sign In to ${props.tierLabel}`}
+                </Button>
+              )}
               {props.footerSlot}
             </CardFooter>
           </form>

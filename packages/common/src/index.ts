@@ -8,6 +8,7 @@ export * from "./lib/sentry.js";
 export * from "./lib/metrics.js";
 export * from "./lib/health.js";
 export * from "./lib/shutdown.js";
+export * from "./lib/sso-state.js";
 
 export * from "./middleware/auth-headers.js";
 export * from "./middleware/request-id.js";

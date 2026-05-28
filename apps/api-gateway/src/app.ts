@@ -277,6 +277,11 @@ export function createApp(logger: Logger): Express {
   // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
   app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
 
+  // Phase 28 — Tenant SSO config (auth-gated; identity-service handles requireTenantAdmin internally).
+  // Public SSO endpoints (discover, initiate, callback) are NOT here — they live
+  // in routes/auth.ts because they need to sign JWTs + set cookies.
+  app.use("/api/sso/config", gatewayAuth(), forwardHeaders(identityUrl, "/internal/sso/tenants"));
+
   // Phase 20 — tenant self-service config (branding + retention).
   // Branding GET/PUT proxies to tenant-service's /internal/branding and
   // /internal/retention. Auth required: tenant-admin scope (the route

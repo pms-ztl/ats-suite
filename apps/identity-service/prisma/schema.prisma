@@ -36,6 +36,11 @@ model User {
   // when the user completes the enrolment flow + verifies one code.
   mfaSecret    String?
   mfaEnabled   Boolean  @default(false)
+  // Phase 28 — SSO: stable IdP-provided identifier (SAML nameID, OIDC sub).
+  // When set, this user authenticated via SSO last time. Unique across
+  // tenants because real-world IdPs guarantee uniqueness per IdP.
+  externalId   String?  @unique
+  ssoLastLogin DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -45,6 +50,7 @@ model User {
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
+  @@index([externalId])
 }
 
 // Password reset request — created by /auth/forgot-password, consumed by
@@ -95,4 +101,73 @@ model AuditEvent {
 
   @@index([tenantId, createdAt])
   @@index([actorUserId])
+}
+
+// ── Phase 28 — Enterprise SSO ──────────────────────────────────────────────
+
+enum SsoProtocol {
+  SAML
+  OIDC
+}
+
+enum SsoStatus {
+  DRAFT
+  ENABLED
+  DISABLED
+}
+
+// Per-tenant SSO config. One row per tenant max.
+// Status flow: DRAFT (test login only, no real provisioning) → ENABLED
+// (full provisioning + login) → DISABLED (config retained but rejected).
+model TenantSso {
+  id              String       @id @default(uuid())
+  tenantId        String       @unique
+  protocol        SsoProtocol
+  status          SsoStatus    @default(DRAFT)
+
+  // SAML 2.0 config (null when protocol = OIDC)
+  samlEntryPoint  String?      // IdP SSO URL where we send AuthnRequest
+  samlIssuer      String?      // Our entity ID (auto-derived from tenant slug)
+  samlCertificate String?      @db.Text  // IdP signing cert PEM (validates assertions)
+
+  // OIDC config (null when protocol = SAML)
+  oidcIssuerUrl    String?     // e.g. https://accounts.google.com — used for IdP discovery
+  oidcClientId     String?
+  oidcClientSecret String?     @db.Text  // stored plaintext in dev; KMS-encrypted in prod (Phase 32)
+
+  // Common: which email domains route here for /sso/discover
+  emailDomains    String[]     @default([])  // e.g. ["hcl.com", "hcltech.com"]
+
+  // IdP claim names — defaults match Okta/Workspace/Azure AD common shapes
+  attrEmail       String       @default("email")
+  attrFirstName   String       @default("firstName")
+  attrLastName    String       @default("lastName")
+  attrGroups      String       @default("groups")
+
+  // Role mapping: {IdP group value → our UserRole}
+  // Default (no group match) lands in defaultRole.
+  roleMap         Json         @default("{}")
+  defaultRole     UserRole     @default(RECRUITER)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([status])
+}
+
+// Append-only audit of every SSO login attempt. Powers the /settings/sso
+// audit panel + feeds platform security telemetry.
+model SsoLoginAudit {
+  id          String       @id @default(uuid())
+  tenantId    String
+  email       String
+  protocol    SsoProtocol
+  outcome     String       // "success" | "fail:bad_signature" | "fail:no_email" | ...
+  ipAddress   String?
+  userAgent   String?
+  userId      String?      // populated when user found/created
+  createdAt   DateTime     @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([email, createdAt])
 }
