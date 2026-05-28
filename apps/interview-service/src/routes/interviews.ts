@@ -1,6 +1,12 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1:
+// - create / advance-round → recruiter or admin (not interviewer)
+// - feedback → interviewer or recruiter or admin (interviewer is the primary submitter)
+const requireScheduler   = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
+const requireFeedbackSubmitter = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER");
 import { InterviewTypeSchema, InterviewStatusSchema, InterviewRecommendationSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 import { advanceApplicationToNextRound } from "../lib/round-progression.js";
@@ -62,7 +68,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateInterviewSchema.parse(req.body);
@@ -100,7 +106,7 @@ const FeedbackSchema = z.object({
   concerns: z.array(z.string()).default([]),
   notes: z.string().optional(),
 });
-router.post("/:id/feedback", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:id/feedback", requireFeedbackSubmitter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
@@ -148,7 +154,7 @@ router.post("/:id/feedback", async (req: Request, res: Response, next: NextFunct
 });
 
 // ── POST /internal/interviews/applications/:id/advance-round ───────────
-router.post("/applications/:id/advance-round", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/applications/:id/advance-round", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const applicationId = req.params["id"] as string;

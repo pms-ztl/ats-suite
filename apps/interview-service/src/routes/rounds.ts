@@ -1,6 +1,9 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: round config is admin/recruiter — not interviewers.
+const requireRoundEditor = requireRole("ADMIN", "RECRUITER");
 import { InterviewTypeSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 
@@ -28,7 +31,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateRoundSchema.parse(req.body);
@@ -44,27 +47,33 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-027-micro-d: gate + scope mutation by tenantId.
+router.patch("/:id", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
     const body = CreateRoundSchema.partial().parse(req.body);
     const existing = await prisma.interviewRound.findFirst({ where: { id, tenantId } });
     if (!existing) throw Errors.notFound("Round");
-    const updated = await prisma.interviewRound.update({ where: { id }, data: body as any });
+    const { count } = await prisma.interviewRound.updateMany({ where: { id, tenantId }, data: body as any });
+    if (count === 0) throw Errors.notFound("Round");
+    const updated = await prisma.interviewRound.findUnique({ where: { id } });
     ok(res, updated);
   } catch (err) { next(err); }
 });
 
-router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/:id", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
     const existing = await prisma.interviewRound.findFirst({ where: { id, tenantId } });
     if (!existing) throw Errors.notFound("Round");
+    // Phase 27 F-027-micro-d: deleteMany with tenantId scope on the round
+    // itself. The interview.updateMany already scopes by roundId which is
+    // tenant-derived, so it's safe.
     await prisma.$transaction([
-      prisma.interview.updateMany({ where: { roundId: id }, data: { roundId: null } }),
-      prisma.interviewRound.delete({ where: { id } }),
+      prisma.interview.updateMany({ where: { roundId: id, tenantId }, data: { roundId: null } }),
+      prisma.interviewRound.deleteMany({ where: { id, tenantId } }),
     ]);
     ok(res, { deleted: true });
   } catch (err) { next(err); }

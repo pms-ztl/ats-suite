@@ -9,7 +9,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, getTenantId, getUserId, createLogger } from "@cdc-ats/common";
+import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import {
   runAgent,
   publishAgentCompleted,
@@ -45,7 +45,8 @@ const RequestSchema = z.object({
     .optional(),
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P1: scheduling agent is admin/recruiter only.
+router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
