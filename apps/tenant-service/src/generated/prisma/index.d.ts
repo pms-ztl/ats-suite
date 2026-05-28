@@ -2429,6 +2429,8 @@ export namespace Prisma {
     reviewedByUserId: string | null
     reviewedAt: Date | null
     decisionNote: string | null
+    paymentMethod: string | null
+    activatedAt: Date | null
   }
 
   export type PlanChangeRequestMaxAggregateOutputType = {
@@ -2443,6 +2445,8 @@ export namespace Prisma {
     reviewedByUserId: string | null
     reviewedAt: Date | null
     decisionNote: string | null
+    paymentMethod: string | null
+    activatedAt: Date | null
   }
 
   export type PlanChangeRequestCountAggregateOutputType = {
@@ -2457,6 +2461,8 @@ export namespace Prisma {
     reviewedByUserId: number
     reviewedAt: number
     decisionNote: number
+    paymentMethod: number
+    activatedAt: number
     _all: number
   }
 
@@ -2473,6 +2479,8 @@ export namespace Prisma {
     reviewedByUserId?: true
     reviewedAt?: true
     decisionNote?: true
+    paymentMethod?: true
+    activatedAt?: true
   }
 
   export type PlanChangeRequestMaxAggregateInputType = {
@@ -2487,6 +2495,8 @@ export namespace Prisma {
     reviewedByUserId?: true
     reviewedAt?: true
     decisionNote?: true
+    paymentMethod?: true
+    activatedAt?: true
   }
 
   export type PlanChangeRequestCountAggregateInputType = {
@@ -2501,6 +2511,8 @@ export namespace Prisma {
     reviewedByUserId?: true
     reviewedAt?: true
     decisionNote?: true
+    paymentMethod?: true
+    activatedAt?: true
     _all?: true
   }
 
@@ -2588,6 +2600,8 @@ export namespace Prisma {
     reviewedByUserId: string | null
     reviewedAt: Date | null
     decisionNote: string | null
+    paymentMethod: string | null
+    activatedAt: Date | null
     _count: PlanChangeRequestCountAggregateOutputType | null
     _min: PlanChangeRequestMinAggregateOutputType | null
     _max: PlanChangeRequestMaxAggregateOutputType | null
@@ -2619,6 +2633,8 @@ export namespace Prisma {
     reviewedByUserId?: boolean
     reviewedAt?: boolean
     decisionNote?: boolean
+    paymentMethod?: boolean
+    activatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["planChangeRequest"]>
 
@@ -2634,6 +2650,8 @@ export namespace Prisma {
     reviewedByUserId?: boolean
     reviewedAt?: boolean
     decisionNote?: boolean
+    paymentMethod?: boolean
+    activatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["planChangeRequest"]>
 
@@ -2649,6 +2667,8 @@ export namespace Prisma {
     reviewedByUserId?: boolean
     reviewedAt?: boolean
     decisionNote?: boolean
+    paymentMethod?: boolean
+    activatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["planChangeRequest"]>
 
@@ -2664,9 +2684,11 @@ export namespace Prisma {
     reviewedByUserId?: boolean
     reviewedAt?: boolean
     decisionNote?: boolean
+    paymentMethod?: boolean
+    activatedAt?: boolean
   }
 
-  export type PlanChangeRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "fromPlan" | "toPlan" | "status" | "reason" | "requestedByUserId" | "requestedAt" | "reviewedByUserId" | "reviewedAt" | "decisionNote", ExtArgs["result"]["planChangeRequest"]>
+  export type PlanChangeRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "fromPlan" | "toPlan" | "status" | "reason" | "requestedByUserId" | "requestedAt" | "reviewedByUserId" | "reviewedAt" | "decisionNote" | "paymentMethod" | "activatedAt", ExtArgs["result"]["planChangeRequest"]>
   export type PlanChangeRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }
@@ -2694,6 +2716,8 @@ export namespace Prisma {
       reviewedByUserId: string | null
       reviewedAt: Date | null
       decisionNote: string | null
+      paymentMethod: string | null
+      activatedAt: Date | null
     }, ExtArgs["result"]["planChangeRequest"]>
     composites: {}
   }
@@ -3129,6 +3153,8 @@ export namespace Prisma {
     readonly reviewedByUserId: FieldRef<"PlanChangeRequest", 'String'>
     readonly reviewedAt: FieldRef<"PlanChangeRequest", 'DateTime'>
     readonly decisionNote: FieldRef<"PlanChangeRequest", 'String'>
+    readonly paymentMethod: FieldRef<"PlanChangeRequest", 'String'>
+    readonly activatedAt: FieldRef<"PlanChangeRequest", 'DateTime'>
   }
     
 
@@ -3601,7 +3627,9 @@ export namespace Prisma {
     requestedAt: 'requestedAt',
     reviewedByUserId: 'reviewedByUserId',
     reviewedAt: 'reviewedAt',
-    decisionNote: 'decisionNote'
+    decisionNote: 'decisionNote',
+    paymentMethod: 'paymentMethod',
+    activatedAt: 'activatedAt'
   };
 
   export type PlanChangeRequestScalarFieldEnum = (typeof PlanChangeRequestScalarFieldEnum)[keyof typeof PlanChangeRequestScalarFieldEnum]
@@ -3949,6 +3977,8 @@ export namespace Prisma {
     reviewedByUserId?: StringNullableFilter<"PlanChangeRequest"> | string | null
     reviewedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
     decisionNote?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    paymentMethod?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    activatedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }
 
@@ -3964,6 +3994,8 @@ export namespace Prisma {
     reviewedByUserId?: SortOrderInput | SortOrder
     reviewedAt?: SortOrderInput | SortOrder
     decisionNote?: SortOrderInput | SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
+    activatedAt?: SortOrderInput | SortOrder
     tenant?: TenantOrderByWithRelationInput
   }
 
@@ -3982,6 +4014,8 @@ export namespace Prisma {
     reviewedByUserId?: StringNullableFilter<"PlanChangeRequest"> | string | null
     reviewedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
     decisionNote?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    paymentMethod?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    activatedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }, "id">
 
@@ -3997,6 +4031,8 @@ export namespace Prisma {
     reviewedByUserId?: SortOrderInput | SortOrder
     reviewedAt?: SortOrderInput | SortOrder
     decisionNote?: SortOrderInput | SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
+    activatedAt?: SortOrderInput | SortOrder
     _count?: PlanChangeRequestCountOrderByAggregateInput
     _max?: PlanChangeRequestMaxOrderByAggregateInput
     _min?: PlanChangeRequestMinOrderByAggregateInput
@@ -4017,6 +4053,8 @@ export namespace Prisma {
     reviewedByUserId?: StringNullableWithAggregatesFilter<"PlanChangeRequest"> | string | null
     reviewedAt?: DateTimeNullableWithAggregatesFilter<"PlanChangeRequest"> | Date | string | null
     decisionNote?: StringNullableWithAggregatesFilter<"PlanChangeRequest"> | string | null
+    paymentMethod?: StringNullableWithAggregatesFilter<"PlanChangeRequest"> | string | null
+    activatedAt?: DateTimeNullableWithAggregatesFilter<"PlanChangeRequest"> | Date | string | null
   }
 
   export type TenantCreateInput = {
@@ -4244,6 +4282,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
     tenant: TenantCreateNestedOneWithoutPlanChangeRequestsInput
   }
 
@@ -4259,6 +4299,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
   }
 
   export type PlanChangeRequestUpdateInput = {
@@ -4272,6 +4314,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     tenant?: TenantUpdateOneRequiredWithoutPlanChangeRequestsNestedInput
   }
 
@@ -4287,6 +4331,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PlanChangeRequestCreateManyInput = {
@@ -4301,6 +4347,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
   }
 
   export type PlanChangeRequestUpdateManyMutationInput = {
@@ -4314,6 +4362,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PlanChangeRequestUncheckedUpdateManyInput = {
@@ -4328,6 +4378,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -4687,6 +4739,8 @@ export namespace Prisma {
     reviewedByUserId?: SortOrder
     reviewedAt?: SortOrder
     decisionNote?: SortOrder
+    paymentMethod?: SortOrder
+    activatedAt?: SortOrder
   }
 
   export type PlanChangeRequestMaxOrderByAggregateInput = {
@@ -4701,6 +4755,8 @@ export namespace Prisma {
     reviewedByUserId?: SortOrder
     reviewedAt?: SortOrder
     decisionNote?: SortOrder
+    paymentMethod?: SortOrder
+    activatedAt?: SortOrder
   }
 
   export type PlanChangeRequestMinOrderByAggregateInput = {
@@ -4715,6 +4771,8 @@ export namespace Prisma {
     reviewedByUserId?: SortOrder
     reviewedAt?: SortOrder
     decisionNote?: SortOrder
+    paymentMethod?: SortOrder
+    activatedAt?: SortOrder
   }
 
   export type EnumPlanChangeStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -5065,6 +5123,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
   }
 
   export type PlanChangeRequestUncheckedCreateWithoutTenantInput = {
@@ -5078,6 +5138,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
   }
 
   export type PlanChangeRequestCreateOrConnectWithoutTenantInput = {
@@ -5121,6 +5183,8 @@ export namespace Prisma {
     reviewedByUserId?: StringNullableFilter<"PlanChangeRequest"> | string | null
     reviewedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
     decisionNote?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    paymentMethod?: StringNullableFilter<"PlanChangeRequest"> | string | null
+    activatedAt?: DateTimeNullableFilter<"PlanChangeRequest"> | Date | string | null
   }
 
   export type TenantCreateWithoutPlanChangeRequestsInput = {
@@ -5270,6 +5334,8 @@ export namespace Prisma {
     reviewedByUserId?: string | null
     reviewedAt?: Date | string | null
     decisionNote?: string | null
+    paymentMethod?: string | null
+    activatedAt?: Date | string | null
   }
 
   export type PlanChangeRequestUpdateWithoutTenantInput = {
@@ -5283,6 +5349,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PlanChangeRequestUncheckedUpdateWithoutTenantInput = {
@@ -5296,6 +5364,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PlanChangeRequestUncheckedUpdateManyWithoutTenantInput = {
@@ -5309,6 +5379,8 @@ export namespace Prisma {
     reviewedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     decisionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
 

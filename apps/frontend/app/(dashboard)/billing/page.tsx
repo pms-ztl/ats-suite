@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { DollarSign, Zap, Activity, AlertTriangle, Bot, Crown, Sparkles, Rocket, Building2, ArrowUpRight, X, CreditCard, ExternalLink } from "lucide-react";
+import { DollarSign, Zap, Activity, AlertTriangle, Bot, Crown, Sparkles, Rocket, Building2, ArrowUpRight, X, CreditCard, ExternalLink, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -39,6 +39,10 @@ interface PCR {
   reason: string | null;
   requestedAt: string;
   decisionNote: string | null;
+  // Phase 33a — set on APPROVED requests for STARTER/PROFESSIONAL.
+  // null = activated (already paid) or non-Stripe path. STRIPE = needs Checkout.
+  paymentMethod?: string | null;
+  activatedAt?: string | null;
 }
 
 interface StripeSubscriptionDto {
@@ -166,19 +170,24 @@ export default function BillingPage() {
     } catch { /* ignore — 404 means no Stripe sub yet */ }
   }, []);
 
-  const startCheckout = async (plan: "STARTER" | "PROFESSIONAL") => {
-    setCheckoutLoading(plan);
+  // Phase 33a — Stripe Checkout is no longer self-serve. Tenants must:
+  //   1. Submit a PlanChangeRequest (the "Request plan change" dialog above)
+  //   2. Wait for super-admin approval
+  //   3. THEN call /stripe/checkout-for-request/:id, which validates the
+  //      approval before creating the Checkout session
+  //
+  // This function is now invoked only against an APPROVED PCR.
+  const payForApprovedRequest = async (requestId: string) => {
+    setCheckoutLoading(requestId);
     try {
-      const data = await apiFetch<{ url: string }>("/billing/stripe/checkout", {
+      const data = await apiFetch<{ url: string }>(`/billing/stripe/checkout-for-request/${requestId}`, {
         method: "POST",
-        body: JSON.stringify({ plan }),
       });
-      // Hard-navigate so the back button returns the user to /billing.
       window.location.href = data.url;
     } catch (err: any) {
       const msg = err?.message ?? "Failed to start checkout";
       toast.error(msg.includes("not configured")
-        ? "Stripe is not configured on this instance. Use 'Request plan change' instead."
+        ? "Stripe is not configured on this instance — contact your platform admin."
         : msg);
       setCheckoutLoading(null);
     }
@@ -407,6 +416,10 @@ export default function BillingPage() {
       {/* Phase 30 — Stripe self-serve plan cards. Shown when the tenant is on
           FREE OR on a paid plan but wants to switch. Enterprise always uses
           the "Request plan change" approval flow below. */}
+      {/* Phase 33a — plan catalog is informational only. Tenant submits a
+          PlanChangeRequest via "Request plan change" above; super-admin
+          approves; if STARTER/PROFESSIONAL, an approved request shows a
+          "Pay now" prompt below to complete Stripe Checkout. */}
       {(currentPlan === "FREE" || currentPlan === "STARTER" || currentPlan === "PROFESSIONAL") && (
         <Card>
           <CardHeader className="pb-3">
@@ -414,10 +427,11 @@ export default function BillingPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
-                  Self-serve plans
+                  Available plans
                 </CardTitle>
                 <CardDescription>
-                  Pay with credit card via Stripe — instant activation, cancel any time.
+                  Submit a plan-change request. Once your platform admin approves it,
+                  STARTER and PROFESSIONAL upgrades will prompt for payment via Stripe.
                 </CardDescription>
               </div>
               {stripeSub && (
@@ -438,7 +452,6 @@ export default function BillingPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {SELF_SERVE_TIERS.map((tier) => {
                 const isCurrent = currentPlan === tier.plan;
-                const isLoading = checkoutLoading === tier.plan;
                 const meta = PLAN_META[tier.plan]!;
                 return (
                   <div
@@ -474,21 +487,47 @@ export default function BillingPage() {
                       size="sm"
                       className="w-full"
                       variant={isCurrent ? "outline" : "default"}
-                      disabled={isCurrent || isLoading}
-                      onClick={() => startCheckout(tier.plan)}
+                      disabled={isCurrent}
+                      onClick={() => { setRequestedPlan(tier.plan); setUpgradeOpen(true); }}
                     >
-                      {isCurrent ? "Active" : isLoading ? "Redirecting…" : currentPlan === "FREE" ? `Start ${tier.plan} trial` : `Switch to ${tier.plan}`}
+                      {isCurrent ? "Active" : `Request ${tier.plan}`}
                     </Button>
                   </div>
                 );
               })}
             </div>
             <p className="text-2xs text-muted-foreground mt-3 text-center">
-              Need Enterprise pricing or a custom contract? Use "Request plan change" above to talk to our team.
+              Enterprise pricing is custom — use "Request plan change" above and select Enterprise.
             </p>
           </CardContent>
         </Card>
       )}
+
+      {/* Phase 33a — "Pay now" prompt for any APPROVED Stripe-payable request
+          whose Tenant.plan flip is still waiting on payment. */}
+      {planRequests.filter((r) => r.status === "APPROVED" && r.paymentMethod === "STRIPE" && !r.activatedAt).map((r) => (
+        <Card key={r.id} className="border-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20">
+          <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                Your {r.toPlan} upgrade is approved — pay to activate
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {r.decisionNote ?? "Click below to complete payment via Stripe. You'll be redirected."}
+              </p>
+            </div>
+            <Button
+              onClick={() => payForApprovedRequest(r.id)}
+              disabled={checkoutLoading === r.id}
+              className="gap-1.5"
+            >
+              <CreditCard className="h-4 w-4" />
+              {checkoutLoading === r.id ? "Redirecting…" : `Pay for ${r.toPlan}`}
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
 
       {/* Budget warning banner */}
       {budgetWarning && (

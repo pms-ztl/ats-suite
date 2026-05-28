@@ -162,7 +162,9 @@ exports.Prisma.PlanChangeRequestScalarFieldEnum = {
   requestedAt: 'requestedAt',
   reviewedByUserId: 'reviewedByUserId',
   reviewedAt: 'reviewedAt',
-  decisionNote: 'decisionNote'
+  decisionNote: 'decisionNote',
+  paymentMethod: 'paymentMethod',
+  activatedAt: 'activatedAt'
 };
 
 exports.Prisma.SortOrder = {

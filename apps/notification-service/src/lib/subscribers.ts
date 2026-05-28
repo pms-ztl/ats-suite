@@ -69,15 +69,41 @@ export async function startNotificationSubscribers(logger: Logger) {
     logger,
     handler: async (envelope) => {
       const p = TenantPlanChangedPayloadSchema.parse(envelope.payload);
+      // Phase 33a — source flag distinguishes Stripe activation from manual
+      // ENTERPRISE/FREE flip. Treated as optional for backward compat with
+      // pre-33a payloads.
+      const source = (envelope.payload as any).source as string | undefined;
+      const isStripeActivation = source === "stripe";
+
+      // Notify the tenant — they see the plan in /billing.
       await emitNotification({
         tenantId: p.tenantId,
         userId: null,                       // broadcast to tenant
         type: "PLAN_CHANGE_APPROVED",
         title: `Plan upgraded to ${p.toPlan}!`,
-        body: `Your tenant is now on the ${p.toPlan} plan.`,
+        body: isStripeActivation
+          ? `Payment received — your tenant is now on the ${p.toPlan} plan.`
+          : `Your tenant is now on the ${p.toPlan} plan.`,
         link: "/billing",
-        metadata: { fromPlan: p.fromPlan, toPlan: p.toPlan, requestId: p.requestId },
+        metadata: { fromPlan: p.fromPlan, toPlan: p.toPlan, requestId: p.requestId, source: source ?? "manual" },
         channels: ["in_app", "email", "slack"],
+      });
+
+      // Phase 33b — also notify super-admins. They approved the request hours
+      // or days ago; for Stripe activations this is "the customer actually
+      // paid". For manual ENTERPRISE/FREE flips they triggered it themselves
+      // — second notification is informational/audit.
+      await emitNotification({
+        tenantId: null,                     // null + null userId → SUPER_ADMIN broadcast
+        userId: null,
+        type: "PLAN_CHANGE_APPROVED",
+        title: isStripeActivation
+          ? `💳 ${p.toPlan} payment received from tenant ${p.tenantId.slice(0, 8)}`
+          : `Plan flipped to ${p.toPlan} for tenant ${p.tenantId.slice(0, 8)}`,
+        body: `Plan changed from ${p.fromPlan} to ${p.toPlan}${isStripeActivation ? " via Stripe Checkout" : ""}.`,
+        link: "/admin/plan-requests",
+        metadata: { tenantId: p.tenantId, fromPlan: p.fromPlan, toPlan: p.toPlan, requestId: p.requestId, source: source ?? "manual" },
+        channels: ["in_app", "email"],      // skip slack here — too noisy for super-admins
       });
     },
   });

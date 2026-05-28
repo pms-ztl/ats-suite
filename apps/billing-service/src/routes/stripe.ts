@@ -113,19 +113,41 @@ router.get("/subscription", async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// ─── POST /internal/stripe/checkout ───────────────────────────────────────
-// Body: { plan: "STARTER" | "PROFESSIONAL" }
-// Returns: { url } — caller redirects the browser there.
+// ─── POST /internal/stripe/checkout-for-request/:requestId ───────────────
+// Phase 33a — Stripe Checkout is now gated behind super-admin approval.
+//
+// Required body: empty (target plan is read from the PlanChangeRequest).
+// The endpoint:
+//   1. Fetches the PlanChangeRequest from tenant-service
+//   2. Confirms request belongs to caller's tenant
+//   3. Confirms request.status = APPROVED AND paymentMethod = STRIPE
+//   4. Confirms request.activatedAt is null (idempotency — can't pay twice)
+//   5. Creates the Stripe Checkout session with metadata.planChangeRequestId
+//      so the webhook can call /plan-changes/:id/activate on completion
+//   6. Returns the Checkout URL
+//
+// Replaces Phase 30's POST /checkout which let any tenant admin self-serve
+// without approval. That endpoint is removed — every paid plan change now
+// flows through PlanChangeRequest first.
 router.post(
-  "/checkout",
+  "/checkout-for-request/:requestId",
   requireTenantAdmin,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(req);
       const userId = req.headers["x-user-id"] as string | undefined;
       if (!userId) throw Errors.unauthorized("Missing user context");
-      const { plan } = z.object({ plan: PlanSchema }).parse(req.body);
+      const requestId = req.params["requestId"];
+      if (typeof requestId !== "string") throw Errors.validation("requestId required");
 
+      // Pull the approved request from tenant-service.
+      const request = await fetchPlanChangeRequest(requestId);
+      if (request.tenantId !== tenantId) throw Errors.forbidden("Plan change request belongs to another tenant");
+      if (request.status !== "APPROVED") throw Errors.validation(`Request must be APPROVED (currently ${request.status}); ask super-admin to approve first`);
+      if (request.paymentMethod !== "STRIPE") throw Errors.validation(`Request payment method is ${request.paymentMethod}; no Stripe payment needed`);
+      if (request.activatedAt) throw Errors.conflict("This plan was already activated; nothing to pay");
+
+      const plan = request.toPlan as "STARTER" | "PROFESSIONAL";
       const priceId = planToPriceId(plan);
       if (!priceId) throw Errors.unavailable(`Stripe price not configured for ${plan}`);
 
@@ -139,30 +161,44 @@ router.post(
 
       const urls = getCheckoutUrls();
       const stripe = getStripe();
+      const isFirstPaidSub = await isNewPaidSubscription(tenantId);
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${urls.successUrl}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: urls.cancelUrl,
-        // metadata lets webhook handlers re-attach the subscription to a
-        // tenant even if Stripe's customer→tenant mapping ever drifts.
-        metadata: { tenantId, plan },
-        subscription_data: { metadata: { tenantId, plan } },
-        // 14-day free trial only when going from FREE → paid; downgrading
-        // from PROFESSIONAL → STARTER doesn't reset trial state.
-        ...(await isNewPaidSubscription(tenantId)
-          ? { subscription_data: { trial_period_days: 14, metadata: { tenantId, plan } } }
-          : {}),
+        // CRITICAL: planChangeRequestId in metadata lets the webhook call
+        // /plan-changes/:id/activate idempotently.
+        metadata: { tenantId, plan, planChangeRequestId: requestId },
+        subscription_data: {
+          metadata: { tenantId, plan, planChangeRequestId: requestId },
+          ...(isFirstPaidSub ? { trial_period_days: 14 } : {}),
+        },
       });
 
       if (!session.url) throw Errors.upstreamFailure("stripe", "No checkout URL returned");
-      ok(res, { url: session.url });
+      ok(res, { url: session.url, requestId, plan });
     } catch (err) {
       next(err);
     }
   },
 );
+
+async function fetchPlanChangeRequest(id: string): Promise<{
+  id: string;
+  tenantId: string;
+  toPlan: string;
+  status: string;
+  paymentMethod: string | null;
+  activatedAt: string | null;
+}> {
+  const tenantUrl = process.env["TENANT_SERVICE_URL"] ?? "http://localhost:4002";
+  const res = await fetch(`${tenantUrl}/internal/plan-changes/${id}`);
+  if (!res.ok) throw Errors.upstreamFailure("tenant", `Plan change lookup failed: ${res.status}`);
+  const body: any = await res.json();
+  return body.data ?? body;
+}
 
 async function isNewPaidSubscription(tenantId: string): Promise<boolean> {
   const existing = await prisma.stripeSubscription.findUnique({ where: { tenantId } });
@@ -322,11 +358,27 @@ async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
     update: { plan: effectivePlan },
   });
 
-  // Tell tenant-service so it can update Tenant.plan + emit the canonical
-  // tenant.plan-changed event. This is the same event the manual
-  // PlanChangeRequest approval flow emits, so existing subscribers
-  // (notifications, etc.) react identically regardless of source.
-  await notifyTenantService(tenantId, effectivePlan, sub.status);
+  // Phase 33a — if the Checkout was created from an approved PlanChangeRequest
+  // (metadata.planChangeRequestId), activate THAT request via tenant-service.
+  // Activation atomically flips Tenant.plan + emits the canonical
+  // tenant.plan-changed event. Idempotent on the tenant-service side.
+  const planChangeRequestId = sub.metadata?.["planChangeRequestId"] as string | undefined;
+  if (planChangeRequestId && isPaidActive) {
+    await activatePlanChangeRequest(planChangeRequestId);
+  } else {
+    // Legacy / out-of-band sub (no request linkage) — fall back to the
+    // direct plan-from-stripe call so old Phase 30 customers don't lose
+    // service if their sub state mutates.
+    await notifyTenantService(tenantId, effectivePlan, sub.status);
+  }
+}
+
+async function activatePlanChangeRequest(requestId: string): Promise<void> {
+  const tenantUrl = process.env["TENANT_SERVICE_URL"] ?? "http://localhost:4002";
+  await fetch(`${tenantUrl}/internal/plan-changes/${requestId}/activate`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+  }).catch(() => undefined);
 }
 
 async function notifyTenantService(

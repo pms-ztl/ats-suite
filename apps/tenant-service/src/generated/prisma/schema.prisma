@@ -104,6 +104,22 @@ model PlanChangeRequest {
   reviewedAt        DateTime?
   decisionNote      String?
 
+  // Phase 33a — super-admin approval gate for paid plans.
+  //
+  // Before 33a: APPROVE immediately flipped Tenant.plan (Phase 22).
+  // After  33a: APPROVE for STARTER/PROFESSIONAL only GRANTS approval —
+  // the tenant must then pay via Stripe Checkout before Tenant.plan flips.
+  // ENTERPRISE keeps the old behaviour (custom contract, no Stripe).
+  //
+  //   paymentMethod    "STRIPE"  → requires Checkout completion to activate
+  //                    "ENTERPRISE_CONTRACT" → flips on approval
+  //                    "FREE"   → downgrade to free; flips on approval
+  //   activatedAt      null until Tenant.plan actually changes. Set by:
+  //                    - tenant-service on approval for ENTERPRISE/FREE
+  //                    - Stripe webhook syncSubscription() for STARTER/PROFESSIONAL
+  paymentMethod String?
+  activatedAt   DateTime?
+
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
