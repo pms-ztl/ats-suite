@@ -3,8 +3,14 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=@cdc-ats/frontend"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "console.log('already running via npm run dev')"],
+      "port": 3000
+    },
+    {
+      "name": "ats-frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "console.log('already running via npm run dev')"],
       "port": 3000
     },
     {
