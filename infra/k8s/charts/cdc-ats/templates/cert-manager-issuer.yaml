@@ -1,0 +1,57 @@
+{{- /*
+  Phase 25 — Let's Encrypt cert-manager issuer.
+
+  Renders ONLY when .Values.certManager.enabled is true. Creates an Issuer
+  scoped to this namespace (use ClusterIssuer instead if you prefer global).
+
+  Prereqs (do these once per cluster, not via this chart):
+    1. Install cert-manager:
+       kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.1/cert-manager.yaml
+    2. Wait for cert-manager pods to be Running:
+       kubectl wait --for=condition=Ready pod -l app=cert-manager -n cert-manager --timeout=120s
+
+  Then set:
+    certManager.enabled: true
+    certManager.email: ops@yourcompany.com
+
+  And in ingress.tls config, drop the manually-created TLS secrets — the
+  Ingress controller will request certs via this issuer automatically.
+
+  Why scoped Issuer (not ClusterIssuer): blast radius. If our Issuer gets
+  rate-limited by Let's Encrypt, it doesn't affect other namespaces.
+*/}}
+{{- if .Values.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cdc-ats-letsencrypt-prod
+  namespace: {{ .Release.Namespace }}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ .Values.certManager.email | required "certManager.email is required when certManager.enabled=true" }}
+    privateKeySecretRef:
+      name: cdc-ats-letsencrypt-prod-key
+    solvers:
+      - http01:
+          ingress:
+            class: {{ .Values.certManager.ingressClass | default "nginx" }}
+---
+# Staging issuer for testing — Let's Encrypt prod has a 5-cert-per-week
+# rate limit per domain set, so iterate on staging first then flip to prod.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cdc-ats-letsencrypt-staging
+  namespace: {{ .Release.Namespace }}
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: {{ .Values.certManager.email }}
+    privateKeySecretRef:
+      name: cdc-ats-letsencrypt-staging-key
+    solvers:
+      - http01:
+          ingress:
+            class: {{ .Values.certManager.ingressClass | default "nginx" }}
+{{- end }}

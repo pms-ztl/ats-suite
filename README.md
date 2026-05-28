@@ -10,6 +10,25 @@ npm run infra:up        # boots postgres, redis, nats, jaeger, prometheus, grafa
 npm run dev             # boots all services + gateway in dev mode
 ```
 
+## Production deployment
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full runbook covering:
+
+- Single-host Docker Compose + nginx + Let's Encrypt (~30 min setup)
+- Kubernetes via Helm + cert-manager + ArgoCD (~2 hrs first time)
+- DNS records to add at your registrar
+- Postgres hardening (per-service users + grants)
+- Operational quick reference (logs, restarts, migrations, agent kill switch)
+
+## Security audit
+
+```bash
+npm run dev                                                    # in one terminal
+API_BASE=http://localhost:4000/api \
+  npx tsx apps/security-test/src/cross-tenant.ts               # in another
+# Generates SECURITY_REPORT.md — 10/10 isolation checks PASS on a clean stack
+```
+
 ## Layout
 
 ```

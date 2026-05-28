@@ -12,6 +12,19 @@ global:
   # Optional: imagePullSecrets:
   #   - name: ghcr-creds
 
+# Phase 25 — cert-manager integration. Set enabled=true to provision
+# Let's Encrypt issuers (see templates/cert-manager-issuer.yaml). When on,
+# Ingress blocks auto-add cert-manager annotations and TLS secrets are
+# requested from Let's Encrypt instead of manually pre-created.
+#
+# Use the staging issuer (`cdc-ats-letsencrypt-staging`) for first deploys
+# to avoid Let's Encrypt's 5-certs-per-week production rate limit.
+certManager:
+  enabled: false
+  email: ""                # required when enabled
+  ingressClass: nginx
+  issuer: cdc-ats-letsencrypt-prod
+
 # Defaults applied to every service unless overridden in the service block.
 defaults:
   port: 4000

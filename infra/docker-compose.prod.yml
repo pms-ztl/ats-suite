@@ -1,0 +1,98 @@
+# Phase 25 — production overlay for docker-compose.full.yml.
+#
+# Usage:
+#   docker compose \
+#     -f infra/docker-compose.full.yml \
+#     -f infra/docker-compose.prod.yml \
+#     --env-file .env.production \
+#     up -d
+#
+# What this overlay changes vs the base full.yml:
+#   1. Adds an nginx reverse proxy on :80 + :443 with TLS termination
+#   2. Removes port exposure on internal services (only nginx is public)
+#   3. Adds `restart: unless-stopped` for production lifecycle
+#   4. Tightens CORS to your real domain
+#   5. Bumps replicas via swarm mode (if `docker stack deploy` is used)
+#
+# Pre-flight checklist (see DEPLOYMENT.md for details):
+#   • Set .env.production with NEXT_PUBLIC_API_URL=https://api.your.com
+#   • Drop TLS certs in ./certs/{app,api}/{fullchain,privkey}.pem
+#   • Open ports 80 + 443 to the internet; everything else stays internal
+#   • Point DNS A records at the host: app.your.com + api.your.com
+
+version: "3.9"
+
+services:
+  # ─── New: nginx reverse proxy ───────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: cdc-ats-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-proxy-params.conf:/etc/nginx/proxy_params.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./certbot-www:/var/www/certbot:ro  # for cert renewals
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks: [cdc_net]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Restart policies + drop public port exposure ──────────────────────
+  # Override the published ports from full.yml so only nginx is reachable
+  # from outside Docker.
+  api-gateway:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      CORS_ORIGIN: "${PROD_APP_URL:-https://app.example.com}"
+
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: "${PROD_API_URL:-https://api.example.com}/api"
+
+  identity-service:    { restart: unless-stopped, ports: !reset [] }
+  tenant-service:      { restart: unless-stopped, ports: !reset [] }
+  billing-service:     { restart: unless-stopped, ports: !reset [] }
+  job-service:         { restart: unless-stopped, ports: !reset [] }
+  candidate-service:   { restart: unless-stopped, ports: !reset [] }
+  interview-service:   { restart: unless-stopped, ports: !reset [] }
+  resume-service:      { restart: unless-stopped, ports: !reset [] }
+  screening-service:   { restart: unless-stopped, ports: !reset [] }
+  notification-service:{ restart: unless-stopped, ports: !reset [] }
+
+  # Infra still accessible from host for ops/debugging but bind to loopback only.
+  postgres:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:5434:5432"]
+  redis:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:6381:6379"]
+  nats:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:4222:4222", "127.0.0.1:8222:8222"]
+  jaeger:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:16686:16686"]
+  prometheus:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:9090:9090"]
+  grafana:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:3001:3000"]
+  loki:
+    restart: unless-stopped
+    ports: !override ["127.0.0.1:3100:3100"]

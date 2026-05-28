@@ -135,9 +135,20 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     {{- end }}
+    {{- /* Phase 25 — auto-provision TLS via cert-manager when enabled */ -}}
+    {{- if $.Values.certManager.enabled }}
+    cert-manager.io/issuer: {{ $.Values.certManager.issuer | quote }}
+    {{- end }}
 spec:
   ingressClassName: {{ $spec.ingress.className }}
-  {{- if $spec.ingress.tlsSecret }}
+  {{- /* If cert-manager is on, derive the secret name from the host so
+        each ingress gets its own cert. Otherwise rely on the manually
+        pre-created secret named in $spec.ingress.tlsSecret. */ -}}
+  {{- if $.Values.certManager.enabled }}
+  tls:
+    - hosts: [{{ $spec.ingress.host | quote }}]
+      secretName: {{ printf "%s-cert" $name }}
+  {{- else if $spec.ingress.tlsSecret }}
   tls:
     - hosts: [{{ $spec.ingress.host | quote }}]
       secretName: {{ $spec.ingress.tlsSecret }}
