@@ -10,7 +10,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, Errors, getTenantId, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { PLAN_LIMITS, ALL_AGENT_TYPES, isPlanAgentEnabled, canParseMoreResumes } from "../lib/plan-limits.js";
 
@@ -112,7 +112,10 @@ router.get("/agents", async (req: Request, res: Response, next: NextFunction) =>
 
 // POST /internal/agents/:type/toggle
 const ToggleSchema = z.object({ enabled: z.boolean(), reason: z.string().optional() });
-router.post("/agents/:type/toggle", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 — F-028-micro-P0: agent toggle is admin-only (defense-in-depth;
+// gateway also gates /api/billing with auth, but tier-3 staff shouldn't
+// be able to flip agents on/off for their tenant).
+router.post("/agents/:type/toggle", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const agentType = req.params["type"] as string;

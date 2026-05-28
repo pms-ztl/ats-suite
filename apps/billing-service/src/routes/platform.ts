@@ -21,7 +21,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getUserId } from "@cdc-ats/common";
+import { ok, created, Errors, getUserId, requireSuperAdmin } from "@cdc-ats/common";
 import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
 import { ALL_AGENT_TYPES } from "../lib/plan-limits.js";
@@ -84,7 +84,11 @@ const KillSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
-router.put("/agents/:type", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 — F-028-micro-P0: defense-in-depth super-admin guard. Gateway
+// already mounts /api/super-admin/platform with requireSuperAdmin (see
+// api-gateway/src/app.ts), but per-route guards mean if the gateway proxy
+// is misconfigured downstream, the service still refuses.
+router.put("/agents/:type", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const agentType = req.params["type"] as string;
     if (!ALL_AGENT_TYPES.includes(agentType as any)) {
@@ -308,7 +312,7 @@ const UpsertPromptSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
-router.put("/prompts/:type", async (req: Request, res: Response, next: NextFunction) => {
+router.put("/prompts/:type", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const agentType = req.params["type"] as string;
     if (!ALL_AGENT_TYPES.includes(agentType as any)) throw Errors.validation(`Unknown agentType: ${agentType}`);
@@ -354,7 +358,7 @@ router.put("/prompts/:type", async (req: Request, res: Response, next: NextFunct
 // ─── POST /internal/platform/prompts/:type/rollback/:id ─────────────────────
 // Flip an old version back to active. Increments version so it shows as
 // a new entry in the timeline (not a destructive change).
-router.post("/prompts/:type/rollback/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/prompts/:type/rollback/:id", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const agentType = req.params["type"] as string;
     const id = req.params["id"] as string;
@@ -397,7 +401,7 @@ router.post("/prompts/:type/rollback/:id", async (req: Request, res: Response, n
 // ─── DELETE /internal/platform/prompts/:type ────────────────────────────────
 // Revert to hardcoded defaults — deactivate any active override but keep the
 // history rows so super-admin can re-activate later.
-router.delete("/prompts/:type", async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/prompts/:type", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const agentType = req.params["type"] as string;
     await prisma.promptOverride.updateMany({
