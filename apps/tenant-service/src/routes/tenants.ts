@@ -3,7 +3,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors } from "@cdc-ats/common";
+import { ok, created, Errors, requireSuperAdmin } from "@cdc-ats/common";
 import { CreateTenantInputSchema, TenantPlanSchema, TenantStatusSchema, tenantSubject } from "@cdc-ats/contracts";
 import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
@@ -11,6 +11,9 @@ import { prisma } from "../lib/prisma.js";
 const router = Router();
 
 // ─── POST /internal/tenants — create tenant (called by register saga) ────
+// NOTE: intentionally NOT requireRole-guarded — during /api/auth/register-company
+// the caller has no JWT yet, so no role exists. Gateway is trusted via
+// network policy + restricts /api/auth/register-company to public path only.
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = CreateTenantInputSchema.parse(req.body);
@@ -59,6 +62,11 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── DELETE /internal/tenants/:id — compensation for saga rollback ───────
+// NOTE: NOT requireRole-guarded — called by the register-company saga in the
+// gateway when user creation fails after tenant creation. At that moment the
+// caller has no JWT yet (saga runs before login). Trusted via network policy.
+// F-027-micro N/A: tenants have no tenantId column (they ARE the tenant),
+// so deleteMany scoped by tenantId doesn't apply.
 router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
@@ -84,7 +92,9 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── GET /internal/tenants?plan=&status=&search= — super-admin list ──────
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: defense-in-depth super-admin guard. Gateway
+// already mounts this under /api/super-admin/tenants with requireSuperAdmin.
+router.get("/", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const plan = typeof req.query["plan"] === "string" ? req.query["plan"] : undefined;
     const status = typeof req.query["status"] === "string" ? req.query["status"] : undefined;
@@ -133,7 +143,9 @@ const UpdateSchema = z.object({
   dataRegion: z.string().optional(),
 });
 
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: super-admin only. Defense-in-depth: gateway
+// gates /api/super-admin/tenants/:id with requireSuperAdmin.
+router.patch("/:id", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
     const body = UpdateSchema.parse(req.body);

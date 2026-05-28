@@ -15,7 +15,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors } from "@cdc-ats/common";
+import { ok, created, Errors, requireTenantAdmin, requireSuperAdmin } from "@cdc-ats/common";
 import { TenantPlanSchema, PlanChangeStatusSchema, tenantSubject } from "@cdc-ats/contracts";
 import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
@@ -29,8 +29,9 @@ const SubmitSchema = z.object({
   requestedByUserId: z.string().uuid(),
 });
 
-// POST /internal/plan-changes
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+// POST /internal/plan-changes — tenant admin submits upgrade request.
+// Phase 27 F-028-micro-P0: tenant admin only (recruiter/interviewer can't request upgrades).
+router.post("/", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = SubmitSchema.parse(req.body);
     const tenant = await prisma.tenant.findUnique({ where: { id: body.tenantId } });
@@ -92,18 +93,25 @@ router.get("/by-tenant/:id", async (req: Request, res: Response, next: NextFunct
 });
 
 // DELETE /internal/plan-changes/:id (cancel own pending)
-router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: tenant-admin only.
+// Phase 27 F-027-micro: cross-tenant cancel was possible — tenant A could
+// cancel tenant B's request by guessing the id. Now scoped by tenantId on
+// BOTH the lookup AND the mutation (defense-in-depth).
+router.delete("/:id", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
-    const row = await prisma.planChangeRequest.findUnique({ where: { id } });
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) throw Errors.unauthorized("Missing tenant context");
+    const row = await prisma.planChangeRequest.findFirst({ where: { id, tenantId } });
     if (!row) throw Errors.notFound("Plan change request");
     if (row.status !== "PENDING") {
       throw Errors.validation(`Cannot cancel a request in ${row.status} state`);
     }
-    await prisma.planChangeRequest.update({
-      where: { id },
+    const { count } = await prisma.planChangeRequest.updateMany({
+      where: { id, tenantId },
       data: { status: "CANCELLED" },
     });
+    if (count === 0) throw Errors.notFound("Plan change request");
     ok(res, { cancelled: true });
   } catch (err) {
     next(err);
@@ -111,7 +119,8 @@ router.delete("/:id", async (req: Request, res: Response, next: NextFunction) =>
 });
 
 // GET /internal/plan-changes?status=PENDING (super-admin queue)
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: super-admin only.
+router.get("/", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = typeof req.query["status"] === "string" ? req.query["status"] : "PENDING";
     const rows = await prisma.planChangeRequest.findMany({
@@ -132,7 +141,8 @@ const ReviewSchema = z.object({
   reviewedByUserId: z.string().uuid(),
 });
 
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: super-admin only — approve/reject plan changes.
+router.patch("/:id", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
     const body = ReviewSchema.parse(req.body);

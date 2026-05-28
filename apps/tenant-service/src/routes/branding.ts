@@ -13,7 +13,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, Errors } from "@cdc-ats/common";
+import { ok, Errors, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -101,7 +101,9 @@ const BrandingUpdateSchema = z.object({
   careerPortalHeroImageUrl: z.union([SafeUrl, z.literal(""), z.null()]).optional(),
 });
 
-router.put("/branding", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: only tenant admins can change branding —
+// not recruiters or interviewers, even if logged in.
+router.put("/branding", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = requireTenantId(req);
     const body = BrandingUpdateSchema.parse(req.body);
@@ -164,7 +166,8 @@ router.get("/retention", async (req: Request, res: Response, next: NextFunction)
 });
 
 // ─── PUT /internal/retention ────────────────────────────────────────────────
-router.put("/retention", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: retention policy is compliance-critical, admin-only.
+router.put("/retention", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = requireTenantId(req);
     const body = z.object({ dataRetentionDays: z.number().int().min(1).max(RETENTION_CEILING_DAYS) }).parse(req.body);
