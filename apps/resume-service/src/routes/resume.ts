@@ -12,7 +12,10 @@ import os from "os";
 import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: resume upload (single + bulk) is admin/recruiter.
+const requireUploader = requireRole("ADMIN", "RECRUITER");
 import { prisma } from "../lib/prisma.js";
 import { enqueueResumeParse } from "../lib/queue.js";
 import { upsertCandidate } from "../lib/service-client.js";
@@ -51,6 +54,7 @@ const UploadBodySchema = z.object({
 // ── POST /internal/resume/upload ────────────────────────────────────────
 router.post(
   "/upload",
+  requireUploader,
   singleUpload.single("resume"),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -99,6 +103,7 @@ router.post(
 // ── POST /internal/resume/bulk ───────────────────────────────────────────
 router.post(
   "/bulk",
+  requireUploader,
   bulkUpload.array("resumes", 1000),
   async (req: Request, res: Response, next: NextFunction) => {
     const cleanupPaths: string[] = [];
