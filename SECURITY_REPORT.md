@@ -1,9 +1,9 @@
 # Cross-Tenant Isolation Penetration Test — Report
 
-Run at: 2026-05-28T03:00:47.779Z
+Run at: 2026-05-28T03:24:48.518Z
 Gateway: http://localhost:4000/api
-Tenant A: 4fb9a661-a09a-4d9e-aa6c-1806ecca3670
-Tenant B: 13007de2-fb73-492d-a169-f7d2b7545ce1
+Tenant A: 74df9a7a-e202-4c03-9863-e0f4f6da6cde
+Tenant B: 478d28cc-cbc3-43f4-9a60-55b920bf05f6
 
 ## Summary
 
@@ -32,7 +32,7 @@ Tenant B: 13007de2-fb73-492d-a169-f7d2b7545ce1
 
 ### ✅ GET /requisitions/<B's req id> as A
 
-- **Attempt**: Use Tenant A's JWT to read Tenant B's requisition (id=12d46146…)
+- **Attempt**: Use Tenant A's JWT to read Tenant B's requisition (id=b335802a…)
 - **Expected**: 404 (not found in A's scope)
 - **Actual**: `404 {"success":false,"error":{"code":"NOT_FOUND","message":"Requisition not found"}}`
 
@@ -44,13 +44,13 @@ Tenant B: 13007de2-fb73-492d-a169-f7d2b7545ce1
 
 ### ✅ GET /candidates/<B's candidate id> as A
 
-- **Attempt**: Read Tenant B's candidate (id=ab1a8f88…)
+- **Attempt**: Read Tenant B's candidate (id=efabef60…)
 - **Expected**: 404
 - **Actual**: `404 {"success":false,"error":{"code":"NOT_FOUND","message":"Candidate not found"}}`
 
 ### ✅ Spoofed X-Tenant-Id is ignored (gateway derives from JWT)
 
-- **Attempt**: Send X-Tenant-Id: 13007de2… with A's JWT
+- **Attempt**: Send X-Tenant-Id: 478d28cc… with A's JWT
 - **Expected**: Response only contains A's resources
 - **Actual**: `200 {"count":1,"containsBId":false}`
 
@@ -58,7 +58,7 @@ Tenant B: 13007de2-fb73-492d-a169-f7d2b7545ce1
 
 - **Attempt**: Auth'd branding read as A — must not return B's website
 - **Expected**: tenantId == A.tenantId; website != B's
-- **Actual**: `200 {"id":"4fb9a661-a09a-4d9e-aa6c-1806ecca3670","website":null}`
+- **Actual**: `200 {"id":"74df9a7a-e202-4c03-9863-e0f4f6da6cde","website":null}`
 
 ### ✅ PATCH /super-admin/tenants/<B's id> as A (non-super-admin)
 
@@ -88,4 +88,4 @@ Tenant B: 13007de2-fb73-492d-a169-f7d2b7545ce1
 
 - **Attempt**: Attempt to destroy Tenant B's data
 - **Expected**: 404 or 403 or 405 (NOT 200/204)
-- **Actual**: `404 {"success":false,"error":{"code":"ROUTE_NOT_FOUND","message":"No route matches DELETE /internal/requisitions/12d46146-3873-46c8-89f6-3fc54b564d46"}}`
+- **Actual**: `404 {"success":false,"error":{"code":"ROUTE_NOT_FOUND","message":"No route matches DELETE /internal/requisitions/b335802a-d63d-45d7-9098-c15e13d25bb7"}}`
