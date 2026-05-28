@@ -1309,6 +1309,7 @@ export namespace Prisma {
     tags: number
     isAnonymized: number
     parsedSummary: number
+    parsedSummaryFair: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1370,6 +1371,7 @@ export namespace Prisma {
     tags?: true
     isAnonymized?: true
     parsedSummary?: true
+    parsedSummaryFair?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1464,6 +1466,7 @@ export namespace Prisma {
     tags: string[]
     isAnonymized: boolean
     parsedSummary: JsonValue | null
+    parsedSummaryFair: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: CandidateCountAggregateOutputType | null
@@ -1502,6 +1505,7 @@ export namespace Prisma {
     tags?: boolean
     isAnonymized?: boolean
     parsedSummary?: boolean
+    parsedSummaryFair?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     applications?: boolean | Candidate$applicationsArgs<ExtArgs>
@@ -1526,6 +1530,7 @@ export namespace Prisma {
     tags?: boolean
     isAnonymized?: boolean
     parsedSummary?: boolean
+    parsedSummaryFair?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["candidate"]>
@@ -1547,6 +1552,7 @@ export namespace Prisma {
     tags?: boolean
     isAnonymized?: boolean
     parsedSummary?: boolean
+    parsedSummaryFair?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["candidate"]>
@@ -1568,11 +1574,12 @@ export namespace Prisma {
     tags?: boolean
     isAnonymized?: boolean
     parsedSummary?: boolean
+    parsedSummaryFair?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CandidateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "firstName" | "lastName" | "phone" | "location" | "country" | "resumeUrl" | "linkedinUrl" | "portfolioUrl" | "summary" | "source" | "tags" | "isAnonymized" | "parsedSummary" | "createdAt" | "updatedAt", ExtArgs["result"]["candidate"]>
+  export type CandidateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "firstName" | "lastName" | "phone" | "location" | "country" | "resumeUrl" | "linkedinUrl" | "portfolioUrl" | "summary" | "source" | "tags" | "isAnonymized" | "parsedSummary" | "parsedSummaryFair" | "createdAt" | "updatedAt", ExtArgs["result"]["candidate"]>
   export type CandidateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     applications?: boolean | Candidate$applicationsArgs<ExtArgs>
     notes?: boolean | Candidate$notesArgs<ExtArgs>
@@ -1604,6 +1611,7 @@ export namespace Prisma {
       tags: string[]
       isAnonymized: boolean
       parsedSummary: Prisma.JsonValue | null
+      parsedSummaryFair: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["candidate"]>
@@ -2047,6 +2055,7 @@ export namespace Prisma {
     readonly tags: FieldRef<"Candidate", 'String[]'>
     readonly isAnonymized: FieldRef<"Candidate", 'Boolean'>
     readonly parsedSummary: FieldRef<"Candidate", 'Json'>
+    readonly parsedSummaryFair: FieldRef<"Candidate", 'Json'>
     readonly createdAt: FieldRef<"Candidate", 'DateTime'>
     readonly updatedAt: FieldRef<"Candidate", 'DateTime'>
   }
@@ -5963,6 +5972,7 @@ export namespace Prisma {
     tags: 'tags',
     isAnonymized: 'isAnonymized',
     parsedSummary: 'parsedSummary',
+    parsedSummaryFair: 'parsedSummaryFair',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -6192,6 +6202,7 @@ export namespace Prisma {
     tags?: StringNullableListFilter<"Candidate">
     isAnonymized?: BoolFilter<"Candidate"> | boolean
     parsedSummary?: JsonNullableFilter<"Candidate">
+    parsedSummaryFair?: JsonNullableFilter<"Candidate">
     createdAt?: DateTimeFilter<"Candidate"> | Date | string
     updatedAt?: DateTimeFilter<"Candidate"> | Date | string
     applications?: ApplicationListRelationFilter
@@ -6215,6 +6226,7 @@ export namespace Prisma {
     tags?: SortOrder
     isAnonymized?: SortOrder
     parsedSummary?: SortOrderInput | SortOrder
+    parsedSummaryFair?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     applications?: ApplicationOrderByRelationAggregateInput
@@ -6242,6 +6254,7 @@ export namespace Prisma {
     tags?: StringNullableListFilter<"Candidate">
     isAnonymized?: BoolFilter<"Candidate"> | boolean
     parsedSummary?: JsonNullableFilter<"Candidate">
+    parsedSummaryFair?: JsonNullableFilter<"Candidate">
     createdAt?: DateTimeFilter<"Candidate"> | Date | string
     updatedAt?: DateTimeFilter<"Candidate"> | Date | string
     applications?: ApplicationListRelationFilter
@@ -6265,6 +6278,7 @@ export namespace Prisma {
     tags?: SortOrder
     isAnonymized?: SortOrder
     parsedSummary?: SortOrderInput | SortOrder
+    parsedSummaryFair?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CandidateCountOrderByAggregateInput
@@ -6292,6 +6306,7 @@ export namespace Prisma {
     tags?: StringNullableListFilter<"Candidate">
     isAnonymized?: BoolWithAggregatesFilter<"Candidate"> | boolean
     parsedSummary?: JsonNullableWithAggregatesFilter<"Candidate">
+    parsedSummaryFair?: JsonNullableWithAggregatesFilter<"Candidate">
     createdAt?: DateTimeWithAggregatesFilter<"Candidate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Candidate"> | Date | string
   }
@@ -6558,6 +6573,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
@@ -6581,6 +6597,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
@@ -6604,6 +6621,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
@@ -6627,6 +6645,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput
@@ -6650,6 +6669,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6671,6 +6691,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6692,6 +6713,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7094,6 +7116,7 @@ export namespace Prisma {
     tags?: SortOrder
     isAnonymized?: SortOrder
     parsedSummary?: SortOrder
+    parsedSummaryFair?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7990,6 +8013,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     notes?: CandidateNoteCreateNestedManyWithoutCandidateInput
@@ -8012,6 +8036,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     notes?: CandidateNoteUncheckedCreateNestedManyWithoutCandidateInput
@@ -8084,6 +8109,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     notes?: CandidateNoteUpdateManyWithoutCandidateNestedInput
@@ -8106,6 +8132,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     notes?: CandidateNoteUncheckedUpdateManyWithoutCandidateNestedInput
@@ -8236,6 +8263,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     applications?: ApplicationCreateNestedManyWithoutCandidateInput
@@ -8258,6 +8286,7 @@ export namespace Prisma {
     tags?: CandidateCreatetagsInput | string[]
     isAnonymized?: boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     applications?: ApplicationUncheckedCreateNestedManyWithoutCandidateInput
@@ -8296,6 +8325,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     applications?: ApplicationUpdateManyWithoutCandidateNestedInput
@@ -8318,6 +8348,7 @@ export namespace Prisma {
     tags?: CandidateUpdatetagsInput | string[]
     isAnonymized?: BoolFieldUpdateOperationsInput | boolean
     parsedSummary?: NullableJsonNullValueInput | InputJsonValue
+    parsedSummaryFair?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     applications?: ApplicationUncheckedUpdateManyWithoutCandidateNestedInput

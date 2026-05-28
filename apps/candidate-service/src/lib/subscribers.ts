@@ -11,6 +11,7 @@
 import { subscribeToEvents } from "@cdc-ats/nats-client";
 import type { Logger } from "pino";
 import { z } from "zod";
+import { toFairnessView } from "@cdc-ats/ai-engine";
 import { prisma } from "./prisma.js";
 
 // Loose schema — the parser may grow new fields; we accept anything and
@@ -65,8 +66,13 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         return;
       }
 
-      // 1. ALWAYS update parsedSummary — this is the authoritative parsed view.
-      const summary = {
+      // 1. ALWAYS update parsedSummary — authoritative parsed view.
+      // Phase 37: prefer the enriched view if the publisher sent one
+      // (taxonomy canonicalization, YOE, dates normalized). Fall back to
+      // raw flat shape for pre-37 events.
+      const enrichedPayload = (envelope.payload as any).enriched;
+      const githubCorroboration = (envelope.payload as any).githubCorroboration ?? null;
+      const summary = enrichedPayload ?? {
         skills:           p.skills ?? [],
         experience:       p.experience ?? [],
         education:        p.education ?? [],
@@ -78,6 +84,9 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         parsedAt:         new Date().toISOString(),
         sourceResumeId:   parsed.resumeId,
       };
+      // Phase 37j — fairness view (PII-stripped). Only computable from the
+      // enriched shape; skip for old-style flat backfill.
+      const fairSummary = enrichedPayload ? toFairnessView(enrichedPayload) : null;
 
       // 2. Decide whether to overwrite name/email/phone/location. Rule:
       //    - email: overwrite ONLY if current is a placeholder
@@ -85,7 +94,10 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
       //      "Bulk N", "Unknown") OR if parsed has a "fullName" that splits
       //      to materially different values
       //    - phone/location: fill-in only (never overwrite a real value)
-      const updateData: Record<string, unknown> = { parsedSummary: summary };
+      const updateData: Record<string, unknown> = {
+        parsedSummary: { ...summary, githubCorroboration },
+        ...(fairSummary ? { parsedSummaryFair: fairSummary } : {}),
+      };
 
       if (p.email && PLACEHOLDER_EMAIL_RE.test(candidate.email)) {
         updateData.email = p.email.toLowerCase();

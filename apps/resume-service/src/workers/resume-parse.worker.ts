@@ -10,8 +10,11 @@
  */
 import { createWorker, publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject as ts } from "@cdc-ats/contracts";
-import { runAgent } from "@cdc-ats/ai-engine";
-import type { ResumeParserInput, ResumeParserOutput } from "@cdc-ats/ai-engine";
+import { runAgent, enrich, extractGithubHandle, fetchGithubProfile } from "@cdc-ats/ai-engine";
+import type {
+  ResumeParserInput, ResumeParserOutput,
+  GithubCorroborationInput, GithubCorroboration,
+} from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
 import type { ResumeParseJob } from "../lib/queue.js";
 import type { Logger } from "pino";
@@ -76,20 +79,50 @@ export function startResumeParseWorker(logger: Logger) {
           },
         });
 
+        // Phase 37 — post-parse enrichment.
+        //   - Canonicalize skills via taxonomy/aliases
+        //   - Canonicalize companies + universities
+        //   - Compute per-skill YOE + lastUsedYear + depth + sourceProjects
+        //   - Normalize all dates to ISO with confidence
+        const enriched = enrich(result.output);
+
+        // Phase 37h — GitHub corroboration. If the parsed resume names a
+        // GitHub URL/handle, fetch the public profile + recent repos, then
+        // ask github-corroborator agent to compare claims vs evidence.
+        // Best-effort: rate-limited, no API key required for public data.
+        let githubCorroboration: GithubCorroboration | null = null;
+        const ghHandle = extractGithubHandle(result.output.links?.github);
+        if (ghHandle) {
+          const ghProfile = await fetchGithubProfile(ghHandle);
+          if (ghProfile) {
+            try {
+              const corro = await runAgent<GithubCorroborationInput, GithubCorroboration>({
+                agentType: "github-corroborator" as any,
+                input: {
+                  candidateProfileJson: JSON.stringify(enriched),
+                  githubProfileJson: JSON.stringify(ghProfile),
+                },
+                context: { tenantId, userId, persistRun: async () => undefined },
+              });
+              githubCorroboration = corro.output;
+            } catch (err) {
+              logger.warn({ err, ghHandle }, "GitHub corroboration failed; continuing");
+            }
+          }
+        }
+
         await prisma.resume.update({
           where: { id: resumeId },
           data: {
-            parsedData: result.output as any,
+            parsedData: { raw: result.output, enriched, githubCorroboration } as any,
             parseStatus: "PARSED",
             parsedAt: new Date(),
           },
         });
 
-        // Publish resume.parsed — screening-service AND candidate-service consume.
-        // Phase 35c — include the full parsed payload so candidate-service can
-        // backfill Candidate.parsedSummary + name/email/phone/location for
-        // bulk-uploaded candidates (placeholder values get overwritten).
-        // Resumes' parsed data is typically <10KB — well within JetStream's defaults.
+        // Publish resume.parsed — screening + candidate consume.
+        // Phase 37 — payload now carries BOTH raw parser output (for screener
+        // back-compat) AND the enriched view (for candidate backfill).
         await publishEvent({
           subject: ts(tenantId, "resume", "parsed"),
           type: "resume.parsed",
@@ -99,9 +132,11 @@ export function startResumeParseWorker(logger: Logger) {
             candidateId,
             resumeId,
             bulkUploadId: bulkUploadId ?? null,
-            parsedSkillsCount: result.output.skills?.length ?? 0,
+            parsedSkillsCount: enriched.skills.length,
             parseCostUsd: result.snapshot.costUsd,
-            parsed: result.output,   // full structured output for backfill
+            parsed: result.output,
+            enriched,
+            githubCorroboration,
           },
         }).catch(() => { /* non-fatal */ });
 

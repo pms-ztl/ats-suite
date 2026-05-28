@@ -138,6 +138,7 @@ exports.Prisma.CandidateScalarFieldEnum = {
   tags: 'tags',
   isAnonymized: 'isAnonymized',
   parsedSummary: 'parsedSummary',
+  parsedSummaryFair: 'parsedSummaryFair',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

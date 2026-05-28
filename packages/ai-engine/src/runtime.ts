@@ -62,7 +62,11 @@ export type AgentType =
   | "offer"
   | "analytics"
   | "bias-auditor"
-  | "copilot";
+  | "copilot"
+  // Phase 37 — new agents
+  | "interview-questions"
+  | "cover-letter-analyzer"
+  | "github-corroborator";
 
 export interface AgentContext {
   tenantId: string;

@@ -21,3 +21,12 @@ export * from "./agents/interview-intelligence.js";
 export * from "./agents/scheduling.js";
 export * from "./agents/candidate-experience.js";
 export * from "./agents/copilot.js";
+
+// Phase 37 — new agents + enrichment lib + taxonomies
+export * from "./agents/interview-questions.js";
+export * from "./agents/cover-letter.js";
+export * from "./lib/normalize.js";
+export * from "./lib/enrich.js";
+export * from "./lib/github.js";
+export * from "./taxonomies/skills.js";
+export * from "./taxonomies/institutions.js";

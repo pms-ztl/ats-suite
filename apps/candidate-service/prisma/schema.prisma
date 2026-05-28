@@ -46,16 +46,23 @@ model Candidate {
   tags        String[] @default([])
   isAnonymized Boolean @default(false)
 
-  // Phase 35c — structured data backfilled from the resume parser.
-  // Stored as JSON (not separate columns) so the schema doesn't need to
-  // change every time the parser adds a new field. Shape:
-  //   { skills: string[], experience: [{company,title,start,end,bullets}],
-  //     education: [{school,degree,field,start,end}],
-  //     summary: string, yearsOfExperience: number, languages: string[],
-  //     certifications: string[], links: {linkedin?, github?, portfolio?},
-  //     parsedAt: ISO, sourceResumeId: uuid }
+  // Phase 35c + 37 — structured data backfilled from the resume parser.
+  // Phase 35c shape (flat): skills[], experience[], education[], summary,
+  // languages[], certifications[], links{}, parsedAt, sourceResumeId.
+  // Phase 37 extends with: enriched skills (canonicalId, yearsActive,
+  // lastUsedYear, depth, sourceProjectIndices), enriched experience
+  // (companyCanonicalId, NormalizedDate dates, tenureMonths, achievements[]),
+  // enriched education (schoolCanonicalId), honestyFlags[], formatGuess,
+  // and githubCorroboration{} when a GitHub URL was extractable.
   // Backfilled by a NATS subscriber on resume.parsed.
   parsedSummary Json?
+
+  // Phase 37j — fairness mode (PII-stripped derived view of parsedSummary).
+  // Name nulled, contact redacted, location at country level, school +
+  // university prestige stripped. Used by the search UI when the
+  // "blind hiring" toggle is on. Computed once by the subscriber, not
+  // re-derived per query (avoids drift + saves CPU).
+  parsedSummaryFair Json?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
