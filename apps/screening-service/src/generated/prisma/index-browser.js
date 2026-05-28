@@ -135,6 +135,7 @@ exports.Prisma.ScreeningScalarFieldEnum = {
   signals: 'signals',
   reasoning: 'reasoning',
   agentRunId: 'agentRunId',
+  agentTrace: 'agentTrace',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
@@ -163,6 +164,11 @@ exports.Prisma.SortOrder = {
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 

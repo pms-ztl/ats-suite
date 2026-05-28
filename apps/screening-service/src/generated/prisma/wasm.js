@@ -107,6 +107,7 @@ exports.Prisma.ScreeningScalarFieldEnum = {
   signals: 'signals',
   reasoning: 'reasoning',
   agentRunId: 'agentRunId',
+  agentTrace: 'agentTrace',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
@@ -135,6 +136,11 @@ exports.Prisma.SortOrder = {
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -181,7 +187,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\CDC\\ATS-microservices\\apps\\screening-service\\src\\generated\\prisma",
+      "value": "D:\\CDC\\ATS\\apps\\screening-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -195,7 +201,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\CDC\\ATS-microservices\\apps\\screening-service\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\CDC\\ATS\\apps\\screening-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -208,6 +214,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -216,13 +223,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"SCREENING_DATABASE_URL\")\n}\n\nenum ScreeningStatus {\n  PENDING\n  IN_PROGRESS\n  COMPLETED\n  FAILED\n}\n\nenum ScreeningOutcome {\n  PASS\n  FAIL\n  REVIEW\n}\n\nmodel Screening {\n  id              String            @id @default(uuid())\n  tenantId        String\n  candidateId     String\n  requisitionId   String\n  applicationId   String?\n  screeningType   String            @default(\"AI_ASSISTED\")\n  status          ScreeningStatus   @default(PENDING)\n  result          ScreeningOutcome?\n  score           Float?\n  matchPercentage Float?\n  signals         Json              @default(\"[]\")\n  reasoning       String?\n  agentRunId      String?\n  startedAt       DateTime?\n  completedAt     DateTime?\n  createdAt       DateTime          @default(now())\n  updatedAt       DateTime          @updatedAt\n\n  @@index([tenantId, status])\n  @@index([candidateId])\n  @@index([applicationId])\n}\n\nmodel AgentRun {\n  id                String   @id\n  tenantId          String\n  agentType         String\n  status            String\n  inputHash         String\n  tokensIn          Int\n  tokensOut         Int\n  costUsd           Decimal  @db.Decimal(10, 6)\n  latencyMs         Int\n  modelName         String\n  triggeredByUserId String?\n  errorMessage      String?\n  createdAt         DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n}\n",
-  "inlineSchemaHash": "e8562be08b5b314a02de2e5f72b9d2bf05ff9c29d783ba7bb7aa8c9f9be710c2",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"SCREENING_DATABASE_URL\")\n}\n\nenum ScreeningStatus {\n  PENDING\n  IN_PROGRESS\n  COMPLETED\n  FAILED\n}\n\nenum ScreeningOutcome {\n  PASS\n  FAIL\n  REVIEW\n}\n\nmodel Screening {\n  id              String            @id @default(uuid())\n  tenantId        String\n  candidateId     String\n  requisitionId   String\n  applicationId   String?\n  screeningType   String            @default(\"AI_ASSISTED\")\n  status          ScreeningStatus   @default(PENDING)\n  result          ScreeningOutcome?\n  score           Float?\n  matchPercentage Float?\n  signals         Json              @default(\"[]\")\n  reasoning       String?\n  agentRunId      String?\n  // Phase 38 — ReAct step trace from the agentic screener (reasoning, tool\n  // calls, observations, final answer). Rendered in the UI so recruiters can\n  // see HOW the AI reached its verdict. Null for single-shot screenings.\n  agentTrace      Json?\n  startedAt       DateTime?\n  completedAt     DateTime?\n  createdAt       DateTime          @default(now())\n  updatedAt       DateTime          @updatedAt\n\n  @@index([tenantId, status])\n  @@index([candidateId])\n  @@index([applicationId])\n}\n\nmodel AgentRun {\n  id                String   @id\n  tenantId          String\n  agentType         String\n  status            String\n  inputHash         String\n  tokensIn          Int\n  tokensOut         Int\n  costUsd           Decimal  @db.Decimal(10, 6)\n  latencyMs         Int\n  modelName         String\n  triggeredByUserId String?\n  errorMessage      String?\n  createdAt         DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n}\n",
+  "inlineSchemaHash": "e0d12bd5377bf9cb10a57095674a2fb6fbf333412aea7a83bcf95e15b8c81ef8",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Screening\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"candidateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requisitionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"applicationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"screeningType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ScreeningStatus\"},{\"name\":\"result\",\"kind\":\"enum\",\"type\":\"ScreeningOutcome\"},{\"name\":\"score\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"matchPercentage\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"signals\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"reasoning\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentRunId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"completedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AgentRun\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inputHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokensIn\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"tokensOut\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"costUsd\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"latencyMs\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"modelName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"triggeredByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"errorMessage\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Screening\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"candidateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requisitionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"applicationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"screeningType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ScreeningStatus\"},{\"name\":\"result\",\"kind\":\"enum\",\"type\":\"ScreeningOutcome\"},{\"name\":\"score\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"matchPercentage\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"signals\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"reasoning\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentRunId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentTrace\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"startedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"completedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AgentRun\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inputHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokensIn\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"tokensOut\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"costUsd\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"latencyMs\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"modelName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"triggeredByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"errorMessage\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

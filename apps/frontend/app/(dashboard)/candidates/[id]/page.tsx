@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ParsedResumeView } from "@/components/candidates/parsed-resume-view";
 import { InterviewQuestionsTab } from "@/components/candidates/interview-questions-tab";
+import { AgentReasoningTrace, type AgentStep } from "@/components/shared/agent-reasoning-trace";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -91,6 +92,11 @@ export default function CandidateDetailPage() {
   // Phase 37k — toggles ParsedResumeView between the full parsedSummary and
   // the PII-stripped parsedSummaryFair view. Off by default.
   const [fairnessMode, setFairnessMode] = useState(false);
+  // Phase 38 — latest agentic screening (carries the ReAct reasoning trace).
+  const [screening, setScreening] = useState<{
+    score?: number; matchPercentage?: number; result?: string; reasoning?: string;
+    agentTrace?: AgentStep[] | null;
+  } | null>(null);
   // Batch 6: custom-form attachments (anything beyond the primary resume)
   const [attachments, setAttachments] = useState<Array<{
     id: string;
@@ -134,6 +140,28 @@ export default function CandidateDetailPage() {
         setTimeline([]);
       })
       .finally(() => setTimelineLoading(false));
+  }, [id]);
+
+  // Phase 38: fetch the candidate's latest screening (with its ReAct trace)
+  useEffect(() => {
+    if (!id) return;
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let token: string | null = null;
+    try { token = window.sessionStorage.getItem("ats-access-token"); } catch {}
+    fetch(`${API}/screening?candidateId=${id}`, {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        const rows = res?.data ?? res;
+        if (Array.isArray(rows) && rows.length > 0) {
+          // newest first (route orders by createdAt desc); prefer one with a trace
+          const withTrace = rows.find((s: any) => Array.isArray(s.agentTrace) && s.agentTrace.length) ?? rows[0];
+          setScreening(withTrace);
+        }
+      })
+      .catch(() => {});
   }, [id]);
 
   // Batch 6: fetch custom-form attachments
@@ -364,6 +392,11 @@ export default function CandidateDetailPage() {
                   <MessageSquare className="h-3 w-3" /> Interview Questions
                 </TabsTrigger>
               )}
+              {screening?.agentTrace && screening.agentTrace.length > 0 && (
+                <TabsTrigger value="ai-screening" className="gap-1.5">
+                  <Sparkles className="h-3 w-3" /> AI Screening
+                </TabsTrigger>
+              )}
               <TabsTrigger value="timeline">
                 Timeline
               </TabsTrigger>
@@ -392,6 +425,24 @@ export default function CandidateDetailPage() {
                       : null,
                   }))}
                 />
+              </TabsContent>
+            )}
+
+            {screening?.agentTrace && screening.agentTrace.length > 0 && (
+              <TabsContent value="ai-screening" className="mt-4 space-y-4">
+                <Card>
+                  <CardContent className="p-4 flex flex-wrap items-center gap-4 text-sm">
+                    {typeof screening.score === "number" && (
+                      <div><span className="text-muted-foreground text-xs">Score </span><span className="font-semibold">{screening.score}/100</span></div>
+                    )}
+                    {typeof screening.matchPercentage === "number" && (
+                      <div><span className="text-muted-foreground text-xs">Match </span><span className="font-semibold">{screening.matchPercentage}%</span></div>
+                    )}
+                    {screening.result && <Badge variant="outline">{screening.result}</Badge>}
+                    {screening.reasoning && <p className="w-full text-xs text-muted-foreground">{screening.reasoning}</p>}
+                  </CardContent>
+                </Card>
+                <AgentReasoningTrace steps={screening.agentTrace} defaultOpen />
               </TabsContent>
             )}
 

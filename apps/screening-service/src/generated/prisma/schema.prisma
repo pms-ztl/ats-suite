@@ -35,6 +35,10 @@ model Screening {
   signals         Json              @default("[]")
   reasoning       String?
   agentRunId      String?
+  // Phase 38 — ReAct step trace from the agentic screener (reasoning, tool
+  // calls, observations, final answer). Rendered in the UI so recruiters can
+  // see HOW the AI reached its verdict. Null for single-shot screenings.
+  agentTrace      Json?
   startedAt       DateTime?
   completedAt     DateTime?
   createdAt       DateTime          @default(now())

@@ -8,13 +8,14 @@ import {
   User, Briefcase, Star, AlertTriangle, Calendar, DollarSign,
   ThumbsUp, ThumbsDown, Clock,
 } from "lucide-react";
+import { AgentReasoningTrace, type AgentStep } from "./agent-reasoning-trace";
 
 interface HITLPayloadRendererProps {
   type: string;
   payload: Record<string, unknown>;
 }
 
-export function HITLPayloadRenderer({ type, payload }: HITLPayloadRendererProps) {
+function renderByType(type: string, payload: Record<string, unknown>) {
   switch (type) {
     case "rejection_review":
       return <ScreeningReviewPayload payload={payload} />;
@@ -29,6 +30,19 @@ export function HITLPayloadRenderer({ type, payload }: HITLPayloadRendererProps)
     default:
       return <GenericPayload payload={payload} />;
   }
+}
+
+export function HITLPayloadRenderer({ type, payload }: HITLPayloadRendererProps) {
+  // When the underlying agent ran the ReAct loop, its step trace rides along on
+  // the payload — surface it so reviewers can see the AI's reasoning.
+  const trace = Array.isArray(payload.agentTrace) ? (payload.agentTrace as AgentStep[]) : null;
+  const toolsUsed = Array.isArray(payload.toolsUsed) ? (payload.toolsUsed as string[]) : undefined;
+  return (
+    <div className="space-y-4">
+      {renderByType(type, payload)}
+      {trace && <AgentReasoningTrace steps={trace} toolsUsed={toolsUsed} />}
+    </div>
+  );
 }
 
 // --- Screening / Rejection Review ---

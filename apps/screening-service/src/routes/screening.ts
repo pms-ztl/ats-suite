@@ -9,9 +9,11 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const requisitionId = req.query["requisitionId"] as string | undefined;
+    const candidateId = req.query["candidateId"] as string | undefined;
     const status = req.query["status"] as string | undefined;
     const where: any = { tenantId };
     if (requisitionId) where.requisitionId = requisitionId;
+    if (candidateId) where.candidateId = candidateId;
     if (status) where.status = status;
     const rows = await prisma.screening.findMany({ where, orderBy: { createdAt: "desc" }, take: 100 });
     ok(res, rows);

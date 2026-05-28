@@ -116,6 +116,8 @@ export function startScreeningWorker(logger: Logger) {
           reasoning: string;
           agentRunId: string;
         };
+        // Agentic-only: the full ReAct step trace, persisted for the UI.
+        let agentTrace: unknown = null;
         // Agentic-only extras surfaced on the completion event (no schema change).
         let agenticMeta:
           | {
@@ -155,6 +157,7 @@ export function startScreeningWorker(logger: Logger) {
             reasoning: ag.output.reasoning,
             agentRunId: ag.agentRunId,
           };
+          agentTrace = ag.steps;
           agenticMeta = {
             confidence: ag.output.confidence,
             recommendedAction: ag.output.recommendedAction,
@@ -189,6 +192,7 @@ export function startScreeningWorker(logger: Logger) {
             signals: verdict.signals as any,
             reasoning: verdict.reasoning,
             agentRunId: verdict.agentRunId,
+            ...(agentTrace ? { agentTrace: agentTrace as any } : {}),
             completedAt: new Date(),
           },
         });
