@@ -95,6 +95,7 @@ router.post("/", requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER"), async (req
         agentRunId: ag.agentRunId,
         toolsUsed: ag.toolsUsed,
         steps: ag.steps.length,
+        agentTrace: ag.steps,
         tokensUsed: ag.snapshot.tokensIn + ag.snapshot.tokensOut,
         costUsd: ag.snapshot.costUsd,
         modelName: ag.snapshot.modelName,
