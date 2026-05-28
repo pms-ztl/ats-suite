@@ -54,6 +54,7 @@ Every phase has a git commit; SHA is canonical.
 | 30 | Stripe self-serve plan purchase | `0b5ea46` |
 | 31a–e | Invite emails, email verification, tenant export, alerts, backup runbook | `508e3f4` |
 | 32a–f | Impersonation, support tickets, audit viewer, SECURITY.md, k6 + SLO, axe a11y | `24687e7` |
+| 33a–c | Gate Stripe behind super-admin approval; super-admin notify on every plan-changed event; public candidate-portal tenant branding | `a5fcbbb` |
 
 ---
 
