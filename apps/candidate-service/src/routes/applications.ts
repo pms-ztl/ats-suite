@@ -3,7 +3,11 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: candidate-facing operations need ADMIN/RECRUITER/HIRING_MANAGER.
+// INTERVIEWER cannot create/update applications or upload attachments.
+const requireRecruiterOrAdmin = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { ApplicationStageSchema, ApplicationStatusSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 
@@ -18,7 +22,7 @@ const CreateApplicationSchema = z.object({
 });
 
 // POST /internal/applications
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateApplicationSchema.parse(req.body);
@@ -68,7 +72,8 @@ const UpdateApplicationSchema = z.object({
   status: ApplicationStatusSchema.optional(),
   notes: z.string().optional(),
 });
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-027-micro-a + F-028-micro-P1: gate + scope mutation by tenantId.
+router.patch("/:id", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
@@ -77,7 +82,10 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
     if (!existing) throw Errors.notFound("Application");
     const data: any = { ...body };
     if (body.stage) data.stageUpdatedAt = new Date();
-    const updated = await prisma.application.update({ where: { id }, data });
+    // defense-in-depth: updateMany with tenantId filter on the mutation itself.
+    const { count } = await prisma.application.updateMany({ where: { id, tenantId }, data });
+    if (count === 0) throw Errors.notFound("Application");
+    const updated = await prisma.application.findUnique({ where: { id } });
     ok(res, updated);
   } catch (err) { next(err); }
 });
@@ -92,7 +100,7 @@ const CreateAttachmentSchema = z.object({
   mimeType: z.string(),
   storageKey: z.string(),
 });
-router.post("/attachments", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/attachments", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateAttachmentSchema.parse(req.body);

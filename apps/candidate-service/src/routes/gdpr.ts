@@ -10,7 +10,7 @@
  * in the response.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, Errors, getTenantId, getUserId, createLogger } from "@cdc-ats/common";
+import { ok, Errors, getTenantId, getUserId, createLogger, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 
 const logger = createLogger({ serviceName: "candidate-service:gdpr" });
@@ -87,7 +87,8 @@ router.get("/candidates/:id/export", async (req: Request, res: Response, next: N
 // candidate row is NOT physically deleted (it would orphan foreign keys
 // in attached events); instead PII fields are nulled / scrambled so any
 // surviving references show only the candidate ID.
-router.delete("/candidates/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: GDPR delete is destructive — tenant admin only.
+router.delete("/candidates/:id", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const actorUserId = getUserId(req) ?? "system";

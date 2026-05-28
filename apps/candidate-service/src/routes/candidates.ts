@@ -17,7 +17,12 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
+
+// Phase 27 F-028-micro-P1: candidate operations need ADMIN/RECRUITER/HIRING_MANAGER.
+// upsert-from-application is INTERNAL (called by job-service public apply flow),
+// so it's NOT gated here — see comment on that route.
+const requireRecruiterOrAdmin = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -78,7 +83,7 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
 });
 
 // POST /internal/candidates
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateCandidateSchema.parse(req.body);
@@ -95,6 +100,10 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
 // POST /internal/candidates/upsert-from-application — used by job-service when
 // a public apply comes in. Idempotent on (tenantId, email).
+// NOT requireRole-guarded: called from job-service's public apply handler
+// where the original requester is an anonymous candidate (no JWT). The
+// X-User-Role header in this case is the synthetic "system" role set by
+// job-service. Trusted via inter-service network policy.
 router.post("/upsert-from-application", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
@@ -167,14 +176,17 @@ const UpdateCandidateSchema = CreateCandidateSchema.partial().extend({
   summary: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
-router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-027-micro-b + F-028-micro-P1: gate + scope mutation by tenantId.
+router.patch("/:id", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
     const body = UpdateCandidateSchema.parse(req.body);
     const existing = await prisma.candidate.findFirst({ where: { id, tenantId } });
     if (!existing) throw Errors.notFound("Candidate");
-    const updated = await prisma.candidate.update({ where: { id }, data: body });
+    const { count } = await prisma.candidate.updateMany({ where: { id, tenantId }, data: body });
+    if (count === 0) throw Errors.notFound("Candidate");
+    const updated = await prisma.candidate.findUnique({ where: { id } });
     ok(res, updated);
   } catch (err) { next(err); }
 });
