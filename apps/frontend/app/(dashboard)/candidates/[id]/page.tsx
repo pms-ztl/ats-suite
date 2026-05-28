@@ -104,6 +104,16 @@ export default function CandidateDetailPage() {
     query: string; response?: string; shouldEscalate?: boolean; escalationReason?: string | null;
     agentTrace?: AgentStep[]; toolsUsed?: string[]; loading: boolean; error?: string;
   }>>([]);
+  // Phase 38 — AI offer drafting (agentic offer) per application
+  const [offerAppId, setOfferAppId] = useState("");
+  const [offerExpectation, setOfferExpectation] = useState("");
+  const [offerBusy, setOfferBusy] = useState(false);
+  const [offerResult, setOfferResult] = useState<{
+    baseSalary?: number; totalCompensation?: number; currency?: string; compBandPosition?: string;
+    justification?: string; signingBonus?: number; annualBonus?: number;
+    approvalChain?: Array<{ role: string; reason: string }>;
+    agentTrace?: AgentStep[]; toolsUsed?: string[]; error?: string;
+  } | null>(null);
   // Batch 6: custom-form attachments (anything beyond the primary resume)
   const [attachments, setAttachments] = useState<Array<{
     id: string;
@@ -216,6 +226,33 @@ export default function CandidateDetailPage() {
       setAsstTurns((t) => t.map((turn, i) => i === idx ? { ...turn, loading: false, error: "The assistant couldn't respond." } : turn));
     } finally {
       setAsstBusy(false);
+    }
+  }
+
+  async function draftOffer() {
+    if (!offerAppId) { toast.error("Pick an application first"); return; }
+    setOfferBusy(true);
+    setOfferResult(null);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      let token: string | null = null;
+      try { token = window.sessionStorage.getItem("ats-access-token"); } catch {}
+      const body: Record<string, unknown> = { applicationId: offerAppId };
+      const exp = Number(offerExpectation);
+      if (offerExpectation && !Number.isNaN(exp)) body.candidateExpectation = exp;
+      const res = await fetch(`${API}/offer`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setOfferResult(json.data ?? json);
+    } catch {
+      setOfferResult({ error: "Offer drafting failed." });
+    } finally {
+      setOfferBusy(false);
     }
   }
 
@@ -438,6 +475,11 @@ export default function CandidateDetailPage() {
               <TabsTrigger value="assistant" className="gap-1.5">
                 <MessageSquare className="h-3 w-3" /> Assistant
               </TabsTrigger>
+              {candidate.applications && candidate.applications.length > 0 && (
+                <TabsTrigger value="offer" className="gap-1.5">
+                  <Sparkles className="h-3 w-3" /> Offer
+                </TabsTrigger>
+              )}
               <TabsTrigger value="timeline">
                 Timeline
               </TabsTrigger>
@@ -536,6 +578,83 @@ export default function CandidateDetailPage() {
                 </Button>
               </form>
             </TabsContent>
+
+            {candidate.applications && candidate.applications.length > 0 && (
+              <TabsContent value="offer" className="mt-4 space-y-4">
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      The offer agent gathers the comp band, market rate, and interview signal, then drafts a package within band — and flags out-of-band exceptions.
+                    </p>
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Application</label>
+                        <select
+                          className="h-9 rounded-md border bg-background px-3 text-sm min-w-[220px] block"
+                          value={offerAppId}
+                          onChange={(e) => setOfferAppId(e.target.value)}
+                        >
+                          <option value="">Select an application…</option>
+                          {candidate.applications.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.requisition?.title ?? a.id} {a.stage ? `· ${a.stage}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Expectation (optional)</label>
+                        <input
+                          type="number"
+                          className="h-9 w-40 rounded-md border bg-background px-3 text-sm block"
+                          placeholder="e.g. 150000"
+                          value={offerExpectation}
+                          onChange={(e) => setOfferExpectation(e.target.value)}
+                        />
+                      </div>
+                      <Button size="sm" onClick={draftOffer} disabled={offerBusy || !offerAppId} className="gap-1.5">
+                        {offerBusy ? <Clock className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        {offerBusy ? "Drafting…" : "Draft offer"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {offerResult && (
+                  offerResult.error ? (
+                    <p className="text-sm text-rose-600">{offerResult.error}</p>
+                  ) : (
+                    <>
+                      <Card>
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground text-xs">Base </span>
+                              <span className="font-semibold">{offerResult.currency} {offerResult.baseSalary?.toLocaleString()}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Total </span>
+                              <span className="font-semibold">{offerResult.currency} {offerResult.totalCompensation?.toLocaleString()}</span>
+                            </div>
+                            {offerResult.compBandPosition && <Badge variant="outline">{offerResult.compBandPosition.replace(/_/g, " ")}</Badge>}
+                          </div>
+                          {offerResult.justification && <p className="text-xs text-muted-foreground">{offerResult.justification}</p>}
+                          {offerResult.approvalChain && offerResult.approvalChain.length > 0 && (
+                            <div className="text-xs">
+                              <span className="font-medium">Approval chain: </span>
+                              {offerResult.approvalChain.map((a) => a.role).join(" → ")}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                      {offerResult.agentTrace && offerResult.agentTrace.length > 0 && (
+                        <AgentReasoningTrace steps={offerResult.agentTrace} toolsUsed={offerResult.toolsUsed} />
+                      )}
+                    </>
+                  )
+                )}
+              </TabsContent>
+            )}
 
             <TabsContent value="applications" className="mt-4 space-y-3">
               {(!candidate.applications || candidate.applications.length === 0) ? (
