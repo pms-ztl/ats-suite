@@ -9,7 +9,10 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, Errors } from "@cdc-ats/common";
+import { ok, Errors, requireRole } from "@cdc-ats/common";
+
+// Any logged-in human (super-admin OR tenant user) can read + mark-read their own notifications.
+const requireAnyAuthenticated = requireRole("SUPER_ADMIN", "ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER");
 import { prisma } from "../lib/prisma.js";
 import { subscribeToUser } from "../lib/redis-pubsub.js";
 import { emitNotification } from "../lib/emit.js";
@@ -71,7 +74,9 @@ router.get("/unread-count", async (req: Request, res: Response, next: NextFuncti
 });
 
 // PATCH /internal/notifications/:id/read
-router.patch("/:id/read", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P2: any logged-in human (incl. SUPER_ADMIN, who
+// gets platform-wide notifications) can mark their own notification read.
+router.patch("/:id/read", requireAnyAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) throw Errors.unauthorized();
     const id = req.params["id"] as string;
@@ -86,7 +91,7 @@ router.patch("/:id/read", async (req: Request, res: Response, next: NextFunction
 });
 
 // POST /internal/notifications/read-all
-router.post("/read-all", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/read-all", requireAnyAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) throw Errors.unauthorized();
     const where = { ...userScopeWhere(req), readAt: null };
@@ -153,7 +158,11 @@ const SystemNotifSchema = z.object({
   channels: z.array(z.enum(["in_app", "email", "slack"])).default(["in_app"]),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
-router.post("/system", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: /system is called only by the api-gateway's
+// forgot-password flow, which sets a synthetic X-User-Role: SUPER_ADMIN
+// header. Tightening to requireSuperAdmin closes the door on anyone else
+// hitting this endpoint with a forged synthetic role through other paths.
+router.post("/system", requireRole("SUPER_ADMIN"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = SystemNotifSchema.parse(req.body);
     const saved = await emitNotification({

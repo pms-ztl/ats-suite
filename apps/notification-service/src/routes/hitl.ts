@@ -14,7 +14,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { emitNotification } from "../lib/emit.js";
 
@@ -66,7 +66,8 @@ const CreateSchema = z.object({
   tenantId: z.string().uuid().optional(),    // override (agent calls may not have user context)
 });
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: HITL checkpoints are admin-decision affairs.
+router.post("/", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Allow tenantId override in body for system-initiated HITL (agents)
     const tenantId = (req.body?.tenantId as string | undefined) ?? getTenantId(req);
@@ -110,7 +111,7 @@ const DecisionSchema = z.object({
   comment: z.string().max(2000).optional(),
 });
 
-router.post("/:id/decision", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:id/decision", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
@@ -143,7 +144,7 @@ const AssignSchema = z.object({
   assignedTo: z.string().uuid(),
   assignedToName: z.string().optional(),
 });
-router.post("/:id/assign", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:id/assign", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;

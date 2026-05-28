@@ -18,7 +18,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors } from "@cdc-ats/common";
+import { ok, created, Errors, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { substituteVariables, renderNotificationEmail } from "../lib/mailer.js";
 import { getTenantBranding } from "../lib/branding-cache.js";
@@ -99,7 +99,8 @@ const UpsertSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
-router.put("/:type", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: email template overrides are admin-only.
+router.put("/:type", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = requireTenantId(req);
     const type = req.params["type"] as string;
@@ -137,7 +138,7 @@ router.put("/:type", async (req: Request, res: Response, next: NextFunction) => 
 });
 
 // ─── DELETE /internal/email-templates/:type ─────────────────────────────────
-router.delete("/:type", async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/:type", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = requireTenantId(req);
     const type = req.params["type"] as string;
@@ -154,7 +155,7 @@ router.delete("/:type", async (req: Request, res: Response, next: NextFunction) 
 // Renders the template with sample variables so the tenant can see what
 // the email actually looks like before saving. Falls back to the system
 // defaults if no template exists yet — gives a "compare new vs old" preview.
-router.post("/:type/preview", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:type/preview", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = requireTenantId(req);
     const type = req.params["type"] as string;

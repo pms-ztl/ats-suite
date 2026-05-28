@@ -10,7 +10,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireTenantAdmin } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { sendSlack } from "../lib/slack.js";
 import { sendEmail, renderNotificationEmail } from "../lib/mailer.js";
@@ -55,7 +55,8 @@ const UpsertSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
-router.put("/:kind", async (req: Request, res: Response, next: NextFunction) => {
+// Phase 27 F-028-micro-P0: integration config (Slack webhook, SMTP) is admin-only.
+router.put("/:kind", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const kind = KindSchema.parse(req.params["kind"]);
@@ -74,7 +75,7 @@ router.put("/:kind", async (req: Request, res: Response, next: NextFunction) => 
 });
 
 // ── DELETE /internal/integrations/:kind ────────────────────────────────────
-router.delete("/:kind", async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/:kind", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const kind = KindSchema.parse(req.params["kind"]);
@@ -91,7 +92,7 @@ const TestPayloadSchema = z.object({
   to: z.string().email().optional(),
 });
 
-router.post("/:kind/test", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:kind/test", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const kind = KindSchema.parse(req.params["kind"]);
