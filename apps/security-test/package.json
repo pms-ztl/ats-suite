@@ -1,0 +1,12 @@
+{
+  "name": "@cdc-ats/security-test",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:cross-tenant": "tsx src/cross-tenant.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.7.0"
+  }
+}
