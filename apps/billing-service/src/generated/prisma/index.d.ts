@@ -39,6 +39,11 @@ export type FeatureFlag = $Result.DefaultSelection<Prisma.$FeatureFlagPayload>
  */
 export type PlatformAgentKillSwitch = $Result.DefaultSelection<Prisma.$PlatformAgentKillSwitchPayload>
 /**
+ * Model PlatformKillAudit
+ * 
+ */
+export type PlatformKillAudit = $Result.DefaultSelection<Prisma.$PlatformKillAuditPayload>
+/**
  * Model PromptOverride
  * 
  */
@@ -211,6 +216,16 @@ export class PrismaClient<
     * ```
     */
   get platformAgentKillSwitch(): Prisma.PlatformAgentKillSwitchDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformKillAudit`: Exposes CRUD operations for the **PlatformKillAudit** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformKillAudits
+    * const platformKillAudits = await prisma.platformKillAudit.findMany()
+    * ```
+    */
+  get platformKillAudit(): Prisma.PlatformKillAuditDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.promptOverride`: Exposes CRUD operations for the **PromptOverride** model.
@@ -667,6 +682,7 @@ export namespace Prisma {
     AgentRunCost: 'AgentRunCost',
     FeatureFlag: 'FeatureFlag',
     PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
+    PlatformKillAudit: 'PlatformKillAudit',
     PromptOverride: 'PromptOverride'
   };
 
@@ -686,7 +702,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "promptOverride"
+      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "platformKillAudit" | "promptOverride"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1060,6 +1076,80 @@ export namespace Prisma {
           }
         }
       }
+      PlatformKillAudit: {
+        payload: Prisma.$PlatformKillAuditPayload<ExtArgs>
+        fields: Prisma.PlatformKillAuditFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformKillAuditFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformKillAuditFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformKillAuditFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformKillAuditFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformKillAuditFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformKillAuditCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformKillAuditCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformKillAuditCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformKillAuditDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          update: {
+            args: Prisma.PlatformKillAuditUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformKillAuditDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformKillAuditUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformKillAuditUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformKillAuditUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformKillAuditPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformKillAuditAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformKillAudit>
+          }
+          groupBy: {
+            args: Prisma.PlatformKillAuditGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformKillAuditGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformKillAuditCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformKillAuditCountAggregateOutputType> | number
+          }
+        }
+      }
       PromptOverride: {
         payload: Prisma.$PromptOverridePayload<ExtArgs>
         fields: Prisma.PromptOverrideFieldRefs
@@ -1235,6 +1325,7 @@ export namespace Prisma {
     agentRunCost?: AgentRunCostOmit
     featureFlag?: FeatureFlagOmit
     platformAgentKillSwitch?: PlatformAgentKillSwitchOmit
+    platformKillAudit?: PlatformKillAuditOmit
     promptOverride?: PromptOverrideOmit
   }
 
@@ -6442,6 +6533,1014 @@ export namespace Prisma {
 
 
   /**
+   * Model PlatformKillAudit
+   */
+
+  export type AggregatePlatformKillAudit = {
+    _count: PlatformKillAuditCountAggregateOutputType | null
+    _min: PlatformKillAuditMinAggregateOutputType | null
+    _max: PlatformKillAuditMaxAggregateOutputType | null
+  }
+
+  export type PlatformKillAuditMinAggregateOutputType = {
+    id: string | null
+    agentType: string | null
+    disabled: boolean | null
+    reason: string | null
+    actorUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type PlatformKillAuditMaxAggregateOutputType = {
+    id: string | null
+    agentType: string | null
+    disabled: boolean | null
+    reason: string | null
+    actorUserId: string | null
+    createdAt: Date | null
+  }
+
+  export type PlatformKillAuditCountAggregateOutputType = {
+    id: number
+    agentType: number
+    disabled: number
+    reason: number
+    actorUserId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PlatformKillAuditMinAggregateInputType = {
+    id?: true
+    agentType?: true
+    disabled?: true
+    reason?: true
+    actorUserId?: true
+    createdAt?: true
+  }
+
+  export type PlatformKillAuditMaxAggregateInputType = {
+    id?: true
+    agentType?: true
+    disabled?: true
+    reason?: true
+    actorUserId?: true
+    createdAt?: true
+  }
+
+  export type PlatformKillAuditCountAggregateInputType = {
+    id?: true
+    agentType?: true
+    disabled?: true
+    reason?: true
+    actorUserId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PlatformKillAuditAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformKillAudit to aggregate.
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformKillAudits to fetch.
+     */
+    orderBy?: PlatformKillAuditOrderByWithRelationInput | PlatformKillAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformKillAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformKillAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformKillAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformKillAudits
+    **/
+    _count?: true | PlatformKillAuditCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformKillAuditMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformKillAuditMaxAggregateInputType
+  }
+
+  export type GetPlatformKillAuditAggregateType<T extends PlatformKillAuditAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformKillAudit]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformKillAudit[P]>
+      : GetScalarType<T[P], AggregatePlatformKillAudit[P]>
+  }
+
+
+
+
+  export type PlatformKillAuditGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformKillAuditWhereInput
+    orderBy?: PlatformKillAuditOrderByWithAggregationInput | PlatformKillAuditOrderByWithAggregationInput[]
+    by: PlatformKillAuditScalarFieldEnum[] | PlatformKillAuditScalarFieldEnum
+    having?: PlatformKillAuditScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformKillAuditCountAggregateInputType | true
+    _min?: PlatformKillAuditMinAggregateInputType
+    _max?: PlatformKillAuditMaxAggregateInputType
+  }
+
+  export type PlatformKillAuditGroupByOutputType = {
+    id: string
+    agentType: string
+    disabled: boolean
+    reason: string | null
+    actorUserId: string | null
+    createdAt: Date
+    _count: PlatformKillAuditCountAggregateOutputType | null
+    _min: PlatformKillAuditMinAggregateOutputType | null
+    _max: PlatformKillAuditMaxAggregateOutputType | null
+  }
+
+  type GetPlatformKillAuditGroupByPayload<T extends PlatformKillAuditGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformKillAuditGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformKillAuditGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformKillAuditGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformKillAuditGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformKillAuditSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    actorUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["platformKillAudit"]>
+
+  export type PlatformKillAuditSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    actorUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["platformKillAudit"]>
+
+  export type PlatformKillAuditSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    actorUserId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["platformKillAudit"]>
+
+  export type PlatformKillAuditSelectScalar = {
+    id?: boolean
+    agentType?: boolean
+    disabled?: boolean
+    reason?: boolean
+    actorUserId?: boolean
+    createdAt?: boolean
+  }
+
+  export type PlatformKillAuditOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agentType" | "disabled" | "reason" | "actorUserId" | "createdAt", ExtArgs["result"]["platformKillAudit"]>
+
+  export type $PlatformKillAuditPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformKillAudit"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      agentType: string
+      disabled: boolean
+      reason: string | null
+      actorUserId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["platformKillAudit"]>
+    composites: {}
+  }
+
+  type PlatformKillAuditGetPayload<S extends boolean | null | undefined | PlatformKillAuditDefaultArgs> = $Result.GetResult<Prisma.$PlatformKillAuditPayload, S>
+
+  type PlatformKillAuditCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformKillAuditFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformKillAuditCountAggregateInputType | true
+    }
+
+  export interface PlatformKillAuditDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformKillAudit'], meta: { name: 'PlatformKillAudit' } }
+    /**
+     * Find zero or one PlatformKillAudit that matches the filter.
+     * @param {PlatformKillAuditFindUniqueArgs} args - Arguments to find a PlatformKillAudit
+     * @example
+     * // Get one PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformKillAuditFindUniqueArgs>(args: SelectSubset<T, PlatformKillAuditFindUniqueArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformKillAudit that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformKillAuditFindUniqueOrThrowArgs} args - Arguments to find a PlatformKillAudit
+     * @example
+     * // Get one PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformKillAuditFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformKillAuditFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformKillAudit that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditFindFirstArgs} args - Arguments to find a PlatformKillAudit
+     * @example
+     * // Get one PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformKillAuditFindFirstArgs>(args?: SelectSubset<T, PlatformKillAuditFindFirstArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformKillAudit that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditFindFirstOrThrowArgs} args - Arguments to find a PlatformKillAudit
+     * @example
+     * // Get one PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformKillAuditFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformKillAuditFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformKillAudits that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformKillAudits
+     * const platformKillAudits = await prisma.platformKillAudit.findMany()
+     * 
+     * // Get first 10 PlatformKillAudits
+     * const platformKillAudits = await prisma.platformKillAudit.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformKillAuditWithIdOnly = await prisma.platformKillAudit.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformKillAuditFindManyArgs>(args?: SelectSubset<T, PlatformKillAuditFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformKillAudit.
+     * @param {PlatformKillAuditCreateArgs} args - Arguments to create a PlatformKillAudit.
+     * @example
+     * // Create one PlatformKillAudit
+     * const PlatformKillAudit = await prisma.platformKillAudit.create({
+     *   data: {
+     *     // ... data to create a PlatformKillAudit
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformKillAuditCreateArgs>(args: SelectSubset<T, PlatformKillAuditCreateArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformKillAudits.
+     * @param {PlatformKillAuditCreateManyArgs} args - Arguments to create many PlatformKillAudits.
+     * @example
+     * // Create many PlatformKillAudits
+     * const platformKillAudit = await prisma.platformKillAudit.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformKillAuditCreateManyArgs>(args?: SelectSubset<T, PlatformKillAuditCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformKillAudits and returns the data saved in the database.
+     * @param {PlatformKillAuditCreateManyAndReturnArgs} args - Arguments to create many PlatformKillAudits.
+     * @example
+     * // Create many PlatformKillAudits
+     * const platformKillAudit = await prisma.platformKillAudit.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformKillAudits and only return the `id`
+     * const platformKillAuditWithIdOnly = await prisma.platformKillAudit.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformKillAuditCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformKillAuditCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformKillAudit.
+     * @param {PlatformKillAuditDeleteArgs} args - Arguments to delete one PlatformKillAudit.
+     * @example
+     * // Delete one PlatformKillAudit
+     * const PlatformKillAudit = await prisma.platformKillAudit.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformKillAudit
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformKillAuditDeleteArgs>(args: SelectSubset<T, PlatformKillAuditDeleteArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformKillAudit.
+     * @param {PlatformKillAuditUpdateArgs} args - Arguments to update one PlatformKillAudit.
+     * @example
+     * // Update one PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformKillAuditUpdateArgs>(args: SelectSubset<T, PlatformKillAuditUpdateArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformKillAudits.
+     * @param {PlatformKillAuditDeleteManyArgs} args - Arguments to filter PlatformKillAudits to delete.
+     * @example
+     * // Delete a few PlatformKillAudits
+     * const { count } = await prisma.platformKillAudit.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformKillAuditDeleteManyArgs>(args?: SelectSubset<T, PlatformKillAuditDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformKillAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformKillAudits
+     * const platformKillAudit = await prisma.platformKillAudit.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformKillAuditUpdateManyArgs>(args: SelectSubset<T, PlatformKillAuditUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformKillAudits and returns the data updated in the database.
+     * @param {PlatformKillAuditUpdateManyAndReturnArgs} args - Arguments to update many PlatformKillAudits.
+     * @example
+     * // Update many PlatformKillAudits
+     * const platformKillAudit = await prisma.platformKillAudit.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformKillAudits and only return the `id`
+     * const platformKillAuditWithIdOnly = await prisma.platformKillAudit.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformKillAuditUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformKillAuditUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformKillAudit.
+     * @param {PlatformKillAuditUpsertArgs} args - Arguments to update or create a PlatformKillAudit.
+     * @example
+     * // Update or create a PlatformKillAudit
+     * const platformKillAudit = await prisma.platformKillAudit.upsert({
+     *   create: {
+     *     // ... data to create a PlatformKillAudit
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformKillAudit we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformKillAuditUpsertArgs>(args: SelectSubset<T, PlatformKillAuditUpsertArgs<ExtArgs>>): Prisma__PlatformKillAuditClient<$Result.GetResult<Prisma.$PlatformKillAuditPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformKillAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditCountArgs} args - Arguments to filter PlatformKillAudits to count.
+     * @example
+     * // Count the number of PlatformKillAudits
+     * const count = await prisma.platformKillAudit.count({
+     *   where: {
+     *     // ... the filter for the PlatformKillAudits we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformKillAuditCountArgs>(
+      args?: Subset<T, PlatformKillAuditCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformKillAuditCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformKillAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformKillAuditAggregateArgs>(args: Subset<T, PlatformKillAuditAggregateArgs>): Prisma.PrismaPromise<GetPlatformKillAuditAggregateType<T>>
+
+    /**
+     * Group by PlatformKillAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformKillAuditGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformKillAuditGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformKillAuditGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformKillAuditGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformKillAuditGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformKillAuditGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformKillAudit model
+   */
+  readonly fields: PlatformKillAuditFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformKillAudit.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformKillAuditClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformKillAudit model
+   */
+  interface PlatformKillAuditFieldRefs {
+    readonly id: FieldRef<"PlatformKillAudit", 'String'>
+    readonly agentType: FieldRef<"PlatformKillAudit", 'String'>
+    readonly disabled: FieldRef<"PlatformKillAudit", 'Boolean'>
+    readonly reason: FieldRef<"PlatformKillAudit", 'String'>
+    readonly actorUserId: FieldRef<"PlatformKillAudit", 'String'>
+    readonly createdAt: FieldRef<"PlatformKillAudit", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformKillAudit findUnique
+   */
+  export type PlatformKillAuditFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformKillAudit to fetch.
+     */
+    where: PlatformKillAuditWhereUniqueInput
+  }
+
+  /**
+   * PlatformKillAudit findUniqueOrThrow
+   */
+  export type PlatformKillAuditFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformKillAudit to fetch.
+     */
+    where: PlatformKillAuditWhereUniqueInput
+  }
+
+  /**
+   * PlatformKillAudit findFirst
+   */
+  export type PlatformKillAuditFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformKillAudit to fetch.
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformKillAudits to fetch.
+     */
+    orderBy?: PlatformKillAuditOrderByWithRelationInput | PlatformKillAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformKillAudits.
+     */
+    cursor?: PlatformKillAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformKillAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformKillAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformKillAudits.
+     */
+    distinct?: PlatformKillAuditScalarFieldEnum | PlatformKillAuditScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformKillAudit findFirstOrThrow
+   */
+  export type PlatformKillAuditFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformKillAudit to fetch.
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformKillAudits to fetch.
+     */
+    orderBy?: PlatformKillAuditOrderByWithRelationInput | PlatformKillAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformKillAudits.
+     */
+    cursor?: PlatformKillAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformKillAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformKillAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformKillAudits.
+     */
+    distinct?: PlatformKillAuditScalarFieldEnum | PlatformKillAuditScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformKillAudit findMany
+   */
+  export type PlatformKillAuditFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter, which PlatformKillAudits to fetch.
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformKillAudits to fetch.
+     */
+    orderBy?: PlatformKillAuditOrderByWithRelationInput | PlatformKillAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformKillAudits.
+     */
+    cursor?: PlatformKillAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformKillAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformKillAudits.
+     */
+    skip?: number
+    distinct?: PlatformKillAuditScalarFieldEnum | PlatformKillAuditScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformKillAudit create
+   */
+  export type PlatformKillAuditCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformKillAudit.
+     */
+    data: XOR<PlatformKillAuditCreateInput, PlatformKillAuditUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformKillAudit createMany
+   */
+  export type PlatformKillAuditCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformKillAudits.
+     */
+    data: PlatformKillAuditCreateManyInput | PlatformKillAuditCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformKillAudit createManyAndReturn
+   */
+  export type PlatformKillAuditCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformKillAudits.
+     */
+    data: PlatformKillAuditCreateManyInput | PlatformKillAuditCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformKillAudit update
+   */
+  export type PlatformKillAuditUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformKillAudit.
+     */
+    data: XOR<PlatformKillAuditUpdateInput, PlatformKillAuditUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformKillAudit to update.
+     */
+    where: PlatformKillAuditWhereUniqueInput
+  }
+
+  /**
+   * PlatformKillAudit updateMany
+   */
+  export type PlatformKillAuditUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformKillAudits.
+     */
+    data: XOR<PlatformKillAuditUpdateManyMutationInput, PlatformKillAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformKillAudits to update
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * Limit how many PlatformKillAudits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformKillAudit updateManyAndReturn
+   */
+  export type PlatformKillAuditUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformKillAudits.
+     */
+    data: XOR<PlatformKillAuditUpdateManyMutationInput, PlatformKillAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformKillAudits to update
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * Limit how many PlatformKillAudits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformKillAudit upsert
+   */
+  export type PlatformKillAuditUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformKillAudit to update in case it exists.
+     */
+    where: PlatformKillAuditWhereUniqueInput
+    /**
+     * In case the PlatformKillAudit found by the `where` argument doesn't exist, create a new PlatformKillAudit with this data.
+     */
+    create: XOR<PlatformKillAuditCreateInput, PlatformKillAuditUncheckedCreateInput>
+    /**
+     * In case the PlatformKillAudit was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformKillAuditUpdateInput, PlatformKillAuditUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformKillAudit delete
+   */
+  export type PlatformKillAuditDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+    /**
+     * Filter which PlatformKillAudit to delete.
+     */
+    where: PlatformKillAuditWhereUniqueInput
+  }
+
+  /**
+   * PlatformKillAudit deleteMany
+   */
+  export type PlatformKillAuditDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformKillAudits to delete
+     */
+    where?: PlatformKillAuditWhereInput
+    /**
+     * Limit how many PlatformKillAudits to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformKillAudit without action
+   */
+  export type PlatformKillAuditDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformKillAudit
+     */
+    select?: PlatformKillAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformKillAudit
+     */
+    omit?: PlatformKillAuditOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model PromptOverride
    */
 
@@ -7616,6 +8715,18 @@ export namespace Prisma {
   export type PlatformAgentKillSwitchScalarFieldEnum = (typeof PlatformAgentKillSwitchScalarFieldEnum)[keyof typeof PlatformAgentKillSwitchScalarFieldEnum]
 
 
+  export const PlatformKillAuditScalarFieldEnum: {
+    id: 'id',
+    agentType: 'agentType',
+    disabled: 'disabled',
+    reason: 'reason',
+    actorUserId: 'actorUserId',
+    createdAt: 'createdAt'
+  };
+
+  export type PlatformKillAuditScalarFieldEnum = (typeof PlatformKillAuditScalarFieldEnum)[keyof typeof PlatformKillAuditScalarFieldEnum]
+
+
   export const PromptOverrideScalarFieldEnum: {
     id: 'id',
     agentType: 'agentType',
@@ -8075,6 +9186,63 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"PlatformAgentKillSwitch"> | Date | string
   }
 
+  export type PlatformKillAuditWhereInput = {
+    AND?: PlatformKillAuditWhereInput | PlatformKillAuditWhereInput[]
+    OR?: PlatformKillAuditWhereInput[]
+    NOT?: PlatformKillAuditWhereInput | PlatformKillAuditWhereInput[]
+    id?: StringFilter<"PlatformKillAudit"> | string
+    agentType?: StringFilter<"PlatformKillAudit"> | string
+    disabled?: BoolFilter<"PlatformKillAudit"> | boolean
+    reason?: StringNullableFilter<"PlatformKillAudit"> | string | null
+    actorUserId?: StringNullableFilter<"PlatformKillAudit"> | string | null
+    createdAt?: DateTimeFilter<"PlatformKillAudit"> | Date | string
+  }
+
+  export type PlatformKillAuditOrderByWithRelationInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    actorUserId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlatformKillAuditWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PlatformKillAuditWhereInput | PlatformKillAuditWhereInput[]
+    OR?: PlatformKillAuditWhereInput[]
+    NOT?: PlatformKillAuditWhereInput | PlatformKillAuditWhereInput[]
+    agentType?: StringFilter<"PlatformKillAudit"> | string
+    disabled?: BoolFilter<"PlatformKillAudit"> | boolean
+    reason?: StringNullableFilter<"PlatformKillAudit"> | string | null
+    actorUserId?: StringNullableFilter<"PlatformKillAudit"> | string | null
+    createdAt?: DateTimeFilter<"PlatformKillAudit"> | Date | string
+  }, "id">
+
+  export type PlatformKillAuditOrderByWithAggregationInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    actorUserId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: PlatformKillAuditCountOrderByAggregateInput
+    _max?: PlatformKillAuditMaxOrderByAggregateInput
+    _min?: PlatformKillAuditMinOrderByAggregateInput
+  }
+
+  export type PlatformKillAuditScalarWhereWithAggregatesInput = {
+    AND?: PlatformKillAuditScalarWhereWithAggregatesInput | PlatformKillAuditScalarWhereWithAggregatesInput[]
+    OR?: PlatformKillAuditScalarWhereWithAggregatesInput[]
+    NOT?: PlatformKillAuditScalarWhereWithAggregatesInput | PlatformKillAuditScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PlatformKillAudit"> | string
+    agentType?: StringWithAggregatesFilter<"PlatformKillAudit"> | string
+    disabled?: BoolWithAggregatesFilter<"PlatformKillAudit"> | boolean
+    reason?: StringNullableWithAggregatesFilter<"PlatformKillAudit"> | string | null
+    actorUserId?: StringNullableWithAggregatesFilter<"PlatformKillAudit"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformKillAudit"> | Date | string
+  }
+
   export type PromptOverrideWhereInput = {
     AND?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
     OR?: PromptOverrideWhereInput[]
@@ -8488,6 +9656,69 @@ export namespace Prisma {
     reason?: NullableStringFieldUpdateOperationsInput | string | null
     updatedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformKillAuditCreateInput = {
+    id?: string
+    agentType: string
+    disabled: boolean
+    reason?: string | null
+    actorUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PlatformKillAuditUncheckedCreateInput = {
+    id?: string
+    agentType: string
+    disabled: boolean
+    reason?: string | null
+    actorUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PlatformKillAuditUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    actorUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformKillAuditUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    actorUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformKillAuditCreateManyInput = {
+    id?: string
+    agentType: string
+    disabled: boolean
+    reason?: string | null
+    actorUserId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type PlatformKillAuditUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    actorUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformKillAuditUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentType?: StringFieldUpdateOperationsInput | string
+    disabled?: BoolFieldUpdateOperationsInput | boolean
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    actorUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PromptOverrideCreateInput = {
@@ -8986,6 +10217,33 @@ export namespace Prisma {
     reason?: SortOrder
     updatedByUserId?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type PlatformKillAuditCountOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    actorUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlatformKillAuditMaxOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    actorUserId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlatformKillAuditMinOrderByAggregateInput = {
+    id?: SortOrder
+    agentType?: SortOrder
+    disabled?: SortOrder
+    reason?: SortOrder
+    actorUserId?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type FloatNullableFilter<$PrismaModel = never> = {

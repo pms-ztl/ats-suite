@@ -86,6 +86,26 @@ model PlatformAgentKillSwitch {
   updatedAt       DateTime @updatedAt
 }
 
+// Phase 22 — audit log of every platform-wide kill switch flip. Unlike
+// PlatformAgentKillSwitch (one row per agent, overwritten on each change),
+// this is append-only — every toggle creates a new row. Powers the
+// "who killed what and why" audit viewer at /admin/platform/audit.
+//
+// Why a separate table: rolling back the kill switch shouldn't lose the
+// history of "we killed this on Tuesday because of incident X". Without
+// this, super-admin's only record of an action is the current state.
+model PlatformKillAudit {
+  id          String   @id @default(uuid())
+  agentType   String
+  disabled    Boolean // the new state set by this action
+  reason      String?
+  actorUserId String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([agentType, createdAt])
+}
+
 // Phase 21 — central prompt overrides. When a row exists for an agentType
 // with `isActive = true`, ai-engine uses these values instead of the
 // hardcoded defaults baked into the agent definitions. Cached for 5

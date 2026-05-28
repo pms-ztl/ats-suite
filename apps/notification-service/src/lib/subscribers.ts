@@ -130,5 +130,44 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
-  logger.info("notification-service NATS subscribers started (5 subjects)");
+  // Phase 22 — platform.agent.kill-switch.toggled
+  // Fires when super-admin flips a kill switch on /admin/platform/agents.
+  // Notifies all SUPER_ADMINs via in-app + slack so an incident has a
+  // visible audit trail outside the dashboard.
+  await subscribeToEvents({
+    stream: "PLATFORM_EVENTS",
+    subject: "platform.agent.kill-switch.toggled",
+    durable: "notification-service:platform-kill-switch",
+    logger,
+    handler: async (envelope) => {
+      const p = envelope.payload as {
+        agentType: string;
+        disabled: boolean;
+        reason: string | null;
+        actorUserId: string | null;
+        toggledAt: string;
+      };
+      const verb = p.disabled ? "killed" : "re-enabled";
+      const emoji = p.disabled ? ":no_entry:" : ":white_check_mark:";
+      await emitNotification({
+        tenantId: null,            // platform-wide → super-admins only
+        userId: null,
+        type: "SYSTEM",
+        title: `${emoji} Agent ${verb} platform-wide: ${p.agentType}`,
+        body: p.disabled
+          ? (p.reason ?? "No reason provided.")
+          : "Agent is live again across all tenants.",
+        link: "/admin/platform/agents",
+        metadata: {
+          agentType: p.agentType,
+          disabled: p.disabled,
+          actorUserId: p.actorUserId,
+          toggledAt: p.toggledAt,
+        },
+        channels: ["in_app", "slack"],
+      });
+    },
+  });
+
+  logger.info("notification-service NATS subscribers started (6 subjects)");
 }

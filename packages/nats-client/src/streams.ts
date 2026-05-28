@@ -61,6 +61,12 @@ export const CORE_STREAMS: StreamSpec[] = [
     description: "Agent run completed (cost + outcome) — billing-service consumes",
     retentionDays: 90,
   },
+  {
+    name: "PLATFORM_EVENTS",
+    subjects: ["platform.agent.>", "platform.prompt.>"],
+    description: "Platform-wide super-admin actions (kill switch toggled, prompt override saved)",
+    retentionDays: 365,
+  },
 ];
 
 /** Create/update all streams. Idempotent — safe to call multiple times. */

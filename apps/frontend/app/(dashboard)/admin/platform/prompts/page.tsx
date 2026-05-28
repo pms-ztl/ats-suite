@@ -26,7 +26,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft, Brain, History, Loader2, RotateCcw, Save, FileText, Clock, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Brain, History, Loader2, RotateCcw, Save, FileText, Clock, User as UserIcon, GitCompare } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { LineDiff } from "@/components/diff/line-diff";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -75,6 +83,7 @@ export default function PlatformPromptsPage() {
   const [temperature, setTemperature] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [compareWith, setCompareWith] = useState<OverrideRow | null>(null);
 
   useEffect(() => {
     void load();
@@ -396,7 +405,17 @@ export default function PlatformPromptsPage() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-2 text-right">
+                            <td className="px-4 py-2 text-right space-x-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setCompareWith(h)}
+                                disabled={!active}
+                                title={active ? "Compare to active version" : "No active version to compare against"}
+                              >
+                                <GitCompare className="w-3 h-3 mr-1" />
+                                Diff
+                              </Button>
                               <Button size="sm" variant="ghost" onClick={() => rollback(h.id)}>
                                 <RotateCcw className="w-3 h-3 mr-1" />
                                 Roll back
@@ -419,6 +438,47 @@ export default function PlatformPromptsPage() {
           )}
         </div>
       </div>
+
+      {/* Diff dialog — compare a historical version to the active one */}
+      <Dialog open={!!compareWith} onOpenChange={(o) => !o && setCompareWith(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="inline-flex items-center gap-2">
+              <GitCompare className="w-5 h-5" />
+              Diff: v{compareWith?.version} → v{active?.version} (active)
+            </DialogTitle>
+            <DialogDescription>
+              Showing what changed from the older version on the left to the currently-active version on the right.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-auto flex-1 space-y-4">
+            {compareWith && active && (
+              <>
+                {/* Settings diff (model + temperature) */}
+                <div className="text-xs grid grid-cols-2 gap-3 px-1">
+                  <div className="border rounded p-2 space-y-1">
+                    <div className="text-muted-foreground">v{compareWith.version}</div>
+                    <div>Model: <span className="font-mono">{compareWith.modelName ?? "(default)"}</span></div>
+                    <div>Temp: <span className="font-mono">{compareWith.temperature ?? "(default)"}</span></div>
+                  </div>
+                  <div className="border rounded p-2 space-y-1 bg-primary/5">
+                    <div className="text-primary">v{active.version} (active)</div>
+                    <div>Model: <span className="font-mono">{active.modelName ?? "(default)"}</span></div>
+                    <div>Temp: <span className="font-mono">{active.temperature ?? "(default)"}</span></div>
+                  </div>
+                </div>
+                {/* System prompt diff */}
+                <LineDiff
+                  oldText={compareWith.systemPrompt ?? ""}
+                  newText={active.systemPrompt ?? ""}
+                  oldLabel={`v${compareWith.version} · ${new Date(compareWith.createdAt).toLocaleString()}`}
+                  newLabel={`v${active.version} (active) · ${new Date(active.createdAt).toLocaleString()}`}
+                />
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

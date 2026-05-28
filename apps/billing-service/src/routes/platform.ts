@@ -22,6 +22,7 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, created, Errors, getUserId } from "@cdc-ats/common";
+import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
 import { ALL_AGENT_TYPES } from "../lib/plan-limits.js";
 
@@ -92,22 +93,81 @@ router.put("/agents/:type", async (req: Request, res: Response, next: NextFuncti
     const body = KillSchema.parse(req.body);
     const userId = getUserId(req) ?? null;
 
-    const updated = await prisma.platformAgentKillSwitch.upsert({
-      where: { agentType },
-      create: {
-        agentType,
-        disabled: body.disabled,
-        reason: body.reason ?? null,
-        updatedByUserId: userId,
-      },
-      update: {
-        disabled: body.disabled,
-        reason: body.reason ?? null,
-        updatedByUserId: userId,
-      },
+    // Phase 22 — only audit + alert when state actually changes. If
+    // super-admin clicks the toggle that's already in the desired state
+    // (or hits the API twice in a row), we don't want a duplicate audit row
+    // or duplicate Slack alert.
+    const prior = await prisma.platformAgentKillSwitch.findUnique({ where: { agentType } });
+    const stateChanged = (prior?.disabled ?? false) !== body.disabled;
+
+    // Upsert current-state row + (if changed) audit row in one transaction
+    // so the live state never diverges from the audit log.
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.platformAgentKillSwitch.upsert({
+        where: { agentType },
+        create: {
+          agentType,
+          disabled: body.disabled,
+          reason: body.reason ?? null,
+          updatedByUserId: userId,
+        },
+        update: {
+          disabled: body.disabled,
+          reason: body.reason ?? null,
+          updatedByUserId: userId,
+        },
+      });
+      if (stateChanged) {
+        await tx.platformKillAudit.create({
+          data: {
+            agentType,
+            disabled: body.disabled,
+            reason: body.reason ?? null,
+            actorUserId: userId,
+          },
+        });
+      }
+      return result;
     });
 
+    // Phase 22 — alert super-admin via NATS so notification-service can
+    // dispatch to Slack + in-app feed. Fire-and-forget; the kill switch
+    // is the source of truth, the notification is just informational.
+    if (stateChanged) {
+      publishEvent({
+        subject: "platform.agent.kill-switch.toggled",
+        type: "platform.agent.kill-switch.toggled",
+        tenantId: null,
+        payload: {
+          agentType,
+          disabled: body.disabled,
+          reason: body.reason ?? null,
+          actorUserId: userId,
+          toggledAt: updated.updatedAt.toISOString(),
+        },
+      }).catch(() => { /* non-fatal — notification is best-effort */ });
+    }
+
     ok(res, updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /internal/platform/audit?limit=100 ─────────────────────────────────
+// Phase 22 — append-only audit of every platform kill switch toggle.
+// Optional ?agentType= filter to scope to one agent's history.
+router.get("/audit", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.max(1, Math.min(500, Number(req.query["limit"]) || 100));
+    const agentType = typeof req.query["agentType"] === "string" ? req.query["agentType"] : undefined;
+
+    const rows = await prisma.platformKillAudit.findMany({
+      where: agentType ? { agentType } : {},
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+    ok(res, { audit: rows });
   } catch (err) {
     next(err);
   }

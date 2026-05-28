@@ -169,6 +169,15 @@ exports.Prisma.PlatformAgentKillSwitchScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PlatformKillAuditScalarFieldEnum = {
+  id: 'id',
+  agentType: 'agentType',
+  disabled: 'disabled',
+  reason: 'reason',
+  actorUserId: 'actorUserId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.PromptOverrideScalarFieldEnum = {
   id: 'id',
   agentType: 'agentType',
@@ -214,6 +223,7 @@ exports.Prisma.ModelName = {
   AgentRunCost: 'AgentRunCost',
   FeatureFlag: 'FeatureFlag',
   PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
+  PlatformKillAudit: 'PlatformKillAudit',
   PromptOverride: 'PromptOverride'
 };
 
