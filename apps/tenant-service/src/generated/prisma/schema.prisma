@@ -62,6 +62,18 @@ model Tenant {
   // tenants from setting < legal minimum.
   dataRetentionDays Int @default(730)
 
+  // Phase 29 — first-run onboarding wizard state.
+  //   onboardingSteps     { branding: ISO, team: ISO, requisition: ISO,
+  //                         rounds: ISO, share: ISO } — completion timestamps
+  //   onboardingDismissedAt set when user clicks "skip / maybe later"
+  //   onboardingCompletedAt set when all 5 steps done
+  // Wizard shows on dashboard load when both …DismissedAt and …CompletedAt
+  // are null. Each step writes its own timestamp so we can resume partial
+  // progress if a user closes the browser mid-wizard.
+  onboardingSteps       Json      @default("{}")
+  onboardingDismissedAt DateTime?
+  onboardingCompletedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

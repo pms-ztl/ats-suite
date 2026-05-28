@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2 } from "lucide-react";
+import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +99,8 @@ async function saveSettings(section: string, payload: Record<string, unknown>): 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
+  // Phase 29 — restart-onboarding modal opener
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   // Profile
   const [profile, setProfile] = useState<ProfileSettings>({
@@ -381,7 +384,27 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+        <button onClick={() => setOnboardingOpen(true)} className="block text-left">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4" /> Restart Onboarding
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Re-open the 5-step setup wizard — useful when walking a new admin through the basics.
+              </p>
+            </CardContent>
+          </Card>
+        </button>
       </div>
+
+      {/* Phase 29 — manually re-openable wizard via Settings. forceOpen ignores
+          the dismissed/completed flags so admins can re-walk the steps. */}
+      {onboardingOpen && (
+        <OnboardingWizard forceOpen onClose={() => setOnboardingOpen(false)} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar nav */}

@@ -11,6 +11,7 @@ import { prisma } from "./lib/prisma.js";
 import tenantsRouter from "./routes/tenants.js";
 import planChangesRouter from "./routes/plan-changes.js";
 import brandingRouter from "./routes/branding.js";
+import onboardingRouter from "./routes/onboarding.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -41,6 +42,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/tenants", tenantsRouter);
   app.use("/internal/plan-changes", planChangesRouter);
   app.use("/internal", brandingRouter);
+  app.use("/internal/onboarding", onboardingRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

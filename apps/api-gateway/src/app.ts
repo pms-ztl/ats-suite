@@ -167,6 +167,39 @@ export function createApp(logger: Logger): Express {
     })
   );
 
+  // Phase 29 — wrap POST /api/users/invite to inject tenantId + invitedByUserId
+  // from the JWT before forwarding. Keeps the frontend body lean (no leaking
+  // of tenant ids into client payloads) and matches the pattern used for
+  // /api/tenants/plan-change-request below. All other /api/users paths
+  // (GET list, GET :id, PATCH, DELETE) keep using the plain forwarder.
+  app.post(
+    "/api/users/invite",
+    gatewayAuth(),
+    express.json({ limit: "1mb" }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const { callService } = await import("./lib/service-client.js");
+        const result = await callService("identity", {
+          method: "POST",
+          path: "/internal/users/invite",
+          body: {
+            ...req.body,
+            tenantId: req.user.tenantId,
+            invitedByUserId: req.user.id,
+          },
+          headers: {
+            "X-User-Id": req.user.id,
+            "X-Tenant-Id": req.user.tenantId,
+            "X-User-Role": req.user.role,
+          },
+        });
+        res.status(201).json({ success: true, data: result });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
   app.use("/api/users", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users"));
   app.use("/api/billing", gatewayAuth(), forwardHeaders(billingUrl, "/internal/billing"));
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
@@ -288,6 +321,12 @@ export function createApp(logger: Logger): Express {
   // itself reads X-Tenant-Id from the forwarded headers).
   app.use("/api/branding", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/branding"));
   app.use("/api/retention", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/retention"));
+
+  // Phase 29 — first-run onboarding wizard state.
+  // Dashboard hits GET on mount to decide whether to pop the wizard; admin
+  // posts steps/dismiss/reset as the user progresses. requireTenantAdmin is
+  // enforced inside the route handlers themselves for the mutating endpoints.
+  app.use("/api/onboarding", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/onboarding"));
 
   // Public branding endpoint — no auth, used by the candidate-portal to
   // whitelabel /jobs and /jobs/:id/apply. Restrictive cache so updates
