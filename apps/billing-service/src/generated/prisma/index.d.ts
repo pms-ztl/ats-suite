@@ -44,6 +44,16 @@ export type PlatformAgentKillSwitch = $Result.DefaultSelection<Prisma.$PlatformA
  */
 export type PlatformKillAudit = $Result.DefaultSelection<Prisma.$PlatformKillAuditPayload>
 /**
+ * Model StripeSubscription
+ * 
+ */
+export type StripeSubscription = $Result.DefaultSelection<Prisma.$StripeSubscriptionPayload>
+/**
+ * Model StripeWebhookEvent
+ * 
+ */
+export type StripeWebhookEvent = $Result.DefaultSelection<Prisma.$StripeWebhookEventPayload>
+/**
  * Model PromptOverride
  * 
  */
@@ -226,6 +236,26 @@ export class PrismaClient<
     * ```
     */
   get platformKillAudit(): Prisma.PlatformKillAuditDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stripeSubscription`: Exposes CRUD operations for the **StripeSubscription** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StripeSubscriptions
+    * const stripeSubscriptions = await prisma.stripeSubscription.findMany()
+    * ```
+    */
+  get stripeSubscription(): Prisma.StripeSubscriptionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stripeWebhookEvent`: Exposes CRUD operations for the **StripeWebhookEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StripeWebhookEvents
+    * const stripeWebhookEvents = await prisma.stripeWebhookEvent.findMany()
+    * ```
+    */
+  get stripeWebhookEvent(): Prisma.StripeWebhookEventDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.promptOverride`: Exposes CRUD operations for the **PromptOverride** model.
@@ -683,6 +713,8 @@ export namespace Prisma {
     FeatureFlag: 'FeatureFlag',
     PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
     PlatformKillAudit: 'PlatformKillAudit',
+    StripeSubscription: 'StripeSubscription',
+    StripeWebhookEvent: 'StripeWebhookEvent',
     PromptOverride: 'PromptOverride'
   };
 
@@ -702,7 +734,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "platformKillAudit" | "promptOverride"
+      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "platformKillAudit" | "stripeSubscription" | "stripeWebhookEvent" | "promptOverride"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1150,6 +1182,154 @@ export namespace Prisma {
           }
         }
       }
+      StripeSubscription: {
+        payload: Prisma.$StripeSubscriptionPayload<ExtArgs>
+        fields: Prisma.StripeSubscriptionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StripeSubscriptionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StripeSubscriptionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          findFirst: {
+            args: Prisma.StripeSubscriptionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StripeSubscriptionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          findMany: {
+            args: Prisma.StripeSubscriptionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>[]
+          }
+          create: {
+            args: Prisma.StripeSubscriptionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          createMany: {
+            args: Prisma.StripeSubscriptionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StripeSubscriptionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>[]
+          }
+          delete: {
+            args: Prisma.StripeSubscriptionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          update: {
+            args: Prisma.StripeSubscriptionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          deleteMany: {
+            args: Prisma.StripeSubscriptionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StripeSubscriptionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StripeSubscriptionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>[]
+          }
+          upsert: {
+            args: Prisma.StripeSubscriptionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeSubscriptionPayload>
+          }
+          aggregate: {
+            args: Prisma.StripeSubscriptionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStripeSubscription>
+          }
+          groupBy: {
+            args: Prisma.StripeSubscriptionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StripeSubscriptionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StripeSubscriptionCountArgs<ExtArgs>
+            result: $Utils.Optional<StripeSubscriptionCountAggregateOutputType> | number
+          }
+        }
+      }
+      StripeWebhookEvent: {
+        payload: Prisma.$StripeWebhookEventPayload<ExtArgs>
+        fields: Prisma.StripeWebhookEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StripeWebhookEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StripeWebhookEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          findFirst: {
+            args: Prisma.StripeWebhookEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StripeWebhookEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          findMany: {
+            args: Prisma.StripeWebhookEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>[]
+          }
+          create: {
+            args: Prisma.StripeWebhookEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          createMany: {
+            args: Prisma.StripeWebhookEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StripeWebhookEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>[]
+          }
+          delete: {
+            args: Prisma.StripeWebhookEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          update: {
+            args: Prisma.StripeWebhookEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.StripeWebhookEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StripeWebhookEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StripeWebhookEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.StripeWebhookEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripeWebhookEventPayload>
+          }
+          aggregate: {
+            args: Prisma.StripeWebhookEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStripeWebhookEvent>
+          }
+          groupBy: {
+            args: Prisma.StripeWebhookEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StripeWebhookEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StripeWebhookEventCountArgs<ExtArgs>
+            result: $Utils.Optional<StripeWebhookEventCountAggregateOutputType> | number
+          }
+        }
+      }
       PromptOverride: {
         payload: Prisma.$PromptOverridePayload<ExtArgs>
         fields: Prisma.PromptOverrideFieldRefs
@@ -1326,6 +1506,8 @@ export namespace Prisma {
     featureFlag?: FeatureFlagOmit
     platformAgentKillSwitch?: PlatformAgentKillSwitchOmit
     platformKillAudit?: PlatformKillAuditOmit
+    stripeSubscription?: StripeSubscriptionOmit
+    stripeWebhookEvent?: StripeWebhookEventOmit
     promptOverride?: PromptOverrideOmit
   }
 
@@ -7541,6 +7723,2109 @@ export namespace Prisma {
 
 
   /**
+   * Model StripeSubscription
+   */
+
+  export type AggregateStripeSubscription = {
+    _count: StripeSubscriptionCountAggregateOutputType | null
+    _min: StripeSubscriptionMinAggregateOutputType | null
+    _max: StripeSubscriptionMaxAggregateOutputType | null
+  }
+
+  export type StripeSubscriptionMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    plan: string | null
+    status: string | null
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean | null
+    stripePriceId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StripeSubscriptionMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    stripeCustomerId: string | null
+    stripeSubscriptionId: string | null
+    plan: string | null
+    status: string | null
+    currentPeriodEnd: Date | null
+    cancelAtPeriodEnd: boolean | null
+    stripePriceId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StripeSubscriptionCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    stripeCustomerId: number
+    stripeSubscriptionId: number
+    plan: number
+    status: number
+    currentPeriodEnd: number
+    cancelAtPeriodEnd: number
+    stripePriceId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type StripeSubscriptionMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    plan?: true
+    status?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    stripePriceId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StripeSubscriptionMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    plan?: true
+    status?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    stripePriceId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StripeSubscriptionCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    stripeCustomerId?: true
+    stripeSubscriptionId?: true
+    plan?: true
+    status?: true
+    currentPeriodEnd?: true
+    cancelAtPeriodEnd?: true
+    stripePriceId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type StripeSubscriptionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripeSubscription to aggregate.
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeSubscriptions to fetch.
+     */
+    orderBy?: StripeSubscriptionOrderByWithRelationInput | StripeSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StripeSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StripeSubscriptions
+    **/
+    _count?: true | StripeSubscriptionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StripeSubscriptionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StripeSubscriptionMaxAggregateInputType
+  }
+
+  export type GetStripeSubscriptionAggregateType<T extends StripeSubscriptionAggregateArgs> = {
+        [P in keyof T & keyof AggregateStripeSubscription]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStripeSubscription[P]>
+      : GetScalarType<T[P], AggregateStripeSubscription[P]>
+  }
+
+
+
+
+  export type StripeSubscriptionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StripeSubscriptionWhereInput
+    orderBy?: StripeSubscriptionOrderByWithAggregationInput | StripeSubscriptionOrderByWithAggregationInput[]
+    by: StripeSubscriptionScalarFieldEnum[] | StripeSubscriptionScalarFieldEnum
+    having?: StripeSubscriptionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StripeSubscriptionCountAggregateInputType | true
+    _min?: StripeSubscriptionMinAggregateInputType
+    _max?: StripeSubscriptionMaxAggregateInputType
+  }
+
+  export type StripeSubscriptionGroupByOutputType = {
+    id: string
+    tenantId: string
+    stripeCustomerId: string
+    stripeSubscriptionId: string
+    plan: string
+    status: string
+    currentPeriodEnd: Date
+    cancelAtPeriodEnd: boolean
+    stripePriceId: string
+    createdAt: Date
+    updatedAt: Date
+    _count: StripeSubscriptionCountAggregateOutputType | null
+    _min: StripeSubscriptionMinAggregateOutputType | null
+    _max: StripeSubscriptionMaxAggregateOutputType | null
+  }
+
+  type GetStripeSubscriptionGroupByPayload<T extends StripeSubscriptionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StripeSubscriptionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StripeSubscriptionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StripeSubscriptionGroupByOutputType[P]>
+            : GetScalarType<T[P], StripeSubscriptionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StripeSubscriptionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    plan?: boolean
+    status?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    stripePriceId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["stripeSubscription"]>
+
+  export type StripeSubscriptionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    plan?: boolean
+    status?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    stripePriceId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["stripeSubscription"]>
+
+  export type StripeSubscriptionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    plan?: boolean
+    status?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    stripePriceId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["stripeSubscription"]>
+
+  export type StripeSubscriptionSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    stripeCustomerId?: boolean
+    stripeSubscriptionId?: boolean
+    plan?: boolean
+    status?: boolean
+    currentPeriodEnd?: boolean
+    cancelAtPeriodEnd?: boolean
+    stripePriceId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type StripeSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "stripeCustomerId" | "stripeSubscriptionId" | "plan" | "status" | "currentPeriodEnd" | "cancelAtPeriodEnd" | "stripePriceId" | "createdAt" | "updatedAt", ExtArgs["result"]["stripeSubscription"]>
+
+  export type $StripeSubscriptionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StripeSubscription"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      stripeCustomerId: string
+      stripeSubscriptionId: string
+      plan: string
+      status: string
+      currentPeriodEnd: Date
+      cancelAtPeriodEnd: boolean
+      stripePriceId: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["stripeSubscription"]>
+    composites: {}
+  }
+
+  type StripeSubscriptionGetPayload<S extends boolean | null | undefined | StripeSubscriptionDefaultArgs> = $Result.GetResult<Prisma.$StripeSubscriptionPayload, S>
+
+  type StripeSubscriptionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StripeSubscriptionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StripeSubscriptionCountAggregateInputType | true
+    }
+
+  export interface StripeSubscriptionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StripeSubscription'], meta: { name: 'StripeSubscription' } }
+    /**
+     * Find zero or one StripeSubscription that matches the filter.
+     * @param {StripeSubscriptionFindUniqueArgs} args - Arguments to find a StripeSubscription
+     * @example
+     * // Get one StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StripeSubscriptionFindUniqueArgs>(args: SelectSubset<T, StripeSubscriptionFindUniqueArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StripeSubscription that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StripeSubscriptionFindUniqueOrThrowArgs} args - Arguments to find a StripeSubscription
+     * @example
+     * // Get one StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StripeSubscriptionFindUniqueOrThrowArgs>(args: SelectSubset<T, StripeSubscriptionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripeSubscription that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionFindFirstArgs} args - Arguments to find a StripeSubscription
+     * @example
+     * // Get one StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StripeSubscriptionFindFirstArgs>(args?: SelectSubset<T, StripeSubscriptionFindFirstArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripeSubscription that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionFindFirstOrThrowArgs} args - Arguments to find a StripeSubscription
+     * @example
+     * // Get one StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StripeSubscriptionFindFirstOrThrowArgs>(args?: SelectSubset<T, StripeSubscriptionFindFirstOrThrowArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StripeSubscriptions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StripeSubscriptions
+     * const stripeSubscriptions = await prisma.stripeSubscription.findMany()
+     * 
+     * // Get first 10 StripeSubscriptions
+     * const stripeSubscriptions = await prisma.stripeSubscription.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const stripeSubscriptionWithIdOnly = await prisma.stripeSubscription.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StripeSubscriptionFindManyArgs>(args?: SelectSubset<T, StripeSubscriptionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StripeSubscription.
+     * @param {StripeSubscriptionCreateArgs} args - Arguments to create a StripeSubscription.
+     * @example
+     * // Create one StripeSubscription
+     * const StripeSubscription = await prisma.stripeSubscription.create({
+     *   data: {
+     *     // ... data to create a StripeSubscription
+     *   }
+     * })
+     * 
+     */
+    create<T extends StripeSubscriptionCreateArgs>(args: SelectSubset<T, StripeSubscriptionCreateArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StripeSubscriptions.
+     * @param {StripeSubscriptionCreateManyArgs} args - Arguments to create many StripeSubscriptions.
+     * @example
+     * // Create many StripeSubscriptions
+     * const stripeSubscription = await prisma.stripeSubscription.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StripeSubscriptionCreateManyArgs>(args?: SelectSubset<T, StripeSubscriptionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StripeSubscriptions and returns the data saved in the database.
+     * @param {StripeSubscriptionCreateManyAndReturnArgs} args - Arguments to create many StripeSubscriptions.
+     * @example
+     * // Create many StripeSubscriptions
+     * const stripeSubscription = await prisma.stripeSubscription.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StripeSubscriptions and only return the `id`
+     * const stripeSubscriptionWithIdOnly = await prisma.stripeSubscription.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StripeSubscriptionCreateManyAndReturnArgs>(args?: SelectSubset<T, StripeSubscriptionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StripeSubscription.
+     * @param {StripeSubscriptionDeleteArgs} args - Arguments to delete one StripeSubscription.
+     * @example
+     * // Delete one StripeSubscription
+     * const StripeSubscription = await prisma.stripeSubscription.delete({
+     *   where: {
+     *     // ... filter to delete one StripeSubscription
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StripeSubscriptionDeleteArgs>(args: SelectSubset<T, StripeSubscriptionDeleteArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StripeSubscription.
+     * @param {StripeSubscriptionUpdateArgs} args - Arguments to update one StripeSubscription.
+     * @example
+     * // Update one StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StripeSubscriptionUpdateArgs>(args: SelectSubset<T, StripeSubscriptionUpdateArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StripeSubscriptions.
+     * @param {StripeSubscriptionDeleteManyArgs} args - Arguments to filter StripeSubscriptions to delete.
+     * @example
+     * // Delete a few StripeSubscriptions
+     * const { count } = await prisma.stripeSubscription.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StripeSubscriptionDeleteManyArgs>(args?: SelectSubset<T, StripeSubscriptionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripeSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StripeSubscriptions
+     * const stripeSubscription = await prisma.stripeSubscription.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StripeSubscriptionUpdateManyArgs>(args: SelectSubset<T, StripeSubscriptionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripeSubscriptions and returns the data updated in the database.
+     * @param {StripeSubscriptionUpdateManyAndReturnArgs} args - Arguments to update many StripeSubscriptions.
+     * @example
+     * // Update many StripeSubscriptions
+     * const stripeSubscription = await prisma.stripeSubscription.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StripeSubscriptions and only return the `id`
+     * const stripeSubscriptionWithIdOnly = await prisma.stripeSubscription.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StripeSubscriptionUpdateManyAndReturnArgs>(args: SelectSubset<T, StripeSubscriptionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StripeSubscription.
+     * @param {StripeSubscriptionUpsertArgs} args - Arguments to update or create a StripeSubscription.
+     * @example
+     * // Update or create a StripeSubscription
+     * const stripeSubscription = await prisma.stripeSubscription.upsert({
+     *   create: {
+     *     // ... data to create a StripeSubscription
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StripeSubscription we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StripeSubscriptionUpsertArgs>(args: SelectSubset<T, StripeSubscriptionUpsertArgs<ExtArgs>>): Prisma__StripeSubscriptionClient<$Result.GetResult<Prisma.$StripeSubscriptionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StripeSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionCountArgs} args - Arguments to filter StripeSubscriptions to count.
+     * @example
+     * // Count the number of StripeSubscriptions
+     * const count = await prisma.stripeSubscription.count({
+     *   where: {
+     *     // ... the filter for the StripeSubscriptions we want to count
+     *   }
+     * })
+    **/
+    count<T extends StripeSubscriptionCountArgs>(
+      args?: Subset<T, StripeSubscriptionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StripeSubscriptionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StripeSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StripeSubscriptionAggregateArgs>(args: Subset<T, StripeSubscriptionAggregateArgs>): Prisma.PrismaPromise<GetStripeSubscriptionAggregateType<T>>
+
+    /**
+     * Group by StripeSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeSubscriptionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StripeSubscriptionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StripeSubscriptionGroupByArgs['orderBy'] }
+        : { orderBy?: StripeSubscriptionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StripeSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStripeSubscriptionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StripeSubscription model
+   */
+  readonly fields: StripeSubscriptionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StripeSubscription.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StripeSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StripeSubscription model
+   */
+  interface StripeSubscriptionFieldRefs {
+    readonly id: FieldRef<"StripeSubscription", 'String'>
+    readonly tenantId: FieldRef<"StripeSubscription", 'String'>
+    readonly stripeCustomerId: FieldRef<"StripeSubscription", 'String'>
+    readonly stripeSubscriptionId: FieldRef<"StripeSubscription", 'String'>
+    readonly plan: FieldRef<"StripeSubscription", 'String'>
+    readonly status: FieldRef<"StripeSubscription", 'String'>
+    readonly currentPeriodEnd: FieldRef<"StripeSubscription", 'DateTime'>
+    readonly cancelAtPeriodEnd: FieldRef<"StripeSubscription", 'Boolean'>
+    readonly stripePriceId: FieldRef<"StripeSubscription", 'String'>
+    readonly createdAt: FieldRef<"StripeSubscription", 'DateTime'>
+    readonly updatedAt: FieldRef<"StripeSubscription", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StripeSubscription findUnique
+   */
+  export type StripeSubscriptionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeSubscription to fetch.
+     */
+    where: StripeSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * StripeSubscription findUniqueOrThrow
+   */
+  export type StripeSubscriptionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeSubscription to fetch.
+     */
+    where: StripeSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * StripeSubscription findFirst
+   */
+  export type StripeSubscriptionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeSubscription to fetch.
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeSubscriptions to fetch.
+     */
+    orderBy?: StripeSubscriptionOrderByWithRelationInput | StripeSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripeSubscriptions.
+     */
+    cursor?: StripeSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripeSubscriptions.
+     */
+    distinct?: StripeSubscriptionScalarFieldEnum | StripeSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * StripeSubscription findFirstOrThrow
+   */
+  export type StripeSubscriptionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeSubscription to fetch.
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeSubscriptions to fetch.
+     */
+    orderBy?: StripeSubscriptionOrderByWithRelationInput | StripeSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripeSubscriptions.
+     */
+    cursor?: StripeSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripeSubscriptions.
+     */
+    distinct?: StripeSubscriptionScalarFieldEnum | StripeSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * StripeSubscription findMany
+   */
+  export type StripeSubscriptionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeSubscriptions to fetch.
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeSubscriptions to fetch.
+     */
+    orderBy?: StripeSubscriptionOrderByWithRelationInput | StripeSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StripeSubscriptions.
+     */
+    cursor?: StripeSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeSubscriptions.
+     */
+    skip?: number
+    distinct?: StripeSubscriptionScalarFieldEnum | StripeSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * StripeSubscription create
+   */
+  export type StripeSubscriptionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * The data needed to create a StripeSubscription.
+     */
+    data: XOR<StripeSubscriptionCreateInput, StripeSubscriptionUncheckedCreateInput>
+  }
+
+  /**
+   * StripeSubscription createMany
+   */
+  export type StripeSubscriptionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StripeSubscriptions.
+     */
+    data: StripeSubscriptionCreateManyInput | StripeSubscriptionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StripeSubscription createManyAndReturn
+   */
+  export type StripeSubscriptionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * The data used to create many StripeSubscriptions.
+     */
+    data: StripeSubscriptionCreateManyInput | StripeSubscriptionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StripeSubscription update
+   */
+  export type StripeSubscriptionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * The data needed to update a StripeSubscription.
+     */
+    data: XOR<StripeSubscriptionUpdateInput, StripeSubscriptionUncheckedUpdateInput>
+    /**
+     * Choose, which StripeSubscription to update.
+     */
+    where: StripeSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * StripeSubscription updateMany
+   */
+  export type StripeSubscriptionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StripeSubscriptions.
+     */
+    data: XOR<StripeSubscriptionUpdateManyMutationInput, StripeSubscriptionUncheckedUpdateManyInput>
+    /**
+     * Filter which StripeSubscriptions to update
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * Limit how many StripeSubscriptions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeSubscription updateManyAndReturn
+   */
+  export type StripeSubscriptionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * The data used to update StripeSubscriptions.
+     */
+    data: XOR<StripeSubscriptionUpdateManyMutationInput, StripeSubscriptionUncheckedUpdateManyInput>
+    /**
+     * Filter which StripeSubscriptions to update
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * Limit how many StripeSubscriptions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeSubscription upsert
+   */
+  export type StripeSubscriptionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * The filter to search for the StripeSubscription to update in case it exists.
+     */
+    where: StripeSubscriptionWhereUniqueInput
+    /**
+     * In case the StripeSubscription found by the `where` argument doesn't exist, create a new StripeSubscription with this data.
+     */
+    create: XOR<StripeSubscriptionCreateInput, StripeSubscriptionUncheckedCreateInput>
+    /**
+     * In case the StripeSubscription was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StripeSubscriptionUpdateInput, StripeSubscriptionUncheckedUpdateInput>
+  }
+
+  /**
+   * StripeSubscription delete
+   */
+  export type StripeSubscriptionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+    /**
+     * Filter which StripeSubscription to delete.
+     */
+    where: StripeSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * StripeSubscription deleteMany
+   */
+  export type StripeSubscriptionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripeSubscriptions to delete
+     */
+    where?: StripeSubscriptionWhereInput
+    /**
+     * Limit how many StripeSubscriptions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeSubscription without action
+   */
+  export type StripeSubscriptionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeSubscription
+     */
+    select?: StripeSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeSubscription
+     */
+    omit?: StripeSubscriptionOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model StripeWebhookEvent
+   */
+
+  export type AggregateStripeWebhookEvent = {
+    _count: StripeWebhookEventCountAggregateOutputType | null
+    _min: StripeWebhookEventMinAggregateOutputType | null
+    _max: StripeWebhookEventMaxAggregateOutputType | null
+  }
+
+  export type StripeWebhookEventMinAggregateOutputType = {
+    id: string | null
+    type: string | null
+    tenantId: string | null
+    livemode: boolean | null
+    processedAt: Date | null
+    processingError: string | null
+    createdAt: Date | null
+  }
+
+  export type StripeWebhookEventMaxAggregateOutputType = {
+    id: string | null
+    type: string | null
+    tenantId: string | null
+    livemode: boolean | null
+    processedAt: Date | null
+    processingError: string | null
+    createdAt: Date | null
+  }
+
+  export type StripeWebhookEventCountAggregateOutputType = {
+    id: number
+    type: number
+    tenantId: number
+    livemode: number
+    payload: number
+    processedAt: number
+    processingError: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type StripeWebhookEventMinAggregateInputType = {
+    id?: true
+    type?: true
+    tenantId?: true
+    livemode?: true
+    processedAt?: true
+    processingError?: true
+    createdAt?: true
+  }
+
+  export type StripeWebhookEventMaxAggregateInputType = {
+    id?: true
+    type?: true
+    tenantId?: true
+    livemode?: true
+    processedAt?: true
+    processingError?: true
+    createdAt?: true
+  }
+
+  export type StripeWebhookEventCountAggregateInputType = {
+    id?: true
+    type?: true
+    tenantId?: true
+    livemode?: true
+    payload?: true
+    processedAt?: true
+    processingError?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type StripeWebhookEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripeWebhookEvent to aggregate.
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeWebhookEvents to fetch.
+     */
+    orderBy?: StripeWebhookEventOrderByWithRelationInput | StripeWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StripeWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StripeWebhookEvents
+    **/
+    _count?: true | StripeWebhookEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StripeWebhookEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StripeWebhookEventMaxAggregateInputType
+  }
+
+  export type GetStripeWebhookEventAggregateType<T extends StripeWebhookEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateStripeWebhookEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStripeWebhookEvent[P]>
+      : GetScalarType<T[P], AggregateStripeWebhookEvent[P]>
+  }
+
+
+
+
+  export type StripeWebhookEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StripeWebhookEventWhereInput
+    orderBy?: StripeWebhookEventOrderByWithAggregationInput | StripeWebhookEventOrderByWithAggregationInput[]
+    by: StripeWebhookEventScalarFieldEnum[] | StripeWebhookEventScalarFieldEnum
+    having?: StripeWebhookEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StripeWebhookEventCountAggregateInputType | true
+    _min?: StripeWebhookEventMinAggregateInputType
+    _max?: StripeWebhookEventMaxAggregateInputType
+  }
+
+  export type StripeWebhookEventGroupByOutputType = {
+    id: string
+    type: string
+    tenantId: string | null
+    livemode: boolean
+    payload: JsonValue
+    processedAt: Date | null
+    processingError: string | null
+    createdAt: Date
+    _count: StripeWebhookEventCountAggregateOutputType | null
+    _min: StripeWebhookEventMinAggregateOutputType | null
+    _max: StripeWebhookEventMaxAggregateOutputType | null
+  }
+
+  type GetStripeWebhookEventGroupByPayload<T extends StripeWebhookEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StripeWebhookEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StripeWebhookEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StripeWebhookEventGroupByOutputType[P]>
+            : GetScalarType<T[P], StripeWebhookEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StripeWebhookEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    tenantId?: boolean
+    livemode?: boolean
+    payload?: boolean
+    processedAt?: boolean
+    processingError?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["stripeWebhookEvent"]>
+
+  export type StripeWebhookEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    tenantId?: boolean
+    livemode?: boolean
+    payload?: boolean
+    processedAt?: boolean
+    processingError?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["stripeWebhookEvent"]>
+
+  export type StripeWebhookEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    tenantId?: boolean
+    livemode?: boolean
+    payload?: boolean
+    processedAt?: boolean
+    processingError?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["stripeWebhookEvent"]>
+
+  export type StripeWebhookEventSelectScalar = {
+    id?: boolean
+    type?: boolean
+    tenantId?: boolean
+    livemode?: boolean
+    payload?: boolean
+    processedAt?: boolean
+    processingError?: boolean
+    createdAt?: boolean
+  }
+
+  export type StripeWebhookEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "tenantId" | "livemode" | "payload" | "processedAt" | "processingError" | "createdAt", ExtArgs["result"]["stripeWebhookEvent"]>
+
+  export type $StripeWebhookEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StripeWebhookEvent"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      type: string
+      tenantId: string | null
+      livemode: boolean
+      payload: Prisma.JsonValue
+      processedAt: Date | null
+      processingError: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["stripeWebhookEvent"]>
+    composites: {}
+  }
+
+  type StripeWebhookEventGetPayload<S extends boolean | null | undefined | StripeWebhookEventDefaultArgs> = $Result.GetResult<Prisma.$StripeWebhookEventPayload, S>
+
+  type StripeWebhookEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StripeWebhookEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StripeWebhookEventCountAggregateInputType | true
+    }
+
+  export interface StripeWebhookEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StripeWebhookEvent'], meta: { name: 'StripeWebhookEvent' } }
+    /**
+     * Find zero or one StripeWebhookEvent that matches the filter.
+     * @param {StripeWebhookEventFindUniqueArgs} args - Arguments to find a StripeWebhookEvent
+     * @example
+     * // Get one StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StripeWebhookEventFindUniqueArgs>(args: SelectSubset<T, StripeWebhookEventFindUniqueArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StripeWebhookEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StripeWebhookEventFindUniqueOrThrowArgs} args - Arguments to find a StripeWebhookEvent
+     * @example
+     * // Get one StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StripeWebhookEventFindUniqueOrThrowArgs>(args: SelectSubset<T, StripeWebhookEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripeWebhookEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventFindFirstArgs} args - Arguments to find a StripeWebhookEvent
+     * @example
+     * // Get one StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StripeWebhookEventFindFirstArgs>(args?: SelectSubset<T, StripeWebhookEventFindFirstArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripeWebhookEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventFindFirstOrThrowArgs} args - Arguments to find a StripeWebhookEvent
+     * @example
+     * // Get one StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StripeWebhookEventFindFirstOrThrowArgs>(args?: SelectSubset<T, StripeWebhookEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StripeWebhookEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StripeWebhookEvents
+     * const stripeWebhookEvents = await prisma.stripeWebhookEvent.findMany()
+     * 
+     * // Get first 10 StripeWebhookEvents
+     * const stripeWebhookEvents = await prisma.stripeWebhookEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const stripeWebhookEventWithIdOnly = await prisma.stripeWebhookEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StripeWebhookEventFindManyArgs>(args?: SelectSubset<T, StripeWebhookEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StripeWebhookEvent.
+     * @param {StripeWebhookEventCreateArgs} args - Arguments to create a StripeWebhookEvent.
+     * @example
+     * // Create one StripeWebhookEvent
+     * const StripeWebhookEvent = await prisma.stripeWebhookEvent.create({
+     *   data: {
+     *     // ... data to create a StripeWebhookEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends StripeWebhookEventCreateArgs>(args: SelectSubset<T, StripeWebhookEventCreateArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StripeWebhookEvents.
+     * @param {StripeWebhookEventCreateManyArgs} args - Arguments to create many StripeWebhookEvents.
+     * @example
+     * // Create many StripeWebhookEvents
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StripeWebhookEventCreateManyArgs>(args?: SelectSubset<T, StripeWebhookEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StripeWebhookEvents and returns the data saved in the database.
+     * @param {StripeWebhookEventCreateManyAndReturnArgs} args - Arguments to create many StripeWebhookEvents.
+     * @example
+     * // Create many StripeWebhookEvents
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StripeWebhookEvents and only return the `id`
+     * const stripeWebhookEventWithIdOnly = await prisma.stripeWebhookEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StripeWebhookEventCreateManyAndReturnArgs>(args?: SelectSubset<T, StripeWebhookEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StripeWebhookEvent.
+     * @param {StripeWebhookEventDeleteArgs} args - Arguments to delete one StripeWebhookEvent.
+     * @example
+     * // Delete one StripeWebhookEvent
+     * const StripeWebhookEvent = await prisma.stripeWebhookEvent.delete({
+     *   where: {
+     *     // ... filter to delete one StripeWebhookEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StripeWebhookEventDeleteArgs>(args: SelectSubset<T, StripeWebhookEventDeleteArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StripeWebhookEvent.
+     * @param {StripeWebhookEventUpdateArgs} args - Arguments to update one StripeWebhookEvent.
+     * @example
+     * // Update one StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StripeWebhookEventUpdateArgs>(args: SelectSubset<T, StripeWebhookEventUpdateArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StripeWebhookEvents.
+     * @param {StripeWebhookEventDeleteManyArgs} args - Arguments to filter StripeWebhookEvents to delete.
+     * @example
+     * // Delete a few StripeWebhookEvents
+     * const { count } = await prisma.stripeWebhookEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StripeWebhookEventDeleteManyArgs>(args?: SelectSubset<T, StripeWebhookEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripeWebhookEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StripeWebhookEvents
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StripeWebhookEventUpdateManyArgs>(args: SelectSubset<T, StripeWebhookEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripeWebhookEvents and returns the data updated in the database.
+     * @param {StripeWebhookEventUpdateManyAndReturnArgs} args - Arguments to update many StripeWebhookEvents.
+     * @example
+     * // Update many StripeWebhookEvents
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StripeWebhookEvents and only return the `id`
+     * const stripeWebhookEventWithIdOnly = await prisma.stripeWebhookEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StripeWebhookEventUpdateManyAndReturnArgs>(args: SelectSubset<T, StripeWebhookEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StripeWebhookEvent.
+     * @param {StripeWebhookEventUpsertArgs} args - Arguments to update or create a StripeWebhookEvent.
+     * @example
+     * // Update or create a StripeWebhookEvent
+     * const stripeWebhookEvent = await prisma.stripeWebhookEvent.upsert({
+     *   create: {
+     *     // ... data to create a StripeWebhookEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StripeWebhookEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StripeWebhookEventUpsertArgs>(args: SelectSubset<T, StripeWebhookEventUpsertArgs<ExtArgs>>): Prisma__StripeWebhookEventClient<$Result.GetResult<Prisma.$StripeWebhookEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StripeWebhookEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventCountArgs} args - Arguments to filter StripeWebhookEvents to count.
+     * @example
+     * // Count the number of StripeWebhookEvents
+     * const count = await prisma.stripeWebhookEvent.count({
+     *   where: {
+     *     // ... the filter for the StripeWebhookEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends StripeWebhookEventCountArgs>(
+      args?: Subset<T, StripeWebhookEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StripeWebhookEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StripeWebhookEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StripeWebhookEventAggregateArgs>(args: Subset<T, StripeWebhookEventAggregateArgs>): Prisma.PrismaPromise<GetStripeWebhookEventAggregateType<T>>
+
+    /**
+     * Group by StripeWebhookEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripeWebhookEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StripeWebhookEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StripeWebhookEventGroupByArgs['orderBy'] }
+        : { orderBy?: StripeWebhookEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StripeWebhookEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStripeWebhookEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StripeWebhookEvent model
+   */
+  readonly fields: StripeWebhookEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StripeWebhookEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StripeWebhookEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StripeWebhookEvent model
+   */
+  interface StripeWebhookEventFieldRefs {
+    readonly id: FieldRef<"StripeWebhookEvent", 'String'>
+    readonly type: FieldRef<"StripeWebhookEvent", 'String'>
+    readonly tenantId: FieldRef<"StripeWebhookEvent", 'String'>
+    readonly livemode: FieldRef<"StripeWebhookEvent", 'Boolean'>
+    readonly payload: FieldRef<"StripeWebhookEvent", 'Json'>
+    readonly processedAt: FieldRef<"StripeWebhookEvent", 'DateTime'>
+    readonly processingError: FieldRef<"StripeWebhookEvent", 'String'>
+    readonly createdAt: FieldRef<"StripeWebhookEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StripeWebhookEvent findUnique
+   */
+  export type StripeWebhookEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeWebhookEvent to fetch.
+     */
+    where: StripeWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * StripeWebhookEvent findUniqueOrThrow
+   */
+  export type StripeWebhookEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeWebhookEvent to fetch.
+     */
+    where: StripeWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * StripeWebhookEvent findFirst
+   */
+  export type StripeWebhookEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeWebhookEvent to fetch.
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeWebhookEvents to fetch.
+     */
+    orderBy?: StripeWebhookEventOrderByWithRelationInput | StripeWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripeWebhookEvents.
+     */
+    cursor?: StripeWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripeWebhookEvents.
+     */
+    distinct?: StripeWebhookEventScalarFieldEnum | StripeWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * StripeWebhookEvent findFirstOrThrow
+   */
+  export type StripeWebhookEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeWebhookEvent to fetch.
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeWebhookEvents to fetch.
+     */
+    orderBy?: StripeWebhookEventOrderByWithRelationInput | StripeWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripeWebhookEvents.
+     */
+    cursor?: StripeWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeWebhookEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripeWebhookEvents.
+     */
+    distinct?: StripeWebhookEventScalarFieldEnum | StripeWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * StripeWebhookEvent findMany
+   */
+  export type StripeWebhookEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter, which StripeWebhookEvents to fetch.
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripeWebhookEvents to fetch.
+     */
+    orderBy?: StripeWebhookEventOrderByWithRelationInput | StripeWebhookEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StripeWebhookEvents.
+     */
+    cursor?: StripeWebhookEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripeWebhookEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripeWebhookEvents.
+     */
+    skip?: number
+    distinct?: StripeWebhookEventScalarFieldEnum | StripeWebhookEventScalarFieldEnum[]
+  }
+
+  /**
+   * StripeWebhookEvent create
+   */
+  export type StripeWebhookEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data needed to create a StripeWebhookEvent.
+     */
+    data: XOR<StripeWebhookEventCreateInput, StripeWebhookEventUncheckedCreateInput>
+  }
+
+  /**
+   * StripeWebhookEvent createMany
+   */
+  export type StripeWebhookEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StripeWebhookEvents.
+     */
+    data: StripeWebhookEventCreateManyInput | StripeWebhookEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StripeWebhookEvent createManyAndReturn
+   */
+  export type StripeWebhookEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many StripeWebhookEvents.
+     */
+    data: StripeWebhookEventCreateManyInput | StripeWebhookEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StripeWebhookEvent update
+   */
+  export type StripeWebhookEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data needed to update a StripeWebhookEvent.
+     */
+    data: XOR<StripeWebhookEventUpdateInput, StripeWebhookEventUncheckedUpdateInput>
+    /**
+     * Choose, which StripeWebhookEvent to update.
+     */
+    where: StripeWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * StripeWebhookEvent updateMany
+   */
+  export type StripeWebhookEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StripeWebhookEvents.
+     */
+    data: XOR<StripeWebhookEventUpdateManyMutationInput, StripeWebhookEventUncheckedUpdateManyInput>
+    /**
+     * Filter which StripeWebhookEvents to update
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * Limit how many StripeWebhookEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeWebhookEvent updateManyAndReturn
+   */
+  export type StripeWebhookEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * The data used to update StripeWebhookEvents.
+     */
+    data: XOR<StripeWebhookEventUpdateManyMutationInput, StripeWebhookEventUncheckedUpdateManyInput>
+    /**
+     * Filter which StripeWebhookEvents to update
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * Limit how many StripeWebhookEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeWebhookEvent upsert
+   */
+  export type StripeWebhookEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * The filter to search for the StripeWebhookEvent to update in case it exists.
+     */
+    where: StripeWebhookEventWhereUniqueInput
+    /**
+     * In case the StripeWebhookEvent found by the `where` argument doesn't exist, create a new StripeWebhookEvent with this data.
+     */
+    create: XOR<StripeWebhookEventCreateInput, StripeWebhookEventUncheckedCreateInput>
+    /**
+     * In case the StripeWebhookEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StripeWebhookEventUpdateInput, StripeWebhookEventUncheckedUpdateInput>
+  }
+
+  /**
+   * StripeWebhookEvent delete
+   */
+  export type StripeWebhookEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+    /**
+     * Filter which StripeWebhookEvent to delete.
+     */
+    where: StripeWebhookEventWhereUniqueInput
+  }
+
+  /**
+   * StripeWebhookEvent deleteMany
+   */
+  export type StripeWebhookEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripeWebhookEvents to delete
+     */
+    where?: StripeWebhookEventWhereInput
+    /**
+     * Limit how many StripeWebhookEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripeWebhookEvent without action
+   */
+  export type StripeWebhookEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripeWebhookEvent
+     */
+    select?: StripeWebhookEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripeWebhookEvent
+     */
+    omit?: StripeWebhookEventOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model PromptOverride
    */
 
@@ -8727,6 +11012,37 @@ export namespace Prisma {
   export type PlatformKillAuditScalarFieldEnum = (typeof PlatformKillAuditScalarFieldEnum)[keyof typeof PlatformKillAuditScalarFieldEnum]
 
 
+  export const StripeSubscriptionScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    stripeCustomerId: 'stripeCustomerId',
+    stripeSubscriptionId: 'stripeSubscriptionId',
+    plan: 'plan',
+    status: 'status',
+    currentPeriodEnd: 'currentPeriodEnd',
+    cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+    stripePriceId: 'stripePriceId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type StripeSubscriptionScalarFieldEnum = (typeof StripeSubscriptionScalarFieldEnum)[keyof typeof StripeSubscriptionScalarFieldEnum]
+
+
+  export const StripeWebhookEventScalarFieldEnum: {
+    id: 'id',
+    type: 'type',
+    tenantId: 'tenantId',
+    livemode: 'livemode',
+    payload: 'payload',
+    processedAt: 'processedAt',
+    processingError: 'processingError',
+    createdAt: 'createdAt'
+  };
+
+  export type StripeWebhookEventScalarFieldEnum = (typeof StripeWebhookEventScalarFieldEnum)[keyof typeof StripeWebhookEventScalarFieldEnum]
+
+
   export const PromptOverrideScalarFieldEnum: {
     id: 'id',
     agentType: 'agentType',
@@ -9243,6 +11559,155 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"PlatformKillAudit"> | Date | string
   }
 
+  export type StripeSubscriptionWhereInput = {
+    AND?: StripeSubscriptionWhereInput | StripeSubscriptionWhereInput[]
+    OR?: StripeSubscriptionWhereInput[]
+    NOT?: StripeSubscriptionWhereInput | StripeSubscriptionWhereInput[]
+    id?: StringFilter<"StripeSubscription"> | string
+    tenantId?: StringFilter<"StripeSubscription"> | string
+    stripeCustomerId?: StringFilter<"StripeSubscription"> | string
+    stripeSubscriptionId?: StringFilter<"StripeSubscription"> | string
+    plan?: StringFilter<"StripeSubscription"> | string
+    status?: StringFilter<"StripeSubscription"> | string
+    currentPeriodEnd?: DateTimeFilter<"StripeSubscription"> | Date | string
+    cancelAtPeriodEnd?: BoolFilter<"StripeSubscription"> | boolean
+    stripePriceId?: StringFilter<"StripeSubscription"> | string
+    createdAt?: DateTimeFilter<"StripeSubscription"> | Date | string
+    updatedAt?: DateTimeFilter<"StripeSubscription"> | Date | string
+  }
+
+  export type StripeSubscriptionOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    plan?: SortOrder
+    status?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    stripePriceId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StripeSubscriptionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId?: string
+    stripeCustomerId?: string
+    stripeSubscriptionId?: string
+    AND?: StripeSubscriptionWhereInput | StripeSubscriptionWhereInput[]
+    OR?: StripeSubscriptionWhereInput[]
+    NOT?: StripeSubscriptionWhereInput | StripeSubscriptionWhereInput[]
+    plan?: StringFilter<"StripeSubscription"> | string
+    status?: StringFilter<"StripeSubscription"> | string
+    currentPeriodEnd?: DateTimeFilter<"StripeSubscription"> | Date | string
+    cancelAtPeriodEnd?: BoolFilter<"StripeSubscription"> | boolean
+    stripePriceId?: StringFilter<"StripeSubscription"> | string
+    createdAt?: DateTimeFilter<"StripeSubscription"> | Date | string
+    updatedAt?: DateTimeFilter<"StripeSubscription"> | Date | string
+  }, "id" | "tenantId" | "stripeCustomerId" | "stripeSubscriptionId">
+
+  export type StripeSubscriptionOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    plan?: SortOrder
+    status?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    stripePriceId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: StripeSubscriptionCountOrderByAggregateInput
+    _max?: StripeSubscriptionMaxOrderByAggregateInput
+    _min?: StripeSubscriptionMinOrderByAggregateInput
+  }
+
+  export type StripeSubscriptionScalarWhereWithAggregatesInput = {
+    AND?: StripeSubscriptionScalarWhereWithAggregatesInput | StripeSubscriptionScalarWhereWithAggregatesInput[]
+    OR?: StripeSubscriptionScalarWhereWithAggregatesInput[]
+    NOT?: StripeSubscriptionScalarWhereWithAggregatesInput | StripeSubscriptionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    tenantId?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    stripeCustomerId?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    stripeSubscriptionId?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    plan?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    status?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    currentPeriodEnd?: DateTimeWithAggregatesFilter<"StripeSubscription"> | Date | string
+    cancelAtPeriodEnd?: BoolWithAggregatesFilter<"StripeSubscription"> | boolean
+    stripePriceId?: StringWithAggregatesFilter<"StripeSubscription"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"StripeSubscription"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"StripeSubscription"> | Date | string
+  }
+
+  export type StripeWebhookEventWhereInput = {
+    AND?: StripeWebhookEventWhereInput | StripeWebhookEventWhereInput[]
+    OR?: StripeWebhookEventWhereInput[]
+    NOT?: StripeWebhookEventWhereInput | StripeWebhookEventWhereInput[]
+    id?: StringFilter<"StripeWebhookEvent"> | string
+    type?: StringFilter<"StripeWebhookEvent"> | string
+    tenantId?: StringNullableFilter<"StripeWebhookEvent"> | string | null
+    livemode?: BoolFilter<"StripeWebhookEvent"> | boolean
+    payload?: JsonFilter<"StripeWebhookEvent">
+    processedAt?: DateTimeNullableFilter<"StripeWebhookEvent"> | Date | string | null
+    processingError?: StringNullableFilter<"StripeWebhookEvent"> | string | null
+    createdAt?: DateTimeFilter<"StripeWebhookEvent"> | Date | string
+  }
+
+  export type StripeWebhookEventOrderByWithRelationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    livemode?: SortOrder
+    payload?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    processingError?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type StripeWebhookEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: StripeWebhookEventWhereInput | StripeWebhookEventWhereInput[]
+    OR?: StripeWebhookEventWhereInput[]
+    NOT?: StripeWebhookEventWhereInput | StripeWebhookEventWhereInput[]
+    type?: StringFilter<"StripeWebhookEvent"> | string
+    tenantId?: StringNullableFilter<"StripeWebhookEvent"> | string | null
+    livemode?: BoolFilter<"StripeWebhookEvent"> | boolean
+    payload?: JsonFilter<"StripeWebhookEvent">
+    processedAt?: DateTimeNullableFilter<"StripeWebhookEvent"> | Date | string | null
+    processingError?: StringNullableFilter<"StripeWebhookEvent"> | string | null
+    createdAt?: DateTimeFilter<"StripeWebhookEvent"> | Date | string
+  }, "id">
+
+  export type StripeWebhookEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    livemode?: SortOrder
+    payload?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    processingError?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: StripeWebhookEventCountOrderByAggregateInput
+    _max?: StripeWebhookEventMaxOrderByAggregateInput
+    _min?: StripeWebhookEventMinOrderByAggregateInput
+  }
+
+  export type StripeWebhookEventScalarWhereWithAggregatesInput = {
+    AND?: StripeWebhookEventScalarWhereWithAggregatesInput | StripeWebhookEventScalarWhereWithAggregatesInput[]
+    OR?: StripeWebhookEventScalarWhereWithAggregatesInput[]
+    NOT?: StripeWebhookEventScalarWhereWithAggregatesInput | StripeWebhookEventScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"StripeWebhookEvent"> | string
+    type?: StringWithAggregatesFilter<"StripeWebhookEvent"> | string
+    tenantId?: StringNullableWithAggregatesFilter<"StripeWebhookEvent"> | string | null
+    livemode?: BoolWithAggregatesFilter<"StripeWebhookEvent"> | boolean
+    payload?: JsonWithAggregatesFilter<"StripeWebhookEvent">
+    processedAt?: DateTimeNullableWithAggregatesFilter<"StripeWebhookEvent"> | Date | string | null
+    processingError?: StringNullableWithAggregatesFilter<"StripeWebhookEvent"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"StripeWebhookEvent"> | Date | string
+  }
+
   export type PromptOverrideWhereInput = {
     AND?: PromptOverrideWhereInput | PromptOverrideWhereInput[]
     OR?: PromptOverrideWhereInput[]
@@ -9718,6 +12183,181 @@ export namespace Prisma {
     disabled?: BoolFieldUpdateOperationsInput | boolean
     reason?: NullableStringFieldUpdateOperationsInput | string | null
     actorUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeSubscriptionCreateInput = {
+    id?: string
+    tenantId: string
+    stripeCustomerId: string
+    stripeSubscriptionId: string
+    plan: string
+    status: string
+    currentPeriodEnd: Date | string
+    cancelAtPeriodEnd?: boolean
+    stripePriceId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StripeSubscriptionUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    stripeCustomerId: string
+    stripeSubscriptionId: string
+    plan: string
+    status: string
+    currentPeriodEnd: Date | string
+    cancelAtPeriodEnd?: boolean
+    stripePriceId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StripeSubscriptionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: StringFieldUpdateOperationsInput | string
+    stripeSubscriptionId?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    currentPeriodEnd?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    stripePriceId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeSubscriptionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: StringFieldUpdateOperationsInput | string
+    stripeSubscriptionId?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    currentPeriodEnd?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    stripePriceId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeSubscriptionCreateManyInput = {
+    id?: string
+    tenantId: string
+    stripeCustomerId: string
+    stripeSubscriptionId: string
+    plan: string
+    status: string
+    currentPeriodEnd: Date | string
+    cancelAtPeriodEnd?: boolean
+    stripePriceId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StripeSubscriptionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: StringFieldUpdateOperationsInput | string
+    stripeSubscriptionId?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    currentPeriodEnd?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    stripePriceId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeSubscriptionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: StringFieldUpdateOperationsInput | string
+    stripeSubscriptionId?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    currentPeriodEnd?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelAtPeriodEnd?: BoolFieldUpdateOperationsInput | boolean
+    stripePriceId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeWebhookEventCreateInput = {
+    id: string
+    type: string
+    tenantId?: string | null
+    livemode: boolean
+    payload: JsonNullValueInput | InputJsonValue
+    processedAt?: Date | string | null
+    processingError?: string | null
+    createdAt?: Date | string
+  }
+
+  export type StripeWebhookEventUncheckedCreateInput = {
+    id: string
+    type: string
+    tenantId?: string | null
+    livemode: boolean
+    payload: JsonNullValueInput | InputJsonValue
+    processedAt?: Date | string | null
+    processingError?: string | null
+    createdAt?: Date | string
+  }
+
+  export type StripeWebhookEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    livemode?: BoolFieldUpdateOperationsInput | boolean
+    payload?: JsonNullValueInput | InputJsonValue
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeWebhookEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    livemode?: BoolFieldUpdateOperationsInput | boolean
+    payload?: JsonNullValueInput | InputJsonValue
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeWebhookEventCreateManyInput = {
+    id: string
+    type: string
+    tenantId?: string | null
+    livemode: boolean
+    payload: JsonNullValueInput | InputJsonValue
+    processedAt?: Date | string | null
+    processingError?: string | null
+    createdAt?: Date | string
+  }
+
+  export type StripeWebhookEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    livemode?: BoolFieldUpdateOperationsInput | boolean
+    payload?: JsonNullValueInput | InputJsonValue
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripeWebhookEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    livemode?: BoolFieldUpdateOperationsInput | boolean
+    payload?: JsonNullValueInput | InputJsonValue
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    processingError?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10246,6 +12886,104 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type StripeSubscriptionCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    plan?: SortOrder
+    status?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    stripePriceId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StripeSubscriptionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    plan?: SortOrder
+    status?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    stripePriceId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StripeSubscriptionMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    stripeCustomerId?: SortOrder
+    stripeSubscriptionId?: SortOrder
+    plan?: SortOrder
+    status?: SortOrder
+    currentPeriodEnd?: SortOrder
+    cancelAtPeriodEnd?: SortOrder
+    stripePriceId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type StripeWebhookEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    livemode?: SortOrder
+    payload?: SortOrder
+    processedAt?: SortOrder
+    processingError?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type StripeWebhookEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    livemode?: SortOrder
+    processedAt?: SortOrder
+    processingError?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type StripeWebhookEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    livemode?: SortOrder
+    processedAt?: SortOrder
+    processingError?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type FloatNullableFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel> | null
     in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
@@ -10360,6 +13098,10 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type NullableFloatFieldUpdateOperationsInput = {
@@ -10594,6 +13336,31 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {

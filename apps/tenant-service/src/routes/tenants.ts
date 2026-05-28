@@ -8,6 +8,9 @@ import { CreateTenantInputSchema, TenantPlanSchema, TenantStatusSchema, tenantSu
 import { publishEvent } from "@cdc-ats/nats-client";
 import { prisma } from "../lib/prisma.js";
 
+// Phase 30 — plans that can transition via Stripe self-serve.
+const STRIPE_PLANS = ["FREE", "STARTER", "PROFESSIONAL"] as const;
+
 const router = Router();
 
 // ─── POST /internal/tenants — create tenant (called by register saga) ────
@@ -128,6 +131,93 @@ router.get("/", requireSuperAdmin, async (req: Request, res: Response, next: Nex
       page,
       pages: Math.ceil(total / limit),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PUT /internal/tenants/:id/stripe-customer ───────────────────────────
+// Phase 30 — billing-service writes the Stripe customer id back here after
+// creating it. Intentionally NOT requireRole-guarded — internal service-to-
+// service call (gateway never exposes this path). Idempotent: re-writing
+// the same id is a no-op; rewriting a different id should never happen
+// because we always reuse the customer.
+router.put("/:id/stripe-customer", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params["id"] as string;
+    const body = z.object({ stripeCustomerId: z.string().min(1) }).parse(req.body);
+    const { count } = await prisma.tenant.updateMany({
+      where: { id },
+      data: { stripeCustomerId: body.stripeCustomerId },
+    });
+    if (count === 0) throw Errors.notFound("Tenant");
+    ok(res, { tenantId: id, stripeCustomerId: body.stripeCustomerId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PUT /internal/tenants/:id/plan-from-stripe ─────────────────────────
+// Phase 30 — billing-service calls this when a Stripe webhook says the
+// tenant's subscription changed. We update Tenant.plan + status, then emit
+// the canonical tenant.plan-changed event so the rest of the platform
+// (billing's TenantPlanCache subscriber, notification-service, etc.) reacts
+// the same way as a manual plan change.
+//
+// Intentionally NOT requireSuperAdmin — this is internal service-to-service.
+// Restricted to STARTER/PROFESSIONAL/FREE (ENTERPRISE never flows through
+// Stripe self-serve).
+router.put("/:id/plan-from-stripe", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params["id"] as string;
+    const body = z.object({
+      plan: z.enum(STRIPE_PLANS),
+      stripeStatus: z.string(),
+    }).parse(req.body);
+
+    const current = await prisma.tenant.findUnique({ where: { id }, select: { plan: true } });
+    if (!current) throw Errors.notFound("Tenant");
+
+    if (current.plan === "ENTERPRISE") {
+      // Stripe should never modify an Enterprise plan — that lives in
+      // PlanChangeRequest. Defensive guard.
+      throw Errors.conflict("Cannot modify ENTERPRISE plan via Stripe");
+    }
+
+    // No-op if already on this plan (idempotent webhook handling).
+    if (current.plan === body.plan) {
+      ok(res, { tenantId: id, plan: body.plan, changed: false });
+      return;
+    }
+
+    const { count } = await prisma.tenant.updateMany({
+      where: { id },
+      data: {
+        plan: body.plan as any,
+        // Move out of TRIAL the moment a paid plan kicks in; downgrade keeps
+        // ACTIVE since the data hasn't gone away.
+        status: body.plan === "FREE" ? "ACTIVE" : "ACTIVE",
+      },
+    });
+    if (count === 0) throw Errors.notFound("Tenant");
+
+    // Emit the SAME canonical event that the manual PlanChangeRequest
+    // approval flow emits. Existing subscribers (billing cache,
+    // notifications) react the same way regardless of source.
+    publishEvent({
+      subject: tenantSubject(id, "tenant", "plan-changed"),
+      type: "tenant.plan-changed",
+      tenantId: id,
+      payload: {
+        tenantId: id,
+        fromPlan: current.plan,
+        toPlan: body.plan,
+        source: "stripe",
+        stripeStatus: body.stripeStatus,
+      },
+    }).catch(() => undefined);
+
+    ok(res, { tenantId: id, plan: body.plan, changed: true });
   } catch (err) {
     next(err);
   }

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { DollarSign, Zap, Activity, AlertTriangle, Bot, Crown, Sparkles, Rocket, Building2, ArrowUpRight, X } from "lucide-react";
+import { DollarSign, Zap, Activity, AlertTriangle, Bot, Crown, Sparkles, Rocket, Building2, ArrowUpRight, X, CreditCard, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -40,6 +40,33 @@ interface PCR {
   requestedAt: string;
   decisionNote: string | null;
 }
+
+interface StripeSubscriptionDto {
+  plan: string;
+  status: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+// Phase 30 — self-serve pricing. Display-only; the actual price lives in
+// Stripe and is what the customer pays. Keep these in sync with the
+// STRIPE_PRICE_* env vars billing-service uses.
+const SELF_SERVE_TIERS = [
+  {
+    plan: "STARTER" as const,
+    price: "$299",
+    period: "/mo",
+    headline: "For small teams hiring 5–20 people/year",
+    bullets: ["5 seats", "20 active jobs", "500 resumes/mo", "Core AI agents", "14-day free trial"],
+  },
+  {
+    plan: "PROFESSIONAL" as const,
+    price: "$999",
+    period: "/mo",
+    headline: "For growth-stage teams scaling hiring",
+    bullets: ["15 seats", "Unlimited jobs", "5,000 resumes/mo", "All 12 AI agents", "14-day free trial"],
+  },
+];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -127,6 +154,47 @@ export default function BillingPage() {
   const [reason, setReason] = useState("");
   const [submittingUpgrade, setSubmittingUpgrade] = useState(false);
 
+  // Phase 30 — Stripe self-serve subscription state.
+  const [stripeSub, setStripeSub] = useState<StripeSubscriptionDto | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const fetchStripeSub = useCallback(async () => {
+    try {
+      const sub = await apiFetch<StripeSubscriptionDto | null>("/billing/stripe/subscription");
+      setStripeSub(sub);
+    } catch { /* ignore — 404 means no Stripe sub yet */ }
+  }, []);
+
+  const startCheckout = async (plan: "STARTER" | "PROFESSIONAL") => {
+    setCheckoutLoading(plan);
+    try {
+      const data = await apiFetch<{ url: string }>("/billing/stripe/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan }),
+      });
+      // Hard-navigate so the back button returns the user to /billing.
+      window.location.href = data.url;
+    } catch (err: any) {
+      const msg = err?.message ?? "Failed to start checkout";
+      toast.error(msg.includes("not configured")
+        ? "Stripe is not configured on this instance. Use 'Request plan change' instead."
+        : msg);
+      setCheckoutLoading(null);
+    }
+  };
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const data = await apiFetch<{ url: string }>("/billing/stripe/portal", { method: "POST" });
+      window.location.href = data.url;
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to open billing portal");
+      setPortalLoading(false);
+    }
+  };
+
   const fetchPlanRequests = useCallback(async () => {
     try {
       const data = await apiFetch<PCR[]>("/tenants/plan-change-requests");
@@ -199,7 +267,32 @@ export default function BillingPage() {
   useEffect(() => {
     fetchData();
     fetchPlanRequests();
-  }, [fetchData, fetchPlanRequests]);
+    fetchStripeSub();
+  }, [fetchData, fetchPlanRequests, fetchStripeSub]);
+
+  // Phase 30 — show a toast for users returning from Stripe Checkout
+  // (success or cancel). URL params are appended by Stripe and survive the
+  // 302 back to /billing. We strip them after reading so a refresh doesn't
+  // re-toast.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("stripe");
+    if (status === "success") {
+      toast.success("Checkout complete — your plan is being activated.");
+      // Re-fetch after a short delay; Stripe webhook usually arrives within
+      // 1-2 seconds but Checkout success can outrun it.
+      setTimeout(() => { fetchStripeSub(); fetchData(); }, 1500);
+    } else if (status === "cancel") {
+      toast.info("Checkout cancelled. You can try again any time.");
+    }
+    if (status) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("stripe");
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [fetchStripeSub, fetchData]);
 
   const toggleAgent = async (agentType: string, enabled: boolean) => {
     try {
@@ -310,6 +403,92 @@ export default function BillingPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Phase 30 — Stripe self-serve plan cards. Shown when the tenant is on
+          FREE OR on a paid plan but wants to switch. Enterprise always uses
+          the "Request plan change" approval flow below. */}
+      {(currentPlan === "FREE" || currentPlan === "STARTER" || currentPlan === "PROFESSIONAL") && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Self-serve plans
+                </CardTitle>
+                <CardDescription>
+                  Pay with credit card via Stripe — instant activation, cancel any time.
+                </CardDescription>
+              </div>
+              {stripeSub && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openPortal}
+                  disabled={portalLoading}
+                  className="gap-1.5"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {portalLoading ? "Opening…" : "Manage subscription"}
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {SELF_SERVE_TIERS.map((tier) => {
+                const isCurrent = currentPlan === tier.plan;
+                const isLoading = checkoutLoading === tier.plan;
+                const meta = PLAN_META[tier.plan]!;
+                return (
+                  <div
+                    key={tier.plan}
+                    className={cn(
+                      "rounded-xl border p-5 transition-colors",
+                      isCurrent ? "border-primary/60 bg-primary/5" : "hover:border-primary/40"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", meta.color)}>
+                          {meta.icon}
+                        </div>
+                        <p className="font-semibold">{meta.label}</p>
+                      </div>
+                      {isCurrent && <Badge variant="outline" className="text-2xs">Current</Badge>}
+                    </div>
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className="text-2xl font-bold">{tier.price}</span>
+                      <span className="text-sm text-muted-foreground">{tier.period}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">{tier.headline}</p>
+                    <ul className="space-y-1 mb-4 text-xs text-muted-foreground">
+                      {tier.bullets.map((b) => (
+                        <li key={b} className="flex items-start gap-1.5">
+                          <span className="text-primary mt-0.5">·</span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      variant={isCurrent ? "outline" : "default"}
+                      disabled={isCurrent || isLoading}
+                      onClick={() => startCheckout(tier.plan)}
+                    >
+                      {isCurrent ? "Active" : isLoading ? "Redirecting…" : currentPlan === "FREE" ? `Start ${tier.plan} trial` : `Switch to ${tier.plan}`}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-2xs text-muted-foreground mt-3 text-center">
+              Need Enterprise pricing or a custom contract? Use "Request plan change" above to talk to our team.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Budget warning banner */}
       {budgetWarning && (

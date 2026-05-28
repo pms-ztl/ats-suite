@@ -62,6 +62,14 @@ model Tenant {
   // tenants from setting < legal minimum.
   dataRetentionDays Int @default(730)
 
+  // Phase 30 — Stripe self-serve. stripeCustomerId is created on first
+  // checkout (or surfaced after the first paid plan starts via webhook).
+  // Stored on Tenant so we can re-use the same customer across plan changes
+  // and across the Customer Portal session for managing payment methods,
+  // invoices, and cancellation. Source of truth for subscription state still
+  // lives in billing-service's StripeSubscription model.
+  stripeCustomerId String?
+
   // Phase 29 — first-run onboarding wizard state.
   //   onboardingSteps     { branding: ISO, team: ISO, requisition: ISO,
   //                         rounds: ISO, share: ISO } — completion timestamps

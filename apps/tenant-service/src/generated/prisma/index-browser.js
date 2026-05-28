@@ -143,6 +143,7 @@ exports.Prisma.TenantScalarFieldEnum = {
   careerPortalAboutHtml: 'careerPortalAboutHtml',
   careerPortalHeroImageUrl: 'careerPortalHeroImageUrl',
   dataRetentionDays: 'dataRetentionDays',
+  stripeCustomerId: 'stripeCustomerId',
   onboardingSteps: 'onboardingSteps',
   onboardingDismissedAt: 'onboardingDismissedAt',
   onboardingCompletedAt: 'onboardingCompletedAt',

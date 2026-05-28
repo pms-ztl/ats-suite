@@ -178,6 +178,31 @@ exports.Prisma.PlatformKillAuditScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.StripeSubscriptionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  stripeCustomerId: 'stripeCustomerId',
+  stripeSubscriptionId: 'stripeSubscriptionId',
+  plan: 'plan',
+  status: 'status',
+  currentPeriodEnd: 'currentPeriodEnd',
+  cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+  stripePriceId: 'stripePriceId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StripeWebhookEventScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  tenantId: 'tenantId',
+  livemode: 'livemode',
+  payload: 'payload',
+  processedAt: 'processedAt',
+  processingError: 'processingError',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.PromptOverrideScalarFieldEnum = {
   id: 'id',
   agentType: 'agentType',
@@ -224,6 +249,8 @@ exports.Prisma.ModelName = {
   FeatureFlag: 'FeatureFlag',
   PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
   PlatformKillAudit: 'PlatformKillAudit',
+  StripeSubscription: 'StripeSubscription',
+  StripeWebhookEvent: 'StripeWebhookEvent',
   PromptOverride: 'PromptOverride'
 };
 

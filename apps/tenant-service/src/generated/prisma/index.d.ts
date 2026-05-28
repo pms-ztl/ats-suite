@@ -1069,6 +1069,7 @@ export namespace Prisma {
     careerPortalAboutHtml: string | null
     careerPortalHeroImageUrl: string | null
     dataRetentionDays: number | null
+    stripeCustomerId: string | null
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
     createdAt: Date | null
@@ -1095,6 +1096,7 @@ export namespace Prisma {
     careerPortalAboutHtml: string | null
     careerPortalHeroImageUrl: string | null
     dataRetentionDays: number | null
+    stripeCustomerId: string | null
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
     createdAt: Date | null
@@ -1123,6 +1125,7 @@ export namespace Prisma {
     careerPortalAboutHtml: number
     careerPortalHeroImageUrl: number
     dataRetentionDays: number
+    stripeCustomerId: number
     onboardingSteps: number
     onboardingDismissedAt: number
     onboardingCompletedAt: number
@@ -1160,6 +1163,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: true
     careerPortalHeroImageUrl?: true
     dataRetentionDays?: true
+    stripeCustomerId?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
     createdAt?: true
@@ -1186,6 +1190,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: true
     careerPortalHeroImageUrl?: true
     dataRetentionDays?: true
+    stripeCustomerId?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
     createdAt?: true
@@ -1214,6 +1219,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: true
     careerPortalHeroImageUrl?: true
     dataRetentionDays?: true
+    stripeCustomerId?: true
     onboardingSteps?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
@@ -1330,6 +1336,7 @@ export namespace Prisma {
     careerPortalAboutHtml: string | null
     careerPortalHeroImageUrl: string | null
     dataRetentionDays: number
+    stripeCustomerId: string | null
     onboardingSteps: JsonValue
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
@@ -1378,6 +1385,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: boolean
     careerPortalHeroImageUrl?: boolean
     dataRetentionDays?: boolean
+    stripeCustomerId?: boolean
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
@@ -1409,6 +1417,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: boolean
     careerPortalHeroImageUrl?: boolean
     dataRetentionDays?: boolean
+    stripeCustomerId?: boolean
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
@@ -1438,6 +1447,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: boolean
     careerPortalHeroImageUrl?: boolean
     dataRetentionDays?: boolean
+    stripeCustomerId?: boolean
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
@@ -1467,6 +1477,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: boolean
     careerPortalHeroImageUrl?: boolean
     dataRetentionDays?: boolean
+    stripeCustomerId?: boolean
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
@@ -1474,7 +1485,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "brandPrimaryColor" | "brandSecondaryColor" | "brandAccentColor" | "brandTagline" | "careerPortalWelcomeMessage" | "careerPortalAboutHtml" | "careerPortalHeroImageUrl" | "dataRetentionDays" | "onboardingSteps" | "onboardingDismissedAt" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
+  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "brandPrimaryColor" | "brandSecondaryColor" | "brandAccentColor" | "brandTagline" | "careerPortalWelcomeMessage" | "careerPortalAboutHtml" | "careerPortalHeroImageUrl" | "dataRetentionDays" | "stripeCustomerId" | "onboardingSteps" | "onboardingDismissedAt" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
   export type TenantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     planChangeRequests?: boolean | Tenant$planChangeRequestsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
@@ -1509,6 +1520,7 @@ export namespace Prisma {
       careerPortalAboutHtml: string | null
       careerPortalHeroImageUrl: string | null
       dataRetentionDays: number
+      stripeCustomerId: string | null
       onboardingSteps: Prisma.JsonValue
       onboardingDismissedAt: Date | null
       onboardingCompletedAt: Date | null
@@ -1959,6 +1971,7 @@ export namespace Prisma {
     readonly careerPortalAboutHtml: FieldRef<"Tenant", 'String'>
     readonly careerPortalHeroImageUrl: FieldRef<"Tenant", 'String'>
     readonly dataRetentionDays: FieldRef<"Tenant", 'Int'>
+    readonly stripeCustomerId: FieldRef<"Tenant", 'String'>
     readonly onboardingSteps: FieldRef<"Tenant", 'Json'>
     readonly onboardingDismissedAt: FieldRef<"Tenant", 'DateTime'>
     readonly onboardingCompletedAt: FieldRef<"Tenant", 'DateTime'>
@@ -3566,6 +3579,7 @@ export namespace Prisma {
     careerPortalAboutHtml: 'careerPortalAboutHtml',
     careerPortalHeroImageUrl: 'careerPortalHeroImageUrl',
     dataRetentionDays: 'dataRetentionDays',
+    stripeCustomerId: 'stripeCustomerId',
     onboardingSteps: 'onboardingSteps',
     onboardingDismissedAt: 'onboardingDismissedAt',
     onboardingCompletedAt: 'onboardingCompletedAt',
@@ -3778,6 +3792,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: StringNullableFilter<"Tenant"> | string | null
     careerPortalHeroImageUrl?: StringNullableFilter<"Tenant"> | string | null
     dataRetentionDays?: IntFilter<"Tenant"> | number
+    stripeCustomerId?: StringNullableFilter<"Tenant"> | string | null
     onboardingSteps?: JsonFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
@@ -3808,6 +3823,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: SortOrderInput | SortOrder
     careerPortalHeroImageUrl?: SortOrderInput | SortOrder
     dataRetentionDays?: SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrderInput | SortOrder
     onboardingCompletedAt?: SortOrderInput | SortOrder
@@ -3841,6 +3857,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: StringNullableFilter<"Tenant"> | string | null
     careerPortalHeroImageUrl?: StringNullableFilter<"Tenant"> | string | null
     dataRetentionDays?: IntFilter<"Tenant"> | number
+    stripeCustomerId?: StringNullableFilter<"Tenant"> | string | null
     onboardingSteps?: JsonFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
@@ -3871,6 +3888,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: SortOrderInput | SortOrder
     careerPortalHeroImageUrl?: SortOrderInput | SortOrder
     dataRetentionDays?: SortOrder
+    stripeCustomerId?: SortOrderInput | SortOrder
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrderInput | SortOrder
     onboardingCompletedAt?: SortOrderInput | SortOrder
@@ -3908,6 +3926,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
     careerPortalHeroImageUrl?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
     dataRetentionDays?: IntWithAggregatesFilter<"Tenant"> | number
+    stripeCustomerId?: StringNullableWithAggregatesFilter<"Tenant"> | string | null
     onboardingSteps?: JsonWithAggregatesFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
@@ -4022,6 +4041,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: string | null
     careerPortalHeroImageUrl?: string | null
     dataRetentionDays?: number
+    stripeCustomerId?: string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
@@ -4052,6 +4072,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: string | null
     careerPortalHeroImageUrl?: string | null
     dataRetentionDays?: number
+    stripeCustomerId?: string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
@@ -4082,6 +4103,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4112,6 +4134,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4142,6 +4165,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: string | null
     careerPortalHeroImageUrl?: string | null
     dataRetentionDays?: number
+    stripeCustomerId?: string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
@@ -4171,6 +4195,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4200,6 +4225,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4441,6 +4467,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: SortOrder
     careerPortalHeroImageUrl?: SortOrder
     dataRetentionDays?: SortOrder
+    stripeCustomerId?: SortOrder
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
@@ -4472,6 +4499,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: SortOrder
     careerPortalHeroImageUrl?: SortOrder
     dataRetentionDays?: SortOrder
+    stripeCustomerId?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
     createdAt?: SortOrder
@@ -4498,6 +4526,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: SortOrder
     careerPortalHeroImageUrl?: SortOrder
     dataRetentionDays?: SortOrder
+    stripeCustomerId?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
     createdAt?: SortOrder
@@ -5116,6 +5145,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: string | null
     careerPortalHeroImageUrl?: string | null
     dataRetentionDays?: number
+    stripeCustomerId?: string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
@@ -5145,6 +5175,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: string | null
     careerPortalHeroImageUrl?: string | null
     dataRetentionDays?: number
+    stripeCustomerId?: string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
@@ -5190,6 +5221,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5219,6 +5251,7 @@ export namespace Prisma {
     careerPortalAboutHtml?: NullableStringFieldUpdateOperationsInput | string | null
     careerPortalHeroImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     dataRetentionDays?: IntFieldUpdateOperationsInput | number
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

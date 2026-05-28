@@ -328,6 +328,30 @@ export function createApp(logger: Logger): Express {
   // enforced inside the route handlers themselves for the mutating endpoints.
   app.use("/api/onboarding", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/onboarding"));
 
+  // Phase 30 — Stripe self-serve plan purchases.
+  // - /api/stripe/webhook is PUBLIC + raw-body (Stripe's signature IS the auth).
+  //   It's mounted BEFORE express.json() further up… but the gateway has no
+  //   global json() — each route is auth-wrapped. We use createProxyMiddleware
+  //   so the raw bytes flow through untouched.
+  // - Everything else under /api/billing/stripe/* is JWT-gated; requireTenantAdmin
+  //   is enforced inside billing-service's stripe router for mutations.
+  app.use(
+    "/api/stripe/webhook",
+    createProxyMiddleware({
+      target: billingUrl,
+      changeOrigin: true,
+      pathRewrite: () => "/internal/stripe/webhook",
+      logger,
+      // Preserve the raw body — http-proxy-middleware does this by default
+      // when no body parser has consumed the stream.
+    })
+  );
+  app.use(
+    "/api/billing/stripe",
+    gatewayAuth(),
+    forwardHeaders(billingUrl, "/internal/stripe")
+  );
+
   // Public branding endpoint — no auth, used by the candidate-portal to
   // whitelabel /jobs and /jobs/:id/apply. Restrictive cache so updates
   // propagate without a CDN purge but we still get ~60s edge caching.

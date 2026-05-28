@@ -106,6 +106,54 @@ model PlatformKillAudit {
   @@index([agentType, createdAt])
 }
 
+// Phase 30 — Stripe subscription mirror.
+// Stripe is the source of truth for subscription state (created via Checkout,
+// updated via webhooks). We mirror just enough here to:
+//   1. Show the current period end + cancel-at-period-end flag in the UI
+//   2. Surface stripeCustomerId for the Customer Portal link
+//   3. Roll back to FREE when status flips to past_due / canceled / unpaid
+//
+// On webhook events we upsert this row, then publish tenant.plan.changed so
+// the rest of the platform (tenant-service, gating logic) stays in sync. Plan
+// is also written to TenantPlanCache for the existing fast-gate path.
+model StripeSubscription {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  stripeCustomerId      String   @unique
+  stripeSubscriptionId  String   @unique
+  // Plan derived from the Stripe price ID -> looked up in STRIPE_PRICE_TO_PLAN
+  plan                  String   // "STARTER" | "PROFESSIONAL"
+  status                String   // active | past_due | canceled | unpaid | trialing | incomplete
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean  @default(false)
+  // For self-service downgrades we need to remember the price the user is on.
+  stripePriceId         String
+  // Audit
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+// Phase 30 — append-only webhook event log so we can debug subscription state
+// transitions in production. Stripe webhooks are eventually consistent and we
+// occasionally need to replay one — keeping the raw payload here makes that
+// trivial.
+model StripeWebhookEvent {
+  id              String   @id              // Stripe's evt_xxx id (used for idempotency)
+  type            String                    // e.g. "customer.subscription.updated"
+  tenantId        String?                   // set when we can match the event to a tenant
+  livemode        Boolean
+  payload         Json                      // full event.data.object for replay
+  processedAt     DateTime?
+  processingError String?
+  createdAt       DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([tenantId, createdAt])
+}
+
 // Phase 21 — central prompt overrides. When a row exists for an agentType
 // with `isActive = true`, ai-engine uses these values instead of the
 // hardcoded defaults baked into the agent definitions. Cached for 5

@@ -32,4 +32,6 @@ export const Errors = {
     new AppError("INTERNAL_ERROR", message, 500),
   upstreamFailure: (service: string, message?: string) =>
     new AppError("UPSTREAM_FAILURE", message ?? `Upstream service ${service} unavailable`, 502),
+  unavailable: (message: string) =>
+    new AppError("SERVICE_UNAVAILABLE", message, 503),
 };
