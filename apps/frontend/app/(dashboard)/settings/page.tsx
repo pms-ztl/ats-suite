@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2, Sparkles, Download } from "lucide-react";
+import { Settings, User, Bell, Shield, Globe, Palette, Key, Loader2, ShieldAlert, Users, Mail, ToggleLeft, Webhook, Trash2, Sparkles, Download, Inbox, FolderSync, MessageSquare, Puzzle } from "lucide-react";
 import Link from "next/link";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import {
@@ -453,6 +453,78 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </button>
+
+        {/* Phase 34g — discovery for the 4 newer candidate-input methods */}
+        <Link href="/settings/api-keys" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Key className="h-4 w-4" /> API keys
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Bearer tokens for the public ingest API. Use for job-board webhooks + the Chrome extension.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/inbound-email" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Inbox className="h-4 w-4" /> Email-to-apply
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Forward a resume to your team's inbound address — we parse the sender + attach the resume + create the candidate.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/cloud-sync" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FolderSync className="h-4 w-4" /> Cloud folder sync
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Watch a Google Drive or Dropbox folder. Every new PDF/DOC dropped in becomes a candidate.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/sms" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> SMS &amp; WhatsApp apply
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Twilio. Candidates text your number; bot collects name + email + resume link; candidate created.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/settings/chrome-extension" className="block">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Puzzle className="h-4 w-4" /> LinkedIn Chrome extension
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                One-click "+ Add to CDC ATS" on every LinkedIn profile your recruiters visit.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Phase 29 — manually re-openable wizard via Settings. forceOpen ignores
