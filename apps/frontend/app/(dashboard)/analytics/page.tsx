@@ -5,6 +5,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AgentReasoningTrace, type AgentStep } from "@/components/shared/agent-reasoning-trace";
 import {
   Dialog,
   DialogContent,
@@ -70,7 +72,13 @@ export default function AnalyticsPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<{
+    answer?: string;
+    insights?: Array<{ finding: string; evidence: string; severity: string; recommendation: string }>;
+    agentTrace?: AgentStep[];
+    toolsUsed?: string[];
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -141,7 +149,9 @@ export default function AnalyticsPage() {
     setAiResult(null);
     try {
       const token = getToken();
-      const res = await fetch(`${API_BASE}/analytics/ai-insights`, {
+      // Agentic analytics route — the agent pulls only the metric slices it
+      // needs, then returns structured insights + its ReAct reasoning trace.
+      const res = await fetch(`${API_BASE}/analytics`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -153,9 +163,14 @@ export default function AnalyticsPage() {
       if (!res.ok) throw new Error(`API Error: ${res.status}`);
       const json = await res.json();
       const data = json.data ?? json;
-      setAiResult(data.answer || data.insights || "No insights generated.");
+      setAiResult({
+        answer: data.answer,
+        insights: data.insights,
+        agentTrace: data.agentTrace,
+        toolsUsed: data.toolsUsed,
+      });
     } catch {
-      setAiResult("Failed to generate AI insights. Please try again.");
+      setAiResult({ error: "Failed to generate AI insights. Please try again." });
     } finally {
       setAiLoading(false);
     }
@@ -239,22 +254,56 @@ export default function AnalyticsPage() {
 
       {/* AI Insights Dialog */}
       <Dialog open={aiOpen} onOpenChange={setAiOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
               AI Insights
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
             {aiLoading ? (
               <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Generating insights...
+                The analytics agent is investigating…
               </div>
-            ) : (
-              <div className="whitespace-pre-wrap text-sm">{aiResult}</div>
-            )}
+            ) : aiResult?.error ? (
+              <p className="text-sm text-rose-600">{aiResult.error}</p>
+            ) : aiResult ? (
+              <>
+                {aiResult.answer && <p className="text-sm leading-relaxed">{aiResult.answer}</p>}
+                {aiResult.insights && aiResult.insights.length > 0 && (
+                  <div className="space-y-2">
+                    {aiResult.insights.map((ins, i) => (
+                      <Card key={i}>
+                        <CardContent className="p-3 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={
+                                ins.severity === "critical"
+                                  ? "text-rose-600 border-rose-300"
+                                  : ins.severity === "warning"
+                                    ? "text-amber-600 border-amber-300"
+                                    : "text-muted-foreground"
+                              }
+                            >
+                              {ins.severity}
+                            </Badge>
+                            <span className="text-sm font-medium">{ins.finding}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{ins.evidence}</p>
+                          <p className="text-xs"><span className="font-medium">Recommendation:</span> {ins.recommendation}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {aiResult.agentTrace && aiResult.agentTrace.length > 0 && (
+                  <AgentReasoningTrace steps={aiResult.agentTrace} toolsUsed={aiResult.toolsUsed} />
+                )}
+              </>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
