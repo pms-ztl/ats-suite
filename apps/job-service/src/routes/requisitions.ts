@@ -27,8 +27,20 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const status = req.query["status"] as string | undefined;
+    // Phase 23 — tier-3 staff filtering.
+    //   ?hiringManagerId=me  → only requisitions where the caller is HM
+    //   ?recruiterId=me      → only requisitions where the caller is recruiter
+    // Both resolve "me" to the X-User-Id header forwarded by the gateway.
+    const hmRaw = req.query["hiringManagerId"] as string | undefined;
+    const recRaw = req.query["recruiterId"] as string | undefined;
+    const callerId = req.headers["x-user-id"] as string | undefined;
+    const hiringManagerId = hmRaw === "me" ? callerId : hmRaw;
+    const recruiterId = recRaw === "me" ? callerId : recRaw;
+
     const where: any = { tenantId };
     if (status) where.status = status;
+    if (hiringManagerId) where.hiringManagerId = hiringManagerId;
+    if (recruiterId) where.recruiterId = recruiterId;
     const requisitions = await prisma.requisition.findMany({
       where, orderBy: { createdAt: "desc" }, take: 100,
     });

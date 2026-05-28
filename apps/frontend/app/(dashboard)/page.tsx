@@ -26,6 +26,10 @@ import {
 } from "recharts";
 import { CHART_COLORS } from "@/lib/constants";
 import { getCurrentUser } from "@/lib/auth";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { RecruiterView } from "./_views/recruiter-view";
+import { InterviewerView } from "./_views/interviewer-view";
+import { HiringManagerView } from "./_views/hiring-manager-view";
 import { formatDate } from "@/lib/utils";
 import {
   Users, Briefcase, Clock, Target, Shield, Brain, TrendingUp, AlertTriangle,
@@ -93,7 +97,30 @@ function getUrgencyStyles(urgency: string) {
   }
 }
 
+/**
+ * Phase 23 — role dispatcher.
+ *
+ * The default export reads the logged-in user's role and renders the
+ * appropriate dashboard:
+ *   RECRUITER       → RecruiterView (scheduling queue + latest apps)
+ *   INTERVIEWER     → InterviewerView (today's panel + feedback due)
+ *   HIRING_MANAGER  → HiringManagerView (my reqs + decisions due)
+ *   anything else   → existing AdminDashboard (KPIs, funnel, full overview)
+ *
+ * While the user object hasn't hydrated, we render the admin dashboard
+ * by default — it works for everyone and avoids a flash. The dispatch
+ * happens once we have a confirmed role.
+ */
 export default function DashboardPage() {
+  const { user } = useCurrentUser();
+  const role = user?.role;
+  if (role === "RECRUITER") return <RecruiterView />;
+  if (role === "INTERVIEWER") return <InterviewerView />;
+  if (role === "HIRING_MANAGER") return <HiringManagerView />;
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
   const [dateRange, setDateRange] = useState("last_30");
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpisLoading, setKpisLoading] = useState(true);

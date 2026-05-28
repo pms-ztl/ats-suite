@@ -25,14 +25,40 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     const tenantId = getTenantId(req);
     const candidateId = req.query["candidateId"] as string | undefined;
     const status = req.query["status"] as string | undefined;
+    // Phase 23 — tier-3 staff filtering. `panelistId=me` (or the explicit
+    // user id) restricts to interviews where the caller is on the panel.
+    // INTERVIEWER dashboards use this to show "my interviews" without
+    // pulling system-wide rows.
+    const panelistIdRaw = req.query["panelistId"] as string | undefined;
+    const callerId = req.headers["x-user-id"] as string | undefined;
+    const panelistId = panelistIdRaw === "me" ? callerId : panelistIdRaw;
+
+    // `feedbackPending=true` further narrows to interviews where the
+    // caller (or specified panelist) hasn't yet submitted feedback —
+    // powers "feedback due" widget on the interviewer landing.
+    const feedbackPending = req.query["feedbackPending"] === "true";
+
     const where: any = { tenantId };
     if (candidateId) where.candidateId = candidateId;
     if (status) where.status = status;
+    if (panelistId) {
+      where.panelMembers = { some: { userId: panelistId } };
+    }
     const rows = await prisma.interview.findMany({
-      where, orderBy: { createdAt: "desc" }, take: 100,
-      include: { round: { select: { name: true, order: true } } },
+      where, orderBy: { scheduledAt: "asc" }, take: 100,
+      include: {
+        round: { select: { name: true, order: true } },
+        panelMembers: panelistId ? { where: { userId: panelistId } } : false,
+        feedback: feedbackPending && panelistId ? { where: { interviewerId: panelistId } } : false,
+      },
     });
-    ok(res, rows);
+    // If feedbackPending, drop interviews where the panelist already
+    // submitted feedback. Done client-side since the Prisma include
+    // doesn't easily express "no feedback row from this user".
+    const filtered = feedbackPending && panelistId
+      ? rows.filter((r: any) => !r.feedback || r.feedback.length === 0)
+      : rows;
+    ok(res, filtered);
   } catch (err) { next(err); }
 });
 
