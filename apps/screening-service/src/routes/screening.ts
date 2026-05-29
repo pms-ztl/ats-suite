@@ -44,7 +44,7 @@ router.get("/audit/:requisitionId", async (req: Request, res: Response, next: Ne
     for (const r of rows) if (r.result) byResult[r.result] = (byResult[r.result] ?? 0) + 1;
     const n = scores.length;
     const avg = n ? Math.round(scores.reduce((a, b) => a + b, 0) / n) : null;
-    const median = n ? (n % 2 ? scores[(n - 1) / 2] : Math.round((scores[n / 2 - 1] + scores[n / 2]) / 2)) : null;
+    const median = n ? (n % 2 ? scores[(n - 1) / 2]! : Math.round((scores[n / 2 - 1]! + scores[n / 2]!) / 2)) : null;
     const passRate = rows.length ? Number((byResult["PASS"]! / rows.length).toFixed(2)) : 0;
     ok(res, {
       requisitionId,
