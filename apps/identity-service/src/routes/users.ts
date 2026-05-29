@@ -308,4 +308,43 @@ router.delete("/:id", async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+// ── PATCH /internal/users/:id/role ──────────────────────────────────────
+// Change a tenant member's role. Tenant-admin only, tenant-scoped. Cannot
+// touch SUPER_ADMIN, and an admin cannot demote themselves (avoid lockout).
+const RoleSchema = z.object({
+  role: z.enum(["ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER"]),
+});
+router.patch("/:id/role", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const actorId = req.headers["x-user-id"] as string | undefined;
+    const id = req.params["id"] as string;
+    const { role } = RoleSchema.parse(req.body);
+    if (id === actorId) throw Errors.validation("You cannot change your own role");
+    const target = await prisma.user.findFirst({ where: { id, tenantId } });
+    if (!target) throw Errors.notFound("User");
+    if (target.role === "SUPER_ADMIN") throw Errors.forbidden("Cannot change a super-admin's role");
+    const updated = await prisma.user.update({ where: { id }, data: { role } });
+    ok(res, { id: updated.id, role: updated.role });
+  } catch (err) { next(err); }
+});
+
+// ── PATCH /internal/users/:id/deactivate ────────────────────────────────
+// Soft-disable a member (cannot log in). Tenant-admin only, tenant-scoped;
+// cannot deactivate yourself or a super-admin. Pass { reactivate: true } to undo.
+router.patch("/:id/deactivate", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const actorId = req.headers["x-user-id"] as string | undefined;
+    const id = req.params["id"] as string;
+    if (id === actorId) throw Errors.validation("You cannot deactivate yourself");
+    const target = await prisma.user.findFirst({ where: { id, tenantId } });
+    if (!target) throw Errors.notFound("User");
+    if (target.role === "SUPER_ADMIN") throw Errors.forbidden("Cannot deactivate a super-admin");
+    const isActive = req.body?.reactivate === true;
+    const updated = await prisma.user.update({ where: { id }, data: { isActive } });
+    ok(res, { id: updated.id, isActive: updated.isActive });
+  } catch (err) { next(err); }
+});
+
 export default router;
