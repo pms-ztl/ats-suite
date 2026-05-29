@@ -1081,6 +1081,43 @@ export const api = {
       if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to cancel interview");
       return res.json();
     },
+    // ── Panel assignment ────────────────────────────────────────────────────
+    async getInterviewPanel(id: string) {
+      const res = await fetch(`${API_BASE}/interviews/${id}/panel`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to load panel");
+      return res.json();
+    },
+    async addPanelMember(id: string, data: { userId: string; role?: string; isRequired?: boolean }) {
+      const res = await fetch(`${API_BASE}/interviews/${id}/panel`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken() ?? ""}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to add panel member");
+      return res.json();
+    },
+    async removePanelMember(id: string, userId: string) {
+      const res = await fetch(`${API_BASE}/interviews/${id}/panel/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to remove panel member");
+      return res.json();
+    },
+    // Minimal tenant roster for the panel picker (scheduler-accessible).
+    async listAssignableUsers() {
+      const res = await fetch(`${API_BASE}/users/assignable`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to load assignable users");
+      return res.json();
+    },
     // ── Legacy mock-only helpers ─────────────────────────────────────────────
     list: (params?: PaginationParams) => get<any>("/interviews", params),
     create: (data: any) => post<any>("/interviews", data),

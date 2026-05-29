@@ -153,6 +153,73 @@ router.post("/:id/feedback", requireFeedbackSubmitter, async (req: Request, res:
   } catch (err) { next(err); }
 });
 
+// ── Panel management ───────────────────────────────────────────────────
+// Assign specific NAMED people to an interview panel, beyond the role-based
+// round-robin auto-assign. Tenant-scoped; scheduler-gated for mutations.
+//   GET    /internal/interviews/:id/panel           — list members
+//   POST   /internal/interviews/:id/panel           — add/update a member
+//   DELETE /internal/interviews/:id/panel/:userId   — remove a member
+const AddPanelSchema = z.object({
+  userId: z.string().uuid(),
+  role: z.string().min(1).max(40).optional(),
+  isRequired: z.boolean().optional(),
+  confirmed: z.boolean().optional(),
+});
+
+router.get("/:id/panel", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const interview = await prisma.interview.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!interview) throw Errors.notFound("Interview");
+    const members = await prisma.interviewPanelMember.findMany({
+      where: { interviewId: id },
+      orderBy: { createdAt: "asc" },
+    });
+    ok(res, members);
+  } catch (err) { next(err); }
+});
+
+router.post("/:id/panel", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const body = AddPanelSchema.parse(req.body);
+    const interview = await prisma.interview.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!interview) throw Errors.notFound("Interview");
+    // Idempotent: re-adding the same user updates their role / required flag
+    // instead of erroring on the @@unique([interviewId, userId]) constraint.
+    const member = await prisma.interviewPanelMember.upsert({
+      where: { interviewId_userId: { interviewId: id, userId: body.userId } },
+      create: {
+        interviewId: id,
+        userId: body.userId,
+        role: body.role ?? "INTERVIEWER",
+        isRequired: body.isRequired ?? true,
+        confirmed: body.confirmed ?? false,
+      },
+      update: {
+        ...(body.role !== undefined ? { role: body.role } : {}),
+        ...(body.isRequired !== undefined ? { isRequired: body.isRequired } : {}),
+        ...(body.confirmed !== undefined ? { confirmed: body.confirmed } : {}),
+      },
+    });
+    created(res, member);
+  } catch (err) { next(err); }
+});
+
+router.delete("/:id/panel/:userId", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const userId = req.params["userId"] as string;
+    const interview = await prisma.interview.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!interview) throw Errors.notFound("Interview");
+    await prisma.interviewPanelMember.deleteMany({ where: { interviewId: id, userId } });
+    ok(res, { removed: userId });
+  } catch (err) { next(err); }
+});
+
 // ── POST /internal/interviews/applications/:id/advance-round ───────────
 router.post("/applications/:id/advance-round", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
   try {

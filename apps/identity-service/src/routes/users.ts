@@ -136,6 +136,31 @@ router.get("/platform-stats", requireRole("SUPER_ADMIN"), async (_req: Request, 
   }
 });
 
+// ─── GET /internal/users/assignable — minimal tenant roster for pickers ───
+// Powers the interview-panel assignment UI. Accessible to scheduler roles
+// (not just ADMIN, unlike the full GET /). Returns a minimal projection — id,
+// name, role, NO email/PII — of ACTIVE users in the caller's tenant. Reads
+// tenant from the gateway-injected X-Tenant-Id header (getTenantId), so no
+// query param is required. Declared before /:id.
+router.get(
+  "/assignable",
+  requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER"),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = getTenantId(req);
+      const users = await prisma.user.findMany({
+        where: { tenantId, isActive: true },
+        orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+        select: { id: true, firstName: true, lastName: true, role: true },
+        take: 500,
+      });
+      ok(res, users);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // ─── POST /internal/users/invite ─────────────────────────────────────────
 // Body: { tenantId, plan, email, firstName, lastName, role, invitedByUserId }
 const InviteSchema = z.object({

@@ -19,6 +19,8 @@ import {
   CalendarDays,
   MapPin,
   User,
+  Users,
+  UserPlus,
   Briefcase,
   ArrowLeft,
   XCircle,
@@ -55,6 +57,20 @@ interface InterviewDetail {
   };
 }
 
+interface PanelMember {
+  id: string;
+  userId: string;
+  role: string;
+  isRequired: boolean;
+  confirmed: boolean;
+}
+interface AssignableUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
 const RECOMMENDATIONS = [
   { value: "STRONG_YES", label: "Strong Yes" },
   { value: "YES", label: "Yes" },
@@ -86,13 +102,25 @@ export default function InterviewDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
+  // Panel assignment state
+  const [panel, setPanel] = useState<PanelMember[]>([]);
+  const [assignable, setAssignable] = useState<AssignableUser[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [panelBusy, setPanelBusy] = useState(false);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError("");
       try {
-        const result = await api.interviews.getInterview(id);
+        const [result, panelRes, usersRes] = await Promise.all([
+          api.interviews.getInterview(id),
+          api.interviews.getInterviewPanel(id).catch(() => null),
+          api.interviews.listAssignableUsers().catch(() => null),
+        ]);
         setInterview(result?.data ?? result ?? null);
+        setPanel(panelRes?.data ?? panelRes ?? []);
+        setAssignable(usersRes?.data ?? usersRes ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load interview");
       } finally {
@@ -101,6 +129,48 @@ export default function InterviewDetailPage() {
     }
     load();
   }, [id]);
+
+  async function reloadPanel() {
+    const panelRes = await api.interviews.getInterviewPanel(id).catch(() => null);
+    setPanel(panelRes?.data ?? panelRes ?? []);
+  }
+
+  async function handleAddPanelist() {
+    if (!selectedUserId) {
+      toast.error("Select a team member to add.");
+      return;
+    }
+    setPanelBusy(true);
+    try {
+      await api.interviews.addPanelMember(id, { userId: selectedUserId });
+      toast.success("Panelist added.");
+      setSelectedUserId("");
+      await reloadPanel();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add panelist");
+    } finally {
+      setPanelBusy(false);
+    }
+  }
+
+  async function handleRemovePanelist(userId: string) {
+    setPanelBusy(true);
+    try {
+      await api.interviews.removePanelMember(id, userId);
+      toast.success("Panelist removed.");
+      await reloadPanel();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove panelist");
+    } finally {
+      setPanelBusy(false);
+    }
+  }
+
+  const nameFor = (userId: string) => {
+    const u = assignable.find((a) => a.id === userId);
+    return u ? `${u.firstName} ${u.lastName}` : `${userId.slice(0, 8)}…`;
+  };
+  const availableToAdd = assignable.filter((u) => !panel.some((m) => m.userId === u.id));
 
   async function handleSubmitFeedback() {
     if (!recommendation) {
@@ -225,16 +295,6 @@ export default function InterviewDetailPage() {
                 <span>{interview.location ?? interview.meetingLink ?? "—"}</span>
               </div>
             )}
-            {interview.panelists && interview.panelists.length > 0 && (
-              <div className="flex items-start gap-2">
-                <span className="font-medium ml-6">Panelists:</span>
-                <span>
-                  {interview.panelists
-                    .map((p) => `${p.user.firstName} ${p.user.lastName}`)
-                    .join(", ")}
-                </span>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -279,6 +339,87 @@ export default function InterviewDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Interview Panel */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4" /> Interview Panel
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {panel.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No panelists assigned yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {panel.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{nameFor(m.userId)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {m.role?.replace(/_/g, " ")}
+                    </span>
+                    {m.isRequired && (
+                      <span className="text-[10px] uppercase tracking-wide rounded bg-amber-100 text-amber-700 px-1.5 py-0.5">
+                        Required
+                      </span>
+                    )}
+                    {m.confirmed && (
+                      <span className="text-[10px] uppercase tracking-wide rounded bg-green-100 text-green-700 px-1.5 py-0.5">
+                        Confirmed
+                      </span>
+                    )}
+                  </div>
+                  {interview.status === "SCHEDULED" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemovePanelist(m.userId)}
+                      disabled={panelBusy}
+                      aria-label={`Remove ${nameFor(m.userId)}`}
+                    >
+                      <XCircle className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {interview.status === "SCHEDULED" && (
+            <div className="flex items-end gap-2">
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs">Add a team member</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a panelist..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableToAdd.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        No more team members available
+                      </div>
+                    ) : (
+                      availableToAdd.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.firstName} {u.lastName} · {u.role?.replace(/_/g, " ")}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddPanelist} disabled={panelBusy || !selectedUserId}>
+                <UserPlus className="h-4 w-4 mr-1" /> Add
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Feedback Form */}
       {showFeedback && (
