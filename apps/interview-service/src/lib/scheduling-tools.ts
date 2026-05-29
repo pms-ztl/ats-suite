@@ -13,6 +13,7 @@ import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
 import { prisma } from "./prisma.js";
 import { getBusyWindows, generateMeetingLink, buildIcs, type BusyWindow } from "./calendar.js";
+import { createExternalEvent } from "./calendar-connectors.js";
 
 interface Participant {
   email: string;
@@ -181,6 +182,16 @@ export function buildSchedulingTools(opts: {
           meetingUrl,
         });
 
+        // If the organizer has a connected Google/Outlook calendar, create the
+        // real event there — the provider then sends native invites + RSVPs.
+        // No-op (returns ok:false) when not connected; the ICS email is the
+        // fallback either way.
+        const ext = await createExternalEvent(
+          organizer,
+          { title: `Interview — ${opts.stage ?? "INTERVIEW"}`, start: args.start, end: args.end, attendees, meetingUrl },
+          logger,
+        );
+
         // Real downstream effect: notification-service emails the invite + ICS.
         await publishEvent({
           subject: tenantSubject(tenantId, "interview", "scheduled"),
@@ -198,12 +209,20 @@ export function buildSchedulingTools(opts: {
             attendees,
             organizer,
             ics,
+            externalEvent: ext.ok ? { provider: ext.provider, htmlLink: ext.htmlLink ?? null } : null,
             bookedByAgent: true,
           },
         }).catch((err) => logger.warn({ err }, "interview.scheduled publish failed (invite not sent)"));
 
-        logger.info({ interviewId: interview.id, candidateId: opts.candidateId, meetingUrl }, "Scheduling agent booked + invited");
-        return { ok: true, interviewId: interview.id, scheduledAt: args.start, meetingUrl, invitedAttendees: attendees.length };
+        logger.info(
+          { interviewId: interview.id, candidateId: opts.candidateId, meetingUrl, externalProvider: ext.provider ?? "none" },
+          "Scheduling agent booked + invited",
+        );
+        return {
+          ok: true, interviewId: interview.id, scheduledAt: args.start, meetingUrl,
+          invitedAttendees: attendees.length,
+          calendarEvent: ext.ok ? { provider: ext.provider, link: ext.htmlLink } : "ics-email-only",
+        };
       } catch (err) {
         logger.error({ err }, "book_interview failed");
         return { ok: false, error: "could not create interview" };

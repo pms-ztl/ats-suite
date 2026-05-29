@@ -17,6 +17,7 @@
 import { createHash } from "crypto";
 import { prisma } from "./prisma.js";
 import type { Logger } from "pino";
+import { fetchExternalBusy } from "./calendar-connectors.js";
 
 export interface BusyWindow { start: string; end: string }
 export interface Participant { email: string; role: string; busyWindows?: BusyWindow[] }
@@ -109,6 +110,12 @@ export async function getBusyWindows(opts: {
         logger.warn({ err, email: p.email }, "ICS feed fetch failed; ignoring");
       }
     }
+
+    // Connected Google/Outlook calendar (real OAuth free/busy). No-op when the
+    // participant has no connection configured.
+    const ext = await fetchExternalBusy(p.email, opts.rangeStart, opts.rangeEnd, logger);
+    if (ext) windows.push(...ext);
+
     result[p.email] = windows;
   }
   return result;
