@@ -118,6 +118,8 @@ export const api = {
     // requisition one-liners kept for mock routing; prefer api.requisitions for real calls
     getRequisitions: (params?: PaginationParams) => get<any>("/requisitions", params),
     createRequisition: (data: any) => post<any>("/requisitions", data),
+    // Phase 2 — AI job-description autogen (title -> description + requirements + bias audit)
+    generateJd: (data: any) => post<any>("/jd-author", data),
     getRequisition: (id: string) => get<any>(`/requisitions/${id}`),
     updateRequisition: (id: string, data: any) => put<any>(`/requisitions/${id}`, data),
     archiveRequisition: (id: string) => del<any>(`/requisitions/${id}`),

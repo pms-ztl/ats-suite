@@ -98,6 +98,8 @@ interface NewRequisitionForm {
   employmentType: string;
   remote: boolean;
   description: string;
+  requirements: string; // one per line — tunes AI screening
+  skills: string;        // comma-separated — seeds AI generation
 }
 
 const DEPARTMENTS = [
@@ -117,6 +119,7 @@ export default function RequisitionsPage() {
   const [reqFilters, setReqFilters] = useState<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [form, setForm] = useState<NewRequisitionForm>({
     title: "",
     department: "",
@@ -124,10 +127,12 @@ export default function RequisitionsPage() {
     employmentType: "",
     remote: false,
     description: "",
+    requirements: "",
+    skills: "",
   });
 
   function resetForm() {
-    setForm({ title: "", department: "", location: "", employmentType: "", remote: false, description: "" });
+    setForm({ title: "", department: "", location: "", employmentType: "", remote: false, description: "", requirements: "", skills: "" });
   }
 
   function handleOpenDialog() {
@@ -138,6 +143,37 @@ export default function RequisitionsPage() {
   function handleCloseDialog() {
     setDialogOpen(false);
     resetForm();
+  }
+
+  async function handleGenerateJd() {
+    if (!form.title.trim()) {
+      toast.error("Enter a Job Title first, then generate.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const skills = form.skills.split(",").map((s) => s.trim()).filter(Boolean);
+      const res: any = await api.platform.generateJd({
+        title: form.title,
+        department: form.department || "General",
+        skills: skills.length ? skills : ["relevant skills"],
+        level: form.employmentType || "mid",
+        location: form.location || "Remote",
+      });
+      const out = res?.data ?? res ?? {};
+      setForm((f) => ({
+        ...f,
+        description: out.description ?? f.description,
+        requirements: Array.isArray(out.requirements) ? out.requirements.join("\n") : f.requirements,
+        skills: f.skills || (Array.isArray(out.niceToHave) ? out.niceToHave.join(", ") : f.skills),
+      }));
+      const score = typeof out.inclusivityScore === "number" ? ` · inclusivity ${out.inclusivityScore}/100` : "";
+      toast.success(`AI draft generated${score}. Review & edit before saving.`);
+    } catch {
+      toast.error("Could not generate a description. Write it manually or try again.");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   async function handleCreateRequisition() {
@@ -154,6 +190,7 @@ export default function RequisitionsPage() {
         employmentType: form.employmentType,
         remote: form.remote,
         description: form.description,
+        requirements: form.requirements.split("\n").map((r) => r.trim()).filter(Boolean),
       });
       toast.success("Requisition created — pending approval.");
       setDialogOpen(false);
@@ -329,6 +366,20 @@ export default function RequisitionsPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="req-skills">Key skills <span className="text-muted-foreground text-xs">(comma-separated — seeds AI + tunes screening)</span></Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="req-skills"
+                  placeholder="e.g. Python, PyTorch, REST APIs"
+                  value={form.skills}
+                  onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={handleGenerateJd} loading={generating} disabled={!form.title.trim()}>
+                  ✨ Generate
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="req-department">Department</Label>
               <Select
                 value={form.department}
@@ -385,6 +436,16 @@ export default function RequisitionsPage() {
                 rows={3}
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="req-requirements">Requirements <span className="text-muted-foreground text-xs">(one per line — tunes AI screening)</span></Label>
+              <Textarea
+                id="req-requirements"
+                placeholder={"3+ years Python\nREST API design\nCloud (AWS/GCP)"}
+                rows={4}
+                value={form.requirements}
+                onChange={(e) => setForm((f) => ({ ...f, requirements: e.target.value }))}
               />
             </div>
           </div>
