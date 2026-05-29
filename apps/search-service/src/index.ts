@@ -1,18 +1,18 @@
+import { config } from "./config.js";
 import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
-initOpenTelemetry({ serviceName: "search-service" });
-initSentry({ serviceName: "search-service" });
+initOpenTelemetry({ serviceName: config.serviceName });
+initSentry({ serviceName: config.serviceName });
 
 import { createApp } from "./app.js";
 import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startSearchSubscribers } from "./lib/subscribers.js";
 
-const logger = createLogger({ serviceName: "search-service" });
-const PORT = Number(process.env["PORT"] ?? 4010);
+const logger = createLogger({ serviceName: config.serviceName });
 
 async function main() {
   if (process.env["NATS_URL"]) {
     try {
-      await connectNats({ serviceName: "search-service" });
+      await connectNats({ serviceName: config.serviceName });
       await ensureStreams();
       await startSearchSubscribers(logger);
       logger.info("NATS connected + subscribers started");
@@ -21,7 +21,7 @@ async function main() {
     }
   }
   const app = createApp(logger);
-  const server = app.listen(PORT, () => logger.info({ port: PORT }, "search-service listening"));
+  const server = app.listen(config.port, () => logger.info({ port: config.port }, `${config.serviceName} listening`));
 
   registerGracefulShutdown({
     logger,
@@ -30,4 +30,4 @@ async function main() {
   });
 }
 
-main().catch((err) => { logger.fatal({ err }, "search-service failed"); process.exit(1); });
+main().catch((err) => { logger.fatal({ err }, `${config.serviceName} failed`); process.exit(1); });

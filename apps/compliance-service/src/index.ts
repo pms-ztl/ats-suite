@@ -1,16 +1,16 @@
+import { config } from "./config.js";
 import { initOpenTelemetry, initSentry, createLogger, registerGracefulShutdown } from "@cdc-ats/common";
-initOpenTelemetry({ serviceName: "compliance-service" });
-initSentry({ serviceName: "compliance-service" });
+initOpenTelemetry({ serviceName: config.serviceName });
+initSentry({ serviceName: config.serviceName });
 
 import { createApp } from "./app.js";
 
-const logger = createLogger({ serviceName: "compliance-service" });
-const PORT = Number(process.env["PORT"] ?? 4013);
+const logger = createLogger({ serviceName: config.serviceName });
 
 async function main() {
   const app = createApp(logger);
-  const server = app.listen(PORT, () => logger.info({ port: PORT }, "compliance-service listening"));
+  const server = app.listen(config.port, () => logger.info({ port: config.port }, `${config.serviceName} listening`));
   registerGracefulShutdown({ logger, server, onShutdown: [] });
 }
 
-main().catch((err) => { logger.fatal({ err }, "compliance-service failed"); process.exit(1); });
+main().catch((err) => { logger.fatal({ err }, `${config.serviceName} failed`); process.exit(1); });
