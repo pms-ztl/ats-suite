@@ -1,0 +1,254 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Blueprint for CDC ATS.
+#
+# Topology: 1 gateway (web) + 1 frontend (web) + 9 internal services (private) +
+# managed Postgres + Key Value (Redis) + a private NATS service. Object storage
+# (S3/R2) is EXTERNAL — set the S3_* vars (sync:false) to your bucket.
+#
+# All backend services build from the SAME Dockerfile (infra/Dockerfile.service)
+# with a SERVICE build-arg; Render exposes a service's `SERVICE` env var as a
+# build arg because the Dockerfile declares `ARG SERVICE`.
+#
+# BEFORE first deploy, see docs/DEPLOY_RENDER.md — you must:
+#   1. create the 9 per-service databases on the managed Postgres,
+#   2. set each *_DATABASE_URL (sync:false) to its db,
+#   3. paste secrets (JWT, OpenRouter/OpenAI, S3), then run migrations.
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  - name: cdc-ats-postgres
+    plan: standard
+    postgresMajorVersion: "16"
+
+services:
+  # ── Redis (Render Key Value) ───────────────────────────────────────────────
+  - type: keyvalue
+    name: cdc-ats-redis
+    plan: standard
+    ipAllowList: []          # only reachable from this Blueprint's services
+
+  # ── NATS (private service from the official image) ─────────────────────────
+  - type: pserv
+    name: cdc-ats-nats
+    runtime: image
+    image:
+      url: docker.io/library/nats:2-alpine
+    plan: starter
+
+  # ── API gateway (public web) ───────────────────────────────────────────────
+  - type: web
+    name: cdc-ats-gateway
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - key: SERVICE
+        value: api-gateway
+      - key: PORT
+        value: "4000"
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: cdc-ats-redis, property: connectionString }
+      - key: NATS_URL
+        value: nats://cdc-ats-nats:4222
+      - key: JWT_SECRET
+        generateValue: true
+      # Internal service base URLs (private services resolve by name on Render)
+      - key: IDENTITY_SERVICE_URL
+        value: http://cdc-ats-identity-service:4001
+      - key: TENANT_SERVICE_URL
+        value: http://cdc-ats-tenant-service:4002
+      - key: BILLING_SERVICE_URL
+        value: http://cdc-ats-billing-service:4003
+      - key: JOB_SERVICE_URL
+        value: http://cdc-ats-job-service:4004
+      - key: CANDIDATE_SERVICE_URL
+        value: http://cdc-ats-candidate-service:4005
+      - key: INTERVIEW_SERVICE_URL
+        value: http://cdc-ats-interview-service:4006
+      - key: RESUME_SERVICE_URL
+        value: http://cdc-ats-resume-service:4007
+      - key: SCREENING_SERVICE_URL
+        value: http://cdc-ats-screening-service:4008
+      - key: NOTIFICATION_SERVICE_URL
+        value: http://cdc-ats-notification-service:4009
+      # Tune rate limits per environment if needed (defaults are safe).
+      - key: TENANT_RATE_LIMIT_PER_MINUTE
+        value: "600"
+
+  # ── Frontend (public web, Next.js standalone) ──────────────────────────────
+  - type: web
+    name: cdc-ats-frontend
+    runtime: docker
+    dockerfilePath: ./apps/frontend/Dockerfile
+    dockerContext: .
+    plan: standard
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService: { type: web, name: cdc-ats-gateway, property: host }   # set to https://<gateway>/api
+
+  # ── Internal services (private) ────────────────────────────────────────────
+  # Each: SERVICE build-arg, its own *_DATABASE_URL (sync:false → per-db),
+  # plus REDIS_URL + NATS_URL + JWT_SECRET. AI services also need an LLM key.
+  - type: pserv
+    name: cdc-ats-identity-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: identity-service }
+      - { key: PORT, value: "4001" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # postgresql://…/identity_db
+      - { key: JWT_SECRET, fromService: { type: web, name: cdc-ats-gateway, envVarKey: JWT_SECRET } }
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: REDIS_URL, fromService: { type: keyvalue, name: cdc-ats-redis, property: connectionString } }
+
+  - type: pserv
+    name: cdc-ats-tenant-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: tenant-service }
+      - { key: PORT, value: "4002" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/tenant_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+
+  - type: pserv
+    name: cdc-ats-billing-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: billing-service }
+      - { key: PORT, value: "4003" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/billing_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: STRIPE_SECRET_KEY, sync: false }
+      - { key: STRIPE_WEBHOOK_SECRET, sync: false }
+
+  - type: pserv
+    name: cdc-ats-job-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: job-service }
+      - { key: PORT, value: "4004" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/job_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+
+  - type: pserv
+    name: cdc-ats-candidate-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: candidate-service }
+      - { key: PORT, value: "4005" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/candidate_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: JOB_SERVICE_URL, value: http://cdc-ats-job-service:4004 }
+      - { key: RESUME_SERVICE_URL, value: http://cdc-ats-resume-service:4007 }
+      - { key: INTERVIEW_SERVICE_URL, value: http://cdc-ats-interview-service:4006 }
+      - { key: OPENAI_API_KEY, sync: false }       # embeddings: matching + skills
+      - { key: OPENROUTER_API_KEY, sync: false }   # LLM agents
+
+  - type: pserv
+    name: cdc-ats-interview-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: interview-service }
+      - { key: PORT, value: "4006" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/interview_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: JOB_SERVICE_URL, value: http://cdc-ats-job-service:4004 }
+      - { key: OPENROUTER_API_KEY, sync: false }
+      # Calendar OAuth (optional — connectors no-op until set)
+      - { key: GOOGLE_OAUTH_CLIENT_ID, sync: false }
+      - { key: GOOGLE_OAUTH_CLIENT_SECRET, sync: false }
+      - { key: MS_OAUTH_CLIENT_ID, sync: false }
+      - { key: MS_OAUTH_CLIENT_SECRET, sync: false }
+
+  - type: pserv
+    name: cdc-ats-resume-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: resume-service }
+      - { key: PORT, value: "4007" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/resume_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: OPENROUTER_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }       # semantic skill matching
+      # Object storage (REQUIRED in prod — service hard-fails without it)
+      - { key: S3_ENDPOINT, sync: false }
+      - { key: S3_BUCKET, sync: false }
+      - { key: S3_ACCESS_KEY_ID, sync: false }
+      - { key: S3_SECRET_ACCESS_KEY, sync: false }
+      - { key: S3_REGION, sync: false }
+      - { key: ENABLE_OCR, value: "true" }
+
+  - type: pserv
+    name: cdc-ats-screening-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: screening-service }
+      - { key: PORT, value: "4008" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/screening_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: REDIS_URL, fromService: { type: keyvalue, name: cdc-ats-redis, property: connectionString } }
+      - { key: RESUME_SERVICE_URL, value: http://cdc-ats-resume-service:4007 }
+      - { key: JOB_SERVICE_URL, value: http://cdc-ats-job-service:4004 }
+      - { key: CANDIDATE_SERVICE_URL, value: http://cdc-ats-candidate-service:4005 }
+      - { key: OPENROUTER_API_KEY, sync: false }
+
+  - type: pserv
+    name: cdc-ats-notification-service
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.service
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health/ready
+    envVars:
+      - { key: SERVICE, value: notification-service }
+      - { key: PORT, value: "4009" }
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, sync: false }   # …/notification_db
+      - { key: NATS_URL, value: nats://cdc-ats-nats:4222 }
+      - { key: SMTP_URL, sync: false }       # e.g. smtp://user:pass@host:587
+      - { key: SMTP_FROM, value: noreply@cdc-ats.example }

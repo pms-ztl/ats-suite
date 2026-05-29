@@ -73,8 +73,9 @@ export function setup() {
     fail(`Login failed (${res.status}) — set LOAD_TEST_EMAIL/PASSWORD env vars to point at a seeded user`);
   }
   const body = res.json();
-  const token = body?.data?.accessToken || body?.accessToken;
-  if (!token) fail("Login response missing accessToken");
+  // Login returns { data: { token, refreshToken, ... } } — `token`, not `accessToken`.
+  const token = body?.data?.token || body?.data?.accessToken || body?.token;
+  if (!token) fail("Login response missing token");
   return { token };
 }
 

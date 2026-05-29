@@ -84,19 +84,27 @@ export function createApp(logger: Logger): Express {
   app.use(cookieParser());
   app.use(metrics.middleware);
 
+  // Rate limits are env-configurable so a dedicated load-test environment can
+  // measure true capacity. DISABLE_RATE_LIMIT=1 turns them off entirely (load
+  // tests / internal benchmarks only — NEVER in a public prod env). Defaults
+  // are unchanged, so production behavior is identical unless explicitly set.
+  const rlDisabled = process.env["DISABLE_RATE_LIMIT"] === "1";
+
   // Strict rate limit on /api/auth to slow credential stuffing
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20,
+    max: Number(process.env["AUTH_RATE_LIMIT_MAX"] ?? 20),
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => rlDisabled,
     message: { success: false, error: { code: "RATE_LIMITED", message: "Too many auth attempts" } },
   });
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 500,
+    max: Number(process.env["GATEWAY_RATE_LIMIT_MAX"] ?? 500),
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => rlDisabled,
   });
   app.use(generalLimiter);
 
@@ -104,7 +112,7 @@ export function createApp(logger: Logger): Express {
   // tenant from JWT. Falls through silently when Redis is unavailable.
   app.use("/api", tenantRateLimit({
     redis,
-    requestsPerMinute: Number(process.env["TENANT_RATE_LIMIT_PER_MINUTE"] ?? 600),
+    requestsPerMinute: rlDisabled ? 1_000_000 : Number(process.env["TENANT_RATE_LIMIT_PER_MINUTE"] ?? 600),
   }));
 
   // ── Health endpoints + metrics ──────────────────────────────────────
