@@ -303,8 +303,16 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 // Tier-3 staff have no business listing users.
 router.get("/", requireRole("SUPER_ADMIN", "ADMIN"), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const tenantId = req.query["tenantId"] as string | undefined;
+    const isSuperAdmin = req.user?.role === "SUPER_ADMIN";
     const role = req.query["role"] as string | undefined;
+    // Tenant admins are ALWAYS scoped to their own tenant — ignore any
+    // tenantId query param so an ADMIN can't enumerate another tenant's users.
+    // Super-admins may target any tenant (?tenantId=) or filter by role across
+    // the whole platform (?role=). A tenant admin with no params lists their
+    // own team (what the Team settings page needs).
+    const tenantId = isSuperAdmin
+      ? (req.query["tenantId"] as string | undefined)
+      : getTenantId(req);
     if (!tenantId && !role) {
       throw Errors.validation("tenantId or role query param is required");
     }

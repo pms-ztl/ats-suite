@@ -52,7 +52,13 @@ export function createApp(logger: Logger): Express {
   // No X-User-Id required on these routes — they're called by other
   // services, not end users. In production, NetworkPolicy + service token
   // restricts who can reach them.
-  app.use("/internal/users", usersRouter);
+  // readAuthHeaders is OPTIONAL here because several routes are intentionally
+  // unauthenticated (verify-credentials during login, POST / during the
+  // register saga, accept-invite) — they run before any JWT exists. But the
+  // role-guarded routes (GET list, invite, role/deactivate, platform-stats,
+  // assignable) need req.user populated from the gateway's X-User-* headers;
+  // without this middleware requireRole/requireTenantAdmin always 401'd.
+  app.use("/internal/users", readAuthHeaders({ optional: true }), usersRouter);
   // Auth polish — forgot/reset password are unauthenticated; the others
   // (change-password, mfa/*) require X-User-Id from a logged-in JWT.
   app.use("/internal/auth", readAuthHeaders({ optional: true }), authPolishRouter);
