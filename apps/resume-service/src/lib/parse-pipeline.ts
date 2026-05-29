@@ -113,11 +113,14 @@ export async function runParsePipeline(opts: {
 
   // 3. Verify — prefer the agentic resume-verifier (ReAct: corroborate claims
   //    with tools). Falls back to the single GitHub-corroboration call.
+  // Cost gate: the verifier is a SECOND LLM run per resume. On by default;
+  // set AGENTIC_RESUME_VERIFY=0 to skip it (falls back to GitHub-only).
   let verification: any = null;
   let githubCorroboration: GithubCorroboration | null = null;
   const ghHandle = extractGithubHandle(result.output.links?.github);
+  const verifyEnabled = process.env["AGENTIC_RESUME_VERIFY"] !== "0";
 
-  if (hasAgenticAgent("resume-verifier")) {
+  if (verifyEnabled && hasAgenticAgent("resume-verifier")) {
     try {
       const ver = await runAgenticAgent<any, any>({
         agentType: "resume-verifier" as any,

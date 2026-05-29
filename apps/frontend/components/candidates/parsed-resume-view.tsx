@@ -157,7 +157,65 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
           <Badge variant="outline" className="text-2xs uppercase">{formatGuess.replace(/_/g, " ")}</Badge>
         )}
         {fairnessMode && <Badge variant="outline" className="text-2xs bg-amber-500/15 text-amber-700 dark:text-amber-300">Fairness mode</Badge>}
+        {data.verification && typeof data.verification.trustScore === "number" && (
+          <Badge
+            variant="outline"
+            className={`text-2xs ${
+              data.verification.trustScore >= 75
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                : data.verification.trustScore >= 50
+                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                  : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+            }`}
+          >
+            Trust {data.verification.trustScore}/100
+          </Badge>
+        )}
       </div>
+
+      {/* Verification & trust (Phase 38 — agentic resume-verifier) */}
+      {data.verification && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" /> Verification &amp; Trust
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs">
+            {data.verification.summary && <p className="text-muted-foreground">{data.verification.summary}</p>}
+            {Array.isArray(data.verification.redFlags) && data.verification.redFlags.length > 0 && (
+              <div className="space-y-1">
+                {data.verification.redFlags.map((rf: string, i: number) => (
+                  <p key={i} className="flex items-start gap-1 text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" /> {rf}
+                  </p>
+                ))}
+              </div>
+            )}
+            {Array.isArray(data.verification.findings) && data.verification.findings.length > 0 && (
+              <div className="space-y-1 pt-1">
+                {data.verification.findings.map((f: AnyMap, i: number) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-2xs shrink-0 ${
+                        f.status === "corroborated"
+                          ? "text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                          : f.status === "contradicted"
+                            ? "text-rose-700 dark:text-rose-300 border-rose-500/30"
+                            : "text-amber-700 dark:text-amber-300 border-amber-500/30"
+                      }`}
+                    >
+                      {f.status}
+                    </Badge>
+                    <span><span className="font-medium">{f.claim}</span>{f.evidence ? ` — ${f.evidence}` : ""}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Honesty flags */}
       {seriousFlags.length > 0 && !fairnessMode && (

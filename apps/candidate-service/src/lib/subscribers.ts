@@ -72,6 +72,8 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
       // raw flat shape for pre-37 events.
       const enrichedPayload = (envelope.payload as any).enriched;
       const githubCorroboration = (envelope.payload as any).githubCorroboration ?? null;
+      // Phase 38 — agentic resume-verifier output (trust score + findings).
+      const verification = (envelope.payload as any).verification ?? null;
       const summary = enrichedPayload ?? {
         skills:           p.skills ?? [],
         experience:       p.experience ?? [],
@@ -95,7 +97,7 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
       //      to materially different values
       //    - phone/location: fill-in only (never overwrite a real value)
       const updateData: Record<string, unknown> = {
-        parsedSummary: { ...summary, githubCorroboration },
+        parsedSummary: { ...summary, githubCorroboration, verification },
         ...(fairSummary ? { parsedSummaryFair: fairSummary } : {}),
       };
 
