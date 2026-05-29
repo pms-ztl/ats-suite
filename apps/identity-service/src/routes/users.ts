@@ -117,6 +117,25 @@ router.get("/seats", async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
+// ─── GET /internal/users/platform-stats — SUPER_ADMIN cross-tenant counts ─
+// Returns { total, byTenant } for the super-admin dashboard (KPI total +
+// per-tenant userCount enrichment). Declared before /:id so the literal path
+// isn't captured as a user id.
+router.get("/platform-stats", requireRole("SUPER_ADMIN"), async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const grouped = await prisma.user.groupBy({ by: ["tenantId"], _count: { _all: true } });
+    const byTenant: Record<string, number> = {};
+    let total = 0;
+    for (const r of grouped) {
+      byTenant[r.tenantId] = r._count._all;
+      total += r._count._all;
+    }
+    ok(res, { total, byTenant });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── POST /internal/users/invite ─────────────────────────────────────────
 // Body: { tenantId, plan, email, firstName, lastName, role, invitedByUserId }
 const InviteSchema = z.object({

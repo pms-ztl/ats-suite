@@ -83,6 +83,44 @@ router.delete("/:id", async (req: Request, res: Response, next: NextFunction) =>
 });
 
 // ─── GET /internal/tenants/:id ───────────────────────────────────────────
+// ─── GET /internal/tenants/stats — platform KPIs (SUPER_ADMIN) ──────────
+// Cross-tenant rollup for the super-admin dashboard. MUST be declared before
+// GET /:id so "stats" isn't captured as a tenant id.
+router.get("/stats", requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [byStatus, byPlan, totalTenants, recent] = await Promise.all([
+      prisma.tenant.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.tenant.groupBy({ by: ["plan"], _count: { _all: true } }),
+      prisma.tenant.count(),
+      prisma.tenant.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, name: true, plan: true, status: true, createdAt: true },
+      }),
+    ]);
+    const statusMap: Record<string, number> = {};
+    for (const r of byStatus) statusMap[r.status] = r._count._all;
+    const planBreakdown: Record<string, number> = {};
+    for (const r of byPlan) planBreakdown[r.plan] = r._count._all;
+    ok(res, {
+      totalTenants,
+      activeTenants: statusMap["ACTIVE"] ?? 0,
+      trialTenants: statusMap["TRIAL"] ?? 0,
+      suspendedTenants: statusMap["SUSPENDED"] ?? 0,
+      planBreakdown,
+      recentTenants: recent.map((t) => ({
+        id: t.id,
+        name: t.name,
+        plan: t.plan,
+        status: t.status,
+        createdAt: t.createdAt.toISOString(),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;

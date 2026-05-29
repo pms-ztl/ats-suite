@@ -388,6 +388,108 @@ export function createApp(logger: Logger): Express {
     next();
   };
 
+  // GET /api/super-admin/stats — platform KPI aggregator. Fans out to
+  // tenant/identity/candidate/job/billing and assembles the dashboard's top
+  // cards. Fail-soft per service (a down service contributes 0 rather than
+  // failing the whole dashboard). Declared BEFORE the /tenants proxy.
+  const superAdminFanout = async (req: Request) => {
+    const { callService } = await import("./lib/service-client.js");
+    const uh = {
+      userId: req.user!.id,
+      tenantId: req.user!.tenantId,
+      role: req.user!.role,
+      email: req.user!.email,
+    };
+    return { callService, uh };
+  };
+  const settledVal = (s: PromiseSettledResult<any>) => (s.status === "fulfilled" ? s.value : null);
+
+  app.get(
+    "/api/super-admin/stats",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { callService, uh } = await superAdminFanout(req);
+        const [tStats, uStats, cStats, rStats, cost] = await Promise.allSettled([
+          callService<any>("tenant", { path: "/internal/tenants/stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("identity", { path: "/internal/users/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("candidate", { path: "/internal/candidates/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("job", { path: "/internal/requisitions/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("billing", { path: "/internal/platform/cost?days=30", userHeaders: uh, timeoutMs: 4000 }),
+        ]);
+        const t = settledVal(tStats) ?? {};
+        const u = settledVal(uStats) ?? {};
+        const c = settledVal(cStats) ?? {};
+        const r = settledVal(rStats) ?? {};
+        const b = settledVal(cost) ?? {};
+        res.json({
+          success: true,
+          data: {
+            totalTenants: t.totalTenants ?? 0,
+            activeTenants: t.activeTenants ?? 0,
+            trialTenants: t.trialTenants ?? 0,
+            suspendedTenants: t.suspendedTenants ?? 0,
+            planBreakdown: t.planBreakdown ?? {},
+            totalUsers: u.total ?? 0,
+            totalCandidates: c.total ?? 0,
+            totalRequisitions: r.total ?? 0,
+            totalCostUsd30d: b?.totals?.costUsd ?? 0,
+            recentTenants: t.recentTenants ?? [],
+          },
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // GET /api/super-admin/tenants — enriched tenant list. Forwards the query to
+  // tenant-service, then merges per-tenant userCount/candidateCount/
+  // requisitionCount (from the platform-stats maps) + agentRunCount/costUsd30d
+  // (from billing's cost rollup). Exact-path GET so PATCH /:id and other
+  // sub-paths still fall through to the proxy below.
+  app.get(
+    "/api/super-admin/tenants",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { callService, uh } = await superAdminFanout(req);
+        const qs = new URLSearchParams(req.query as Record<string, string>).toString();
+        const [listRes, uStats, cStats, rStats, cost] = await Promise.allSettled([
+          callService<any>("tenant", { path: `/internal/tenants${qs ? `?${qs}` : ""}`, userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("identity", { path: "/internal/users/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("candidate", { path: "/internal/candidates/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("job", { path: "/internal/requisitions/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("billing", { path: "/internal/platform/cost?days=30", userHeaders: uh, timeoutMs: 4000 }),
+        ]);
+        const list = settledVal(listRes) ?? { data: [], total: 0, page: 1, pages: 0 };
+        const users = (settledVal(uStats) ?? {}).byTenant ?? {};
+        const cands = (settledVal(cStats) ?? {}).byTenant ?? {};
+        const reqs = (settledVal(rStats) ?? {}).byTenant ?? {};
+        const costByTenant = new Map<string, { runs: number; costUsd: number }>();
+        for (const row of (settledVal(cost) ?? {}).byTenant ?? []) {
+          costByTenant.set(row.tenantId, { runs: row.runs ?? 0, costUsd: row.costUsd ?? 0 });
+        }
+        const rows = (list.data ?? []).map((tn: any) => ({
+          ...tn,
+          userCount: users[tn.id] ?? 0,
+          candidateCount: cands[tn.id] ?? 0,
+          requisitionCount: reqs[tn.id] ?? 0,
+          agentRunCount: costByTenant.get(tn.id)?.runs ?? 0,
+          costUsd30d: costByTenant.get(tn.id)?.costUsd ?? 0,
+        }));
+        res.json({
+          success: true,
+          data: { data: rows, total: list.total ?? rows.length, page: list.page ?? 1, pages: list.pages ?? 1 },
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   app.use("/api/super-admin/tenants", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/tenants"));
   app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
 

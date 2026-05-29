@@ -74,6 +74,22 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
   } catch (err) { next(err); }
 });
 
+// GET /internal/requisitions/platform-stats — SUPER_ADMIN cross-tenant counts.
+// Returns { total, byTenant } for the super-admin dashboard. Declared before
+// /:id so the literal path isn't captured as a requisition id.
+router.get("/platform-stats", requireRole("SUPER_ADMIN"), async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const grouped = await prisma.requisition.groupBy({ by: ["tenantId"], _count: { _all: true } });
+    const byTenant: Record<string, number> = {};
+    let total = 0;
+    for (const r of grouped) {
+      byTenant[r.tenantId] = r._count._all;
+      total += r._count._all;
+    }
+    ok(res, { total, byTenant });
+  } catch (err) { next(err); }
+});
+
 router.post("/", requireReqEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
