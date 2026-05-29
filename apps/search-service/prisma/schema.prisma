@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SEARCH_DATABASE_URL")
+}
+
+enum DocKind {
+  CANDIDATE
+  JOB
+}
+
+// A denormalized, searchable copy of candidates + jobs, kept in sync via NATS
+// events (and an explicit /index endpoint). Embeddings are stored as Float[]
+// and cosine is computed in-app, so the service runs on stock Postgres; swap to
+// the pgvector image + an ANN index later for scale.
+model SearchDocument {
+  id        String   @id @default(uuid())
+  tenantId  String
+  kind      DocKind
+  refId     String // candidateId or requisitionId in the owning service
+  title     String   @default("")
+  text      String   @default("") @db.Text
+  skills    String[] @default([])
+  embedding Float[]  @default([])
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, kind, refId])
+  @@index([tenantId, kind])
+}

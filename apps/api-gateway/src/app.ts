@@ -169,6 +169,7 @@ export function createApp(logger: Logger): Express {
   const resumeUrl = process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007";
   const screeningUrl = process.env["SCREENING_SERVICE_URL"] ?? "http://localhost:4008";
   const notificationUrl = process.env["NOTIFICATION_SERVICE_URL"] ?? "http://localhost:4009";
+  const searchUrl = process.env["SEARCH_SERVICE_URL"] ?? "http://localhost:4010";
 
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
@@ -322,6 +323,8 @@ export function createApp(logger: Logger): Express {
   app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
   app.use("/api/resume", gatewayAuth(), forwardHeaders(resumeUrl, "/internal/resume"));
   app.use("/api/screening", gatewayAuth(), forwardHeaders(screeningUrl, "/internal/screening"));
+  // Phase 6 — search & matching microservice (port 4010).
+  app.use("/api/search", gatewayAuth(), forwardHeaders(searchUrl, "/internal/search"));
   app.use("/api/interviews", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interviews"));
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
