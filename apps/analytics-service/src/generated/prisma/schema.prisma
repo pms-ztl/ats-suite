@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ANALYTICS_DATABASE_URL")
+}
+
+// Pre-aggregated metrics for fast reporting. Populated via /ingest (and, later,
+// domain-event subscribers) instead of the gateway fanning out to every service
+// on each dashboard load.
+model MetricRollup {
+  id        String   @id @default(uuid())
+  tenantId  String
+  metric    String // e.g. "applied" | "screened" | "interviewed" | "offered" | "hired"
+  dimension String   @default("all") // e.g. a source or department
+  period    String   @default("all") // e.g. "2026-05" or "all"
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, metric, dimension, period])
+  @@index([tenantId, metric])
+}
