@@ -102,23 +102,38 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         ...(fairSummary ? { parsedSummaryFair: fairSummary } : {}),
       };
 
-      if (p.email && PLACEHOLDER_EMAIL_RE.test(candidate.email)) {
-        updateData.email = p.email.toLowerCase();
+      // Phase 37 parser fields are confidence-wrapped ({value,confidence}); the
+      // enriched view carries them too. Unwrap before backfilling identity —
+      // otherwise p.email is an object, p.email.toLowerCase() throws, and the
+      // candidate keeps its placeholder name/email.
+      const unwrap = (f: any): any => (f && typeof f === "object" && "value" in f ? f.value : f);
+      const pName = unwrap((p as any).name) ?? unwrap(enrichedPayload?.name);
+      const pEmail = unwrap((p as any).email) ?? unwrap(enrichedPayload?.email);
+      const pPhone = unwrap((p as any).phone) ?? unwrap(enrichedPayload?.phone);
+      const pLocation = unwrap((p as any).location) ?? unwrap(enrichedPayload?.location);
+      const pSummary = unwrap((p as any).summary) ?? unwrap(enrichedPayload?.summary);
+
+      if (typeof pEmail === "string" && pEmail && PLACEHOLDER_EMAIL_RE.test(candidate.email)) {
+        updateData.email = pEmail.toLowerCase();
       }
       const isGenericName =
         /^(pending|unknown|bulk\s|cloud\s)/i.test(candidate.firstName) ||
         /^(pending|unknown|bulk\s|cloud\s|user|—)/i.test(candidate.lastName);
       if (isGenericName) {
-        const fullName = p.fullName ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim();
+        const fullName =
+          (p as any).fullName ??
+          (pName && typeof pName === "object"
+            ? `${pName.first ?? ""} ${pName.last ?? ""}`.trim()
+            : typeof pName === "string" ? pName : "");
         if (fullName) {
           const [first, ...rest] = fullName.split(/\s+/);
           if (first) updateData.firstName = first;
           if (rest.length > 0) updateData.lastName = rest.join(" ");
         }
       }
-      if (!candidate.phone && p.phone)         updateData.phone    = p.phone;
-      if (!candidate.location && p.location)   updateData.location = p.location;
-      if (!candidate.summary && p.summary)     updateData.summary  = p.summary;
+      if (!candidate.phone && typeof pPhone === "string" && pPhone)          updateData.phone    = pPhone;
+      if (!candidate.location && typeof pLocation === "string" && pLocation) updateData.location = pLocation;
+      if (!candidate.summary && typeof pSummary === "string" && pSummary)    updateData.summary  = pSummary;
       if (!candidate.linkedinUrl && p.links?.linkedin)   updateData.linkedinUrl  = p.links.linkedin;
       if (!candidate.portfolioUrl && p.links?.portfolio) updateData.portfolioUrl = p.links.portfolio;
 

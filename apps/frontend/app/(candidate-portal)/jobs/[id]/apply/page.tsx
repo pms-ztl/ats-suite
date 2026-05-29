@@ -228,61 +228,29 @@ export default function ApplyPage() {
       return;
     }
 
+    if (!job?.slug) { toast.error("Job not loaded yet — try again."); return; }
     setSubmitting(true);
 
     try {
-      // Use public apply endpoint — no auth required
-      const payload = {
-        jobPostingId: job?.id ?? jobId,
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim() || undefined,
-        linkedinUrl: form.linkedinUrl.trim() || undefined,
-        coverLetter: form.coverLetter.trim() || undefined,
-        source: "CAREER_PAGE",
-      };
+      // One multipart call to the real public endpoint: creates candidate +
+      // application AND forwards the resume for parsing. No auth required.
+      const fd = new FormData();
+      fd.append("firstName", form.firstName.trim());
+      fd.append("lastName", form.lastName.trim());
+      fd.append("email", form.email.trim());
+      if (form.phone.trim()) fd.append("phone", form.phone.trim());
+      if (form.linkedinUrl.trim()) fd.append("linkedinUrl", form.linkedinUrl.trim());
+      if (form.coverLetter.trim()) fd.append("coverLetter", form.coverLetter.trim());
+      if (resume) fd.append("resume", resume, resume.name);
 
-      const res = await fetch(`${API_BASE}/public/apply`, {
+      const res = await fetch(`${API_BASE}/public/jobs/${job.slug}/apply-custom`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: fd,
       });
-
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          errData.error?.message || `Application failed (${res.status})`
-        );
+        throw new Error(errData.error?.message || `Application failed (${res.status})`);
       }
-
-      // If resume exists, attempt upload (best-effort) via the public route
-      // so anonymous candidates can submit without an auth token.
-      const result = await res.json();
-      const candidateId = result.data?.candidateId;
-      const applicationId = result.data?.applicationId;
-
-      if (resume && applicationId) {
-        try {
-          const formData = new FormData();
-          formData.append("file", resume);
-          formData.append("email", form.email.trim().toLowerCase());
-
-          const upRes = await fetch(
-            `${API_BASE}/public/applications/${applicationId}/resume`,
-            { method: "POST", body: formData },
-          );
-          if (!upRes.ok) {
-            const errBody = await upRes.json().catch(() => ({}));
-            console.warn("Resume upload failed:", errBody?.error?.message || upRes.status);
-          }
-        } catch {
-          // Resume upload failed but application was created -- not fatal
-          console.warn("Resume upload failed, application was still created.");
-        }
-      }
-      // Avoid an unused-variable lint warning when candidateId isn't used elsewhere
-      void candidateId;
 
       setSubmitted(true);
       toast.success("Application submitted successfully!");
