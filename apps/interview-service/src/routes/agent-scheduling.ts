@@ -34,6 +34,7 @@ const RequestSchema = z.object({
         busyWindows: z
           .array(z.object({ start: z.string(), end: z.string() }))
           .default([]),
+        timezone: z.string().optional(),
       }),
     )
     .min(1)
@@ -73,6 +74,7 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
         logger,
         participants: body.participants,
         durationMinutes: body.durationMinutes,
+        meetingTimezone: body.timezone,
         ...(body.preferences ? { preferences: body.preferences } : {}),
         ...(body.candidateId ? { candidateId: body.candidateId } : {}),
         ...(body.requisitionId ? { requisitionId: body.requisitionId } : {}),

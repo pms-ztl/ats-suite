@@ -45,6 +45,7 @@ export interface AgenticSchedulingInput {
     email: string;
     role: "interviewer" | "candidate" | "hiring_manager";
     busyWindows: Array<{ start: string; end: string }>;
+    timezone?: string; // IANA tz; defaults to the meeting timezone
   }>;
   durationMinutes: number;
   dateRange: { start: string; end: string };

@@ -156,6 +156,39 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
+  // ── tenant.{*}.interview.scheduled ────────────────────────────────────
+  // Phase 38 — the scheduling agent (or manual create) booked an interview.
+  // Send the candidate + panel a real invite with the meeting link + ICS.
+  await subscribeToEvents({
+    stream: "INTERVIEW_EVENTS",
+    subject: "tenant.*.interview.scheduled",
+    durable: "notification-service:interview-scheduled",
+    logger,
+    handler: async (envelope) => {
+      const p = envelope.payload as any;
+      const when = p.scheduledAt ? new Date(p.scheduledAt).toUTCString() : "soon";
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,                       // broadcast to the tenant
+        // Reuses SYSTEM type (NotificationType is a DB enum; a dedicated
+        // INTERVIEW_SCHEDULED value would need an enum migration). The
+        // metadata + title/link carry the full invite context.
+        type: "SYSTEM",
+        title: "Interview scheduled",
+        body: `${when}${p.meetingUrl ? ` · Join: ${p.meetingUrl}` : ""}`,
+        link: p.interviewId ? `/interviews/${p.interviewId}` : "/interviews",
+        metadata: {
+          interviewId: p.interviewId, candidateId: p.candidateId,
+          scheduledAt: p.scheduledAt, endAt: p.endAt, meetingUrl: p.meetingUrl,
+          attendees: p.attendees ?? [], organizer: p.organizer ?? null,
+          ics: p.ics ?? null,               // email channel can attach this
+          bookedByAgent: !!p.bookedByAgent,
+        },
+        channels: ["in_app", "email"],
+      });
+    },
+  });
+
   // Phase 22 — platform.agent.kill-switch.toggled
   // Fires when super-admin flips a kill switch on /admin/platform/agents.
   // Notifies all SUPER_ADMINs via in-app + slack so an incident has a

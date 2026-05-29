@@ -82,6 +82,10 @@ export default function SchedulingPage() {
   const [formEnd, setFormEnd] = useState("");
   const [formLocation, setFormLocation] = useState("");
   const [formAttendees, setFormAttendees] = useState("");
+  const [formCandidateId, setFormCandidateId] = useState("");
+  const [formReqId, setFormReqId] = useState("");
+  const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
+  const [reqs, setReqs] = useState<Array<{ id: string; title: string }>>([]);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestion, setSuggestion] = useState<ScheduleSuggestion | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -102,6 +106,21 @@ export default function SchedulingPage() {
       }
     }
     load();
+    // Candidate + requisition pickers for booking a real interview
+    const token = getToken();
+    const hdr: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch(`${API}/candidates?page=1&pageSize=50`, { credentials: "include", headers: hdr })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        const rows = res?.data?.data ?? res?.data ?? res;
+        if (Array.isArray(rows)) setCandidates(rows.map((c: any) => ({ id: c.id, name: `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() || c.email })));
+      }).catch(() => {});
+    fetch(`${API}/requisitions?page=1&pageSize=50`, { credentials: "include", headers: hdr })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        const rows = res?.data?.data ?? res?.data ?? res;
+        if (Array.isArray(rows)) setReqs(rows.map((r2: any) => ({ id: r2.id, title: r2.title })));
+      }).catch(() => {});
   }, [retryCount]);
 
   const filtered = useMemo(() => {
@@ -129,6 +148,10 @@ export default function SchedulingPage() {
           durationMinutes: 60,
           dateRange: { start: start.toISOString(), end: end.toISOString() },
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          // When a candidate + requisition are chosen, the agent may BOOK the
+          // slot itself (creates the interview + sends the invite).
+          ...(formCandidateId ? { candidateId: formCandidateId } : {}),
+          ...(formReqId ? { requisitionId: formReqId } : {}),
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -155,30 +178,35 @@ export default function SchedulingPage() {
   }
 
   async function handleCreateEvent() {
-    if (!formTitle || !formStart || !formEnd) {
-      toast.error("Title, start, and end times are required.");
+    if (!formStart || !formEnd) {
+      toast.error("Start and end times are required.");
+      return;
+    }
+    if (!formCandidateId || !formReqId) {
+      toast.error("Pick a candidate and a requisition — interviews are tied to both.");
       return;
     }
     setSubmitting(true);
     try {
-      await fetch(`${API}/scheduling`, {
+      // Real interview creation (the agent route /api/scheduling expects
+      // participants; manual events go to /api/interviews which the model
+      // actually represents).
+      const res = await fetch(`${API}/interviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
-          title: formTitle,
+          requisitionId: formReqId,
+          candidateId: formCandidateId,
           type: formType,
-          startAt: new Date(formStart).toISOString(),
-          endAt: new Date(formEnd).toISOString(),
-          location: formLocation || undefined,
-          attendees: formAttendees
-            ? formAttendees.split(",").map((e) => e.trim())
-            : undefined,
+          scheduledAt: new Date(formStart).toISOString(),
+          ...(formLocation ? { meetingUrl: formLocation } : {}),
         }),
       });
-      toast.success("Event scheduled successfully.");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success("Interview scheduled successfully.");
       setDialogOpen(false);
       setFormTitle("");
       setFormType("INTERVIEW");
@@ -186,6 +214,9 @@ export default function SchedulingPage() {
       setFormEnd("");
       setFormLocation("");
       setFormAttendees("");
+      setFormCandidateId("");
+      setFormReqId("");
+      setSuggestion(null);
       setRetryCount((c) => c + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create event");
@@ -227,6 +258,30 @@ export default function SchedulingPage() {
                 <DialogTitle>Schedule New Event</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Candidate</Label>
+                    <select
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      value={formCandidateId}
+                      onChange={(e) => setFormCandidateId(e.target.value)}
+                    >
+                      <option value="">Select…</option>
+                      {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Requisition</Label>
+                    <select
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      value={formReqId}
+                      onChange={(e) => setFormReqId(e.target.value)}
+                    >
+                      <option value="">Select…</option>
+                      {reqs.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Title</Label>
                   <Input
