@@ -27,6 +27,7 @@ model Requisition {
   jobFamily       String?
   description     String?
   requirements    Json              @default("[]")
+  customFields    Json              @default("[]")
   salaryMin       Float?
   salaryMax       Float?
   salaryCurrency  String            @default("USD")

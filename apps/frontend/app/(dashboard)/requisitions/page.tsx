@@ -100,6 +100,7 @@ interface NewRequisitionForm {
   description: string;
   requirements: string; // one per line — tunes AI screening
   skills: string;        // comma-separated — seeds AI generation
+  customFields: { label: string; value: string }[]; // Phase 3 — admin criteria -> screener
 }
 
 const DEPARTMENTS = [
@@ -129,10 +130,11 @@ export default function RequisitionsPage() {
     description: "",
     requirements: "",
     skills: "",
+    customFields: [],
   });
 
   function resetForm() {
-    setForm({ title: "", department: "", location: "", employmentType: "", remote: false, description: "", requirements: "", skills: "" });
+    setForm({ title: "", department: "", location: "", employmentType: "", remote: false, description: "", requirements: "", skills: "", customFields: [] });
   }
 
   function handleOpenDialog() {
@@ -183,7 +185,7 @@ export default function RequisitionsPage() {
     }
     setSubmitting(true);
     try {
-      await api.platform.createRequisition({
+      const resp: any = await api.platform.createRequisition({
         title: form.title,
         department: form.department,
         location: form.location,
@@ -191,8 +193,13 @@ export default function RequisitionsPage() {
         remote: form.remote,
         description: form.description,
         requirements: form.requirements.split("\n").map((r) => r.trim()).filter(Boolean),
+        customFields: form.customFields
+          .filter((c) => c.label.trim())
+          .map((c) => ({ label: c.label.trim(), value: c.value.trim() })),
       });
       toast.success("Requisition created — pending approval.");
+      const warnings: string[] = resp?.data?.complianceWarnings ?? resp?.complianceWarnings ?? [];
+      if (warnings.length) toast.warning(warnings[0]);
       setDialogOpen(false);
       resetForm();
       fetchRequisitions(setRequisitions, setLoading, setError);
@@ -447,6 +454,27 @@ export default function RequisitionsPage() {
                 value={form.requirements}
                 onChange={(e) => setForm((f) => ({ ...f, requirements: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Custom fields <span className="text-muted-foreground text-xs">(your own labeled criteria — sent to the AI screener)</span></Label>
+              {form.customFields.map((cf, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    placeholder="Label (e.g. Open to relocation?)"
+                    value={cf.label}
+                    onChange={(e) => setForm((f) => { const c = [...f.customFields]; c[i] = { ...c[i], label: e.target.value }; return { ...f, customFields: c }; })}
+                  />
+                  <Input
+                    placeholder="Value (e.g. Yes, Bangalore)"
+                    value={cf.value}
+                    onChange={(e) => setForm((f) => { const c = [...f.customFields]; c[i] = { ...c[i], value: e.target.value }; return { ...f, customFields: c }; })}
+                  />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, customFields: f.customFields.filter((_, j) => j !== i) }))}>✕</Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => setForm((f) => ({ ...f, customFields: [...f.customFields, { label: "", value: "" }] }))}>
+                + Add custom field
+              </Button>
             </div>
           </div>
           <DialogFooter>

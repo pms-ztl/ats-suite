@@ -56,13 +56,21 @@ export function buildScreenerTools(opts: {
     get_job_requirements: async (args: { requisitionId: string }) => {
       const req = await fetchRequisition(args.requisitionId, tenantId);
       if (!req) return { found: false, error: "requisition not found" };
-      const requirements = Array.isArray(req.requirements) ? (req.requirements as string[]) : [];
+      const baseReqs = Array.isArray(req.requirements) ? (req.requirements as string[]) : [];
+      // Phase 3 — admin-defined custom fields become additional screening
+      // criteria the agent must assess (and that feed the Phase 4 match score).
+      const customFields = Array.isArray((req as any).customFields) ? (req as any).customFields : [];
+      const customCriteria = customFields
+        .filter((f: any) => f && f.label)
+        .map((f: any) => `${f.label}: ${f.value ?? ""}`.trim());
+      const requirements = [...baseReqs, ...customCriteria];
       return {
         found: true,
         title: req.title,
         department: req.department,
         description: (req as any).description ?? null,
         requirements,
+        customCriteria,
         requirementCount: requirements.length,
       };
     },

@@ -59,6 +59,7 @@ export interface RequisitionData {
   department: string;
   description?: string | null;
   requirements: string[] | unknown;
+  customFields?: Array<{ label: string; value: string; importance?: string }> | unknown;
 }
 
 export async function fetchResume(

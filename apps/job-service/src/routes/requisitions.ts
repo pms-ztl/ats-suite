@@ -12,6 +12,14 @@ import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
+// Phase 3 — admin-defined custom screening fields (label + value), passed to
+// the AI screener as additional criteria so screening is tuned to this job.
+const CustomFieldSchema = z.object({
+  label: z.string().min(1).max(120),
+  value: z.string().max(2000).default(""),
+  importance: z.enum(["must", "nice", "info"]).optional(),
+});
+
 const CreateReqSchema = z.object({
   title: z.string().min(1).max(200),
   department: z.string().min(1).max(100),
@@ -19,12 +27,23 @@ const CreateReqSchema = z.object({
   country: z.string().default("US"),
   description: z.string().optional(),
   requirements: z.array(z.string()).optional(),
+  customFields: z.array(CustomFieldSchema).max(30).optional(),
   salaryMin: z.number().optional(),
   salaryMax: z.number().optional(),
   salaryCurrency: z.string().default("USD"),
   status: RequisitionStatusSchema.optional(),
   headcount: z.number().int().min(1).default(1),
 });
+
+// Phase 5 — pay-transparency publish gate (advisory, non-blocking). Many US
+// jurisdictions require a posted salary range for public OPEN roles.
+function complianceWarnings(r: { status?: string | null; salaryMin?: number | null; salaryMax?: number | null }): string[] {
+  const w: string[] = [];
+  if (r.status === "OPEN" && (r.salaryMin == null || r.salaryMax == null)) {
+    w.push("Pay transparency: add a salary range (min & max) before posting publicly — required in CA, CO, CT, IL, MD, MN, NV, NY, WA and more.");
+  }
+  return w;
+}
 
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -95,9 +114,13 @@ router.post("/", requireReqEditor, async (req: Request, res: Response, next: Nex
     const tenantId = getTenantId(req);
     const body = CreateReqSchema.parse(req.body);
     const requisition = await prisma.requisition.create({
-      data: { tenantId, ...body, requirements: (body.requirements ?? []) as any },
+      data: {
+        tenantId, ...body,
+        requirements: (body.requirements ?? []) as any,
+        customFields: (body.customFields ?? []) as any,
+      },
     });
-    created(res, requisition);
+    created(res, { ...requisition, complianceWarnings: complianceWarnings(requisition as any) });
   } catch (err) { next(err); }
 });
 
@@ -124,10 +147,11 @@ router.patch("/:id", requireReqEditor, async (req: Request, res: Response, next:
     if (!existing) throw Errors.notFound("Requisition");
     const data: any = { ...body };
     if (body.requirements) data.requirements = body.requirements;
+    if (body.customFields) data.customFields = body.customFields;
     const { count } = await prisma.requisition.updateMany({ where: { id, tenantId }, data });
     if (count === 0) throw Errors.notFound("Requisition");
     const updated = await prisma.requisition.findUnique({ where: { id } });
-    ok(res, updated);
+    ok(res, { ...updated, complianceWarnings: complianceWarnings(updated as any) });
   } catch (err) { next(err); }
 });
 

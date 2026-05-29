@@ -131,6 +131,7 @@ exports.Prisma.RequisitionScalarFieldEnum = {
   jobFamily: 'jobFamily',
   description: 'description',
   requirements: 'requirements',
+  customFields: 'customFields',
   salaryMin: 'salaryMin',
   salaryMax: 'salaryMax',
   salaryCurrency: 'salaryCurrency',

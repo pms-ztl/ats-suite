@@ -1493,6 +1493,7 @@ export namespace Prisma {
     jobFamily: number
     description: number
     requirements: number
+    customFields: number
     salaryMin: number
     salaryMax: number
     salaryCurrency: number
@@ -1579,6 +1580,7 @@ export namespace Prisma {
     jobFamily?: true
     description?: true
     requirements?: true
+    customFields?: true
     salaryMin?: true
     salaryMax?: true
     salaryCurrency?: true
@@ -1690,6 +1692,7 @@ export namespace Prisma {
     jobFamily: string | null
     description: string | null
     requirements: JsonValue
+    customFields: JsonValue
     salaryMin: number | null
     salaryMax: number | null
     salaryCurrency: string
@@ -1733,6 +1736,7 @@ export namespace Prisma {
     jobFamily?: boolean
     description?: boolean
     requirements?: boolean
+    customFields?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -1760,6 +1764,7 @@ export namespace Prisma {
     jobFamily?: boolean
     description?: boolean
     requirements?: boolean
+    customFields?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -1784,6 +1789,7 @@ export namespace Prisma {
     jobFamily?: boolean
     description?: boolean
     requirements?: boolean
+    customFields?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -1808,6 +1814,7 @@ export namespace Prisma {
     jobFamily?: boolean
     description?: boolean
     requirements?: boolean
+    customFields?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -1822,7 +1829,7 @@ export namespace Prisma {
     closedAt?: boolean
   }
 
-  export type RequisitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "title" | "department" | "location" | "country" | "jobFamily" | "description" | "requirements" | "salaryMin" | "salaryMax" | "salaryCurrency" | "status" | "priority" | "hiringManagerId" | "recruiterId" | "headcount" | "targetStartDate" | "createdAt" | "updatedAt" | "closedAt", ExtArgs["result"]["requisition"]>
+  export type RequisitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "title" | "department" | "location" | "country" | "jobFamily" | "description" | "requirements" | "customFields" | "salaryMin" | "salaryMax" | "salaryCurrency" | "status" | "priority" | "hiringManagerId" | "recruiterId" | "headcount" | "targetStartDate" | "createdAt" | "updatedAt" | "closedAt", ExtArgs["result"]["requisition"]>
   export type RequisitionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     jobPostings?: boolean | Requisition$jobPostingsArgs<ExtArgs>
     formSchema?: boolean | Requisition$formSchemaArgs<ExtArgs>
@@ -1847,6 +1854,7 @@ export namespace Prisma {
       jobFamily: string | null
       description: string | null
       requirements: Prisma.JsonValue
+      customFields: Prisma.JsonValue
       salaryMin: number | null
       salaryMax: number | null
       salaryCurrency: string
@@ -2293,6 +2301,7 @@ export namespace Prisma {
     readonly jobFamily: FieldRef<"Requisition", 'String'>
     readonly description: FieldRef<"Requisition", 'String'>
     readonly requirements: FieldRef<"Requisition", 'Json'>
+    readonly customFields: FieldRef<"Requisition", 'Json'>
     readonly salaryMin: FieldRef<"Requisition", 'Float'>
     readonly salaryMax: FieldRef<"Requisition", 'Float'>
     readonly salaryCurrency: FieldRef<"Requisition", 'String'>
@@ -8500,6 +8509,7 @@ export namespace Prisma {
     jobFamily: 'jobFamily',
     description: 'description',
     requirements: 'requirements',
+    customFields: 'customFields',
     salaryMin: 'salaryMin',
     salaryMax: 'salaryMax',
     salaryCurrency: 'salaryCurrency',
@@ -8783,6 +8793,7 @@ export namespace Prisma {
     jobFamily?: StringNullableFilter<"Requisition"> | string | null
     description?: StringNullableFilter<"Requisition"> | string | null
     requirements?: JsonFilter<"Requisition">
+    customFields?: JsonFilter<"Requisition">
     salaryMin?: FloatNullableFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableFilter<"Requisition"> | number | null
     salaryCurrency?: StringFilter<"Requisition"> | string
@@ -8809,6 +8820,7 @@ export namespace Prisma {
     jobFamily?: SortOrderInput | SortOrder
     description?: SortOrderInput | SortOrder
     requirements?: SortOrder
+    customFields?: SortOrder
     salaryMin?: SortOrderInput | SortOrder
     salaryMax?: SortOrderInput | SortOrder
     salaryCurrency?: SortOrder
@@ -8838,6 +8850,7 @@ export namespace Prisma {
     jobFamily?: StringNullableFilter<"Requisition"> | string | null
     description?: StringNullableFilter<"Requisition"> | string | null
     requirements?: JsonFilter<"Requisition">
+    customFields?: JsonFilter<"Requisition">
     salaryMin?: FloatNullableFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableFilter<"Requisition"> | number | null
     salaryCurrency?: StringFilter<"Requisition"> | string
@@ -8864,6 +8877,7 @@ export namespace Prisma {
     jobFamily?: SortOrderInput | SortOrder
     description?: SortOrderInput | SortOrder
     requirements?: SortOrder
+    customFields?: SortOrder
     salaryMin?: SortOrderInput | SortOrder
     salaryMax?: SortOrderInput | SortOrder
     salaryCurrency?: SortOrder
@@ -8896,6 +8910,7 @@ export namespace Prisma {
     jobFamily?: StringNullableWithAggregatesFilter<"Requisition"> | string | null
     description?: StringNullableWithAggregatesFilter<"Requisition"> | string | null
     requirements?: JsonWithAggregatesFilter<"Requisition">
+    customFields?: JsonWithAggregatesFilter<"Requisition">
     salaryMin?: FloatNullableWithAggregatesFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableWithAggregatesFilter<"Requisition"> | number | null
     salaryCurrency?: StringWithAggregatesFilter<"Requisition"> | string
@@ -9355,6 +9370,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -9381,6 +9397,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -9407,6 +9424,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -9433,6 +9451,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -9459,6 +9478,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -9483,6 +9503,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -9507,6 +9528,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -10153,6 +10175,7 @@ export namespace Prisma {
     jobFamily?: SortOrder
     description?: SortOrder
     requirements?: SortOrder
+    customFields?: SortOrder
     salaryMin?: SortOrder
     salaryMax?: SortOrder
     salaryCurrency?: SortOrder
@@ -11348,6 +11371,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -11373,6 +11397,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -11414,6 +11439,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -11439,6 +11465,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -11464,6 +11491,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -11489,6 +11517,7 @@ export namespace Prisma {
     jobFamily?: string | null
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -11530,6 +11559,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -11555,6 +11585,7 @@ export namespace Prisma {
     jobFamily?: NullableStringFieldUpdateOperationsInput | string | null
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
+    customFields?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
