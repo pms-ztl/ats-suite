@@ -130,7 +130,7 @@ export function buildScreenerTools(opts: {
         take: 200,
       });
       if (rows.length === 0) {
-        return { count: 0, note: "No prior screenings for this requisition — you are setting the bar.", passBar: 70 };
+        return { count: 0, note: "No prior screenings for this requisition — you are setting the bar.", passBar: Number(process.env["SCREENING_PASS_BAR"] ?? 65) };
       }
       const scores = rows.map((r) => r.score as number);
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -139,7 +139,7 @@ export function buildScreenerTools(opts: {
         count: rows.length,
         averageScore: Number(avg.toFixed(1)),
         passRate: Number((passes / rows.length).toFixed(2)),
-        passBar: 70,
+        passBar: Number(process.env["SCREENING_PASS_BAR"] ?? 65),
       };
     },
 

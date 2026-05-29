@@ -187,6 +187,37 @@ export function startScreeningWorker(logger: Logger) {
           };
         }
 
+        // ── Phase 4 — calibrated, deterministic scoring ──────────────────────
+        // The agentic model self-scores conservatively against a fixed bar, so
+        // even strong matches land below it (the "everyone < 70" problem).
+        // Recompute a transparent score from the per-requirement findings
+        // (% of requirements met, must-haves weighted 2x) and apply a
+        // configurable pass/review bar, so genuinely-matching candidates surface
+        // as PASS. Agentic path only; tune via SCREENING_PASS_BAR / _REVIEW_BAR.
+        {
+          const findings = agenticMeta?.requirementFindings ?? [];
+          if (findings.length > 0) {
+            const passBar = Number(process.env["SCREENING_PASS_BAR"] ?? 65);
+            const reviewBar = Number(process.env["SCREENING_REVIEW_BAR"] ?? 40);
+            let met = 0;
+            let total = 0;
+            for (const f of findings as Array<{ met?: boolean; priority?: string; importance?: string }>) {
+              const w = /must/i.test(String(f.priority ?? f.importance ?? "")) ? 2 : 1;
+              total += w;
+              if (f.met) met += w;
+            }
+            if (total > 0) {
+              const calibrated = Math.round((met / total) * 100);
+              verdict = {
+                ...verdict,
+                score: calibrated,
+                matchPercentage: calibrated,
+                result: calibrated >= passBar ? "PASS" : calibrated >= reviewBar ? "REVIEW" : "FAIL",
+              };
+            }
+          }
+        }
+
         await prisma.screening.update({
           where: { id: screening.id },
           data: {
