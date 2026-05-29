@@ -110,11 +110,16 @@ router.post("/jobs/:slug/apply", async (req: Request, res: Response, next: NextF
       },
     });
 
-    // 2. Create application in candidate-service
+    // 2. Create application in candidate-service.
+    // role:"RECRUITER" — /internal/applications is recruiter/admin-gated, but
+    // this is a trusted internal call from the public-apply handler (the
+    // applicant is anonymous / role CANDIDATE, which the endpoint rejects).
+    // Same pattern as forwardResumeUpload's X-User-Role:"ADMIN".
     const application = await callCandidateService<{ id: string }>({
       method: "POST",
       path: "/internal/applications",
       tenantId: posting.tenantId,
+      role: "RECRUITER",
       body: {
         candidateId: candidate.id,
         requisitionId: posting.requisitionId,
@@ -176,6 +181,7 @@ router.post("/jobs/:slug/apply-custom", applyUpload.any(), async (req: Request, 
       method: "POST",
       path: "/internal/applications",
       tenantId: posting.tenantId,
+      role: "RECRUITER", // trusted internal call; endpoint is recruiter/admin-gated
       body: { candidateId: candidate.id, requisitionId: posting.requisitionId, notes: str("coverLetter") ?? null, formResponses },
     });
 

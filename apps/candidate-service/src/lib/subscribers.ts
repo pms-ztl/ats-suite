@@ -15,32 +15,17 @@ import { toFairnessView } from "@cdc-ats/ai-engine";
 import { prisma } from "./prisma.js";
 import { embedCandidate } from "./matching.js";
 
-// Loose schema — the parser may grow new fields; we accept anything and
-// only enforce shapes for the fields we actually use here.
+// Loose schema — accept ANY parsed shape. The Phase 37 resume-parser wraps
+// identity fields as { value, confidence } and nests skills/experience as
+// objects, so a strict per-field schema (email: z.string(), …) actually
+// REJECTED the real payload and crashed the subscriber before the unwrap/
+// backfill ran. The handler below unwraps + type-guards every field it reads,
+// so it's safe to accept anything here and validate at point-of-use.
 const ResumeParsedPayload = z.object({
   tenantId: z.string(),
   candidateId: z.string(),
   resumeId: z.string(),
-  parsed: z.object({
-    email: z.string().optional().nullable(),
-    firstName: z.string().optional().nullable(),
-    lastName: z.string().optional().nullable(),
-    fullName: z.string().optional().nullable(),
-    phone: z.string().optional().nullable(),
-    location: z.string().optional().nullable(),
-    summary: z.string().optional().nullable(),
-    skills: z.array(z.string()).optional(),
-    experience: z.array(z.unknown()).optional(),
-    education: z.array(z.unknown()).optional(),
-    yearsOfExperience: z.number().optional(),
-    languages: z.array(z.string()).optional(),
-    certifications: z.array(z.string()).optional(),
-    links: z.object({
-      linkedin: z.string().optional().nullable(),
-      github: z.string().optional().nullable(),
-      portfolio: z.string().optional().nullable(),
-    }).optional(),
-  }).optional(),
+  parsed: z.any().optional(),
 }).passthrough();
 
 // Placeholder emails from bulk-upload look like:
