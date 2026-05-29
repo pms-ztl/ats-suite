@@ -31,6 +31,7 @@ import { Redis } from "ioredis";
 import type { Logger } from "pino";
 import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import { gatewayAuth } from "./lib/auth-middleware.js";
+import { resolveTenantPlan } from "./lib/tenant-plan.js";
 import authRouter from "./routes/auth.js";
 import impersonateRouter from "./routes/impersonate.js";
 import { publicIngestRouter } from "./routes/public-ingest.js";
@@ -193,12 +194,17 @@ export function createApp(logger: Logger): Express {
       try {
         if (!req.user) throw Errors.unauthorized();
         const { callService } = await import("./lib/service-client.js");
+        // Resolve the tenant's REAL plan so seat limits reflect what they pay
+        // for. Without this, identity defaults to FREE (1 seat) and paid
+        // tenants can't invite a second user.
+        const tenantPlan = await resolveTenantPlan(req.user.tenantId);
         const result = await callService<any>("identity", {
           method: "POST",
           path: "/internal/users/invite",
           body: {
             ...req.body,
             tenantId: req.user.tenantId,
+            plan: tenantPlan,
             invitedByUserId: req.user.id,
           },
           headers: {
@@ -251,6 +257,27 @@ export function createApp(logger: Logger): Express {
         // admin's browser network tab (email is the only legit channel).
         const { inviteToken, inviteExpiresAt, ...safe } = result;
         res.status(201).json({ success: true, data: safe });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+  // GET /api/users/seats — inject the tenant's REAL plan so the team page
+  // shows accurate seat usage/limits. Must be registered BEFORE the generic
+  // /api/users proxy (which would otherwise forward without a plan → FREE).
+  app.get(
+    "/api/users/seats",
+    gatewayAuth(),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const { callService } = await import("./lib/service-client.js");
+        const plan = await resolveTenantPlan(req.user.tenantId);
+        const data = await callService<any>("identity", {
+          method: "GET",
+          path: `/internal/users/seats?tenantId=${encodeURIComponent(req.user.tenantId)}&plan=${encodeURIComponent(plan)}`,
+        });
+        res.json({ success: true, data });
       } catch (err) {
         next(err);
       }

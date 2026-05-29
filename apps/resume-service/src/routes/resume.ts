@@ -21,7 +21,7 @@ import { enqueueResumeParse } from "../lib/queue.js";
 import { runParsePipeline } from "../lib/parse-pipeline.js";
 
 const reparseLogger = createLogger({ serviceName: "resume-service:reparse" });
-import { upsertCandidate } from "../lib/service-client.js";
+import { upsertCandidate, checkResumeQuota } from "../lib/service-client.js";
 import { extractResumeText } from "../lib/extract.js";
 import { buildKey, putObject, getPresignedDownloadUrl, isStorageConfigured } from "../lib/storage.js";
 
@@ -144,6 +144,18 @@ router.post(
       const files = (req.files ?? []) as Express.Multer.File[];
       cleanupPaths.push(...files.map((f) => f.path));
       if (files.length === 0) throw Errors.validation("At least one file is required");
+
+      // Plan gate: enforce the tenant's monthly resume-parse quota before we
+      // create any candidates. Fail-open (billing down ⇒ allow) so an outage
+      // never blocks hiring; FREE/STARTER over-quota uploads are rejected up
+      // front instead of silently consuming files.
+      const quota = await checkResumeQuota(files.length, tenantId, userId);
+      if (!quota.allowed) {
+        throw Errors.planLimit(
+          `Your ${quota.plan} plan allows ${quota.limit} resume parses per month (used ${quota.used}). ` +
+          `This upload of ${files.length} would exceed it — upgrade your plan to import more.`
+        );
+      }
 
       const requisitionId =
         typeof req.body.requisitionId === "string" ? req.body.requisitionId : null;
