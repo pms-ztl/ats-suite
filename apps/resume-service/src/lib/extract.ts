@@ -46,14 +46,24 @@ export async function extractResumeText(
 
   try {
     if (mimeType === MIME_PDF) {
-      // pdf-parse module shape varies by version. v2+ exports named; v1 was default.
-      // Handle both — pick whichever is callable.
+      // pdf-parse v2 — class-based API (PDFParse). The installed version no
+      // longer exports a callable default/function, so the old v1-style call
+      // threw "pdfParse is not a function", was swallowed by the catch below,
+      // and EVERY PDF extracted to empty text (parse then failed with "no
+      // extracted text"). Use the v2 PDFParse class.
       const mod: any = await import("pdf-parse");
-      const pdfParse: (b: Buffer) => Promise<{ text: string; numpages: number }> =
-        typeof mod === "function" ? mod : (mod.default ?? mod.pdfParse ?? mod);
-      const result = await pdfParse(buffer);
-      text = result.text ?? "";
-      pageCount = result.numpages;
+      const PDFParse = mod.PDFParse ?? mod.default?.PDFParse;
+      if (typeof PDFParse !== "function") {
+        throw new Error("pdf-parse: PDFParse class not found (unexpected module shape)");
+      }
+      const parser = new PDFParse({ data: new Uint8Array(buffer) });
+      try {
+        const result: any = await parser.getText();
+        text = result?.text ?? "";
+        pageCount = result?.total ?? result?.numpages ?? result?.pages;
+      } finally {
+        await parser.destroy?.();
+      }
 
       // Phase 36a — OCR fallback for scanned-image PDFs. When pdf-parse
       // extracts nothing (or near-nothing), the PDF is most likely an
