@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("AGENT_DATABASE_URL")
+}
+
+// Centralized record of every agent run (cost, tokens, model, latency) — the
+// single home for LLM cost tracking that today is duplicated across services.
+model AgentRun {
+  id                String   @id
+  tenantId          String
+  agentType         String
+  status            String // COMPLETED | FAILED | BUDGET_EXCEEDED | REPAIR_FAILED
+  inputHash         String   @default("")
+  tokensIn          Int      @default(0)
+  tokensOut         Int      @default(0)
+  costUsd           Float    @default(0)
+  latencyMs         Int      @default(0)
+  modelName         String   @default("")
+  iterations        Int      @default(0)
+  errorMessage      String?
+  triggeredByUserId String?
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, agentType])
+  @@index([tenantId, createdAt])
+}

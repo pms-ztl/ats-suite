@@ -170,6 +170,7 @@ export function createApp(logger: Logger): Express {
   const screeningUrl = process.env["SCREENING_SERVICE_URL"] ?? "http://localhost:4008";
   const notificationUrl = process.env["NOTIFICATION_SERVICE_URL"] ?? "http://localhost:4009";
   const searchUrl = process.env["SEARCH_SERVICE_URL"] ?? "http://localhost:4010";
+  const agentUrl = process.env["AGENT_SERVICE_URL"] ?? "http://localhost:4011";
 
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
@@ -325,6 +326,8 @@ export function createApp(logger: Logger): Express {
   app.use("/api/screening", gatewayAuth(), forwardHeaders(screeningUrl, "/internal/screening"));
   // Phase 6 — search & matching microservice (port 4010).
   app.use("/api/search", gatewayAuth(), forwardHeaders(searchUrl, "/internal/search"));
+  // Phase 6 — centralized agent-orchestration microservice (port 4011).
+  app.use("/api/agents", gatewayAuth(), forwardHeaders(agentUrl, "/internal/agents"));
   app.use("/api/interviews", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interviews"));
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
