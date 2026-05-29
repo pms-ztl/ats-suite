@@ -13,6 +13,8 @@ import supportRouter from "./routes/support.js";
 import inboundEmailRouter from "./routes/inbound-email.js";
 import cloudSyncRouter from "./routes/cloud-sync.js";
 import smsApplyRouter from "./routes/sms-apply.js";
+import webhooksRouter from "./routes/webhooks.js";
+import complianceRouter from "./routes/compliance.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -39,6 +41,8 @@ export function createApp(logger: Logger): Express {
   // Phase 32b — in-app support tickets. Tenant + super-admin routes share
   // this router; gates inside each handler.
   app.use("/internal/support", readAuthHeaders(), supportRouter);
+  app.use("/internal/webhooks", readAuthHeaders(), webhooksRouter);
+  app.use("/internal/compliance", readAuthHeaders(), complianceRouter);
   // Phase 34c — email-to-apply. Public webhook endpoints (no auth header;
   // each route validates its own provider-specific signature).
   app.use("/internal/inbound-email", inboundEmailRouter);

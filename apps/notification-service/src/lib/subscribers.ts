@@ -8,6 +8,7 @@
  *   tenant.{*}.interview.feedback.submitted → INTERVIEW_FEEDBACK_NEW (tenant broadcast)
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
+import { auditAndDeliver } from "./webhooks.js";
 import {
   TenantCreatedPayloadSchema,
   TenantPlanChangedPayloadSchema,
@@ -129,6 +130,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         },
         channels: ["in_app", "email"],
       });
+      await auditAndDeliver("bulk-upload.completed", p as any, { logger });
     },
   });
 
@@ -153,6 +155,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         },
         channels: ["in_app", "slack"],
       });
+      await auditAndDeliver("interview.feedback.submitted", p as any, { logger });
     },
   });
 
@@ -186,6 +189,7 @@ export async function startNotificationSubscribers(logger: Logger) {
         },
         channels: ["in_app", "email"],
       });
+      await auditAndDeliver("interview.scheduled", p, { logger });
     },
   });
 

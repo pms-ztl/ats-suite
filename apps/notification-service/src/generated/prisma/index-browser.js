@@ -234,6 +234,30 @@ exports.Prisma.SupportTicketMessageScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.WebhookScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  url: 'url',
+  secret: 'secret',
+  events: 'events',
+  active: 'active',
+  failureCount: 'failureCount',
+  lastStatus: 'lastStatus',
+  lastDeliveryAt: 'lastDeliveryAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  action: 'action',
+  actorUserId: 'actorUserId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -322,7 +346,9 @@ exports.Prisma.ModelName = {
   EmailTemplate: 'EmailTemplate',
   SmsConversation: 'SmsConversation',
   SupportTicket: 'SupportTicket',
-  SupportTicketMessage: 'SupportTicketMessage'
+  SupportTicketMessage: 'SupportTicketMessage',
+  Webhook: 'Webhook',
+  AuditLog: 'AuditLog'
 };
 
 /**

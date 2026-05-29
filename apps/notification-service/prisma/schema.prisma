@@ -246,3 +246,36 @@ model SupportTicketMessage {
 
   @@index([ticketId, createdAt])
 }
+
+// Phase 40 — outbound webhooks: tenants register URLs to receive domain events
+// (candidate.*, screening.*, interview.*, ...) signed with HMAC-SHA256.
+model Webhook {
+  id             String    @id @default(uuid())
+  tenantId       String
+  url            String
+  secret         String                     // HMAC signing secret (shown once on create)
+  events         String[]  @default([])     // subscribed event types; empty = all
+  active         Boolean   @default(true)
+  failureCount   Int       @default(0)
+  lastStatus     Int?
+  lastDeliveryAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId])
+}
+
+// Phase 40 — immutable audit trail for SOC2/GDPR evidence. Append-only;
+// records security- + decision-relevant events fanned in from NATS.
+model AuditLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  action      String                       // e.g. "interview.scheduled", "plan-change.approved"
+  actorUserId String?
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([action])
+}
