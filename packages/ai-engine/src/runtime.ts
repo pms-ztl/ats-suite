@@ -66,7 +66,9 @@ export type AgentType =
   // Phase 37 — new agents
   | "interview-questions"
   | "cover-letter-analyzer"
-  | "github-corroborator";
+  | "github-corroborator"
+  // Phase 38 — agentic resume verifier
+  | "resume-verifier";
 
 export interface AgentContext {
   tenantId: string;

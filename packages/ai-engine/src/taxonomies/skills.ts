@@ -273,6 +273,25 @@ export const SKILL_TAXONOMY: CanonicalSkill[] = [
   { id: "skill:public-speaking", label: "Public Speaking", aliases: ["public speaking", "presentations"], category: "soft" },
   { id: "skill:writing", label: "Technical Writing", aliases: ["technical writing", "writing"], category: "soft" },
   { id: "skill:cross-functional", label: "Cross-Functional Collaboration", aliases: ["cross-functional", "cross functional collaboration", "stakeholder management"], category: "soft" },
+
+  // Phase 38 — high-frequency modern tooling top-ups (the long tail is now
+  // covered by semantic skill matching, so this is just the most common gaps).
+  { id: "skill:clickhouse", label: "ClickHouse", aliases: ["clickhouse"], category: "database" },
+  { id: "skill:duckdb", label: "DuckDB", aliases: ["duckdb"], category: "database" },
+  { id: "skill:trino", label: "Trino", aliases: ["trino", "presto"], category: "data" },
+  { id: "skill:airbyte", label: "Airbyte", aliases: ["airbyte"], category: "data" },
+  { id: "skill:dagster", label: "Dagster", aliases: ["dagster"], category: "data" },
+  { id: "skill:weaviate", label: "Weaviate", aliases: ["weaviate"], category: "data" },
+  { id: "skill:qdrant", label: "Qdrant", aliases: ["qdrant"], category: "data" },
+  { id: "skill:llamaindex", label: "LlamaIndex", aliases: ["llamaindex", "llama index", "llama-index"], category: "framework" },
+  { id: "skill:vllm", label: "vLLM", aliases: ["vllm"], category: "data" },
+  { id: "skill:bun", label: "Bun", aliases: ["bun", "bun.js"], category: "framework" },
+  { id: "skill:deno", label: "Deno", aliases: ["deno"], category: "framework" },
+  { id: "skill:tauri", label: "Tauri", aliases: ["tauri"], category: "framework" },
+  { id: "skill:pulumi", label: "Pulumi", aliases: ["pulumi"], category: "devops" },
+  { id: "skill:argocd", label: "Argo CD", aliases: ["argocd", "argo cd", "argo"], category: "devops" },
+  { id: "skill:opentelemetry", label: "OpenTelemetry", aliases: ["opentelemetry", "otel"], category: "devops" },
+  { id: "skill:temporal", label: "Temporal", aliases: ["temporal", "temporal.io"], category: "framework" },
 ];
 
 // Lookup map built once at module load.

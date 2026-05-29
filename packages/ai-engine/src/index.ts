@@ -38,6 +38,8 @@ export * from "./agents/interview-questions.js";
 export * from "./agents/cover-letter.js";
 export * from "./lib/normalize.js";
 export * from "./lib/enrich.js";
+export * from "./lib/semantic-skills.js";
 export * from "./lib/github.js";
+export * from "./agents/resume-verifier-agentic.js";
 export * from "./taxonomies/skills.js";
 export * from "./taxonomies/institutions.js";

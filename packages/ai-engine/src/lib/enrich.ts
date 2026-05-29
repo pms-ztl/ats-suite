@@ -28,11 +28,40 @@ export interface EnrichedSkill {
   canonicalId: string | null;           // null if no taxonomy match
   label: string;                        // canonical label, or raw if no match
   category: string | null;
-  confidence: number;                   // from the LLM
+  confidence: number;                   // RAW model self-report
+  evidenceConfidence: number;           // blended w/ deterministic evidence signals
+  matchVia: "alias" | "semantic" | null; // how it canonicalized (null = unmatched)
   yearsActive: number;                  // computed from work-history overlap
   lastUsedYear: number | null;          // latest end-year of a position mentioning it
   depth: SkillDepth;                    // lead / used / mentioned
   sourceProjectIndices: number[];       // which experience[] entries mentioned it
+}
+
+export interface EnrichOptions {
+  /** Raw resume text — enables evidence-adjusted confidence (verbatim checks). */
+  sourceText?: string;
+}
+
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+/**
+ * Blend the model's self-reported confidence with deterministic evidence so the
+ * number means "how well-supported is this", not just "how sure did the LLM
+ * sound". NOT statistical calibration (that needs labels) — evidence grounding.
+ */
+function evidenceAdjustedConfidence(opts: {
+  modelConfidence: number;
+  canonicalized: boolean;
+  verbatimInSource: boolean;
+  tiedToRole: boolean;
+  sparseSource: boolean;
+}): number {
+  let c = opts.modelConfidence;
+  if (opts.canonicalized) c += 0.1;     // matched a known skill
+  if (opts.verbatimInSource) c += 0.15; // literally present in the resume text
+  if (opts.tiedToRole) c += 0.1;        // appears inside a real work position
+  if (opts.sparseSource) c -= 0.15;     // little text to support anything
+  return Math.round(clamp01(c) * 100) / 100;
 }
 
 export interface EnrichedExperience {
@@ -95,7 +124,9 @@ function tryCanonicalize(institutionName: string): CanonicalInstitution | null {
 
 // ─── Main entry: enrich() ───────────────────────────────────────────────
 
-export function enrich(raw: ResumeParserOutput): EnrichedResume {
+export function enrich(raw: ResumeParserOutput, opts: EnrichOptions = {}): EnrichedResume {
+  const sourceText = (opts.sourceText ?? "").toLowerCase();
+  const sparseSource = sourceText.length > 0 && sourceText.length < 400;
   // 1. Normalize experience dates + canonicalize companies
   const experience: EnrichedExperience[] = raw.experience.map((e) => {
     const sd = parseResumeDate(e.startDate);
@@ -158,12 +189,21 @@ export function enrich(raw: ResumeParserOutput): EnrichedResume {
       else if (bulletDepth === "used" && depth !== "lead") depth = "used";
     }
 
+    const verbatimInSource = sourceText.length > 0 && aliases.some((a) => sourceText.includes(a));
     enrichedSkills.push({
       raw: s.raw,
       canonicalId: canonical?.id ?? null,
       label: canonical?.label ?? s.raw,
       category: canonical?.category ?? null,
       confidence: s.confidence,
+      evidenceConfidence: evidenceAdjustedConfidence({
+        modelConfidence: s.confidence,
+        canonicalized: !!canonical,
+        verbatimInSource,
+        tiedToRole: sourceProjectIndices.length > 0,
+        sparseSource,
+      }),
+      matchVia: canonical ? "alias" : null,
       yearsActive: Math.round((monthsTotal / 12) * 10) / 10,    // 1 dp
       lastUsedYear,
       depth,

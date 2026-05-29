@@ -12,12 +12,15 @@ import os from "os";
 import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireRole, createLogger } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: resume upload (single + bulk) is admin/recruiter.
 const requireUploader = requireRole("ADMIN", "RECRUITER");
 import { prisma } from "../lib/prisma.js";
 import { enqueueResumeParse } from "../lib/queue.js";
+import { runParsePipeline } from "../lib/parse-pipeline.js";
+
+const reparseLogger = createLogger({ serviceName: "resume-service:reparse" });
 import { upsertCandidate } from "../lib/service-client.js";
 import { extractResumeText } from "../lib/extract.js";
 import { buildKey, putObject, getPresignedDownloadUrl, isStorageConfigured } from "../lib/storage.js";
@@ -300,6 +303,36 @@ router.get("/:resumeId/download-url", async (req: Request, res: Response, next: 
     const url = await getPresignedDownloadUrl(r.storageKey);
     if (!url) throw Errors.unavailable("Storage not configured");
     ok(res, { url, expiresInSeconds: 600, fileName: r.originalFilename ?? r.fileName });
+  } catch (err) { next(err); }
+});
+
+// ── POST /internal/resume/reparse/:candidateId ──────────────────────────
+// Re-run the full parse → enrich → semantic-match → verify pipeline on the
+// candidate's stored resume text (no re-upload needed). Used to backfill old
+// candidates after the engine improves (the path referenced in DEPLOY.md).
+router.post("/reparse/:candidateId", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const candidateId = req.params["candidateId"] as string;
+    const r = await prisma.resume.findFirst({ where: { candidateId, tenantId }, orderBy: { createdAt: "desc" } });
+    if (!r) throw Errors.notFound("Resume");
+    if (!r.extractedText) {
+      return res.status(400).json({
+        success: false,
+        error: { code: "NO_EXTRACTED_TEXT", message: "Stored resume has no extracted text to re-parse; re-upload the file." },
+      });
+    }
+    const out = await runParsePipeline({
+      resumeId: r.id,
+      candidateId,
+      tenantId,
+      userId,
+      resumeText: r.extractedText,
+      logger: reparseLogger,
+      reparse: true,
+    });
+    ok(res, { reparsed: true, resumeId: r.id, ...out });
   } catch (err) { next(err); }
 });
 

@@ -12,9 +12,9 @@
  *   - For most tenants whose recruiters never upload scans, this is dead
  *     weight on the resume-service container
  *
- * Bounds:
- *   - Max 10 pages OCR'd per resume (above that, we truncate + warn)
- *   - Max 60 seconds total per resume (worker timeout)
+ * Bounds (configurable):
+ *   - RESUME_OCR_MAX_PAGES pages per resume (default 30; truncate + warn above)
+ *   - RESUME_OCR_MAX_MS wall-clock budget (default 180s; stop + warn above)
  *
  * Tesseract.js lifecycle: we keep ONE worker per process (warm), reuse
  * across requests. The first call pays the model-load cost; subsequent
@@ -24,7 +24,11 @@ import { createLogger } from "@cdc-ats/common";
 
 const logger = createLogger({ serviceName: "resume-service:ocr" });
 
-const MAX_PAGES_OCR = 10;
+// Page cap + time budget are configurable. Defaults raised from the original
+// 10 pages to cover long CVs (academic/medical résumés run 15-30 pages); a
+// wall-clock budget still protects the worker from pathological inputs.
+const MAX_PAGES_OCR = Math.max(1, Number(process.env["RESUME_OCR_MAX_PAGES"]) || 30);
+const MAX_OCR_MS = Math.max(10_000, Number(process.env["RESUME_OCR_MAX_MS"]) || 180_000);
 const PDF_RENDER_SCALE = 2.0;       // 2x for better OCR accuracy on small text
 
 export function isOcrEnabled(): boolean {
@@ -117,18 +121,27 @@ export async function ocrPdf(pdfBuffer: Buffer): Promise<OcrResult> {
 
     const worker = await getTesseractWorker();
     const texts: string[] = [];
+    const startedAt = Date.now();
+    let pagesDone = 0;
+    let timedOut = false;
     for (let i = 0; i < pages.length; i++) {
+      if (Date.now() - startedAt > MAX_OCR_MS) {
+        timedOut = true;
+        warnings.push(`OCR hit the ${Math.round(MAX_OCR_MS / 1000)}s time budget after ${pagesDone} page(s); remaining pages skipped.`);
+        break;
+      }
       try {
         const { data } = await worker.recognize(pages[i]);
         texts.push(data.text ?? "");
+        pagesDone++;
       } catch (err) {
         warnings.push(`OCR failed on page ${i + 1}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     return {
       text: texts.join("\n\n").trim(),
-      pagesOcred: pages.length,
-      truncated: pages.length >= MAX_PAGES_OCR,
+      pagesOcred: pagesDone,
+      truncated: timedOut || pages.length >= MAX_PAGES_OCR,
       warnings,
     };
   } catch (err) {
