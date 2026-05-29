@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("COMPLIANCE_DATABASE_URL")
+}
+
+// Append-only audit trail for NYC Local Law 144 / EU AI Act record-keeping.
+model AuditRecord {
+  id          String   @id @default(uuid())
+  tenantId    String
+  kind        String // AI_DECISION | ACCESS | EXPORT | BIAS_AUDIT | CONSENT | RETENTION
+  subjectType String   @default("") // candidate | requisition | screening
+  subjectId   String   @default("")
+  actorUserId String?
+  summary     String   @default("")
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, kind])
+  @@index([tenantId, subjectId])
+  @@index([tenantId, createdAt])
+}
+
+model RetentionPolicy {
+  id            String   @id @default(uuid())
+  tenantId      String   @unique
+  candidateDays Int      @default(365)
+  auditDays     Int      @default(2555) // ~7 years
+  updatedAt     DateTime @updatedAt
+}

@@ -172,6 +172,7 @@ export function createApp(logger: Logger): Express {
   const searchUrl = process.env["SEARCH_SERVICE_URL"] ?? "http://localhost:4010";
   const agentUrl = process.env["AGENT_SERVICE_URL"] ?? "http://localhost:4011";
   const analyticsServiceUrl = process.env["ANALYTICS_SERVICE_URL"] ?? "http://localhost:4012";
+  const complianceServiceUrl = process.env["COMPLIANCE_SERVICE_URL"] ?? "http://localhost:4013";
 
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
@@ -332,6 +333,9 @@ export function createApp(logger: Logger): Express {
   // Phase 6 — analytics/reporting microservice (port 4012). Mounted at /api/reporting
   // to avoid the existing gateway-hosted /api/analytics agent + aggregator routes.
   app.use("/api/reporting", gatewayAuth(), forwardHeaders(analyticsServiceUrl, "/internal/analytics"));
+  // Phase 6 — compliance/audit microservice (port 4013). At /api/audit since
+  // /api/compliance already proxies to notification-service.
+  app.use("/api/audit", gatewayAuth(), forwardHeaders(complianceServiceUrl, "/internal/compliance"));
   app.use("/api/interviews", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interviews"));
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
