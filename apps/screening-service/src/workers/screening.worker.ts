@@ -46,7 +46,12 @@ export function startScreeningWorker(logger: Logger) {
       ]);
 
       const resumeText = resume?.extractedText ?? "(no resume text available)";
-      const resumeSkills = (resume?.parsedData?.skills ?? []) as string[];
+      // parsedData is nested ({ raw|enriched: { skills:[{raw,confidence}] } }); unwrap + flatten.
+      const _pd: any = resume?.parsedData ?? {};
+      const _core: any = _pd.enriched ?? _pd.raw ?? _pd;
+      const resumeSkills: string[] = (Array.isArray(_core.skills) ? _core.skills : [])
+        .map((s: any) => (typeof s === "string" ? s : s?.raw ?? s?.name ?? null))
+        .filter((s: any): s is string => typeof s === "string" && s.length > 0);
       const jobRequirements = Array.isArray(requisition?.requirements)
         ? (requisition.requirements as string[])
         : ["general experience"];   // fallback when requirements JSON isn't an array

@@ -61,6 +61,7 @@ export function buildScreenerTools(opts: {
         found: true,
         title: req.title,
         department: req.department,
+        description: (req as any).description ?? null,
         requirements,
         requirementCount: requirements.length,
       };
@@ -69,12 +70,23 @@ export function buildScreenerTools(opts: {
     get_candidate_profile: async (args: { candidateId: string }) => {
       const resume = await fetchResume(args.candidateId, tenantId);
       if (!resume) return { found: false, error: "no resume on file" };
-      const parsed = resume.parsedData ?? {};
+      // parsedData is stored NESTED as { raw|enriched: { skills:[{raw,confidence}], ... } }.
+      // Unwrap to the structured core, then flatten each skill object to its string so the
+      // screener actually sees the candidate's skills. The previous code read `.skills` off
+      // the top-level wrapper → always [] (every candidate looked skill-less to the screener).
+      const pd: any = resume.parsedData ?? {};
+      const core: any = pd.enriched ?? pd.raw ?? pd;
+      const skills = (Array.isArray(core.skills) ? core.skills : [])
+        .map((s: any) => (typeof s === "string" ? s : s?.raw ?? s?.name ?? s?.canonical ?? null))
+        .filter((s: any): s is string => typeof s === "string" && s.length > 0);
+      const summaryRaw = core.summary;
+      const summary = typeof summaryRaw === "string" ? summaryRaw : (summaryRaw?.value ?? null);
       const text = resume.extractedText ?? "";
       return {
         found: true,
-        skills: (parsed as any).skills ?? [],
-        summary: (parsed as any).summary ?? null,
+        skills,
+        skillCount: skills.length,
+        summary,
         hasResumeText: text.length > 0,
         resumeTextLength: text.length,
         parseStatus: resume.parseStatus,

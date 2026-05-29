@@ -182,8 +182,14 @@ router.post(
           const extractedText = extraction.text;
 
           // Derive placeholder candidate details from filename
-          const baseName = file.originalname.replace(/\.(pdf|docx?|txt)$/i, "")
-            .replace(/[-_]+/g, " ").trim();
+          const baseName = file.originalname
+            .replace(/\.(pdf|docx?|txt)$/i, "")
+            .replace(/[-_]+/g, " ")
+            // Strip common résumé-filename noise so "resume_12_Harsh_Gupta.pdf"
+            // yields a usable placeholder ("Harsh Gupta"), not "resume"/"12".
+            .replace(/^\s*(resume|cv|curriculum vitae)\b\s*/i, "")
+            .replace(/^\s*\d+\s*/, "")
+            .trim();
           const firstName = baseName.split(" ")[0] || "Pending";
           const lastName = baseName.split(" ").slice(1).join(" ") || `Bulk ${enqueued + 1}`;
           const placeholderEmail = `bulk-${bulk.id.slice(0, 8)}-${enqueued}@pending.placeholder`;

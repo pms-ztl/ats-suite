@@ -86,6 +86,11 @@ export interface AgenticAgentDefinition<TIn, TOut> {
   maxSteps?: number;
   /** Hard cost ceiling per run in USD. Default 0.40. */
   maxCostUsd?: number;
+  /** Cap on output tokens per model call. Default 16000 (env: AGENT_MAX_OUTPUT_TOKENS).
+   *  Prevents the SDK from pre-authorizing the model's full max (e.g. 64k),
+   *  which budget-limited API keys reject ("requested up to 64000 tokens,
+   *  but can only afford …"). */
+  maxOutputTokens?: number;
 }
 
 export interface AgenticResult<T> {
@@ -143,7 +148,7 @@ export async function runAgenticAgent<TIn, TOut>(opts: {
 
   const agentRunId = randomUUID();
   const startedAt = new Date();
-  const modelId = def?.modelId ?? "claude-sonnet-4-20250514";
+  const modelId = process.env["AI_MODEL_OVERRIDE"] || def?.modelId || "claude-sonnet-4-20250514";
   const useReal = !!def && realLLMAvailable(modelId);
 
   let output = {} as TOut;
@@ -236,6 +241,7 @@ async function runReActLoop<TIn, TOut>(
   iterations: number;
 }> {
   const maxSteps = ctx.maxSteps ?? def.maxSteps ?? 8;
+  const maxOutputTokens = def.maxOutputTokens ?? Number(process.env["AGENT_MAX_OUTPUT_TOKENS"] ?? 16000);
   const maxCost = def.maxCostUsd ?? 0.4;
   const answerToolName = def.answerToolName ?? "submit_assessment";
 
@@ -298,6 +304,7 @@ async function runReActLoop<TIn, TOut>(
     messages,
     tools: toolMap,
     maxSteps,
+    maxTokens: maxOutputTokens,
     onStepFinish: (step) => {
       if (step.text && step.text.trim()) {
         steps.push({ index: steps.length, kind: "reasoning", text: truncate(step.text, 800) });
@@ -343,6 +350,7 @@ async function runReActLoop<TIn, TOut>(
       model: getModel(modelId),
       schema: def.answerSchema as any,
       system: def.systemPrompt,
+      maxTokens: maxOutputTokens,
       prompt:
         `${def.buildUserPrompt(input)}\n\n` +
         `You investigated but did not submit a verdict in time. Based on this trace, ` +

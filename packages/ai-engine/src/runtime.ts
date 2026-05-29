@@ -286,7 +286,10 @@ async function callRealLLM<TIn, TOut>(
     modelId: def.modelId ?? "claude-sonnet-4-20250514",
   });
 
-  const modelId = resolved.modelId;
+  // AI_MODEL_OVERRIDE forces every agent onto one model (e.g. a cheaper
+  // gpt-4o-mini) regardless of per-agent defaults — used to fit a constrained
+  // API budget. getModel + estimateCost + the run snapshot all see this id.
+  const modelId = process.env["AI_MODEL_OVERRIDE"] || resolved.modelId;
   const systemPrompt = resolved.systemPrompt;
   const maxRepairs = def.maxRepairAttempts ?? 3;
   const maxCost = def.maxCostUsd ?? 0.50;
@@ -314,6 +317,7 @@ async function callRealLLM<TIn, TOut>(
         schema: def.outputSchema as any,
         system: systemPrompt,
         prompt,
+        maxTokens: Number(process.env["AGENT_MAX_OUTPUT_TOKENS"] ?? 16000),
         ...(resolved.temperature !== undefined ? { temperature: resolved.temperature } : {}),
       });
 

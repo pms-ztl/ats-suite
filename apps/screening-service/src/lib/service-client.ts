@@ -47,12 +47,9 @@ export interface ResumeData {
   candidateId: string;
   fileName: string;
   extractedText: string | null;
-  parsedData: {
-    skills?: string[];
-    name?: { first: string; last: string };
-    email?: string;
-    summary?: string;
-  } | null;
+  // Stored NESTED as { raw|enriched: { skills:[{raw,confidence}], name:{value}, ... } }.
+  // Typed loosely — get_candidate_profile unwraps it.
+  parsedData: Record<string, any> | null;
   parseStatus: string;
 }
 
@@ -60,6 +57,7 @@ export interface RequisitionData {
   id: string;
   title: string;
   department: string;
+  description?: string | null;
   requirements: string[] | unknown;
 }
 

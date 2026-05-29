@@ -102,8 +102,10 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         updateData.email = pEmail.toLowerCase();
       }
       const isGenericName =
-        /^(pending|unknown|bulk\s|cloud\s)/i.test(candidate.firstName) ||
-        /^(pending|unknown|bulk\s|cloud\s|user|—)/i.test(candidate.lastName);
+        /^(pending|unknown|bulk|cloud|resume|cv|document|file|untitled)\b/i.test(candidate.firstName) ||
+        /^\d/.test(candidate.firstName) ||
+        /^(pending|unknown|bulk|cloud|user|—|resume|cv)\b/i.test(candidate.lastName) ||
+        /^\d/.test(candidate.lastName);
       if (isGenericName) {
         const fullName =
           (p as any).fullName ??
