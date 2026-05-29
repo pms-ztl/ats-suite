@@ -23,6 +23,7 @@ import {
 } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
 import { buildSourcingTools } from "../lib/sourcing-tools.js";
+import { matchCandidates, embedCandidate } from "../lib/matching.js";
 
 const logger = createLogger({ serviceName: "candidate-service:sourcing" });
 const router = Router();
@@ -140,6 +141,62 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
   } catch (err) {
     next(err);
   }
+});
+
+// ── POST /internal/sourcing/match ───────────────────────────────────────
+// Direct ML vector match: rank candidates by embedding similarity to a job's
+// requirements (or free text). Non-agentic; powers a "Best matches" surface.
+const MatchSchema = z.object({
+  requisitionId: z.string().uuid().optional(),
+  text: z.string().optional(),
+  limit: z.number().int().min(1).max(50).optional(),
+});
+router.post("/match", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const body = MatchSchema.parse(req.body);
+    let queryText = body.text ?? "";
+    if (!queryText && body.requisitionId) {
+      const jobUrl = process.env["JOB_SERVICE_URL"] ?? "http://localhost:4004";
+      const r = await fetch(`${jobUrl}/internal/requisitions/${body.requisitionId}`, {
+        headers: { "X-User-Id": userId ?? "", "X-Tenant-Id": tenantId, "X-User-Role": (req.headers["x-user-role"] as string) ?? "ADMIN" },
+      });
+      if (r.ok) {
+        const reqData: any = ((await r.json()) as any).data;
+        const reqs = Array.isArray(reqData?.requirements) ? reqData.requirements.join(", ") : "";
+        queryText = `${reqData?.title ?? ""}\n${reqData?.description ?? ""}\n${reqs}`.trim();
+      }
+    }
+    if (!queryText) {
+      return res.status(400).json({ success: false, error: { code: "NO_QUERY", message: "Provide text or a requisitionId" } });
+    }
+    const result = await matchCandidates({ tenantId, queryText, limit: body.limit ?? 25, logger });
+    if (!result.available) {
+      return res.status(503).json({ success: false, error: { code: "EMBEDDINGS_OFF", message: "Embeddings not configured (set OPENAI_API_KEY/EMBEDDINGS_API_KEY)." } });
+    }
+    ok(res, { matches: result.matches, scanned: result.scanned });
+  } catch (err) { next(err); }
+});
+
+// ── POST /internal/sourcing/embed-backfill ──────────────────────────────
+// Embed candidates that don't have a vector yet (e.g. parsed before this
+// feature). Processes up to `limit` per call; call repeatedly to drain.
+router.post("/embed-backfill", requireRole("ADMIN"), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const limit = Math.min(200, Math.max(1, Number(req.body?.limit) || 100));
+    const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "Candidate"
+      WHERE "tenantId" = ${tenantId} AND "embedding" IS NULL AND "parsedSummary" IS NOT NULL
+      LIMIT ${limit}
+    `;
+    let embedded = 0;
+    for (const row of rows) {
+      if (await embedCandidate(row.id, tenantId, logger)) embedded++;
+    }
+    ok(res, { candidatesProcessed: rows.length, embedded, remainingHint: rows.length === limit ? "more may remain — call again" : "drained" });
+  } catch (err) { next(err); }
 });
 
 export default router;

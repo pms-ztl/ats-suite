@@ -13,6 +13,7 @@
 import type { ToolImpl } from "@cdc-ats/ai-engine";
 import type { Logger } from "pino";
 import { prisma } from "./prisma.js";
+import { matchCandidates } from "./matching.js";
 
 /** Pull a flat lowercased skill list out of the Phase 37 parsedSummary blob. */
 function skillsFromParsed(parsed: any): string[] {
@@ -37,7 +38,22 @@ export function buildSourcingTools(opts: {
   const { tenantId, userId, logger } = opts;
 
   return {
-    // ── act: search ───────────────────────────────────────────────────────────
+    // ── act: semantic vector search (real ML matching) ─────────────────────────
+    semantic_search_candidates: async (args: { query: string; limit?: number }) => {
+      const r = await matchCandidates({ tenantId, queryText: args.query, limit: args.limit ?? 25, logger });
+      if (!r.available) {
+        return { available: false, note: "Embeddings not configured — use search_candidates (keyword) instead." };
+      }
+      return {
+        available: true,
+        scanned: r.scanned,
+        candidates: r.matches.map((m) => ({
+          id: m.id, name: m.name, skills: m.skills, matchScore: m.score, source: "semantic_search",
+        })),
+      };
+    },
+
+    // ── act: keyword search ────────────────────────────────────────────────────
     search_candidates: async (args: {
       skills?: string[];
       titleKeywords?: string[];

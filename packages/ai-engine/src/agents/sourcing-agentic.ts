@@ -60,9 +60,18 @@ export interface AgenticSourcingInput {
 
 export const SOURCING_TOOLS: AgenticToolDef[] = [
   {
+    name: "semantic_search_candidates",
+    description:
+      "ML vector search — finds candidates whose whole profile is semantically similar to a free-text job description/requirements, even without exact keyword matches (e.g. 'distributed systems' surfaces a Kafka/Spark engineer). Prefer this for the role overall; use search_candidates for hard skill filters. Returns matchScore (0-1).",
+    parameters: z.object({
+      query: z.string().describe("Free-text role/requirements to match against"),
+      limit: z.number().min(1).max(50).optional(),
+    }),
+  },
+  {
     name: "search_candidates",
     description:
-      "Search this tenant's candidate pool. Provide skills and/or title keywords. Returns brief matches (id, name, skills, source). Call repeatedly with different/broader queries if the first returns too few.",
+      "Keyword search of this tenant's candidate pool. Provide skills and/or title keywords. Returns brief matches (id, name, skills, source). Call repeatedly with different/broader queries if the first returns too few.",
     parameters: z.object({
       skills: z.array(z.string()).optional().describe("Skill keywords to match"),
       titleKeywords: z.array(z.string()).optional().describe("Words likely in their title/summary"),
@@ -99,8 +108,8 @@ export const SOURCING_TOOLS: AgenticToolDef[] = [
 const SYSTEM_PROMPT = `You are an autonomous talent sourcing agent. You actively SEARCH the pool with tools and reason over what you find — you never rank a list handed to you. Operate ReAct-style: THINK what to search, ACT, OBSERVE, refine.
 
 OPERATING LOOP
-1. Get the requirements straight, then call search_candidates with the most discriminating skills first (specific beats broad).
-2. If too few promising hits, BROADEN deliberately: drop the least-critical skill, switch to title keywords, or lower minYears — then search again. Record every distinct query in searchStrategiesUsed so your method is auditable.
+1. Start with semantic_search_candidates using the role's requirements as free text — it ranks the whole pool by embedding similarity (best overall fits, not just keyword hits). Then use search_candidates to enforce any HARD must-have skill filters.
+2. If too few promising hits, BROADEN deliberately: loosen the semantic query, drop the least-critical skill, switch to title keywords, or lower minYears — then search again. Record every distinct query in searchStrategiesUsed so your method is auditable.
 3. For each promising hit, call get_candidate_detail and judge REAL fit: recency (a skill idle 5+ years is weaker), depth (used vs led/owned), and whether experience scale matches the role. Never score on a name + skill tags alone.
 4. Call check_prior_engagement and EXCLUDE anyone already applied to / screened for this requisition — re-surfacing them wastes recruiter time.
 5. Score each surviving candidate 0.0–1.0 with SPECIFIC evidence in the rationale (cite the matched skills/experience). For strong matches (>= 0.7), call shortlist_candidate and set shortlisted=true.

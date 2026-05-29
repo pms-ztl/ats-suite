@@ -13,6 +13,7 @@ import type { Logger } from "pino";
 import { z } from "zod";
 import { toFairnessView } from "@cdc-ats/ai-engine";
 import { prisma } from "./prisma.js";
+import { embedCandidate } from "./matching.js";
 
 // Loose schema — the parser may grow new fields; we accept anything and
 // only enforce shapes for the fields we actually use here.
@@ -140,6 +141,10 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
           data: { parsedSummary: summary as any },
         }).catch(() => undefined);
       }
+
+      // Phase 39 — embed the freshly-parsed candidate for vector matching.
+      // Best-effort + no-op without an embeddings key.
+      embedCandidate(parsed.candidateId, parsed.tenantId, logger).catch(() => undefined);
     },
   });
 

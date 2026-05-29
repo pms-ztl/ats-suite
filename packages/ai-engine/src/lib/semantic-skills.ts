@@ -17,6 +17,24 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { SKILL_TAXONOMY } from "../taxonomies/skills.js";
 import type { EnrichedResume, EnrichedSkill } from "./enrich.js";
 
+/** Embedding vector dimensionality for the configured model (3-small = 1536). */
+export const EMBEDDING_DIMS = Number(process.env["EMBEDDINGS_DIMS"]) || 1536;
+
+/**
+ * Embed a single text → vector. Returns null when no embeddings provider is
+ * configured (so callers degrade gracefully). Shared by the resume engine's
+ * semantic skill matching AND the candidate↔job vector matching engine.
+ */
+export async function embedText(text: string): Promise<number[] | null> {
+  if (!embeddingsAvailable() || !text.trim()) return null;
+  try {
+    const { embedding } = await embed({ model: client().embedding(EMBED_MODEL), value: text.slice(0, 8000) });
+    return embedding;
+  } catch {
+    return null;
+  }
+}
+
 const EMBED_MODEL = process.env["EMBEDDINGS_MODEL"] ?? "text-embedding-3-small";
 const DEFAULT_THRESHOLD = Number(process.env["SEMANTIC_SKILL_THRESHOLD"]) || 0.6;
 
