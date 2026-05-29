@@ -65,6 +65,9 @@ export default function SourcingPage() {
   const [reqId, setReqId] = useState("");
   const [sourcing, setSourcing] = useState(false);
   const [result, setResult] = useState<SourcingResult | null>(null);
+  // Instant vector matching (direct, no LLM)
+  const [matching, setMatching] = useState(false);
+  const [matches, setMatches] = useState<Array<{ id: string; name: string; score: number; skills: string[] }> | null>(null);
 
   useEffect(() => {
     fetchSourcingData(setPools, setCandidates, setLoading, setError);
@@ -81,6 +84,29 @@ export default function SourcingPage() {
       })
       .catch(() => {});
   }, []);
+
+  async function runVectorMatch() {
+    if (!reqId) { toast.error("Pick a requisition first"); return; }
+    setMatching(true);
+    setMatches(null);
+    try {
+      const token = document.cookie.match(/ats-token=([^;]+)/)?.[1] ?? "";
+      const res = await fetch(`${API}/sourcing/match`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requisitionId: reqId, limit: 25 }),
+      });
+      if (res.status === 503) { toast.error("Embeddings not configured — set an embeddings key + run embed-backfill."); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setMatches((json.data ?? json).matches ?? []);
+    } catch {
+      toast.error("Vector match failed.");
+    } finally {
+      setMatching(false);
+    }
+  }
 
   async function runAiSourcing() {
     if (!reqId) { toast.error("Pick a requisition first"); return; }
@@ -163,11 +189,35 @@ export default function SourcingPage() {
                 <option key={r.id} value={r.id}>{r.title}</option>
               ))}
             </select>
+            <Button size="sm" variant="outline" onClick={runVectorMatch} disabled={matching || !reqId} className="gap-1.5">
+              {matching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+              {matching ? "Matching…" : "Best matches"}
+            </Button>
             <Button size="sm" onClick={runAiSourcing} disabled={sourcing || !reqId} className="gap-1.5">
               {sourcing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {sourcing ? "Sourcing…" : "Source candidates"}
+              {sourcing ? "Sourcing…" : "Source (AI agent)"}
             </Button>
           </div>
+
+          {matches && (
+            <div className="space-y-2">
+              <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Vector matches (embedding similarity){matches.length ? ` · top ${matches.length}` : ""}
+              </p>
+              {matches.length === 0 && (
+                <p className="text-sm text-muted-foreground">No embedded candidates yet — run embed-backfill, or this requisition has no close matches.</p>
+              )}
+              {matches.map((m) => (
+                <div key={m.id} className="flex items-center justify-between gap-3 rounded-md border p-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{m.name}</p>
+                    {m.skills?.length > 0 && <p className="text-2xs text-muted-foreground">{m.skills.slice(0, 8).join(" · ")}</p>}
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums shrink-0">{Math.round(m.score * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {result && (
             <div className="space-y-3">
