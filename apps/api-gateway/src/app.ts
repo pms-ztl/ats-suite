@@ -500,10 +500,15 @@ export function createApp(logger: Logger): Express {
   // Phase 32a — super-admin impersonation. In-process router (signs JWT +
   // writes audit). Mounted BEFORE the proxy routes so super-admin gating
   // happens before any forwarding.
+  // NOTE: no mount-level requireSuperAdmin here. /start self-checks SUPER_ADMIN,
+  // but /stop must be callable WHILE impersonating — at which point req.user.role
+  // is the impersonated user's role (e.g. ADMIN), not SUPER_ADMIN. Gating the
+  // mount with requireSuperAdmin made it impossible to stop an active session
+  // (403). Each route enforces its own authorization (/start: role===SUPER_ADMIN;
+  // /stop: requires an active actorUserId).
   app.use(
     "/api/super-admin/impersonate",
     gatewayAuth(),
-    requireSuperAdmin,
     express.json({ limit: "32kb" }),
     impersonateRouter,
   );

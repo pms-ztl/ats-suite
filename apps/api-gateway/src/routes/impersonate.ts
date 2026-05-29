@@ -54,12 +54,25 @@ router.post("/:tenantId/start", async (req: Request, res: Response, next: NextFu
     const tenantId = tenantIdParam;
     const body = z.object({ userId: z.string().uuid().optional() }).parse(req.body ?? {});
 
+    // Forward the super-admin's identity on the internal lookups below. The
+    // user-list endpoint is requireRole("SUPER_ADMIN","ADMIN"); without these
+    // headers identity sees no req.user and returns 401 (which previously made
+    // every impersonation start fail). The SUPER_ADMIN role is also what lets
+    // the cross-tenant ?tenantId= query through identity's tenant-scoping.
+    const uh = {
+      userId: req.user.id,
+      tenantId: req.user.tenantId,
+      role: req.user.role,
+      email: req.user.email,
+    };
+
     // Verify the tenant exists. We hit tenant-service rather than trusting
     // the URL — a typo in the URL shouldn't silently sign a JWT for a
     // non-existent tenant.
     const tenant = await callService<{ id: string; name: string; status: string }>("tenant", {
       method: "GET",
       path: `/internal/tenants/${tenantId}`,
+      userHeaders: uh,
     });
 
     // Pick the target user: explicit userId from the body, or the tenant's
@@ -70,6 +83,7 @@ router.post("/:tenantId/start", async (req: Request, res: Response, next: NextFu
       const u = await callService<any>("identity", {
         method: "GET",
         path: `/internal/users/${body.userId}`,
+        userHeaders: uh,
       });
       if (u.tenantId !== tenantId) throw Errors.validation("User does not belong to that tenant");
       target = { id: u.id, email: u.email, role: u.role };
@@ -77,6 +91,7 @@ router.post("/:tenantId/start", async (req: Request, res: Response, next: NextFu
       const list = await callService<{ data: any[] }>("identity", {
         method: "GET",
         path: `/internal/users?tenantId=${tenantId}&role=ADMIN`,
+        userHeaders: uh,
       });
       const first = (list.data ?? (list as any))[0];
       if (!first) throw Errors.notFound(`No ADMIN found for tenant ${tenant.name}`);
