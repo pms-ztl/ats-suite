@@ -51,13 +51,13 @@ function formatSalary(min?: number, max?: number, currency?: string) {
 }
 
 const statusColors: Record<string, string> = {
-  OPEN: "bg-green-100 text-green-800",
-  DRAFT: "bg-gray-100 text-gray-700",
-  CLOSED: "bg-red-100 text-red-700",
-  CANCELLED: "bg-red-100 text-red-700",
-  ON_HOLD: "bg-yellow-100 text-yellow-800",
-  FILLED: "bg-blue-100 text-blue-700",
-  IN_PROGRESS: "bg-emerald-100 text-emerald-800",
+  OPEN: "bg-brand-tint text-brand-ink",
+  DRAFT: "bg-surface-3 text-ink-3",
+  CLOSED: "bg-danger-tint text-danger",
+  CANCELLED: "bg-danger-tint text-danger",
+  ON_HOLD: "bg-warn-tint text-warn",
+  FILLED: "bg-info-tint text-info",
+  IN_PROGRESS: "bg-ok-tint text-ok",
 };
 
 export default function RequisitionDetailPage() {

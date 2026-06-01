@@ -213,9 +213,9 @@ export default function FormBuilderPage() {
                 <p className="text-xs text-muted-foreground mb-6">This is how candidates will see the form.</p>
                 <FormRenderer
                   fields={fields}
-                  submitLabel="Submit (preview only — no data saved)"
+                  submitLabel="Submit (preview only, no data saved)"
                   onSubmit={() => {
-                    toast.info("Preview mode — submission is not actually saved");
+                    toast.info("Preview mode, submission is not actually saved");
                   }}
                 />
               </CardContent>

@@ -50,29 +50,29 @@ interface Requisition {
 }
 
 const statusColors: Record<string, string> = {
-  open: "bg-green-100 text-green-800",
-  OPEN: "bg-green-100 text-green-800",
-  draft: "bg-gray-100 text-gray-700",
-  DRAFT: "bg-gray-100 text-gray-700",
-  closed: "bg-red-100 text-red-700",
-  CLOSED: "bg-red-100 text-red-700",
-  cancelled: "bg-red-100 text-red-700",
-  CANCELLED: "bg-red-100 text-red-700",
-  on_hold: "bg-yellow-100 text-yellow-800",
-  ON_HOLD: "bg-yellow-100 text-yellow-800",
-  filled: "bg-blue-100 text-blue-700",
-  FILLED: "bg-blue-100 text-blue-700",
-  in_progress: "bg-emerald-100 text-emerald-800",
-  IN_PROGRESS: "bg-emerald-100 text-emerald-800",
+  open: "bg-brand-tint text-brand-ink",
+  OPEN: "bg-brand-tint text-brand-ink",
+  draft: "bg-surface-3 text-ink-3",
+  DRAFT: "bg-surface-3 text-ink-3",
+  closed: "bg-danger-tint text-danger",
+  CLOSED: "bg-danger-tint text-danger",
+  cancelled: "bg-danger-tint text-danger",
+  CANCELLED: "bg-danger-tint text-danger",
+  on_hold: "bg-warn-tint text-warn",
+  ON_HOLD: "bg-warn-tint text-warn",
+  filled: "bg-info-tint text-info",
+  FILLED: "bg-info-tint text-info",
+  in_progress: "bg-ok-tint text-ok",
+  IN_PROGRESS: "bg-ok-tint text-ok",
 };
 
 function formatSalary(min: number | undefined, max: number | undefined, currency: string | undefined) {
-  if (!min && !max) return "—";
+  if (!min && !max) return "-";
   const curr = currency ?? "USD";
   const fmt = (n: number) => `${curr} ${(n / 1000).toFixed(0)}k`;
   if (!min) return `Up to ${fmt(max!)}`;
   if (!max) return `From ${fmt(min)}`;
-  return `${fmt(min)} – ${fmt(max)}`;
+  return `${fmt(min)} to ${fmt(max)}`;
 }
 
 function fetchRequisitions(
@@ -98,9 +98,9 @@ interface NewRequisitionForm {
   employmentType: string;
   remote: boolean;
   description: string;
-  requirements: string; // one per line — tunes AI screening
-  skills: string;        // comma-separated — seeds AI generation
-  customFields: { label: string; value: string }[]; // Phase 3 — admin criteria -> screener
+  requirements: string; // one per line, tunes AI screening
+  skills: string;        // comma-separated, seeds AI generation
+  customFields: { label: string; value: string }[]; // Phase 3, admin criteria -> screener
 }
 
 const DEPARTMENTS = [
@@ -197,7 +197,7 @@ export default function RequisitionsPage() {
           .filter((c) => c.label.trim())
           .map((c) => ({ label: c.label.trim(), value: c.value.trim() })),
       });
-      toast.success("Requisition created — pending approval.");
+      toast.success("Requisition created, pending approval.");
       const warnings: string[] = resp?.data?.complianceWarnings ?? resp?.complianceWarnings ?? [];
       if (warnings.length) toast.warning(warnings[0]);
       setDialogOpen(false);
@@ -373,7 +373,7 @@ export default function RequisitionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="req-skills">Key skills <span className="text-muted-foreground text-xs">(comma-separated — seeds AI + tunes screening)</span></Label>
+              <Label htmlFor="req-skills">Key skills <span className="text-muted-foreground text-xs">(comma-separated, seeds AI + tunes screening)</span></Label>
               <div className="flex items-center gap-2">
                 <Input
                   id="req-skills"
@@ -381,7 +381,7 @@ export default function RequisitionsPage() {
                   value={form.skills}
                   onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={handleGenerateJd} loading={generating} disabled={!form.title.trim()}>
+                <Button type="button" variant="outline" size="sm" onClick={handleGenerateJd} loading={generating} disabled={!form.title.trim()} className="shrink-0 border-ai/40 bg-ai/10 text-ai-ink hover:bg-ai/15 hover:text-ai-ink">
                   ✨ Generate
                 </Button>
               </div>
@@ -446,7 +446,7 @@ export default function RequisitionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="req-requirements">Requirements <span className="text-muted-foreground text-xs">(one per line — tunes AI screening)</span></Label>
+              <Label htmlFor="req-requirements">Requirements <span className="text-muted-foreground text-xs">(one per line, tunes AI screening)</span></Label>
               <Textarea
                 id="req-requirements"
                 placeholder={"3+ years Python\nREST API design\nCloud (AWS/GCP)"}
@@ -456,7 +456,7 @@ export default function RequisitionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Custom fields <span className="text-muted-foreground text-xs">(your own labeled criteria — sent to the AI screener)</span></Label>
+              <Label>Custom fields <span className="text-muted-foreground text-xs">(your own labeled criteria, sent to the AI screener)</span></Label>
               {form.customFields.map((cf, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <Input
