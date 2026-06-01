@@ -273,7 +273,7 @@ export default function RequisitionDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Status</span>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[requisition.status] ?? "bg-gray-100 text-gray-700"}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[requisition.status] ?? "bg-muted text-muted-foreground"}`}>
                   {requisition.status}
                 </span>
               </div>

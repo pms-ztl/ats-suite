@@ -1,14 +1,14 @@
 /**
  * Formats a date string or Date object consistently across the app.
- * Returns "—" for null/undefined/invalid dates.
+ * Returns "-" for null/undefined/invalid dates.
  */
 export function formatDate(value: string | Date | null | undefined, opts?: {
   includeTime?: boolean;
   relative?: boolean;
 }): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const date = value instanceof Date ? value : new Date(value);
-  if (isNaN(date.getTime())) return "—";
+  if (isNaN(date.getTime())) return "-";
 
   if (opts?.relative) {
     const diffMs = Date.now() - date.getTime();

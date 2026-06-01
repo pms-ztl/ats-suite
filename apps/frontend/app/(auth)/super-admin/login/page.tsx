@@ -8,7 +8,7 @@ export default function SuperAdminLoginPage() {
     <LoginCard
       tierLabel="Platform Admin"
       title="Platform Admin Sign-In"
-      subtitle="CDC ATS — the platform provider portal"
+      subtitle="CDC ATS, the platform provider portal"
       letter="◆"
       accentClass="bg-gradient-to-br from-violet-600 to-purple-700 shadow-[0_0_24px_-4px_rgb(168_85_247/0.5)]"
       homeUrl="/admin"

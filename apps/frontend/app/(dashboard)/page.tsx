@@ -89,16 +89,16 @@ function getGreetingForHour(hour: number): string {
 function getUrgencyStyles(urgency: string) {
   switch (urgency) {
     case "critical":
-      return { border: "border-l-rose-500", bg: "bg-rose-50/50 dark:bg-rose-950/20", badge: "destructive" as const, text: "text-rose-700" };
+      return { border: "border-l-rose-500", bg: "bg-danger-tint/50", badge: "destructive" as const, text: "text-danger" };
     case "high":
-      return { border: "border-l-amber-500", bg: "bg-amber-50/50 dark:bg-amber-950/20", badge: "warning" as const, text: "text-amber-700" };
+      return { border: "border-l-amber-500", bg: "bg-warn-tint/50", badge: "warning" as const, text: "text-warn" };
     default:
-      return { border: "border-l-blue-500", bg: "bg-blue-50/50 dark:bg-blue-950/20", badge: "info" as const, text: "text-blue-700" };
+      return { border: "border-l-blue-500", bg: "bg-info-tint/50", badge: "info" as const, text: "text-info" };
   }
 }
 
 /**
- * Phase 23 — role dispatcher.
+ * Phase 23, role dispatcher.
  *
  * The default export reads the logged-in user's role and renders the
  * appropriate dashboard:
@@ -108,7 +108,7 @@ function getUrgencyStyles(urgency: string) {
  *   anything else   → existing AdminDashboard (KPIs, funnel, full overview)
  *
  * While the user object hasn't hydrated, we render the admin dashboard
- * by default — it works for everyone and avoids a flash. The dispatch
+ * by default, it works for everyone and avoids a flash. The dispatch
  * happens once we have a confirmed role.
  */
 export default function DashboardPage() {
@@ -164,12 +164,12 @@ function AdminDashboard() {
         setKpis([
           { label: "Open Requisitions", value: d.openRequisitions ?? 0, change: d.openRequisitionsChange, changeLabel: "vs last month", sparklineData: d.openRequisitionsSparkline },
           { label: "Active Candidates", value: d.activeCandidates ?? 0, change: d.activeCandidatesChange, changeLabel: "vs last month", sparklineData: d.activeCandidatesSparkline },
-          { label: "Time to Hire", value: d.avgTimeToHire != null ? `${d.avgTimeToHire}d` : "—", change: d.avgTimeToHireChange, changeLabel: "vs last month", sparklineData: d.avgTimeToHireSparkline },
-          { label: "Offer Accept Rate", value: d.offerAcceptRate != null ? `${d.offerAcceptRate}%` : "—", change: d.offerAcceptRateChange, changeLabel: "vs last month", sparklineData: d.offerAcceptRateSparkline },
+          { label: "Time to Hire", value: d.avgTimeToHire != null ? `${d.avgTimeToHire}d` : "-", change: d.avgTimeToHireChange, changeLabel: "vs last month", sparklineData: d.avgTimeToHireSparkline },
+          { label: "Offer Accept Rate", value: d.offerAcceptRate != null ? `${d.offerAcceptRate}%` : "-", change: d.offerAcceptRateChange, changeLabel: "vs last month", sparklineData: d.offerAcceptRateSparkline },
           { label: "AI Decisions Today", value: d.aiDecisionsToday ?? 0, change: d.aiDecisionsTodayChange, changeLabel: "vs yesterday", sparklineData: d.aiDecisionsTodaySparkline },
-          { label: "Compliance Score", value: d.complianceScore != null ? `${d.complianceScore}%` : "—", change: d.complianceScoreChange, changeLabel: "vs last month", sparklineData: d.complianceScoreSparkline },
-          { label: "Diversity Index", value: d.diversityScore ?? "—", change: d.diversityScoreChange, changeLabel: "vs last quarter", sparklineData: d.diversityScoreSparkline },
-          { label: "Cost per Hire", value: d.costPerHire != null ? `$${d.costPerHire}` : "—", change: d.costPerHireChange, changeLabel: "vs last month", sparklineData: d.costPerHireSparkline },
+          { label: "Compliance Score", value: d.complianceScore != null ? `${d.complianceScore}%` : "-", change: d.complianceScoreChange, changeLabel: "vs last month", sparklineData: d.complianceScoreSparkline },
+          { label: "Diversity Index", value: d.diversityScore ?? "-", change: d.diversityScoreChange, changeLabel: "vs last quarter", sparklineData: d.diversityScoreSparkline },
+          { label: "Cost per Hire", value: d.costPerHire != null ? `$${d.costPerHire}` : "-", change: d.costPerHireChange, changeLabel: "vs last month", sparklineData: d.costPerHireSparkline },
         ]);
         if (d.timeSeriesData) setTimeData(d.timeSeriesData);
         if (d.pipelineData) setPipelineData(d.pipelineData);
@@ -179,14 +179,14 @@ function AdminDashboard() {
         console.error("Failed to load dashboard data:", err);
         setKpisError(true);
         setKpis([
-          { label: "Open Requisitions", value: "—" },
-          { label: "Active Candidates", value: "—" },
-          { label: "Time to Hire", value: "—" },
-          { label: "Offer Accept Rate", value: "—" },
-          { label: "AI Decisions Today", value: "—" },
-          { label: "Compliance Score", value: "—" },
-          { label: "Diversity Index", value: "—" },
-          { label: "Cost per Hire", value: "—" },
+          { label: "Open Requisitions", value: "-" },
+          { label: "Active Candidates", value: "-" },
+          { label: "Time to Hire", value: "-" },
+          { label: "Offer Accept Rate", value: "-" },
+          { label: "AI Decisions Today", value: "-" },
+          { label: "Compliance Score", value: "-" },
+          { label: "Diversity Index", value: "-" },
+          { label: "Cost per Hire", value: "-" },
         ]);
       })
       .finally(() => setKpisLoading(false));
@@ -215,8 +215,8 @@ function AdminDashboard() {
         const d = res.data ?? res;
         if (Array.isArray(d) && d.length > 0) {
           const colorMap: Record<string, string> = {
-            APPLIED: "bg-indigo-500", SCREENING: "bg-emerald-500", INTERVIEW: "bg-amber-500",
-            OFFER: "bg-violet-500", HIRED: "bg-rose-500",
+            APPLIED: "bg-info", SCREENING: "bg-ok", INTERVIEW: "bg-warn",
+            OFFER: "bg-ai", HIRED: "bg-danger",
           };
           setFunnelCounts(d.map((s: any) => ({
             name: s.stage ?? s.name ?? "Unknown",
@@ -309,7 +309,7 @@ function AdminDashboard() {
               toast.success("Dashboard report exported as CSV.");
             }}>Export Report</Button>
             <Button size="sm" onClick={() => {
-              toast.success("Real-time mode enabled — dashboard refreshes every 30s.");
+              toast.success("Real-time mode enabled, dashboard refreshes every 30s.");
               setTimeout(() => window.location.reload(), 30000);
             }}><Activity className="h-4 w-4 mr-1" />Real-time</Button>
           </div>
@@ -361,19 +361,19 @@ function AdminDashboard() {
 
       {/* AI Review Queue Summary */}
       {hitlPending > 0 && (
-        <Card className={hitlOverdue > 0 ? "border-amber-300 bg-amber-50/30" : undefined}>
+        <Card className={hitlOverdue > 0 ? "border-warn/40 bg-warn-tint/30" : undefined}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${hitlOverdue > 0 ? "bg-amber-100" : "bg-indigo-100"}`}>
-                  <ShieldCheck className={`h-5 w-5 ${hitlOverdue > 0 ? "text-amber-600" : "text-indigo-600"}`} />
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${hitlOverdue > 0 ? "bg-warn-tint" : "bg-info-tint"}`}>
+                  <ShieldCheck className={`h-5 w-5 ${hitlOverdue > 0 ? "text-warn" : "text-info"}`} />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold">AI Review Queue</h3>
                   <p className="text-xs text-muted-foreground">
                     {hitlPending} pending checkpoint{hitlPending !== 1 ? "s" : ""}
                     {hitlOverdue > 0 && (
-                      <span className="text-amber-600 font-medium"> ({hitlOverdue} overdue)</span>
+                      <span className="text-warn font-medium"> ({hitlOverdue} overdue)</span>
                     )}
                   </p>
                 </div>
@@ -585,9 +585,9 @@ function AdminDashboard() {
                 {recentActivity.map((item, i) => (
                   <div key={i} className="flex items-start gap-3 group hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 transition-colors">
                     <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
-                      item.type === "success" ? "bg-emerald-500" :
-                      item.type === "warning" ? "bg-amber-500" :
-                      item.type === "error" ? "bg-rose-500" : "bg-blue-500"
+                      item.type === "success" ? "bg-ok" :
+                      item.type === "warning" ? "bg-warn" :
+                      item.type === "error" ? "bg-danger" : "bg-info"
                     }`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{item.action}</p>
@@ -605,10 +605,10 @@ function AdminDashboard() {
       {/* Enhanced Quick Links with trend indicators and icons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Review Queue", count: "12 pending", trend: "+3", trendDir: "up" as const, href: "/compliance", color: "text-amber-600", bgHover: "hover:border-amber-300", icon: Eye },
-          { label: "Bias Alerts", count: "3 active", trend: "-2", trendDir: "down" as const, href: "/compliance", color: "text-rose-600", bgHover: "hover:border-rose-300", icon: AlertTriangle },
-          { label: "AI Models", count: "15 deployed", trend: "+1", trendDir: "up" as const, href: "/ai", color: "text-indigo-600", bgHover: "hover:border-indigo-300", icon: Brain },
-          { label: "Open Requisitions", count: "48 active", trend: "+5", trendDir: "up" as const, href: "/platform", color: "text-emerald-600", bgHover: "hover:border-emerald-300", icon: Briefcase },
+          { label: "Review Queue", count: "12 pending", trend: "+3", trendDir: "up" as const, href: "/compliance", color: "text-warn", bgHover: "hover:border-warn/40", icon: Eye },
+          { label: "Bias Alerts", count: "3 active", trend: "-2", trendDir: "down" as const, href: "/compliance", color: "text-danger", bgHover: "hover:border-danger/40", icon: AlertTriangle },
+          { label: "AI Models", count: "15 deployed", trend: "+1", trendDir: "up" as const, href: "/ai", color: "text-info", bgHover: "hover:border-info/40", icon: Brain },
+          { label: "Open Requisitions", count: "48 active", trend: "+5", trendDir: "up" as const, href: "/platform", color: "text-ok", bgHover: "hover:border-ok/40", icon: Briefcase },
         ].map((link, i) => {
           const Icon = link.icon;
           return (
@@ -619,12 +619,12 @@ function AdminDashboard() {
                     <Icon className={`h-4 w-4 ${link.color}`} />
                     <div className={`flex items-center gap-0.5 text-2xs font-medium ${
                       link.trendDir === "down" && link.label === "Bias Alerts"
-                        ? "text-emerald-600"
+                        ? "text-ok"
                         : link.trendDir === "up" && link.label === "Bias Alerts"
-                          ? "text-rose-600"
+                          ? "text-danger"
                           : link.trendDir === "up"
-                            ? "text-emerald-600"
-                            : "text-rose-600"
+                            ? "text-ok"
+                            : "text-danger"
                     }`}>
                       {link.trendDir === "up" ? (
                         <ArrowUpRight className="h-3 w-3" />

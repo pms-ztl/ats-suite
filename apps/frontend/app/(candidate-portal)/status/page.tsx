@@ -64,7 +64,7 @@ function getStatusBadge(status: string) {
       return <Badge variant="info">In Progress</Badge>;
     case "HIRED":
     case "ACCEPTED":
-      return <Badge variant="default" className="bg-emerald-600">Hired</Badge>;
+      return <Badge variant="default" className="bg-ok">Hired</Badge>;
     case "REJECTED":
     case "DECLINED":
       return <Badge variant="destructive">Not Selected</Badge>;
@@ -101,7 +101,7 @@ export default function ApplicationStatusPage() {
     setSearched(true);
 
     try {
-      // Use public API — no auth required
+      // Use public API, no auth required
       const res = await fetch(
         `${API_BASE}/public/status?email=${encodeURIComponent(email.trim())}`,
         {
@@ -293,7 +293,7 @@ export default function ApplicationStatusPage() {
                                   className={cn(
                                     "h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors",
                                     isCompleted &&
-                                      "bg-emerald-100 text-emerald-600",
+                                      "bg-ok-tint text-ok",
                                     isCurrent &&
                                       "bg-primary/10 text-primary ring-2 ring-primary",
                                     isUpcoming &&
@@ -311,7 +311,7 @@ export default function ApplicationStatusPage() {
                                 <span
                                   className={cn(
                                     "text-xs text-center",
-                                    isCompleted && "text-emerald-700 font-medium",
+                                    isCompleted && "text-ok font-medium",
                                     isCurrent && "text-primary font-medium",
                                     isUpcoming && "text-muted-foreground"
                                   )}
@@ -324,7 +324,7 @@ export default function ApplicationStatusPage() {
                                   className={cn(
                                     "h-0.5 flex-1 -mt-5",
                                     i < currentIdx
-                                      ? "bg-emerald-300"
+                                      ? "bg-ok"
                                       : "bg-border"
                                   )}
                                 />

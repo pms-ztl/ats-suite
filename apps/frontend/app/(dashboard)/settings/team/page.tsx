@@ -279,19 +279,19 @@ export default function TeamManagementPage() {
 
       {/* Seat limit banner */}
       {seats && !seats.unlimited && seats.remaining !== null && seats.remaining <= 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-4">
+        <div className="rounded-lg border border-warn/40 bg-warn-tint p-4">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <ShieldAlert className="h-5 w-5 text-warn dark:text-warn shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                Seat limit reached — {seats.plan} plan includes {seats.limit} seats.
+              <p className="text-sm font-semibold text-warn">
+                Seat limit reached, {seats.plan} plan includes {seats.limit} seats.
               </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              <p className="text-xs text-warn dark:text-warn mt-1">
                 Upgrade your plan to invite more teammates, or deactivate an existing user to free up a seat.
               </p>
               <a
                 href="/billing"
-                className="inline-block mt-2 text-xs font-semibold text-amber-900 dark:text-amber-200 underline hover:no-underline"
+                className="inline-block mt-2 text-xs font-semibold text-warn underline hover:no-underline"
               >
                 View plans →
               </a>

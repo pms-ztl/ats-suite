@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 32c — super-admin audit log viewer.
+ * Phase 32c, super-admin audit log viewer.
  *
  * Reads from GET /api/super-admin/audit (paginated) with filters for
  * tenant, action, resourceType, date range. CSV export downloads up to
@@ -10,7 +10,7 @@
  * Why a separate page from /admin/platform/audit (which exists already):
  * platform/audit is scoped to platform actions (kill switches + prompt
  * overrides). THIS page is the cross-cutting audit log of every actor
- * action across every tenant — what auditors will ask for in a SOC 2
+ * action across every tenant, what auditors will ask for in a SOC 2
  * review.
  */
 import { useCallback, useEffect, useState } from "react";
@@ -234,9 +234,9 @@ export default function AuditPage() {
                     <td className="px-4 py-2 font-mono text-xs whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="px-4 py-2"><Badge variant="outline" className="text-2xs">{r.action}</Badge></td>
                     <td className="px-4 py-2 font-mono text-xs">{r.resourceType}{r.resourceId ? `:${r.resourceId.slice(0, 8)}` : ""}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.actorUserId ? r.actorUserId.slice(0, 8) : "—"}</td>
+                    <td className="px-4 py-2 font-mono text-xs">{r.actorUserId ? r.actorUserId.slice(0, 8) : "-"}</td>
                     <td className="px-4 py-2 font-mono text-xs">{r.tenantId ? r.tenantId.slice(0, 8) : "(platform)"}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.ipAddress ?? "—"}</td>
+                    <td className="px-4 py-2 font-mono text-xs">{r.ipAddress ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>

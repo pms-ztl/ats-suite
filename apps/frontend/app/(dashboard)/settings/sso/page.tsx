@@ -223,13 +223,13 @@ export default function SsoSettingsPage() {
       />
 
       {/* Status banner */}
-      <Card className={cfg.status === "ENABLED" ? "border-emerald-500/50" : cfg.status === "DRAFT" ? "border-amber-500/50" : "border-muted"}>
+      <Card className={cfg.status === "ENABLED" ? "border-ok/40/50" : cfg.status === "DRAFT" ? "border-warn/40/50" : "border-muted"}>
         <CardContent className="pt-4 pb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {cfg.status === "ENABLED" ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              <CheckCircle2 className="w-5 h-5 text-ok" />
             ) : cfg.status === "DRAFT" ? (
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <AlertTriangle className="w-5 h-5 text-warn" />
             ) : (
               <Shield className="w-5 h-5 text-muted-foreground" />
             )}
@@ -238,9 +238,9 @@ export default function SsoSettingsPage() {
                 Status: <Badge variant={cfg.status === "ENABLED" ? "default" : "outline"}>{cfg.status}</Badge>
               </p>
               <p className="text-xs text-muted-foreground">
-                {cfg.status === "DRAFT" && "Test mode — assertions are parsed but no users are provisioned."}
-                {cfg.status === "ENABLED" && "Live — users on configured domains route to your IdP."}
-                {cfg.status === "DISABLED" && "Off — config retained but SSO rejected."}
+                {cfg.status === "DRAFT" && "Test mode, assertions are parsed but no users are provisioned."}
+                {cfg.status === "ENABLED" && "Live, users on configured domains route to your IdP."}
+                {cfg.status === "DISABLED" && "Off, config retained but SSO rejected."}
               </p>
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function SsoSettingsPage() {
                   value={cfg.oidcClientSecret === "***REDACTED***" ? "" : (cfg.oidcClientSecret ?? "")}
                   onChange={(e) => setCfg({ ...cfg, oidcClientSecret: e.target.value || null })}
                 />
-                <p className="text-xs text-muted-foreground">Stored encrypted at rest in production (Phase 32). For now: plaintext in DB — rotate regularly.</p>
+                <p className="text-xs text-muted-foreground">Stored encrypted at rest in production (Phase 32). For now: plaintext in DB, rotate regularly.</p>
               </div>
             </>
           )}
@@ -402,10 +402,10 @@ export default function SsoSettingsPage() {
             Recent SSO login attempts
           </CardTitle>
           <CardDescription>
-            <span className="text-emerald-600 dark:text-emerald-400">{successCount} success</span>
+            <span className="text-ok dark:text-ok">{successCount} success</span>
             {" / "}
             <span className="text-destructive">{failCount} fail</span>
-            {" — last 50"}
+            {", last 50"}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -428,10 +428,10 @@ export default function SsoSettingsPage() {
                     <td className="px-4 py-1.5 tabular-nums text-muted-foreground">{new Date(a.createdAt).toLocaleString()}</td>
                     <td className="px-4 py-1.5 font-mono">{a.email}</td>
                     <td className="px-4 py-1.5">{a.protocol}</td>
-                    <td className={`px-4 py-1.5 ${a.outcome.startsWith("success") ? "text-emerald-600 dark:text-emerald-400" : a.outcome.startsWith("fail") ? "text-destructive" : ""}`}>
+                    <td className={`px-4 py-1.5 ${a.outcome.startsWith("success") ? "text-ok dark:text-ok" : a.outcome.startsWith("fail") ? "text-destructive" : ""}`}>
                       {a.outcome}
                     </td>
-                    <td className="px-4 py-1.5 text-muted-foreground">{a.ipAddress ?? "—"}</td>
+                    <td className="px-4 py-1.5 text-muted-foreground">{a.ipAddress ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>

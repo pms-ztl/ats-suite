@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Phase 31b — confirm-email banner. Shown sitewide when the signed-in user
+ * Phase 31b, confirm-email banner. Shown sitewide when the signed-in user
  * hasn't verified their email yet. Dismiss is session-only (sessionStorage)
  * so they get it back on next login until they verify.
  *
  * Why session-only and not permanent: an unverified email is a real
- * security concern — if we let the user dismiss it forever they might
+ * security concern, if we let the user dismiss it forever they might
  * forget about it and accept invites/notifications going to the wrong
  * address. Per-session dismiss is the right middle ground.
  */
@@ -32,7 +32,7 @@ export function VerifyEmailBanner() {
 
   if (isLoading || !user) return null;
   // user.emailVerified can be undefined for users created before Phase 31b
-  // (the backend defaults those to true) — only show banner on explicit false.
+  // (the backend defaults those to true), only show banner on explicit false.
   if ((user as any).emailVerified !== false) return null;
   if (dismissed) return null;
 
@@ -58,28 +58,28 @@ export function VerifyEmailBanner() {
       if (!res.ok) throw new Error(`${res.status}`);
       const body = await res.json();
       if (body?.data?.alreadyVerified || body?.alreadyVerified) {
-        toast.success("Your email is already verified — refreshing.");
+        toast.success("Your email is already verified, refreshing.");
         window.location.reload();
         return;
       }
       setSentAt(Date.now());
       toast.success(`Verification email sent to ${user.email}`);
     } catch {
-      toast.error("Couldn't send — try again in a minute.");
+      toast.error("Couldn't send, try again in a minute.");
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50/80 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+    <div className="border-b border-warn/40 bg-warn-tint/80 text-warn">
       <div className="px-6 py-2 flex items-center gap-3 text-sm">
         <Mail className="h-4 w-4 shrink-0" />
         <div className="flex-1 min-w-0">
           <span className="font-medium">Confirm your email.</span>{" "}
           <span className="opacity-80">
             We sent a link to <strong>{user.email}</strong>
-            {sentAt ? " (re-sent — check your inbox)" : ""}.
+            {sentAt ? " (re-sent, check your inbox)" : ""}.
           </span>
         </div>
         <button

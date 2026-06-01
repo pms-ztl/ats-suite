@@ -206,7 +206,7 @@ export default function RetentionPage() {
           </div>
 
           {belowFloor && (
-            <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-danger-tint border border-danger/40 text-danger dark:text-danger text-sm">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
                 Retention must be at least {retention.floorDays} days on the {retention.plan} plan.
@@ -237,7 +237,7 @@ export default function RetentionPage() {
           <p className="text-muted-foreground">
             The retention worker runs nightly at 03:00 UTC. When it finds an eligible candidate it calls the same anonymization
             flow as the manual <code className="bg-muted px-1 py-0.5 rounded text-xs">DELETE /api/gdpr/candidates/:id</code>{" "}
-            endpoint — applications, notes, and attachments are removed; the candidate record stays but with name/email/contact scrubbed.
+            endpoint, applications, notes, and attachments are removed; the candidate record stays but with name/email/contact scrubbed.
           </p>
           <div className="pt-3 border-t flex items-start gap-2 text-xs text-muted-foreground">
             <Trash2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />

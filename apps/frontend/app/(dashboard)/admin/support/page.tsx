@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Phase 32b — super-admin support ticket triage.
+ * Phase 32b, super-admin support ticket triage.
  *
  * Lists every open ticket across all tenants, plus a filter for RESOLVED.
  * Clicking a ticket opens the thread view with the same reply UI as the
- * tenant side — but super-admins can also flag messages as internal-only
+ * tenant side, but super-admins can also flag messages as internal-only
  * (visible only to other SUPER_ADMINs) and change status/priority.
  */
 import { useCallback, useEffect, useState } from "react";
@@ -46,15 +46,15 @@ interface TicketMessage {
 }
 
 const STATUS_COLOR: Record<Ticket["status"], string> = {
-  OPEN: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  AWAITING_CUSTOMER: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  RESOLVED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  OPEN: "bg-info/15 text-info dark:text-info",
+  AWAITING_CUSTOMER: "bg-warn/15 text-warn dark:text-warn",
+  RESOLVED: "bg-ok/15 text-ok dark:text-ok",
 };
 const PRIORITY_COLOR: Record<Ticket["priority"], string> = {
   LOW: "text-muted-foreground",
   NORMAL: "",
-  HIGH: "text-amber-600 dark:text-amber-400",
-  URGENT: "text-rose-600 dark:text-rose-400 font-bold",
+  HIGH: "text-warn dark:text-warn",
+  URGENT: "text-danger dark:text-danger font-bold",
 };
 
 function authHeaders(): Record<string, string> {
@@ -233,7 +233,7 @@ function AdminTicketDialog({ ticketId, onClose, onUpdated }: {
             <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
               {ticket.messages?.map((m) => (
                 <div key={m.id} className={`rounded-lg border p-3 text-sm ${
-                  m.isInternal ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30" :
+                  m.isInternal ? "bg-warn-tint border-warn/40" :
                   m.authorRole === "SUPPORT" ? "bg-primary/5 border-primary/30" : "bg-muted/30"
                 }`}>
                   <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground">

@@ -10,8 +10,8 @@ interface PageErrorProps {
 export function PageError({ message = "Failed to load data.", onRetry }: PageErrorProps) {
   return (
     <div role="alert" className="flex flex-col items-center justify-center min-h-[300px] gap-4 text-center p-8">
-      <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
-        <AlertTriangle className="h-6 w-6 text-rose-500" />
+      <div className="h-12 w-12 rounded-full bg-danger-tint flex items-center justify-center">
+        <AlertTriangle className="h-6 w-6 text-danger" />
       </div>
       <div>
         <h3 className="font-semibold text-foreground">Something went wrong</h3>

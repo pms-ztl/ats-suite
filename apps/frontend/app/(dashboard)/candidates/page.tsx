@@ -234,7 +234,7 @@ export default function CandidatesPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-slate-200 bg-white p-4">
+            <div key={i} className="rounded-lg border border-line bg-white p-4">
               <Skeleton className="h-7 w-16 mb-2" />
               <Skeleton className="h-3 w-24" />
             </div>

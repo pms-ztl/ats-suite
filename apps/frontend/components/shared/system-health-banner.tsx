@@ -15,21 +15,21 @@ interface SystemHealthBannerProps {
 }
 
 const stripVariants: Record<ServiceStatus, string> = {
-  operational: "bg-emerald-50/60 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800",
-  degraded: "bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800",
-  down: "bg-rose-50/60 border-rose-200 dark:bg-rose-950/20 dark:border-rose-800",
+  operational: "bg-ok-tint/60 border-ok/40",
+  degraded: "bg-warn-tint/60 border-warn/40",
+  down: "bg-danger-tint/60 border-danger/40",
 };
 
 const dotVariants: Record<ServiceStatus, string> = {
-  operational: "bg-emerald-500",
-  degraded: "bg-amber-500",
-  down: "bg-rose-500",
+  operational: "bg-ok",
+  degraded: "bg-warn",
+  down: "bg-danger",
 };
 
 const StatusIcon = ({ status }: { status: ServiceStatus }) => {
-  if (status === "operational") return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
-  if (status === "degraded") return <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
-  return <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />;
+  if (status === "operational") return <CheckCircle2 className="h-4 w-4 text-ok dark:text-ok" />;
+  if (status === "degraded") return <AlertTriangle className="h-4 w-4 text-warn dark:text-warn" />;
+  return <XCircle className="h-4 w-4 text-danger dark:text-danger" />;
 };
 
 export function SystemHealthBanner({ services, className }: SystemHealthBannerProps) {

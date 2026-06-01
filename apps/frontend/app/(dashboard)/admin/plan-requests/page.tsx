@@ -218,8 +218,8 @@ export default function PlanRequestsPage() {
                     <Badge
                       variant={r.status === "APPROVED" ? "default" : "secondary"}
                       className={cn(
-                        r.status === "APPROVED" && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-                        r.status === "REJECTED" && "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+                        r.status === "APPROVED" && "bg-ok/15 text-ok dark:text-ok",
+                        r.status === "REJECTED" && "bg-danger/15 text-danger dark:text-danger",
                       )}
                     >
                       {r.status}
@@ -238,8 +238,8 @@ export default function PlanRequestsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {action === "APPROVE"
-                ? <><Sparkles className="h-5 w-5 text-emerald-500" /> Approve plan change</>
-                : <><XCircle className="h-5 w-5 text-amber-500" /> Reject plan change</>}
+                ? <><Sparkles className="h-5 w-5 text-ok" /> Approve plan change</>
+                : <><XCircle className="h-5 w-5 text-warn" /> Reject plan change</>}
             </DialogTitle>
             <DialogDescription>
               {actioning && action === "APPROVE" && (

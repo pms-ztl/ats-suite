@@ -13,7 +13,7 @@
  *   - Left rail: agent list with "custom" badge if override exists
  *   - Right pane: editor for the selected agent
  *   - History panel: previous versions with rollback button
- *   - Saving creates a NEW version (never edits in place — auditable)
+ *   - Saving creates a NEW version (never edits in place, auditable)
  *   - Empty fields fall back to the hardcoded defaults (per-field override)
  */
 import { useEffect, useMemo, useState } from "react";
@@ -226,7 +226,7 @@ export default function PlatformPromptsPage() {
 
       <PageHeader
         title="Prompt control plane"
-        description="Override the system prompt, model, or temperature for any agent — across every tenant. Versioned with rollback. Cache TTL is 5 minutes."
+        description="Override the system prompt, model, or temperature for any agent, across every tenant. Versioned with rollback. Cache TTL is 5 minutes."
       />
 
       <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
@@ -280,7 +280,7 @@ export default function PlatformPromptsPage() {
                       <CardDescription>
                         {active
                           ? `Override active (v${active.version}). Saved ${new Date(active.createdAt).toLocaleString()}.`
-                          : "Using hardcoded defaults — no override active. Save below to create a custom version."}
+                          : "Using hardcoded defaults, no override active. Save below to create a custom version."}
                       </CardDescription>
                     </div>
                     {active && (
@@ -328,7 +328,7 @@ export default function PlatformPromptsPage() {
                           <p className="text-xs text-muted-foreground">Empty = use agent default</p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="temperature">Temperature (0–2)</Label>
+                          <Label htmlFor="temperature">Temperature (0-2)</Label>
                           <Input
                             id="temperature"
                             type="number"
@@ -397,7 +397,7 @@ export default function PlatformPromptsPage() {
                               </span>
                             </td>
                             <td className="px-4 py-2 text-xs">
-                              {h.notes ?? <span className="text-muted-foreground italic">—</span>}
+                              {h.notes ?? <span className="text-muted-foreground italic">-</span>}
                               {h.createdByUserId && (
                                 <span className="ml-2 text-muted-foreground inline-flex items-center gap-1">
                                   <UserIcon className="w-3 h-3" />
@@ -439,7 +439,7 @@ export default function PlatformPromptsPage() {
         </div>
       </div>
 
-      {/* Diff dialog — compare a historical version to the active one */}
+      {/* Diff dialog, compare a historical version to the active one */}
       <Dialog open={!!compareWith} onOpenChange={(o) => !o && setCompareWith(null)}>
         <DialogContent className="max-w-5xl w-[95vw] sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>

@@ -248,7 +248,7 @@ function FileUploader({
         )}>
           <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-sm truncate flex-1">{file.name}</span>
-          <button type="button" onClick={() => onChange(null)} className="text-muted-foreground hover:text-rose-500" disabled={disabled}>
+          <button type="button" onClick={() => onChange(null)} className="text-muted-foreground hover:text-danger" disabled={disabled}>
             <X className="h-4 w-4" />
           </button>
         </div>

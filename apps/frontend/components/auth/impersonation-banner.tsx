@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 32a — banner shown sitewide when a SUPER_ADMIN is impersonating
+ * Phase 32a, banner shown sitewide when a SUPER_ADMIN is impersonating
  * another user. Rendered above the verify-email banner; bright red so
  * the support agent can never forget they're acting as someone else.
  *
@@ -23,7 +23,7 @@ export function ImpersonationBanner() {
 
   // actorUserId is only present in the /auth/me response when an
   // impersonation JWT is in the cookie. We rely on the typed AuthUser
-  // — `(user as any)` only because actorUserId is optional on AuthUser.
+  //, `(user as any)` only because actorUserId is optional on AuthUser.
   const actorUserId = (user as any)?.actorUserId as string | undefined;
   if (!actorUserId || !user) return null;
 
@@ -43,13 +43,13 @@ export function ImpersonationBanner() {
       // Hard-nav so the auth context picks up the new JWT cleanly.
       window.location.href = "/admin";
     } catch {
-      toast.error("Couldn't stop impersonating — try again.");
+      toast.error("Couldn't stop impersonating, try again.");
       setStopping(false);
     }
   };
 
   return (
-    <div className="bg-rose-600 text-white border-b border-rose-700">
+    <div className="bg-danger text-white border-b border-danger/40">
       <div className="px-6 py-2 flex items-center gap-3 text-sm">
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <div className="flex-1 min-w-0">

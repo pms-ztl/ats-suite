@@ -42,7 +42,7 @@ const PLANS = [
     id:    "STARTER",
     name:  "Starter",
     icon:  Zap,
-    color: "text-blue-500",
+    color: "text-info",
     monthlyPrice: 149,
     yearlyPrice:  119,
     description:  "For growing companies that need AI-powered hiring at scale.",
@@ -98,7 +98,7 @@ const PLANS = [
     id:    "ENTERPRISE",
     name:  "Enterprise",
     icon:  Building2,
-    color: "text-amber-500",
+    color: "text-warn",
     monthlyPrice: null,  // custom
     yearlyPrice:  null,
     description:  "Custom contracts, dedicated infra, SSO, and white-labeling.",
@@ -133,7 +133,7 @@ const FAQS = [
   },
   {
     q: "What happens after the 14-day trial?",
-    a: "You'll receive a reminder 3 days before your trial ends. If you don't add a payment method, your account moves to the Free plan — your data is never deleted.",
+    a: "You'll receive a reminder 3 days before your trial ends. If you don't add a payment method, your account moves to the Free plan, your data is never deleted.",
   },
   {
     q: "Is my data isolated from other customers?",
@@ -141,7 +141,7 @@ const FAQS = [
   },
   {
     q: "Do you offer GDPR / EEOC compliance?",
-    a: "Yes — GDPR data erasure, consent management, right-to-access exports, and full EEOC adverse-impact reporting are included on all paid plans.",
+    a: "Yes, GDPR data erasure, consent management, right-to-access exports, and full EEOC adverse-impact reporting are included on all paid plans.",
   },
   {
     q: "Can I white-label the candidate portal?",
@@ -179,14 +179,14 @@ export default function PricingPage() {
       <section className="py-20 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <Badge variant="secondary" className="mb-4 gap-1.5">
-            <Sparkles className="h-3 w-3 text-primary" />
+            <Sparkles className="h-3 w-3 text-ai" />
             AI-Powered Hiring Platform
           </Badge>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
             Simple, transparent pricing
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            One platform for every stage of hiring — from first post to final offer.
+            One platform for every stage of hiring, from first post to final offer.
             No hidden fees. Cancel any time.
           </p>
 
@@ -209,7 +209,7 @@ export default function PricingPage() {
               )}
             >
               Yearly
-              <span className="text-xs text-emerald-500 font-semibold">Save 20%</span>
+              <span className="text-xs text-ok font-semibold">Save 20%</span>
             </button>
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function PricingPage() {
                         "inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold border",
                         isPro
                           ? "bg-primary text-primary-foreground border-transparent"
-                          : "bg-blue-500 text-white border-transparent"
+                          : "bg-info text-white border-transparent"
                       )}
                     >
                       {plan.badge}
@@ -293,7 +293,7 @@ export default function PricingPage() {
                 <ul className="space-y-2 flex-1">
                   {(plan.features as readonly string[]).map((f) => (
                     <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <Check className="h-3.5 w-3.5 text-ok shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </li>
                   ))}

@@ -545,12 +545,12 @@ export default function CandidateDetailPage() {
                           <Clock className="h-4 w-4 animate-spin" /> Thinking…
                         </div>
                       ) : t.error ? (
-                        <p className="text-sm text-rose-600">{t.error}</p>
+                        <p className="text-sm text-danger">{t.error}</p>
                       ) : (
                         <>
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{t.response}</p>
                           {t.shouldEscalate && (
-                            <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300">
+                            <Badge variant="outline" className="text-2xs text-warn border-warn/40">
                               Escalated{t.escalationReason ? `: ${t.escalationReason}` : ""}
                             </Badge>
                           )}
@@ -622,7 +622,7 @@ export default function CandidateDetailPage() {
 
                 {offerResult && (
                   offerResult.error ? (
-                    <p className="text-sm text-rose-600">{offerResult.error}</p>
+                    <p className="text-sm text-danger">{offerResult.error}</p>
                   ) : (
                     <>
                       <Card>

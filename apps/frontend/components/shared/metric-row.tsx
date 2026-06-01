@@ -20,10 +20,10 @@ export function MetricRow({ label, value, max, target, format, className }: Metr
     <div className={cn("space-y-1", className)}>
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className={cn("font-semibold tabular-nums", isAboveTarget ? "text-foreground" : "text-rose-600")}>{displayValue}</span>
+        <span className={cn("font-semibold tabular-nums", isAboveTarget ? "text-foreground" : "text-danger")}>{displayValue}</span>
       </div>
       <div className="relative">
-        <Progress value={pct} className={cn("h-2", !isAboveTarget && "[&>div]:bg-rose-500")} />
+        <Progress value={pct} className={cn("h-2", !isAboveTarget && "[&>div]:bg-danger")} />
         {targetPct !== undefined && (
           <div className="absolute top-0 h-2 w-0.5 bg-slate-800" style={{ left: `${targetPct}%` }} title={`Target: ${target}`} />
         )}

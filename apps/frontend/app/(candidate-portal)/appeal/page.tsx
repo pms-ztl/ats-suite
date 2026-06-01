@@ -28,7 +28,7 @@ export default function CandidateAppealPage() {
         return;
       }
 
-      // Hit the public backend route — anonymous candidates have no JWT.
+      // Hit the public backend route, anonymous candidates have no JWT.
       const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
       const res = await fetch(`${API_BASE}/public/appeal`, {
         method: "POST",
@@ -72,7 +72,7 @@ export default function CandidateAppealPage() {
         <h1 className="text-2xl font-semibold">Appeal Submitted</h1>
         <Card>
           <CardContent className="py-12 text-center">
-            <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+            <CheckCircle2 className="h-12 w-12 text-ok mx-auto mb-4" />
             <h2 className="text-lg font-semibold">Your appeal has been submitted</h2>
             <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
               A human reviewer will examine your case within 5 business days. You&apos;ll receive an email notification when a decision is made.
@@ -93,12 +93,12 @@ export default function CandidateAppealPage() {
         <p className="text-sm text-muted-foreground mt-1">Request a human review of an AI-assisted hiring decision</p>
       </div>
 
-      <Card className="border-amber-200 bg-amber-50/30">
+      <Card className="border-warn/40 bg-warn-tint/30">
         <CardContent className="flex items-start gap-3 py-4">
-          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-800">Your Rights</p>
-            <p className="text-sm text-amber-700 mt-1">Under applicable regulations, you have the right to request that a qualified human reviewer examines any decision that was assisted by artificial intelligence. This review is independent and impartial.</p>
+            <p className="text-sm font-medium text-warn">Your Rights</p>
+            <p className="text-sm text-warn mt-1">Under applicable regulations, you have the right to request that a qualified human reviewer examines any decision that was assisted by artificial intelligence. This review is independent and impartial.</p>
           </div>
         </CardContent>
       </Card>

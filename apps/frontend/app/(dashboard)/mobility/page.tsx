@@ -48,7 +48,7 @@ export default function MobilityPage() {
           { label: "Remote Roles", value: openReqs.filter(r => r.location === "Remote").length },
         ].map(s => (
           <Card key={s.label}><CardContent className="p-4">
-            <p className="text-2xl font-bold">{loading ? "—" : s.value}</p>
+            <p className="text-2xl font-bold">{loading ? "-" : s.value}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
           </CardContent></Card>
         ))}
@@ -71,7 +71,7 @@ export default function MobilityPage() {
                   </p>
                 </div>
               </div>
-              <div className="text-xs text-muted-foreground">{r.salaryMin && r.salaryMax ? `${r.salaryCurrency} ${Math.round(r.salaryMin/1000)}k–${Math.round(r.salaryMax/1000)}k` : ""}</div>
+              <div className="text-xs text-muted-foreground">{r.salaryMin && r.salaryMax ? `${r.salaryCurrency} ${Math.round(r.salaryMin/1000)}k-${Math.round(r.salaryMax/1000)}k` : ""}</div>
             </div>
           ))}</div>}
         </CardContent>

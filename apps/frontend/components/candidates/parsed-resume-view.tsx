@@ -40,7 +40,7 @@ function ConfidenceBadge({ conf }: { conf?: number }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center ml-1 text-amber-600 dark:text-amber-400">
+          <span className="inline-flex items-center ml-1 text-warn dark:text-warn">
             <ShieldQuestion className="h-3 w-3" />
           </span>
         </TooltipTrigger>
@@ -66,8 +66,8 @@ function Field({ label, value, conf, mono }: { label: string; value: any; conf?:
 // Skill chip, color by depth, recency dot, confidence indicator
 function SkillChip({ skill }: { skill: AnyMap }) {
   const depthColor =
-    skill.depth === "lead"      ? "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30"
-    : skill.depth === "used"    ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30"
+    skill.depth === "lead"      ? "bg-ai/15 text-ai-ink dark:text-ai-ink border-ai/40/30"
+    : skill.depth === "used"    ? "bg-info/15 text-info dark:text-info border-info/40/30"
                                 : "bg-muted text-muted-foreground border-border";
   const yearsActive = typeof skill.yearsActive === "number" ? skill.yearsActive : null;
   const recentEnough = skill.lastUsedYear && skill.lastUsedYear >= new Date().getFullYear() - 2;
@@ -90,7 +90,7 @@ function SkillChip({ skill }: { skill: AnyMap }) {
             {skill.depth && <p>Depth: {skill.depth === "lead" ? "Led work using it" : skill.depth === "used" ? "Hands-on use" : "Mentioned"}</p>}
             {yearsActive && yearsActive > 0 && <p>{yearsActive} years active</p>}
             {skill.lastUsedYear && <p>Last used: {skill.lastUsedYear}</p>}
-            {skill.canonicalId ? null : <p className="text-amber-500">Not in skill taxonomy</p>}
+            {skill.canonicalId ? null : <p className="text-warn">Not in skill taxonomy</p>}
           </div>
         </TooltipContent>
       </Tooltip>
@@ -105,8 +105,8 @@ function AchievementBadge({ achievement }: { achievement: AnyMap }) {
   const positive = achievement.changeValue > 0;
   return (
     <Badge variant="outline" className={`text-2xs gap-1 ${
-      positive ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
-              : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+      positive ? "bg-ok/15 text-ok dark:text-ok border-ok/40/30"
+              : "bg-danger/15 text-danger dark:text-danger border-danger/40/30"
     }`}>
       {positive ? "+" : ""}{achievement.changeValue}{achievement.changeUnit ?? ""} {achievement.metric}
     </Badge>
@@ -156,16 +156,16 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
         {formatGuess && formatGuess !== "other" && (
           <Badge variant="outline" className="text-2xs uppercase">{formatGuess.replace(/_/g, " ")}</Badge>
         )}
-        {fairnessMode && <Badge variant="outline" className="text-2xs bg-amber-500/15 text-amber-700 dark:text-amber-300">Fairness mode</Badge>}
+        {fairnessMode && <Badge variant="outline" className="text-2xs bg-warn/15 text-warn dark:text-warn">Fairness mode</Badge>}
         {data.verification && typeof data.verification.trustScore === "number" && (
           <Badge
             variant="outline"
             className={`text-2xs ${
               data.verification.trustScore >= 75
-                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                ? "bg-ok/15 text-ok dark:text-ok border-ok/40/30"
                 : data.verification.trustScore >= 50
-                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-                  : "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30"
+                  ? "bg-warn/15 text-warn dark:text-warn border-warn/40/30"
+                  : "bg-danger/15 text-danger dark:text-danger border-danger/40/30"
             }`}
           >
             Trust {data.verification.trustScore}/100
@@ -178,7 +178,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> Verification &amp; Trust
+              <Sparkles className="h-4 w-4 text-ai" /> Verification &amp; Trust
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-xs">
@@ -186,7 +186,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
             {Array.isArray(data.verification.redFlags) && data.verification.redFlags.length > 0 && (
               <div className="space-y-1">
                 {data.verification.redFlags.map((rf: string, i: number) => (
-                  <p key={i} className="flex items-start gap-1 text-rose-600 dark:text-rose-400">
+                  <p key={i} className="flex items-start gap-1 text-danger dark:text-danger">
                     <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" /> {rf}
                   </p>
                 ))}
@@ -200,10 +200,10 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
                       variant="outline"
                       className={`text-2xs shrink-0 ${
                         f.status === "corroborated"
-                          ? "text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                          ? "text-ok dark:text-ok border-ok/40/30"
                           : f.status === "contradicted"
-                            ? "text-rose-700 dark:text-rose-300 border-rose-500/30"
-                            : "text-amber-700 dark:text-amber-300 border-amber-500/30"
+                            ? "text-danger dark:text-danger border-danger/40/30"
+                            : "text-warn dark:text-warn border-warn/40/30"
                       }`}
                     >
                       {f.status}
@@ -219,9 +219,9 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
 
       {/* Honesty flags */}
       {seriousFlags.length > 0 && !fairnessMode && (
-        <Card className="border-amber-300 bg-amber-50/60 dark:bg-amber-950/20">
+        <Card className="border-warn/40 bg-warn-tint/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-600" /> Worth verifying in interview</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-warn" /> Worth verifying in interview</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5">
             {seriousFlags.map((f, i) => (
@@ -243,7 +243,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
             <CardTitle className="text-sm flex items-center gap-2">
               Skills ({skills.length})
               {skills.some((s) => lowConfidence(s.confidence)) && (
-                <span className="text-2xs text-amber-600 ml-auto">some low-confidence</span>
+                <span className="text-2xs text-warn ml-auto">some low-confidence</span>
               )}
             </CardTitle>
           </CardHeader>
@@ -253,8 +253,8 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
             </div>
             <div className="mt-3 flex flex-wrap gap-3 text-2xs text-muted-foreground">
               <span><Star className="h-2.5 w-2.5 fill-current inline" /> used last 2 years</span>
-              <span><span className="inline-block h-2 w-2 rounded-full bg-violet-500 mr-1" />lead</span>
-              <span><span className="inline-block h-2 w-2 rounded-full bg-blue-500 mr-1" />hands-on</span>
+              <span><span className="inline-block h-2 w-2 rounded-full bg-ai mr-1" />lead</span>
+              <span><span className="inline-block h-2 w-2 rounded-full bg-info mr-1" />hands-on</span>
             </div>
           </CardContent>
         </Card>
@@ -398,7 +398,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
             </div>
             {(ghCorro.confirmed ?? []).length > 0 && (
               <div>
-                <p className="font-medium text-emerald-600 mb-1">Confirmed</p>
+                <p className="font-medium text-ok mb-1">Confirmed</p>
                 <ul className="list-disc pl-4 space-y-0.5 text-muted-foreground">
                   {ghCorro.confirmed.map((c: AnyMap, i: number) => (
                     <li key={i}><span className="text-foreground">{c.claim}</span>, {c.evidence}</li>
@@ -408,7 +408,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
             )}
             {(ghCorro.discrepancies ?? []).length > 0 && (
               <div>
-                <p className="font-medium text-amber-600 mb-1">Discrepancies</p>
+                <p className="font-medium text-warn mb-1">Discrepancies</p>
                 <ul className="list-disc pl-4 space-y-0.5">
                   {ghCorro.discrepancies.map((d: AnyMap, i: number) => (
                     <li key={i} className="flex items-start gap-2">

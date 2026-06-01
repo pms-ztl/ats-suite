@@ -127,7 +127,7 @@ function ResetPasswordForm({ token }: { token: string }) {
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password}</p>
               )}
-              {/* Password strength checklist — show when password field has any value */}
+              {/* Password strength checklist, show when password field has any value */}
               {password.length > 0 && (
                 <ul className="space-y-1 mt-2">
                   {[
@@ -135,9 +135,9 @@ function ResetPasswordForm({ token }: { token: string }) {
                     { label: "One uppercase letter", met: /[A-Z]/.test(password) },
                     { label: "One number", met: /[0-9]/.test(password) },
                   ].map(({ label, met }) => (
-                    <li key={label} className={`flex items-center gap-1.5 text-xs ${met ? "text-emerald-600" : "text-muted-foreground"}`}>
+                    <li key={label} className={`flex items-center gap-1.5 text-xs ${met ? "text-ok" : "text-muted-foreground"}`}>
                       {met
-                        ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        ? <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
                         : <Circle className="h-3.5 w-3.5 shrink-0" />
                       }
                       {label}
@@ -262,7 +262,7 @@ function ForgotPasswordForm() {
                 <div className="text-xs text-muted-foreground">AI-Powered Hiring</div>
               </div>
             </div>
-            <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center mb-2">
+            <div className="h-10 w-10 rounded-lg bg-ok flex items-center justify-center mb-2">
               <CheckCircle className="h-5 w-5 text-white" />
             </div>
             <CardTitle className="text-xl">Check your email</CardTitle>
@@ -271,7 +271,7 @@ function ForgotPasswordForm() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-sm text-emerald-700">
+            <div className="flex items-center gap-2 rounded-md bg-ok-tint border border-ok/40 px-3 py-2.5 text-sm text-ok">
               <Mail className="h-4 w-4 shrink-0" />
               Reset link sent to <span className="font-medium">{email}</span>
             </div>

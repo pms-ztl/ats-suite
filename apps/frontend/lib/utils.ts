@@ -53,9 +53,9 @@ export function getConfidenceColor(confidence: number): string {
 }
 
 export function getConfidenceBg(confidence: number): string {
-  if (confidence >= 0.9) return "bg-emerald-50 text-emerald-700";
-  if (confidence >= 0.7) return "bg-amber-50 text-amber-700";
-  return "bg-rose-50 text-rose-700";
+  if (confidence >= 0.9) return "bg-ok-tint text-ok";
+  if (confidence >= 0.7) return "bg-warn-tint text-warn";
+  return "bg-danger-tint text-danger";
 }
 
 export function getTrendIcon(value: number): "up" | "down" | "neutral" {
@@ -66,7 +66,7 @@ export function getTrendIcon(value: number): "up" | "down" | "neutral" {
 
 export function getTrendColor(value: number, inverseIsGood: boolean = false): string {
   const isPositive = inverseIsGood ? value < 0 : value > 0;
-  if (isPositive) return "text-emerald-600";
-  if (value === 0) return "text-slate-500";
-  return "text-rose-600";
+  if (isPositive) return "text-ok";
+  if (value === 0) return "text-muted-foreground";
+  return "text-danger";
 }

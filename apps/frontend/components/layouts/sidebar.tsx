@@ -22,9 +22,9 @@ import {
 
 const PLAN_META: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
   FREE:         { label: "Free",         icon: <Rocket className="h-2.5 w-2.5" />,   className: "bg-muted text-muted-foreground" },
-  STARTER:      { label: "Starter",      icon: <Zap className="h-2.5 w-2.5" />,      className: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  PROFESSIONAL: { label: "Pro",          icon: <Crown className="h-2.5 w-2.5" />,    className: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
-  ENTERPRISE:   { label: "Enterprise",   icon: <Building2 className="h-2.5 w-2.5" />, className: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  STARTER:      { label: "Starter",      icon: <Zap className="h-2.5 w-2.5" />,      className: "bg-info-tint text-info dark:text-info" },
+  PROFESSIONAL: { label: "Pro",          icon: <Crown className="h-2.5 w-2.5" />,    className: "bg-ai-tint text-ai-ink dark:text-ai-ink" },
+  ENTERPRISE:   { label: "Enterprise",   icon: <Building2 className="h-2.5 w-2.5" />, className: "bg-warn-tint text-warn dark:text-warn" },
 };
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -84,7 +84,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   useEffect(() => {
     // Use absolute backend URL + JWT (sessionStorage primary, HttpOnly cookie
     // fallback via credentials:"include"). Previously hit relative "/api/..."
-    // on port 3000 with a fake "x-tenant-id" header — always 401, retried
+    // on port 3000 with a fake "x-tenant-id" header, always 401, retried
     // on every layout mount, added perceptible click latency.
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
     let token: string | null = null;
@@ -123,7 +123,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             in. Click anywhere on the rail to toggle.
             ───────────────────────────────────────────────────────────── */}
         <div className="absolute top-0 right-0 h-full w-3 -mr-2.5 group/rail z-50">
-          {/* Invisible widened hit-target — makes the edge forgiving to grab */}
+          {/* Invisible widened hit-target, makes the edge forgiving to grab */}
           <button
             type="button"
             onClick={onToggle}
@@ -139,7 +139,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               "group-hover/rail:via-primary/70 transition-all duration-300"
             )}
           />
-          {/* Floating pill toggle — premium look with glow on hover */}
+          {/* Floating pill toggle, premium look with glow on hover */}
           <span
             aria-hidden="true"
             className={cn(
@@ -227,7 +227,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
             <Separator className="my-2" />
 
-            {/* Category links — filtered by role */}
+            {/* Category links, filtered by role */}
             {SIDEBAR_CATEGORIES.filter((cat) => can(cat.key)).map((cat) => (
               <NavItem
                 key={cat.key}
@@ -244,7 +244,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {/* Footer */}
         <div className="border-t p-2 space-y-1">
-          {/* Platform admin portal — SUPER_ADMIN only */}
+          {/* Platform admin portal, SUPER_ADMIN only */}
           {isSuperAdmin && (
             <NavItem
               href="/admin"
@@ -254,7 +254,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               collapsed={collapsed}
             />
           )}
-          {/* Seat usage indicator — Tenant admin only */}
+          {/* Seat usage indicator, Tenant admin only */}
           {isTenantAdmin && seats && !collapsed && (
             <div className="flex items-center gap-2 px-3 py-1.5 text-2xs">
               <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -262,7 +262,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 Seats:{" "}
                 <strong className={cn(
                   "text-foreground",
-                  !seats.unlimited && seats.used >= seats.limit && "text-rose-500"
+                  !seats.unlimited && seats.used >= seats.limit && "text-danger"
                 )}>
                   {seats.used}{seats.unlimited ? "" : ` / ${seats.limit}`}
                 </strong>
@@ -293,7 +293,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               collapsed && "justify-center"
             )}
           >
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-ai" />
             <span
               className={cn(
                 "flex-1 min-w-0 truncate transition-all duration-200",
@@ -357,7 +357,7 @@ function NavItem({
 }) {
   // Grid layout: [icon] [label that truncates] [badge].
   // Grid is more bulletproof than flex for "label must truncate and badge must
-  // stay visible" — the badge column is `auto` so it sizes to content and never
+  // stay visible", the badge column is `auto` so it sizes to content and never
   // collapses, the label column is `minmax(0, 1fr)` so it CAN shrink below
   // content width (which is what makes text-overflow:ellipsis kick in), and
   // the icon column is `auto` so it stays at its natural 16px.
@@ -387,7 +387,7 @@ function NavItem({
               className={cn(
                 "h-5 px-1.5 text-2xs min-w-[20px] justify-center tabular-nums shrink-0",
                 urgent
-                  ? "bg-rose-500 text-white border-transparent"
+                  ? "bg-danger text-white border-transparent"
                   : active
                     ? "bg-primary/20 text-primary border-transparent"
                     : "bg-muted text-muted-foreground border-transparent"

@@ -9,7 +9,7 @@
  * to redeploy anything).
  *
  * "Tenants throttled" count shows how many tenants have ALSO killed this
- * agent at the tenant level — informational, not affected by the platform
+ * agent at the tenant level, informational, not affected by the platform
  * kill switch.
  *
  * Backend: /api/super-admin/platform/agents (proxies to billing-service)
@@ -120,7 +120,7 @@ export default function PlatformAgentsPage() {
   }
 
   function requestToggle(agent: AgentRow, nextEnabled: boolean) {
-    // Re-enabling is harmless — no confirmation. Killing requires a reason.
+    // Re-enabling is harmless, no confirmation. Killing requires a reason.
     if (nextEnabled) {
       void commitToggle(agent.agentType, false, null);
     } else {
@@ -195,10 +195,10 @@ export default function PlatformAgentsPage() {
                   <td className="px-4 py-3">
                     <div className="font-medium">{a.agentType}</div>
                     <div className="text-xs text-muted-foreground">
-                      {AGENT_DESCRIPTIONS[a.agentType] ?? "—"}
+                      {AGENT_DESCRIPTIONS[a.agentType] ?? "-"}
                     </div>
                     {a.platformKillDisabled && a.platformKillReason && (
-                      <div className="text-xs text-amber-700 dark:text-amber-400 mt-1 inline-flex items-start gap-1">
+                      <div className="text-xs text-warn dark:text-warn mt-1 inline-flex items-start gap-1">
                         <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
                         <span>Killed: {a.platformKillReason}</span>
                       </div>
@@ -210,7 +210,7 @@ export default function PlatformAgentsPage() {
                     {a.tenantsWithKillSwitch > 0 ? (
                       <Badge variant="outline" className="font-normal">{a.tenantsWithKillSwitch}</Badge>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -251,7 +251,7 @@ export default function PlatformAgentsPage() {
               id="killReason"
               rows={3}
               maxLength={500}
-              placeholder="Prompt regression detected — investigating, expect ~30 min outage."
+              placeholder="Prompt regression detected, investigating, expect ~30 min outage."
               value={confirmKill?.reason ?? ""}
               onChange={(e) => setConfirmKill((c) => (c ? { ...c, reason: e.target.value } : c))}
             />
@@ -282,7 +282,7 @@ export default function PlatformAgentsPage() {
 
 function StatCard({ icon, label, value, hint, tone }: { icon: React.ReactNode; label: string; value: string; hint?: string; tone?: "warn" | "neutral" }) {
   return (
-    <Card className={tone === "warn" ? "border-amber-200 dark:border-amber-900" : undefined}>
+    <Card className={tone === "warn" ? "border-warn/40" : undefined}>
       <CardContent className="pt-4 pb-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {icon}

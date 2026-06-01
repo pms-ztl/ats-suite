@@ -315,7 +315,7 @@ export default function RequisitionsPage() {
                     <p className="font-semibold text-sm truncate">{req.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{req.department}</p>
                   </div>
-                  <span className={`text-2xs font-medium px-2 py-0.5 rounded-full shrink-0 ${statusColors[req.status] ?? "bg-gray-100 text-gray-700"}`}>
+                  <span className={`text-2xs font-medium px-2 py-0.5 rounded-full shrink-0 ${statusColors[req.status] ?? "bg-muted text-muted-foreground"}`}>
                     {req.status}
                   </span>
                 </div>

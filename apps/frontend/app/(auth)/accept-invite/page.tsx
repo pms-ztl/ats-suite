@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 31a — accept invite page.
+ * Phase 31a, accept invite page.
  *
  * Flow:
  *   1. Land here with ?token=<uuid> in the URL (link emailed by gateway).
@@ -150,7 +150,7 @@ function AcceptInviteInner() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <Sparkles className="h-6 w-6 text-ai" />
           </div>
           <CardTitle className="text-2xl">Welcome to {info.tenantName ?? "CDC ATS"}</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ function AcceptInviteInner() {
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               <ul className="space-y-0.5 pt-1">
                 {checks.map((c) => (
-                  <li key={c.label} className={`flex items-center gap-1.5 text-2xs ${c.ok ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  <li key={c.label} className={`flex items-center gap-1.5 text-2xs ${c.ok ? "text-ok" : "text-muted-foreground"}`}>
                     {c.ok ? <CheckCircle2 className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
                     {c.label}
                   </li>

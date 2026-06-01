@@ -99,9 +99,9 @@ async function saveSettings(section: string, payload: Record<string, unknown>): 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saving, setSaving] = useState(false);
-  // Phase 29 — restart-onboarding modal opener
+  // Phase 29, restart-onboarding modal opener
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  // Phase 31c — tenant data export.
+  // Phase 31c, tenant data export.
   const [exporting, setExporting] = useState(false);
 
   const downloadTenantExport = async () => {
@@ -432,7 +432,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Re-open the 5-step setup wizard — useful when walking a new admin through the basics.
+                Re-open the 5-step setup wizard, useful when walking a new admin through the basics.
               </p>
             </CardContent>
           </Card>
@@ -454,7 +454,7 @@ export default function SettingsPage() {
           </Card>
         </button>
 
-        {/* Phase 34g — discovery for the 4 newer candidate-input methods */}
+        {/* Phase 34g, discovery for the 4 newer candidate-input methods */}
         <Link href="/settings/api-keys" className="block">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader className="pb-2">
@@ -478,7 +478,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Forward a resume to your team's inbound address — we parse the sender + attach the resume + create the candidate.
+                Forward a resume to your team's inbound address, we parse the sender + attach the resume + create the candidate.
               </p>
             </CardContent>
           </Card>
@@ -527,7 +527,7 @@ export default function SettingsPage() {
         </Link>
       </div>
 
-      {/* Phase 29 — manually re-openable wizard via Settings. forceOpen ignores
+      {/* Phase 29, manually re-openable wizard via Settings. forceOpen ignores
           the dismissed/completed flags so admins can re-walk the steps. */}
       {onboardingOpen && (
         <OnboardingWizard forceOpen onClose={() => setOnboardingOpen(false)} />
@@ -1023,7 +1023,7 @@ function AppearancePanel({ appearance, onChange }: { appearance: AppearanceSetti
       setIsDark(false);
       onChange({ ...appearance, theme: "light" });
     } else {
-      // No saved preference — read current state from classList
+      // No saved preference, read current state from classList
       setIsDark(document.documentElement.classList.contains("dark"));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

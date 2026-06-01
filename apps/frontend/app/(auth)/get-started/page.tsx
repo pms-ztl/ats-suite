@@ -34,7 +34,7 @@ const PLANS = {
     price: "$149/mo",
     description: "Up to 20 jobs · 5 seats · Full AI screening",
     icon: Zap,
-    color: "border-blue-500/50 bg-blue-500/5",
+    color: "border-info/40/50 bg-info/5",
     badge: "Most popular",
   },
   PROFESSIONAL: {
@@ -64,7 +64,7 @@ function StepIndicator({ step }: { step: number }) {
               className={cn(
                 "h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
                 step > n
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-ok text-white"
                   : step === n
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
@@ -82,7 +82,7 @@ function StepIndicator({ step }: { step: number }) {
           {i < arr.length - 1 && (
             <div className={cn(
               "h-px w-12 mb-4 transition-colors",
-              step > n ? "bg-emerald-500" : "bg-border"
+              step > n ? "bg-ok" : "bg-border"
             )} />
           )}
         </div>
@@ -168,8 +168,8 @@ function GetStartedForm() {
   if (step === 3) {
     return (
       <div className="text-center py-4">
-        <div className="mx-auto h-16 w-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-4">
-          <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+        <div className="mx-auto h-16 w-16 rounded-full bg-ok/10 border border-ok/40/30 flex items-center justify-center mb-4">
+          <CheckCircle2 className="h-8 w-8 text-ok" />
         </div>
         <h2 className="text-2xl font-bold mb-2">You&apos;re all set!</h2>
         <p className="text-muted-foreground text-sm mb-1">

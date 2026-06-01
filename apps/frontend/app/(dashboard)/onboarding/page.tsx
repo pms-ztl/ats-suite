@@ -37,17 +37,17 @@ export default function OnboardingPage() {
           { label: "Total Hires", value: hired.length, icon: UserPlus },
           { label: "Onboarding Active", value: recentHires.length, icon: Clock },
           { label: "Completed", value: 0, icon: CheckCircle },
-          { label: "Pending Docs", value: "—", icon: Package },
+          { label: "Pending Docs", value: "-", icon: Package },
         ].map(s => { const Icon = s.icon; return (
           <Card key={s.label}><CardContent className="p-4 flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Icon className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold">{loading ? "—" : s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
+            <div><p className="text-2xl font-bold">{loading ? "-" : s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
           </CardContent></Card>
         );})}
       </div>
 
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><UserPlus className="h-4 w-4" /> New Hires — Onboarding Pipeline</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><UserPlus className="h-4 w-4" /> New Hires, Onboarding Pipeline</CardTitle></CardHeader>
         <CardContent className="p-0">
           {loading && <div className="p-4 space-y-2">{[...Array(4)].map((_,i)=><div key={i} className="h-12 bg-muted rounded animate-pulse"/>)}</div>}
           {!loading && recentHires.length === 0 && <div className="p-6 text-center text-sm text-muted-foreground">No hires in onboarding yet.</div>}
@@ -56,8 +56,8 @@ export default function OnboardingPage() {
             return (
               <div key={c.id} className="flex items-center justify-between px-6 py-3 hover:bg-muted/40 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-semibold text-emerald-700">{c.firstName?.[0]}{c.lastName?.[0]}</span>
+                  <div className="h-8 w-8 rounded-full bg-ok-tint flex items-center justify-center shrink-0">
+                    <span className="text-xs font-semibold text-ok">{c.firstName?.[0]}{c.lastName?.[0]}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium">{c.firstName} {c.lastName}</p>
@@ -66,7 +66,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{c.location ?? ""}</span>
-                  <span className="text-2xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">HIRED</span>
+                  <span className="text-2xs font-medium px-2 py-0.5 rounded-full bg-ok-tint text-ok">HIRED</span>
                 </div>
               </div>
             );

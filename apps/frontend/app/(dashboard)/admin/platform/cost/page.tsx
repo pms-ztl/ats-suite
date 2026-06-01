@@ -179,7 +179,7 @@ export default function PlatformCostPage() {
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* By tenant — top spenders */}
+        {/* By tenant, top spenders */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Top tenants by spend</CardTitle>
@@ -221,7 +221,7 @@ export default function PlatformCostPage() {
           </CardContent>
         </Card>
 
-        {/* By agent — cost drivers */}
+        {/* By agent, cost drivers */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Cost by agent</CardTitle>

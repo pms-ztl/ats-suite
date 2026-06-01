@@ -10,9 +10,9 @@ interface PermissionMatrixProps {
 
 export function PermissionMatrix({ roles, resources, permissions, className }: PermissionMatrixProps) {
   const cellIcon = (level: "full" | "read" | "none") => {
-    if (level === "full") return <Check className="h-4 w-4 text-emerald-600" />;
-    if (level === "read") return <Minus className="h-4 w-4 text-amber-500" />;
-    return <X className="h-4 w-4 text-slate-300" />;
+    if (level === "full") return <Check className="h-4 w-4 text-ok" />;
+    if (level === "read") return <Minus className="h-4 w-4 text-warn" />;
+    return <X className="h-4 w-4 text-ink-3" />;
   };
 
   return (

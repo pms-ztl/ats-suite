@@ -29,11 +29,11 @@ import { toast } from "sonner";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
 const TYPE_COLOR: Record<string, string> = {
-  verify_claim:      "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
-  probe_gap:         "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30",
-  elicit_narrative:  "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30",
-  behavioural:       "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30",
-  technical:         "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  verify_claim:      "bg-warn/15 text-warn dark:text-warn border-warn/40/30",
+  probe_gap:         "bg-danger/15 text-danger dark:text-danger border-danger/40/30",
+  elicit_narrative:  "bg-ai/15 text-ai-ink dark:text-ai-ink border-ai/40/30",
+  behavioural:       "bg-info/15 text-info dark:text-info border-info/40/30",
+  technical:         "bg-ok/15 text-ok dark:text-ok border-ok/40/30",
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -121,7 +121,7 @@ export function InterviewQuestionsTab({ candidateId, applications }: Props) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" /> Generate personalized questions
+            <Sparkles className="h-4 w-4 text-ai" /> Generate personalized questions
           </CardTitle>
           <CardDescription className="text-xs">
             We'll write 5-10 questions targeting this candidate's claims + your job's requirements, each with a citation.

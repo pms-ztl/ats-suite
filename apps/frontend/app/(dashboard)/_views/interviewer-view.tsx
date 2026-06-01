@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 23 — interviewer "today" dashboard.
+ * Phase 23, interviewer "today" dashboard.
  *
  * Lives at `/` when the logged-in user has role INTERVIEWER. Focuses on
  * what they need to do as a panelist: today's interviews, feedback that's
@@ -90,10 +90,10 @@ export function InterviewerView() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Calendar className="w-4 h-4" />} label="Today" value={loading ? "—" : today.length.toString()} hint="Interviews on your calendar" />
-        <StatCard icon={<MessageSquare className="w-4 h-4" />} label="Feedback due" value={loading ? "—" : feedbackDue.length.toString()} hint="Awaiting your write-up" />
-        <StatCard icon={<Video className="w-4 h-4" />} label="Upcoming" value={loading ? "—" : upcoming.length.toString()} hint="In the next weeks" />
-        <StatCard icon={<ClipboardCheck className="w-4 h-4" />} label="All assigned" value={loading ? "—" : myInterviews.length.toString()} hint="Where you're a panelist" />
+        <StatCard icon={<Calendar className="w-4 h-4" />} label="Today" value={loading ? "-" : today.length.toString()} hint="Interviews on your calendar" />
+        <StatCard icon={<MessageSquare className="w-4 h-4" />} label="Feedback due" value={loading ? "-" : feedbackDue.length.toString()} hint="Awaiting your write-up" />
+        <StatCard icon={<Video className="w-4 h-4" />} label="Upcoming" value={loading ? "-" : upcoming.length.toString()} hint="In the next weeks" />
+        <StatCard icon={<ClipboardCheck className="w-4 h-4" />} label="All assigned" value={loading ? "-" : myInterviews.length.toString()} hint="Where you're a panelist" />
       </div>
 
       {/* Today */}
@@ -120,7 +120,7 @@ export function InterviewerView() {
                   <Link href={`/interviews/${i.id}`} className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex items-center gap-3">
                       <div className="text-xs font-mono tabular-nums text-muted-foreground w-12 shrink-0">
-                        {i.scheduledAt ? formatTime(i.scheduledAt) : "—"}
+                        {i.scheduledAt ? formatTime(i.scheduledAt) : "-"}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{i.round?.name ?? `Round ${i.roundNumber ?? "?"}`}</p>
@@ -151,7 +151,7 @@ export function InterviewerView() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? <RowsSkeleton /> : feedbackDue.length === 0 ? (
-            <EmptyState text="You're caught up — no feedback owed." />
+            <EmptyState text="You're caught up, no feedback owed." />
           ) : (
             <ul className="divide-y">
               {feedbackDue.map((i) => (

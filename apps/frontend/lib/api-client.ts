@@ -79,7 +79,7 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-      }).catch(() => { /* best-effort — clear cookie regardless */ });
+      }).catch(() => { /* best-effort, clear cookie regardless */ });
     },
     getMe: async () => {
       const token = getToken();
@@ -118,7 +118,7 @@ export const api = {
     // requisition one-liners kept for mock routing; prefer api.requisitions for real calls
     getRequisitions: (params?: PaginationParams) => get<any>("/requisitions", params),
     createRequisition: (data: any) => post<any>("/requisitions", data),
-    // Phase 2 — AI job-description autogen (title -> description + requirements + bias audit)
+    // Phase 2, AI job-description autogen (title -> description + requirements + bias audit)
     generateJd: (data: any) => post<any>("/jd-author", data),
     getRequisition: (id: string) => get<any>(`/requisitions/${id}`),
     updateRequisition: (id: string, data: any) => put<any>(`/requisitions/${id}`, data),
@@ -219,7 +219,7 @@ export const api = {
         credentials: "include",
         headers: { Authorization: `Bearer ${token ?? ""}` },
       });
-      if (res.status === 204) return; // soft delete — no content
+      if (res.status === 204) return; // soft delete, no content
       if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to delete requisition");
     },
 
@@ -275,7 +275,7 @@ export const api = {
     scanPromptInjection: (data: any) => post<any>("/security/prompt-firewall/scan", data),
     getPromptFirewallLog: () => get<any>("/security/prompt-firewall/log"),
     updateFirewallRules: (data: any) => put<any>("/security/prompt-firewall/rules", data),
-    // /security/zero-trust/* not implemented on backend yet — fall back to
+    // /security/zero-trust/* not implemented on backend yet, fall back to
     // the access/config endpoint which returns a similar shape (enforcement
     // mode, policy version) so the page doesn't show empty cards.
     getZeroTrustStatus: () => get<any>("/security/access/config"),
@@ -940,7 +940,7 @@ export const api = {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken() ?? ""}` },
       });
       if (!res.ok) throw new Error((await res.json()).error?.message ?? "Failed to delete candidate");
-      // 204 No Content — return nothing
+      // 204 No Content, return nothing
       return;
     },
     async advanceCandidateStage(id: string, stage: string, applicationId?: string) {
@@ -1481,7 +1481,7 @@ export const api = {
     swarmScheduler: () => request<any>('GET', '/scheduling/swarm-based-interview-scheduling-orchestrator'),
   },
   mobility: {
-    // Backend mounts the list at GET /mobility (root) — there is no /opportunities subpath.
+    // Backend mounts the list at GET /mobility (root), there is no /opportunities subpath.
     getOpportunities: () => get<any>("/mobility"),
     match: (data: any) => post<any>("/mobility/match", data),
     getProfile: (employeeId: string) => get<any>(`/mobility/profiles/${employeeId}`),

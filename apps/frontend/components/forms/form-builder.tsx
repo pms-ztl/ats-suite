@@ -148,7 +148,7 @@ export function FormBuilder({ initialFields, onChange }: FormBuilderProps) {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteField(f.id); }}
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-rose-500 transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger transition-opacity"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

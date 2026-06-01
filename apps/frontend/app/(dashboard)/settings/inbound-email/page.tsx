@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Phase 34g — Email-to-apply configuration page.
+ * Phase 34g, Email-to-apply configuration page.
  *
  * Shows the tenant their unique inbound address (jobs+<slug>@<our-domain>)
  * + setup instructions for routing email at their provider + the webhook
  * URL they'd paste into SendGrid/Mailgun/Postmark.
  *
- * No backend "settings" to save here — the address is derived from the
+ * No backend "settings" to save here, the address is derived from the
  * tenant slug, and the webhook is set up at the email provider, not here.
  * This page is documentation + a copy-the-address button.
  */

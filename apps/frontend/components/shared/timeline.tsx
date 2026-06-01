@@ -17,10 +17,10 @@ interface TimelineProps {
 
 export function Timeline({ events, className }: TimelineProps) {
   const typeColors = {
-    info: "bg-blue-500",
-    success: "bg-emerald-500",
-    warning: "bg-amber-500",
-    error: "bg-rose-500",
+    info: "bg-info",
+    success: "bg-ok",
+    warning: "bg-warn",
+    error: "bg-danger",
   };
 
   return (

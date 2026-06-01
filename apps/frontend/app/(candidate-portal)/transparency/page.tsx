@@ -22,8 +22,8 @@ export default function CandidateTransparencyPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-              <Brain className="h-4 w-4 text-indigo-600" />
+            <div className="h-8 w-8 rounded-lg bg-info-tint flex items-center justify-center shrink-0">
+              <Brain className="h-4 w-4 text-ai" />
             </div>
             <div>
               <p className="text-sm font-medium">AI-Assisted</p>
@@ -33,8 +33,8 @@ export default function CandidateTransparencyPage() {
         </Card>
         <Card>
           <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-              <Shield className="h-4 w-4 text-emerald-600" />
+            <div className="h-8 w-8 rounded-lg bg-ok-tint flex items-center justify-center shrink-0">
+              <Shield className="h-4 w-4 text-ok" />
             </div>
             <div>
               <p className="text-sm font-medium">Bias-Monitored</p>
@@ -44,8 +44,8 @@ export default function CandidateTransparencyPage() {
         </Card>
         <Card>
           <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-              <Scale className="h-4 w-4 text-amber-600" />
+            <div className="h-8 w-8 rounded-lg bg-warn-tint flex items-center justify-center shrink-0">
+              <Scale className="h-4 w-4 text-warn" />
             </div>
             <div>
               <p className="text-sm font-medium">Your Rights</p>

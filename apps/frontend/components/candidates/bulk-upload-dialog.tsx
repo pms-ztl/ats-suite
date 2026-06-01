@@ -243,15 +243,15 @@ export function BulkUploadDialog({
             <div className={cn(
               "rounded-xl p-5 border",
               allOk
-                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900"
+                ? "bg-ok-tint border-ok/40"
                 : isDone && uploadStatus.failedFiles > 0
-                  ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900"
+                  ? "bg-warn-tint border-warn/40"
                   : "bg-primary/5 border-primary/20"
             )}>
               <div className="flex items-center gap-2 mb-3">
                 {!isDone && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-                {allOk && <PartyPopper className="h-5 w-5 text-emerald-600" />}
-                {isDone && !allOk && <FileWarning className="h-5 w-5 text-amber-600" />}
+                {allOk && <PartyPopper className="h-5 w-5 text-ok" />}
+                {isDone && !allOk && <FileWarning className="h-5 w-5 text-warn" />}
                 <span className="font-semibold text-sm">
                   {!isDone && `Parsing… ${uploadStatus.processedFiles + uploadStatus.failedFiles} / ${uploadStatus.totalFiles}`}
                   {allOk && `Done! All ${uploadStatus.totalFiles} resumes parsed successfully.`}
@@ -265,26 +265,26 @@ export function BulkUploadDialog({
             </div>
 
             {uploadStatus.errors.length > 0 && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-900 p-3 max-h-48 overflow-y-auto">
-                <p className="text-xs font-semibold text-rose-700 dark:text-rose-300 mb-2">
+              <div className="rounded-lg border border-danger/40 bg-danger-tint p-3 max-h-48 overflow-y-auto">
+                <p className="text-xs font-semibold text-danger dark:text-danger mb-2">
                   Errors ({uploadStatus.errors.length})
                 </p>
                 <ul className="space-y-1 text-xs">
                   {uploadStatus.errors.slice(0, 20).map((e, i) => (
-                    <li key={i} className="flex items-start gap-2 text-rose-700 dark:text-rose-300">
+                    <li key={i} className="flex items-start gap-2 text-danger dark:text-danger">
                       <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
                       <span className="truncate"><strong>{e.filename}</strong>: {e.error}</span>
                     </li>
                   ))}
                   {uploadStatus.errors.length > 20 && (
-                    <li className="text-rose-600 dark:text-rose-400">…and {uploadStatus.errors.length - 20} more</li>
+                    <li className="text-danger dark:text-danger">…and {uploadStatus.errors.length - 20} more</li>
                   )}
                 </ul>
               </div>
             )}
 
             {pollError && (
-              <p className="text-xs text-amber-700">
+              <p className="text-xs text-warn">
                 Status poll error: {pollError}. The upload continues in the background.
               </p>
             )}
@@ -310,7 +310,7 @@ export function BulkUploadDialog({
                   <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   <span className="text-xs truncate flex-1">{f.name}</span>
                   <span className="text-2xs text-muted-foreground tabular-nums shrink-0">{fmtSize(f.size)}</span>
-                  <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-rose-500 shrink-0">
+                  <button onClick={() => removeFile(i)} className="text-muted-foreground hover:text-danger shrink-0">
                     <X className="h-3 w-3" />
                   </button>
                 </div>

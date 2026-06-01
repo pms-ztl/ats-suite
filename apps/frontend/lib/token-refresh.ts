@@ -77,6 +77,6 @@ export async function refreshTokenIfNeeded(): Promise<void> {
       document.cookie = `${TOKEN_COOKIE}=${newToken}; path=/; max-age=${24 * 60 * 60}`;
     }
   } catch {
-    // Silently fail — let the normal 401 flow handle expiry
+    // Silently fail, let the normal 401 flow handle expiry
   }
 }

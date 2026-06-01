@@ -62,7 +62,7 @@ export function dateColumn<T>(accessorKey: string, header: string): ColumnDef<T>
     header,
     cell: ({ row }) => {
       const val = row.getValue(accessorKey) as string;
-      return <span className="text-sm whitespace-nowrap">{val ? formatDate(val) : "—"}</span>;
+      return <span className="text-sm whitespace-nowrap">{val ? formatDate(val) : "-"}</span>;
     },
   };
 }

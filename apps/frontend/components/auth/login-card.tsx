@@ -53,7 +53,7 @@ export function LoginCard(props: LoginCardProps) {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<React.ReactNode>("");
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-  // Phase 28 — SSO discovery. When the user's email matches a tenant with
+  // Phase 28, SSO discovery. When the user's email matches a tenant with
   // SSO enabled, we hide the password field and show a "Continue with SSO"
   // button that navigates to the tenant's initiate URL.
   const [ssoTarget, setSsoTarget] = useState<{ initiateUrl: string; protocol: string } | null>(null);
@@ -106,7 +106,7 @@ export function LoginCard(props: LoginCardProps) {
       await login(email, password);
 
       // After login, auth-context has set user; fetch /me again to confirm role
-      // (login() pushes to "/" by default — we need tier check before redirect)
+      // (login() pushes to "/" by default, we need tier check before redirect)
       const token = window.sessionStorage.getItem("ats-access-token");
       const meRes = await fetch(`${API_BASE}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +117,7 @@ export function LoginCard(props: LoginCardProps) {
       const role = me.data?.role ?? me.role;
 
       if (!props.allowedRoles.includes(role)) {
-        // Wrong portal — tell user where to sign in
+        // Wrong portal, tell user where to sign in
         const correct = props.redirectMap?.[role];
         setError(
           correct ? (
@@ -181,7 +181,7 @@ export function LoginCard(props: LoginCardProps) {
                   onChange={e => {
                     setEmail(e.target.value);
                     if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: undefined }));
-                    // Reset SSO state when email changes — user might be typing a different domain.
+                    // Reset SSO state when email changes, user might be typing a different domain.
                     if (ssoTarget) setSsoTarget(null);
                   }}
                   onBlur={(e) => void checkSso(e.target.value)}
@@ -191,7 +191,7 @@ export function LoginCard(props: LoginCardProps) {
                 {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
                 {ssoChecking && <p className="text-xs text-muted-foreground">Checking for SSO…</p>}
               </div>
-              {/* Phase 28 — show password input ONLY when no SSO target detected for this email. */}
+              {/* Phase 28, show password input ONLY when no SSO target detected for this email. */}
               {!ssoTarget && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">

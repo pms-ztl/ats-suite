@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 23 — recruiter "today" dashboard.
+ * Phase 23, recruiter "today" dashboard.
  *
  * Lives at `/` when the logged-in user has role RECRUITER. Focuses on
  * the daily-driver tasks for a recruiter: candidates added today,
@@ -118,10 +118,10 @@ export function RecruiterView() {
 
       {/* Stat strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Users className="w-4 h-4" />} label="New today" value={loading ? "—" : todayCandidates.length.toString()} hint="Candidates added" />
-        <StatCard icon={<Calendar className="w-4 h-4" />} label="To schedule" value={loading ? "—" : interviewsToSchedule.length.toString()} hint="Interviews need slots" />
-        <StatCard icon={<Briefcase className="w-4 h-4" />} label="My reqs" value={loading ? "—" : myReqs.length.toString()} hint="Open requisitions" />
-        <StatCard icon={<ClipboardList className="w-4 h-4" />} label="Pipeline" value={loading ? "—" : candidates.length.toString()} hint="Active candidates" />
+        <StatCard icon={<Users className="w-4 h-4" />} label="New today" value={loading ? "-" : todayCandidates.length.toString()} hint="Candidates added" />
+        <StatCard icon={<Calendar className="w-4 h-4" />} label="To schedule" value={loading ? "-" : interviewsToSchedule.length.toString()} hint="Interviews need slots" />
+        <StatCard icon={<Briefcase className="w-4 h-4" />} label="My reqs" value={loading ? "-" : myReqs.length.toString()} hint="Open requisitions" />
+        <StatCard icon={<ClipboardList className="w-4 h-4" />} label="Pipeline" value={loading ? "-" : candidates.length.toString()} hint="Active candidates" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -141,7 +141,7 @@ export function RecruiterView() {
           </CardHeader>
           <CardContent className="p-0">
             {loading ? <RowsSkeleton /> : interviewsToSchedule.length === 0 ? (
-              <EmptyState text="Nothing waiting — you're caught up." />
+              <EmptyState text="Nothing waiting, you're caught up." />
             ) : (
               <ul className="divide-y">
                 {interviewsToSchedule.map((i) => (

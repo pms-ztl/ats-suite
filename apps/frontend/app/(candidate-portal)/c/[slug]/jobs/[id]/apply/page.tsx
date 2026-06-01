@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 20 — tenant-whitelabeled apply page.
+ * Phase 20, tenant-whitelabeled apply page.
  *
  * URL: /c/{slug}/jobs/{id}/apply
  *
@@ -66,7 +66,7 @@ interface FormSchema {
 function formatSalary(min: number | null, max: number | null, currency: string) {
   if (min == null && max == null) return null;
   const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
+  if (min != null && max != null) return `${fmt(min)} to ${fmt(max)}`;
   return fmt(min ?? max!);
 }
 
@@ -88,7 +88,7 @@ export default function TenantApplyPage() {
   const [coverLetter, setCoverLetter] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
-  // Custom form state — keyed by fieldId
+  // Custom form state, keyed by fieldId
   const [customValues, setCustomValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function TenantApplyPage() {
       try {
         const [jobRes, schemaRes] = await Promise.all([
           fetch(`${API_BASE}/public/jobs/${encodeURIComponent(id)}`),
-          // Schema is optional — 404 is fine, default form below
+          // Schema is optional, 404 is fine, default form below
           fetch(`${API_BASE}/public/jobs/${encodeURIComponent(id)}/form`).catch(() => null),
         ]);
         if (jobRes.ok) {
@@ -190,7 +190,7 @@ export default function TenantApplyPage() {
       <BrandedShell slug={slug as string} hero={false}>
         <Card className="max-w-xl mx-auto">
           <CardContent className="py-12 text-center space-y-3">
-            <CheckCircle2 className="w-12 h-12 mx-auto text-green-500" />
+            <CheckCircle2 className="w-12 h-12 mx-auto text-ok" />
             <h2 className="text-xl font-semibold">Application received</h2>
             <p className="text-sm text-muted-foreground">
               Thanks for applying to <strong>{job.title}</strong>. Our team will review your application

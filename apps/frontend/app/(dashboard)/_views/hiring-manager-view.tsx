@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 23 — hiring manager "today" dashboard.
+ * Phase 23, hiring manager "today" dashboard.
  *
  * Lives at `/` when the logged-in user has role HIRING_MANAGER. Focuses on
  * the reqs they own + the candidates moving through the pipeline + decisions
@@ -93,10 +93,10 @@ export function HiringManagerView() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Briefcase className="w-4 h-4" />} label="My reqs" value={loading ? "—" : myReqs.length.toString()} hint={`${open} open`} />
-        <StatCard icon={<Users className="w-4 h-4" />} label="Total headcount" value={loading ? "—" : totalHeadcount.toString()} hint="Across your reqs" />
-        <StatCard icon={<FileSignature className="w-4 h-4" />} label="Decisions due" value={loading ? "—" : pendingDecisions.length.toString()} hint="Awaiting your call" />
-        <StatCard icon={<TrendingUp className="w-4 h-4" />} label="Conversion" value="—" hint="Apply→Hire (this quarter)" />
+        <StatCard icon={<Briefcase className="w-4 h-4" />} label="My reqs" value={loading ? "-" : myReqs.length.toString()} hint={`${open} open`} />
+        <StatCard icon={<Users className="w-4 h-4" />} label="Total headcount" value={loading ? "-" : totalHeadcount.toString()} hint="Across your reqs" />
+        <StatCard icon={<FileSignature className="w-4 h-4" />} label="Decisions due" value={loading ? "-" : pendingDecisions.length.toString()} hint="Awaiting your call" />
+        <StatCard icon={<TrendingUp className="w-4 h-4" />} label="Conversion" value="-" hint="Apply→Hire (this quarter)" />
       </div>
 
       <div className="grid lg:grid-cols-[1fr,1fr] gap-6">
@@ -176,7 +176,7 @@ export function HiringManagerView() {
         </Card>
       </div>
 
-      {/* Pipeline summary card — placeholder for richer chart later */}
+      {/* Pipeline summary card, placeholder for richer chart later */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">

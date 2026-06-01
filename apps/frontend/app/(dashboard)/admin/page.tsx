@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// PageHeader uses breadcrumbs — use inline header for super-admin
+// PageHeader uses breadcrumbs, use inline header for super-admin
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -58,16 +58,16 @@ interface Stats {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const PLAN_META: Record<string, { icon: React.ReactNode; badge: string; color: string }> = {
   FREE:         { icon: <Rocket className="h-3.5 w-3.5" />, badge: "Free",         color: "bg-muted text-muted-foreground" },
-  STARTER:      { icon: <Zap className="h-3.5 w-3.5" />,    badge: "Starter",      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
-  PROFESSIONAL: { icon: <Crown className="h-3.5 w-3.5" />,  badge: "Professional", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
-  ENTERPRISE:   { icon: <Building2 className="h-3.5 w-3.5" />, badge: "Enterprise", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  STARTER:      { icon: <Zap className="h-3.5 w-3.5" />,    badge: "Starter",      color: "bg-info-tint text-info dark:text-info" },
+  PROFESSIONAL: { icon: <Crown className="h-3.5 w-3.5" />,  badge: "Professional", color: "bg-ai-tint text-ai-ink dark:text-ai-ink" },
+  ENTERPRISE:   { icon: <Building2 className="h-3.5 w-3.5" />, badge: "Enterprise", color: "bg-warn-tint text-warn dark:text-warn" },
 };
 
 const STATUS_META: Record<string, { badge: string; color: string }> = {
-  TRIAL:     { badge: "Trial",     color: "bg-blue-50 text-blue-600 border-blue-200" },
-  ACTIVE:    { badge: "Active",    color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  SUSPENDED: { badge: "Suspended", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  CANCELLED: { badge: "Cancelled", color: "bg-rose-50 text-rose-700 border-rose-200" },
+  TRIAL:     { badge: "Trial",     color: "bg-info-tint text-info border-info/40" },
+  ACTIVE:    { badge: "Active",    color: "bg-ok-tint text-ok border-ok/40" },
+  SUSPENDED: { badge: "Suspended", color: "bg-warn-tint text-warn border-warn/40" },
+  CANCELLED: { badge: "Cancelled", color: "bg-danger-tint text-danger border-danger/40" },
 };
 
 function getApiBase() {
@@ -164,7 +164,7 @@ export default function SuperAdminPage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchTenants(); }, [fetchTenants]);
 
-  // Phase 32a — start an impersonation session as the tenant's first ADMIN.
+  // Phase 32a, start an impersonation session as the tenant's first ADMIN.
   // Backend signs a 1-hour JWT, sets the cookie, and we hard-nav to / so
   // the auth context re-fetches /auth/me with the new identity.
   const impersonateTenant = async (id: string, name: string) => {
@@ -179,7 +179,7 @@ export default function SuperAdminPage() {
         const body = await res.json().catch(() => ({} as any));
         throw new Error(body?.error?.message ?? body?.message ?? `${res.status}`);
       }
-      toast.success(`Now impersonating ${name} — taking you to their dashboard…`);
+      toast.success(`Now impersonating ${name}, taking you to their dashboard…`);
       window.location.href = "/";
     } catch (e: any) {
       toast.error(e.message || "Couldn't start impersonation");
@@ -222,24 +222,24 @@ export default function SuperAdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPI
           label="Total tenants"
-          value={statsLoading ? "—" : stats?.totalTenants ?? 0}
+          value={statsLoading ? "-" : stats?.totalTenants ?? 0}
           icon={<Building2 className="h-5 w-5" />}
           sub={`${stats?.activeTenants ?? 0} active · ${stats?.trialTenants ?? 0} trial`}
         />
         <KPI
           label="Total users"
-          value={statsLoading ? "—" : stats?.totalUsers ?? 0}
+          value={statsLoading ? "-" : stats?.totalUsers ?? 0}
           icon={<Users className="h-5 w-5" />}
         />
         <KPI
           label="Total candidates"
-          value={statsLoading ? "—" : stats?.totalCandidates ?? 0}
+          value={statsLoading ? "-" : stats?.totalCandidates ?? 0}
           icon={<BarChart3 className="h-5 w-5" />}
           sub={`${stats?.totalRequisitions ?? 0} requisitions`}
         />
         <KPI
           label="AI spend (30d)"
-          value={statsLoading ? "—" : `$${(stats?.totalCostUsd30d ?? 0).toFixed(2)}`}
+          value={statsLoading ? "-" : `$${(stats?.totalCostUsd30d ?? 0).toFixed(2)}`}
           icon={<DollarSign className="h-5 w-5" />}
         />
       </div>
@@ -249,12 +249,12 @@ export default function SuperAdminPage() {
         <Link href="/admin/platform/agents" className="block">
           <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-danger/10 text-danger dark:text-danger flex items-center justify-center shrink-0">
                 <Power className="h-4 w-4" />
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm">Agent control plane</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">Global kill switch — disable any agent for every tenant in 1 click.</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">Global kill switch, disable any agent for every tenant in 1 click.</p>
               </div>
             </CardContent>
           </Card>
@@ -262,7 +262,7 @@ export default function SuperAdminPage() {
         <Link href="/admin/platform/cost" className="block">
           <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-ok/10 text-ok dark:text-ok flex items-center justify-center shrink-0">
                 <DollarSign className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -275,7 +275,7 @@ export default function SuperAdminPage() {
         <Link href="/admin/platform/prompts" className="block">
           <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-ai/10 text-ai-ink dark:text-ai-ink flex items-center justify-center shrink-0">
                 <Brain className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -288,7 +288,7 @@ export default function SuperAdminPage() {
         <Link href="/admin/platform/audit" className="block">
           <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-warn/10 text-warn dark:text-warn flex items-center justify-center shrink-0">
                 <FileText className="h-4 w-4" />
               </div>
               <div className="min-w-0">
@@ -407,7 +407,7 @@ export default function SuperAdminPage() {
                             {status.badge}
                           </span>
                           {daysLeft !== null && (
-                            <span className={cn("text-xs", daysLeft <= 3 ? "text-rose-500" : "text-muted-foreground")}>
+                            <span className={cn("text-xs", daysLeft <= 3 ? "text-danger" : "text-muted-foreground")}>
                               {daysLeft}d left
                             </span>
                           )}
@@ -431,23 +431,23 @@ export default function SuperAdminPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "STARTER" })}>
-                              <Zap className="h-4 w-4 mr-2 text-blue-500" /> Upgrade → Starter
+                              <Zap className="h-4 w-4 mr-2 text-info" /> Upgrade → Starter
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "PROFESSIONAL" })}>
                               <Crown className="h-4 w-4 mr-2 text-primary" /> Upgrade → Professional
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "ENTERPRISE" })}>
-                              <Building2 className="h-4 w-4 mr-2 text-amber-500" /> Upgrade → Enterprise
+                              <Building2 className="h-4 w-4 mr-2 text-warn" /> Upgrade → Enterprise
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { status: "ACTIVE" })}>
-                              <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" /> Activate
+                              <CheckCircle2 className="h-4 w-4 mr-2 text-ok" /> Activate
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateTenant(t.id, { status: "SUSPENDED" })}>
-                              <Ban className="h-4 w-4 mr-2 text-amber-500" /> Suspend
+                              <Ban className="h-4 w-4 mr-2 text-warn" /> Suspend
                             </DropdownMenuItem>
-                            {/* Phase 32a — impersonate this tenant's admin for support debugging. */}
+                            {/* Phase 32a, impersonate this tenant's admin for support debugging. */}
                             <DropdownMenuItem onClick={() => impersonateTenant(t.id, t.name)}>
-                              <UserCog className="h-4 w-4 mr-2 text-rose-500" /> Impersonate admin
+                              <UserCog className="h-4 w-4 mr-2 text-danger" /> Impersonate admin
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -464,7 +464,7 @@ export default function SuperAdminPage() {
         {total > 20 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border/40">
             <span className="text-xs text-muted-foreground">
-              Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}
+              Showing {(page - 1) * 20 + 1}-{Math.min(page * 20, total)} of {total}
             </span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>

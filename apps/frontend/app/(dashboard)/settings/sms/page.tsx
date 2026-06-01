@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 34g — SMS / WhatsApp apply configuration.
+ * Phase 34g, SMS / WhatsApp apply configuration.
  *
  * Setup is half-manual: tenant provisions a phone number in their own
  * Twilio account (TCPA compliance requires they own it), then pastes
@@ -47,10 +47,10 @@ interface SmsConversation {
 
 const STEP_COLOR: Record<string, string> = {
   GREETING: "bg-muted text-muted-foreground",
-  AWAITING_NAME: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  AWAITING_EMAIL: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  AWAITING_RESUME: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  COMPLETED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  AWAITING_NAME: "bg-info/15 text-info dark:text-info",
+  AWAITING_EMAIL: "bg-info/15 text-info dark:text-info",
+  AWAITING_RESUME: "bg-info/15 text-info dark:text-info",
+  COMPLETED: "bg-ok/15 text-ok dark:text-ok",
 };
 
 function authHeaders(): Record<string, string> {
@@ -221,8 +221,8 @@ export default function SmsSettingsPage() {
                     <td className="px-4 py-2">
                       <Badge variant="outline" className={`text-2xs ${STEP_COLOR[c.step] ?? ""}`}>{c.step}</Badge>
                     </td>
-                    <td className="px-4 py-2">{c.collectedName ?? "—"}</td>
-                    <td className="px-4 py-2 font-mono text-2xs">{c.collectedEmail ?? "—"}</td>
+                    <td className="px-4 py-2">{c.collectedName ?? "-"}</td>
+                    <td className="px-4 py-2 font-mono text-2xs">{c.collectedEmail ?? "-"}</td>
                     <td className="px-4 py-2 text-muted-foreground">{new Date(c.updatedAt).toLocaleString()}</td>
                   </tr>
                 ))}

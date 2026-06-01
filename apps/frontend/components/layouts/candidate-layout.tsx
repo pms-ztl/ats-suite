@@ -15,7 +15,7 @@ const candidateNav = [
   { href: "/transparency", label: "Help", icon: HelpCircle },
 ];
 
-// Phase 33c — public-branding shape (subset of /api/public/branding/:slug)
+// Phase 33c, public-branding shape (subset of /api/public/branding/:slug)
 interface PublicBranding {
   name: string;
   slug: string;
@@ -52,7 +52,7 @@ function hexToHslTuple(hex: string | null | undefined): string | null {
 export function CandidateLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Phase 33c — when on /c/<slug>/... (tenant-scoped career portal), pull
+  // Phase 33c, when on /c/<slug>/... (tenant-scoped career portal), pull
   // the tenant's public branding and whitelabel the layout. On the generic
   // /jobs route (no slug) we keep the platform default.
   const slug = useMemo(() => {
@@ -86,12 +86,12 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
   // Glassmorphism: chrome surfaces composite over the global aurora backdrop
   // applied in globals.css (body::before). All shades use semantic tokens so
   // both light and dark mode look right.
-  // Phase 33c — brandStyle (when present) recolors --primary inside this
+  // Phase 33c, brandStyle (when present) recolors --primary inside this
   // tree only, so the tenant's color flows through bg-primary / text-primary
   // utility classes used across the candidate portal.
   return (
     <div className="min-h-screen text-foreground flex flex-col" style={brandStyle}>
-      {/* Top Nav — glass */}
+      {/* Top Nav, glass */}
       <header className="sticky top-0 z-30 border-b border-border/40 glass-surface">
         <div className="max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <Link href={slug ? `/c/${slug}/jobs` : "/jobs"} className="flex items-center gap-2.5">

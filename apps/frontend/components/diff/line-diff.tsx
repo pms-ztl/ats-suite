@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Line-level diff renderer — minimal LCS-based two-way diff for showing
+ * Line-level diff renderer, minimal LCS-based two-way diff for showing
  * what changed between two prompt versions.
  *
  * Why not pull in `diff` or `react-diff-viewer`: those add ~60 KB to the
@@ -87,9 +87,9 @@ export function LineDiff({ oldText, newText, oldLabel = "Old", newLabel = "New" 
     <div className="border rounded-md overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/40">
         <div className="text-xs text-muted-foreground">
-          <span className="text-green-700 dark:text-green-400 font-medium">+{adds}</span>
+          <span className="text-ok dark:text-ok font-medium">+{adds}</span>
           {" / "}
-          <span className="text-red-700 dark:text-red-400 font-medium">-{dels}</span>
+          <span className="text-danger dark:text-danger font-medium">-{dels}</span>
         </div>
         <div className="flex items-center gap-1">
           <Button size="sm" variant={mode === "split" ? "default" : "ghost"} onClick={() => setMode("split")}>
@@ -120,7 +120,7 @@ function SplitView({ lines, oldLabel, newLabel }: { lines: DiffLine[]; oldLabel:
           return (
             <div
               key={i}
-              className={`px-3 py-0.5 ${l.kind === "del" ? "bg-red-100 dark:bg-red-950/40" : ""}`}
+              className={`px-3 py-0.5 ${l.kind === "del" ? "bg-danger-tint" : ""}`}
             >
               <span className="text-muted-foreground inline-block w-8 select-none">{l.oldNum ?? ""}</span>
               <span className="whitespace-pre">{l.text || " "}</span>
@@ -138,7 +138,7 @@ function SplitView({ lines, oldLabel, newLabel }: { lines: DiffLine[]; oldLabel:
           return (
             <div
               key={i}
-              className={`px-3 py-0.5 ${l.kind === "add" ? "bg-green-100 dark:bg-green-950/40" : ""}`}
+              className={`px-3 py-0.5 ${l.kind === "add" ? "bg-ok-tint" : ""}`}
             >
               <span className="text-muted-foreground inline-block w-8 select-none">{l.newNum ?? ""}</span>
               <span className="whitespace-pre">{l.text || " "}</span>
@@ -157,9 +157,9 @@ function UnifiedView({ lines }: { lines: DiffLine[] }) {
         const prefix = l.kind === "add" ? "+" : l.kind === "del" ? "-" : " ";
         const bg =
           l.kind === "add"
-            ? "bg-green-100 dark:bg-green-950/40"
+            ? "bg-ok-tint"
             : l.kind === "del"
-              ? "bg-red-100 dark:bg-red-950/40"
+              ? "bg-danger-tint"
               : "";
         return (
           <div key={i} className={`px-3 py-0.5 ${bg}`}>

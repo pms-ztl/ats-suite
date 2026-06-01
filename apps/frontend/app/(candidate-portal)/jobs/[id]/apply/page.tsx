@@ -173,7 +173,7 @@ export default function ApplyPage() {
       }
 
       try {
-        // Use public API — look up by slug (no auth required)
+        // Use public API, look up by slug (no auth required)
         const res = await fetch(`${API_BASE}/public/jobs/${jobId}`, {
           headers: { "Content-Type": "application/json" },
         });
@@ -228,7 +228,7 @@ export default function ApplyPage() {
       return;
     }
 
-    if (!job?.slug) { toast.error("Job not loaded yet — try again."); return; }
+    if (!job?.slug) { toast.error("Job not loaded yet, try again."); return; }
     setSubmitting(true);
 
     try {
@@ -269,7 +269,7 @@ export default function ApplyPage() {
       <div className="max-w-xl mx-auto space-y-6">
         <Card>
           <CardContent className="py-12 text-center">
-            <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+            <CheckCircle2 className="h-12 w-12 text-ok mx-auto mb-4" />
             <h2 className="text-xl font-semibold">
               Application Submitted!
             </h2>
@@ -465,14 +465,14 @@ export default function ApplyPage() {
                   errors.resume
                     ? "border-destructive/50 bg-destructive/5"
                     : resume
-                      ? "border-emerald-300 bg-emerald-50/50"
+                      ? "border-ok/40 bg-ok-tint/50"
                       : "border-border hover:border-primary/50"
                 }`}
               >
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 {resume ? (
                   <div>
-                    <p className="text-sm font-medium text-emerald-700">
+                    <p className="text-sm font-medium text-ok">
                       {resume.name}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">

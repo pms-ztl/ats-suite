@@ -26,9 +26,9 @@ import { AccessDenied } from "@/components/shared/access-denied";
 
 const PLAN_META: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
   FREE:         { icon: <Rocket className="h-4 w-4" />,   label: "Free",         color: "bg-muted text-muted-foreground" },
-  STARTER:      { icon: <Zap className="h-4 w-4" />,      label: "Starter",      color: "bg-blue-500/15 text-blue-700 dark:text-blue-300" },
-  PROFESSIONAL: { icon: <Crown className="h-4 w-4" />,    label: "Professional", color: "bg-violet-500/15 text-violet-700 dark:text-violet-300" },
-  ENTERPRISE:   { icon: <Building2 className="h-4 w-4" />, label: "Enterprise",  color: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
+  STARTER:      { icon: <Zap className="h-4 w-4" />,      label: "Starter",      color: "bg-info/15 text-info dark:text-info" },
+  PROFESSIONAL: { icon: <Crown className="h-4 w-4" />,    label: "Professional", color: "bg-ai/15 text-ai-ink dark:text-ai-ink" },
+  ENTERPRISE:   { icon: <Building2 className="h-4 w-4" />, label: "Enterprise",  color: "bg-warn/15 text-warn dark:text-warn" },
 };
 
 interface PCR {
@@ -39,7 +39,7 @@ interface PCR {
   reason: string | null;
   requestedAt: string;
   decisionNote: string | null;
-  // Phase 33a — set on APPROVED requests for STARTER/PROFESSIONAL.
+  // Phase 33a, set on APPROVED requests for STARTER/PROFESSIONAL.
   // null = activated (already paid) or non-Stripe path. STRIPE = needs Checkout.
   paymentMethod?: string | null;
   activatedAt?: string | null;
@@ -52,7 +52,7 @@ interface StripeSubscriptionDto {
   cancelAtPeriodEnd: boolean;
 }
 
-// Phase 30 — self-serve pricing. Display-only; the actual price lives in
+// Phase 30, self-serve pricing. Display-only; the actual price lives in
 // Stripe and is what the customer pays. Keep these in sync with the
 // STRIPE_PRICE_* env vars billing-service uses.
 const SELF_SERVE_TIERS = [
@@ -60,7 +60,7 @@ const SELF_SERVE_TIERS = [
     plan: "STARTER" as const,
     price: "$299",
     period: "/mo",
-    headline: "For small teams hiring 5–20 people/year",
+    headline: "For small teams hiring 5-20 people/year",
     bullets: ["5 seats", "20 active jobs", "500 resumes/mo", "Core AI agents", "14-day free trial"],
   },
   {
@@ -158,7 +158,7 @@ export default function BillingPage() {
   const [reason, setReason] = useState("");
   const [submittingUpgrade, setSubmittingUpgrade] = useState(false);
 
-  // Phase 30 — Stripe self-serve subscription state.
+  // Phase 30, Stripe self-serve subscription state.
   const [stripeSub, setStripeSub] = useState<StripeSubscriptionDto | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -167,10 +167,10 @@ export default function BillingPage() {
     try {
       const sub = await apiFetch<StripeSubscriptionDto | null>("/billing/stripe/subscription");
       setStripeSub(sub);
-    } catch { /* ignore — 404 means no Stripe sub yet */ }
+    } catch { /* ignore, 404 means no Stripe sub yet */ }
   }, []);
 
-  // Phase 33a — Stripe Checkout is no longer self-serve. Tenants must:
+  // Phase 33a, Stripe Checkout is no longer self-serve. Tenants must:
   //   1. Submit a PlanChangeRequest (the "Request plan change" dialog above)
   //   2. Wait for super-admin approval
   //   3. THEN call /stripe/checkout-for-request/:id, which validates the
@@ -187,7 +187,7 @@ export default function BillingPage() {
     } catch (err: any) {
       const msg = err?.message ?? "Failed to start checkout";
       toast.error(msg.includes("not configured")
-        ? "Stripe is not configured on this instance — contact your platform admin."
+        ? "Stripe is not configured on this instance, contact your platform admin."
         : msg);
       setCheckoutLoading(null);
     }
@@ -279,7 +279,7 @@ export default function BillingPage() {
     fetchStripeSub();
   }, [fetchData, fetchPlanRequests, fetchStripeSub]);
 
-  // Phase 30 — show a toast for users returning from Stripe Checkout
+  // Phase 30, show a toast for users returning from Stripe Checkout
   // (success or cancel). URL params are appended by Stripe and survive the
   // 302 back to /billing. We strip them after reading so a refresh doesn't
   // re-toast.
@@ -288,7 +288,7 @@ export default function BillingPage() {
     const params = new URLSearchParams(window.location.search);
     const status = params.get("stripe");
     if (status === "success") {
-      toast.success("Checkout complete — your plan is being activated.");
+      toast.success("Checkout complete, your plan is being activated.");
       // Re-fetch after a short delay; Stripe webhook usually arrives within
       // 1-2 seconds but Checkout success can outrun it.
       setTimeout(() => { fetchStripeSub(); fetchData(); }, 1500);
@@ -366,8 +366,8 @@ export default function BillingPage() {
             <div className="flex items-center gap-2">
               {pendingReq ? (
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="gap-1 text-amber-700 dark:text-amber-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <Badge variant="outline" className="gap-1 text-warn dark:text-warn">
+                    <span className="h-1.5 w-1.5 rounded-full bg-warn animate-pulse" />
                     Upgrade pending: {pendingReq.toPlan}
                   </Badge>
                   <Button size="sm" variant="ghost" onClick={() => cancelRequest(pendingReq.id)} className="h-7 gap-1">
@@ -396,8 +396,8 @@ export default function BillingPage() {
                       variant="outline"
                       className={cn(
                         "text-2xs",
-                        r.status === "APPROVED" && "text-emerald-600 dark:text-emerald-400",
-                        r.status === "REJECTED" && "text-rose-600 dark:text-rose-400",
+                        r.status === "APPROVED" && "text-ok dark:text-ok",
+                        r.status === "REJECTED" && "text-danger dark:text-danger",
                       )}
                     >
                       {r.status}
@@ -413,10 +413,10 @@ export default function BillingPage() {
         </CardContent>
       </Card>
 
-      {/* Phase 30 — Stripe self-serve plan cards. Shown when the tenant is on
+      {/* Phase 30, Stripe self-serve plan cards. Shown when the tenant is on
           FREE OR on a paid plan but wants to switch. Enterprise always uses
           the "Request plan change" approval flow below. */}
-      {/* Phase 33a — plan catalog is informational only. Tenant submits a
+      {/* Phase 33a, plan catalog is informational only. Tenant submits a
           PlanChangeRequest via "Request plan change" above; super-admin
           approves; if STARTER/PROFESSIONAL, an approved request shows a
           "Pay now" prompt below to complete Stripe Checkout. */}
@@ -497,21 +497,21 @@ export default function BillingPage() {
               })}
             </div>
             <p className="text-2xs text-muted-foreground mt-3 text-center">
-              Enterprise pricing is custom — use "Request plan change" above and select Enterprise.
+              Enterprise pricing is custom, use "Request plan change" above and select Enterprise.
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Phase 33a — "Pay now" prompt for any APPROVED Stripe-payable request
+      {/* Phase 33a, "Pay now" prompt for any APPROVED Stripe-payable request
           whose Tenant.plan flip is still waiting on payment. */}
       {planRequests.filter((r) => r.status === "APPROVED" && r.paymentMethod === "STRIPE" && !r.activatedAt).map((r) => (
-        <Card key={r.id} className="border-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20">
+        <Card key={r.id} className="border-ok/40 bg-ok-tint/60">
           <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
             <div>
               <p className="font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Your {r.toPlan} upgrade is approved — pay to activate
+                <CheckCircle2 className="h-4 w-4 text-ok" />
+                Your {r.toPlan} upgrade is approved, pay to activate
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {r.decisionNote ?? "Click below to complete payment via Stripe. You'll be redirected."}
@@ -531,7 +531,7 @@ export default function BillingPage() {
 
       {/* Budget warning banner */}
       {budgetWarning && (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-800">
+        <div className="flex items-center gap-3 rounded-lg border border-warn/40 bg-warn-tint p-4 text-warn">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <div>
             <p className="font-medium">

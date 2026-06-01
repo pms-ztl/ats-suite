@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 20 — tenant-whitelabeled jobs index.
+ * Phase 20, tenant-whitelabeled jobs index.
  *
  * URL: /c/{slug}/jobs
  *
@@ -44,7 +44,7 @@ interface PublicJob {
 function formatSalary(min: number | null, max: number | null, currency: string) {
   if (min == null && max == null) return null;
   const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
+  if (min != null && max != null) return `${fmt(min)} to ${fmt(max)}`;
   return fmt(min ?? max!);
 }
 
@@ -109,7 +109,7 @@ export default function TenantJobsPage() {
               <Briefcase className="w-10 h-10 mx-auto text-muted-foreground" />
               <p className="font-medium">No open roles right now</p>
               <p className="text-sm text-muted-foreground">
-                Check back later — we&apos;re always growing.
+                Check back later, we&apos;re always growing.
               </p>
             </CardContent>
           </Card>

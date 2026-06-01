@@ -87,7 +87,7 @@ export function DataTable<TData, TValue>({ columns, data, loading = false, pageS
     if (onExport) {
       onExport();
     }
-    // Built-in CSV export — runs whenever onExport is omitted or is a no-op placeholder.
+    // Built-in CSV export, runs whenever onExport is omitted or is a no-op placeholder.
     // Detects empty arrow functions in both dev ("() => {}") and minified ("()=>{}") forms,
     // or when no onExport was provided at all.
     const src = onExport ? onExport.toString().replace(/\s/g, "") : "";
@@ -273,7 +273,7 @@ export function DataTable<TData, TValue>({ columns, data, loading = false, pageS
         </div>
       </div>
 
-      {/* Server-side pagination bar — shown when totalItems is provided */}
+      {/* Server-side pagination bar, shown when totalItems is provided */}
       {isServerPaginated && (() => {
         const activePage = currentPage ?? 1;
         const activeSize = pageSize ?? 25;
@@ -283,9 +283,9 @@ export function DataTable<TData, TValue>({ columns, data, loading = false, pageS
         const endItem = Math.min(activePage * activeSize, total);
         return (
           <div className="flex items-center justify-between border-t pt-3 px-1">
-            {/* Left: showing X–Y of Z */}
+            {/* Left: showing X-Y of Z */}
             <span className="text-xs text-muted-foreground">
-              Showing {total === 0 ? 0 : startItem}–{endItem} of {total} results
+              Showing {total === 0 ? 0 : startItem}-{endItem} of {total} results
             </span>
             {/* Center: page size selector */}
             <div className="flex items-center gap-2">

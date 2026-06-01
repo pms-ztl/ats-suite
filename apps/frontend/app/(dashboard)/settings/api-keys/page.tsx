@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 34b — Tenant API keys management.
+ * Phase 34b, Tenant API keys management.
  *
  * Tenants generate API keys here and hand them to:
  *   - The LinkedIn Chrome extension (Phase 34f)
@@ -9,7 +9,7 @@
  *   - Their own scripts that POST candidates via /api/v1/candidates
  *
  * Plaintext key is shown ONCE at creation time in a dialog. If they lose
- * it, they must revoke + recreate — same model as GitHub PATs and Stripe.
+ * it, they must revoke + recreate, same model as GitHub PATs and Stripe.
  */
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -104,7 +104,7 @@ export default function ApiKeysPage() {
     if (!plaintext) return;
     try {
       await navigator.clipboard.writeText(plaintext);
-      toast.success("Copied — store this somewhere safe");
+      toast.success("Copied, store this somewhere safe");
     } catch { toast.error("Copy failed"); }
   };
 
@@ -163,7 +163,7 @@ export default function ApiKeysPage() {
                     <td className="px-4 py-2">
                       {k.revokedAt
                         ? <Badge variant="outline" className="text-2xs bg-destructive/15 text-destructive">Revoked</Badge>
-                        : <Badge variant="outline" className="text-2xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Active</Badge>}
+                        : <Badge variant="outline" className="text-2xs bg-ok/15 text-ok dark:text-ok">Active</Badge>}
                     </td>
                     <td className="px-4 py-2 text-right">
                       {!k.revokedAt && (
@@ -203,7 +203,7 @@ export default function ApiKeysPage() {
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500" /> Save this key now</DialogTitle>
+                <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warn" /> Save this key now</DialogTitle>
                 <DialogDescription>It will not be shown again. Revoke + recreate if you lose it.</DialogDescription>
               </DialogHeader>
               <div className="space-y-3">

@@ -97,7 +97,7 @@ export default function SourcingPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ requisitionId: reqId, limit: 25 }),
       });
-      if (res.status === 503) { toast.error("Embeddings not configured — set an embeddings key + run embed-backfill."); return; }
+      if (res.status === 503) { toast.error("Embeddings not configured, set an embeddings key + run embed-backfill."); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setMatches((json.data ?? json).matches ?? []);
@@ -174,7 +174,7 @@ export default function SourcingPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" /> AI Sourcing
+            <Sparkles className="h-4 w-4 text-ai" /> AI Sourcing
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -205,7 +205,7 @@ export default function SourcingPage() {
                 Vector matches (embedding similarity){matches.length ? ` · top ${matches.length}` : ""}
               </p>
               {matches.length === 0 && (
-                <p className="text-sm text-muted-foreground">No embedded candidates yet — run embed-backfill, or this requisition has no close matches.</p>
+                <p className="text-sm text-muted-foreground">No embedded candidates yet, run embed-backfill, or this requisition has no close matches.</p>
               )}
               {matches.map((m) => (
                 <div key={m.id} className="flex items-center justify-between gap-3 rounded-md border p-2.5">
@@ -231,7 +231,7 @@ export default function SourcingPage() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">{c.name}</p>
                       {c.shortlisted && (
-                        <Badge variant="outline" className="text-2xs gap-1 text-amber-600 border-amber-300">
+                        <Badge variant="outline" className="text-2xs gap-1 text-warn border-warn/40">
                           <Star className="h-3 w-3" /> Shortlisted
                         </Badge>
                       )}

@@ -11,7 +11,7 @@
  * answer "what happened to the platform between Tuesday and Wednesday?"
  *
  * Both data sources come from the same backend service, joined on the
- * frontend. Pagination is naive (limit=100 per source) — sufficient for
+ * frontend. Pagination is naive (limit=100 per source), sufficient for
  * months of normal activity. Add infinite scroll later if anyone ever
  * needs >100 events per kind.
  */
@@ -72,7 +72,7 @@ export default function PlatformAuditPage() {
   async function load() {
     setLoading(true);
     try {
-      // 1) Kill switch audit — one call, scoped on backend
+      // 1) Kill switch audit, one call, scoped on backend
       const auditRes = await fetch(`${API_BASE}/super-admin/platform/audit?limit=200`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -80,7 +80,7 @@ export default function PlatformAuditPage() {
       const auditBody = await auditRes.json();
       setKillAudit((auditBody.data ?? auditBody).audit ?? []);
 
-      // 2) Prompt history — one call per agent (parallel). We list all
+      // 2) Prompt history, one call per agent (parallel). We list all
       // agents then fan out to fetch each one's history. Capped at 20
       // calls (we have <20 agents) which is fine for an audit page.
       const promptsRes = await fetch(`${API_BASE}/super-admin/platform/prompts`, {
@@ -164,7 +164,7 @@ export default function PlatformAuditPage() {
 
       <PageHeader
         title="Platform audit log"
-        description="Every super-admin action that mutated the platform — kill switches, prompt overrides, rollbacks. Append-only, sorted newest first."
+        description="Every super-admin action that mutated the platform, kill switches, prompt overrides, rollbacks. Append-only, sorted newest first."
       />
 
       {/* Filters */}
@@ -228,8 +228,8 @@ function KillEvent({ row }: { row: KillAuditRow }) {
       <div
         className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
           row.disabled
-            ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            ? "bg-danger-tint text-danger dark:text-danger"
+            : "bg-ok-tint text-ok dark:text-ok"
         }`}
       >
         <Power className="w-4 h-4" />
@@ -247,7 +247,7 @@ function KillEvent({ row }: { row: KillAuditRow }) {
           </span>
         </div>
         {row.reason && (
-          <div className="text-xs text-amber-700 dark:text-amber-400 inline-flex items-start gap-1">
+          <div className="text-xs text-warn dark:text-warn inline-flex items-start gap-1">
             <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
             <span>{row.reason}</span>
           </div>
@@ -272,7 +272,7 @@ function PromptEvent({ row }: { row: PromptOverrideRow }) {
 
   return (
     <div className="flex items-start gap-3">
-      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-ai-tint text-ai-ink dark:text-ai-ink">
         <Brain className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0 space-y-1">

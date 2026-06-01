@@ -8,9 +8,9 @@ interface LiveIndicatorProps {
 
 export function LiveIndicator({ status, label, className }: LiveIndicatorProps) {
   const styles = {
-    operational: { bg: "bg-emerald-50 border-emerald-200 text-emerald-700", dot: "bg-emerald-500", defaultLabel: "Operational" },
-    degraded: { bg: "bg-amber-50 border-amber-200 text-amber-700", dot: "bg-amber-500", defaultLabel: "Degraded" },
-    outage: { bg: "bg-rose-50 border-rose-200 text-rose-700", dot: "bg-rose-500", defaultLabel: "Outage" },
+    operational: { bg: "bg-ok-tint border-ok/40 text-ok", dot: "bg-ok", defaultLabel: "Operational" },
+    degraded: { bg: "bg-warn-tint border-warn/40 text-warn", dot: "bg-warn", defaultLabel: "Degraded" },
+    outage: { bg: "bg-danger-tint border-danger/40 text-danger", dot: "bg-danger", defaultLabel: "Outage" },
   };
   const s = styles[status];
 

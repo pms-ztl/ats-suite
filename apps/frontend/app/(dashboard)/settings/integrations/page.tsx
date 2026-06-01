@@ -8,7 +8,7 @@
  *   - Email overrides (Reply-To, From display) plus "Send test" → /api/integrations/email/test
  *
  * Reads/writes via /api/integrations (proxied to notification-service).
- * In_app delivery is always on — it's the SSE/DB channel.
+ * In_app delivery is always on, it's the SSE/DB channel.
  */
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -75,7 +75,7 @@ export default function IntegrationsPage() {
       const slack = items.find((i) => i.kind === "slack");
       if (slack) {
         const cfg = slack.config as Record<string, string>;
-        // Backend redacts webhook URL in list — show as ".... last 12 chars"
+        // Backend redacts webhook URL in list, show as ".... last 12 chars"
         setSlackUrl(typeof cfg.webhookUrl === "string" ? cfg.webhookUrl : "");
         setSlackChannel(typeof cfg.channel === "string" ? cfg.channel : "");
         setSlackEnabled(slack.enabled);
@@ -205,7 +205,7 @@ export default function IntegrationsPage() {
       if (!res.ok || !json?.data?.ok) {
         throw new Error(json?.data?.error ?? json?.error?.message ?? `HTTP ${res.status}`);
       }
-      toast.success(`Test email sent — check your inbox`);
+      toast.success(`Test email sent, check your inbox`);
     } catch (err) {
       toast.error(`Email test failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -240,7 +240,7 @@ export default function IntegrationsPage() {
               </CardTitle>
               <CardDescription>Always-on bell + live SSE stream. No setup required.</CardDescription>
             </div>
-            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+            <Badge className="bg-ok/15 text-ok border-ok/40/30">
               <CheckCircle2 className="h-3 w-3 mr-1" /> Active
             </Badge>
           </CardHeader>
@@ -267,7 +267,7 @@ export default function IntegrationsPage() {
               </CardDescription>
             </div>
             {slackConfigured ? (
-              <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+              <Badge className="bg-ok/15 text-ok border-ok/40/30">
                 <CheckCircle2 className="h-3 w-3 mr-1" /> Configured
               </Badge>
             ) : (
@@ -353,7 +353,7 @@ export default function IntegrationsPage() {
                 Default SMTP is platform-managed. Override From / Reply-To if you have your own sender domain.
               </CardDescription>
             </div>
-            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+            <Badge className="bg-ok/15 text-ok border-ok/40/30">
               <CheckCircle2 className="h-3 w-3 mr-1" /> Active
             </Badge>
           </CardHeader>

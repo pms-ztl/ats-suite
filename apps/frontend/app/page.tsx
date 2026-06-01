@@ -78,11 +78,11 @@ function getGreetingForHour(hour: number): string {
 function getUrgencyStyles(urgency: string) {
   switch (urgency) {
     case "critical":
-      return { border: "border-l-rose-500", bg: "bg-rose-50/50 dark:bg-rose-950/20", badge: "destructive" as const, text: "text-rose-700" };
+      return { border: "border-l-rose-500", bg: "bg-danger-tint/50", badge: "destructive" as const, text: "text-danger" };
     case "high":
-      return { border: "border-l-amber-500", bg: "bg-amber-50/50 dark:bg-amber-950/20", badge: "warning" as const, text: "text-amber-700" };
+      return { border: "border-l-amber-500", bg: "bg-warn-tint/50", badge: "warning" as const, text: "text-warn" };
     default:
-      return { border: "border-l-blue-500", bg: "bg-blue-50/50 dark:bg-blue-950/20", badge: "info" as const, text: "text-blue-700" };
+      return { border: "border-l-blue-500", bg: "bg-info-tint/50", badge: "info" as const, text: "text-info" };
   }
 }
 
@@ -104,10 +104,10 @@ export default function Home() {
   useEffect(() => {
     // Hit the real backend (4000) via absolute URL with credentials.
     // The previous code hit relative "/api/..." (which 404s on Next.js) and
-    // fell into the catch — rendering fake hardcoded 48/1240/etc.
+    // fell into the catch, rendering fake hardcoded 48/1240/etc.
     //
     // Auth: try sessionStorage first (set by AuthProvider after login in
-    // the SAME tab). If absent — e.g. dashboard opened in a fresh tab —
+    // the SAME tab). If absent, e.g. dashboard opened in a fresh tab -
     // the HttpOnly `ats-token` cookie set by /auth/login is auto-sent by
     // `credentials: "include"`, and the backend's requireAuth middleware
     // accepts it as a fallback.
@@ -127,11 +127,11 @@ export default function Home() {
       .then((r) => r.json())
       .then((res) => {
         const d = res.data ?? res;
-        // Helper: show "—" when the backend returns null (real "no data yet")
-        const num = (v: unknown) => (v == null ? "—" : v);
-        const pct = (v: unknown) => (v == null ? "—" : `${v}%`);
-        const days = (v: unknown) => (v == null ? "—" : `${v}d`);
-        const dollars = (v: unknown) => (v == null ? "—" : `$${v}`);
+        // Helper: show "-" when the backend returns null (real "no data yet")
+        const num = (v: unknown) => (v == null ? "-" : v);
+        const pct = (v: unknown) => (v == null ? "-" : `${v}%`);
+        const days = (v: unknown) => (v == null ? "-" : `${v}d`);
+        const dollars = (v: unknown) => (v == null ? "-" : `$${v}`);
         setKpis([
           { label: "Open Requisitions",  value: num(d.openRequisitions),   changeLabel: "live", sparklineData: [] },
           { label: "Active Candidates",  value: num(d.activeCandidates),   changeLabel: "live", sparklineData: [] },
@@ -148,16 +148,16 @@ export default function Home() {
       })
       .catch((err) => {
         console.error("Failed to load dashboard data:", err);
-        // Show "—" honestly instead of inventing data
+        // Show "-" honestly instead of inventing data
         setKpis([
-          { label: "Open Requisitions",  value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Active Candidates",  value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Time to Hire",       value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Offer Accept Rate",  value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "AI Decisions Today", value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Compliance Score",   value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Diversity Index",    value: "—", changeLabel: "error loading", sparklineData: [] },
-          { label: "Cost per Hire",      value: "—", changeLabel: "error loading", sparklineData: [] },
+          { label: "Open Requisitions",  value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Active Candidates",  value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Time to Hire",       value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Offer Accept Rate",  value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "AI Decisions Today", value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Compliance Score",   value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Diversity Index",    value: "-", changeLabel: "error loading", sparklineData: [] },
+          { label: "Cost per Hire",      value: "-", changeLabel: "error loading", sparklineData: [] },
         ]);
       });
   }, []);
@@ -219,16 +219,16 @@ export default function Home() {
         {/* System Health */}
         <div className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm ${
           overallSystemStatus === "operational"
-            ? "bg-emerald-50/60 border-emerald-200"
-            : "bg-amber-50/60 border-amber-200"
+            ? "bg-ok-tint/60 border-ok/40"
+            : "bg-warn-tint/60 border-warn/40"
         }`}>
           <div className="flex items-center gap-3">
             <span className="relative flex h-2.5 w-2.5">
               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                overallSystemStatus === "operational" ? "bg-emerald-400" : "bg-amber-400"
+                overallSystemStatus === "operational" ? "bg-ok" : "bg-warn"
               }`} />
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                overallSystemStatus === "operational" ? "bg-emerald-500" : "bg-amber-500"
+                overallSystemStatus === "operational" ? "bg-ok" : "bg-warn"
               }`} />
             </span>
             <span className="font-medium">
@@ -239,7 +239,7 @@ export default function Home() {
             {systemHealthServices.map((service) => (
               <div key={service.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className={`h-1.5 w-1.5 rounded-full ${
-                  service.status === "operational" ? "bg-emerald-500" : "bg-amber-500"
+                  service.status === "operational" ? "bg-ok" : "bg-warn"
                 }`} />
                 {service.name}
               </div>
@@ -391,7 +391,7 @@ export default function Home() {
                   {recentActivity.map((item, i) => (
                     <div key={i} className="flex items-start gap-3 group hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 transition-colors">
                       <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
-                        item.type === "success" ? "bg-emerald-500" : item.type === "warning" ? "bg-amber-500" : item.type === "error" ? "bg-rose-500" : "bg-blue-500"
+                        item.type === "success" ? "bg-ok" : item.type === "warning" ? "bg-warn" : item.type === "error" ? "bg-danger" : "bg-info"
                       }`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.action}</p>
@@ -409,10 +409,10 @@ export default function Home() {
         {/* Quick Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Review Queue", count: "12 pending", trend: "+3", trendDir: "up" as const, href: "/compliance", color: "text-amber-600", bgHover: "hover:border-amber-300", icon: Eye },
-            { label: "Bias Alerts", count: "3 active", trend: "-2", trendDir: "down" as const, href: "/compliance", color: "text-rose-600", bgHover: "hover:border-rose-300", icon: AlertTriangle },
-            { label: "AI Models", count: "15 deployed", trend: "+1", trendDir: "up" as const, href: "/ai", color: "text-indigo-600", bgHover: "hover:border-indigo-300", icon: Brain },
-            { label: "Open Requisitions", count: "48 active", trend: "+5", trendDir: "up" as const, href: "/platform", color: "text-emerald-600", bgHover: "hover:border-emerald-300", icon: Briefcase },
+            { label: "Review Queue", count: "12 pending", trend: "+3", trendDir: "up" as const, href: "/compliance", color: "text-warn", bgHover: "hover:border-warn/40", icon: Eye },
+            { label: "Bias Alerts", count: "3 active", trend: "-2", trendDir: "down" as const, href: "/compliance", color: "text-danger", bgHover: "hover:border-danger/40", icon: AlertTriangle },
+            { label: "AI Models", count: "15 deployed", trend: "+1", trendDir: "up" as const, href: "/ai", color: "text-info", bgHover: "hover:border-info/40", icon: Brain },
+            { label: "Open Requisitions", count: "48 active", trend: "+5", trendDir: "up" as const, href: "/platform", color: "text-ok", bgHover: "hover:border-ok/40", icon: Briefcase },
           ].map((link, i) => {
             const Icon = link.icon;
             return (
@@ -422,9 +422,9 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-1.5">
                       <Icon className={`h-4 w-4 ${link.color}`} />
                       <div className={`flex items-center gap-0.5 text-2xs font-medium ${
-                        link.trendDir === "down" && link.label === "Bias Alerts" ? "text-emerald-600" :
-                        link.trendDir === "up" && link.label === "Bias Alerts" ? "text-rose-600" :
-                        link.trendDir === "up" ? "text-emerald-600" : "text-rose-600"
+                        link.trendDir === "down" && link.label === "Bias Alerts" ? "text-ok" :
+                        link.trendDir === "up" && link.label === "Bias Alerts" ? "text-danger" :
+                        link.trendDir === "up" ? "text-ok" : "text-danger"
                       }`}>
                         {link.trendDir === "up" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {link.trend}

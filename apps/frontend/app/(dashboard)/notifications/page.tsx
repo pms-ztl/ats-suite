@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Full notification inbox (Batch 3 — rewritten to use real /api/notifications).
+ * Full notification inbox (Batch 3, rewritten to use real /api/notifications).
  */
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
@@ -18,13 +18,13 @@ import {
 import { useNotifications, type Notification } from "@/hooks/use-notifications";
 
 const TYPE_META: Record<string, { icon: React.ReactNode; tint: string }> = {
-  PLAN_CHANGE_REQUESTED:  { icon: <Crown className="h-4 w-4" />,    tint: "text-violet-500 bg-violet-500/10" },
-  PLAN_CHANGE_APPROVED:   { icon: <Sparkles className="h-4 w-4" />, tint: "text-emerald-500 bg-emerald-500/10" },
-  PLAN_CHANGE_REJECTED:   { icon: <AlertCircle className="h-4 w-4" />, tint: "text-amber-500 bg-amber-500/10" },
-  NEW_TENANT_SIGNUP:      { icon: <Building2 className="h-4 w-4" />, tint: "text-blue-500 bg-blue-500/10" },
-  BULK_UPLOAD_COMPLETED:  { icon: <Upload className="h-4 w-4" />, tint: "text-emerald-500 bg-emerald-500/10" },
-  SEAT_LIMIT_REACHED:     { icon: <AlertCircle className="h-4 w-4" />, tint: "text-amber-500 bg-amber-500/10" },
-  INTERVIEW_FEEDBACK_NEW: { icon: <Calendar className="h-4 w-4" />, tint: "text-blue-500 bg-blue-500/10" },
+  PLAN_CHANGE_REQUESTED:  { icon: <Crown className="h-4 w-4" />,    tint: "text-ai-ink bg-ai/10" },
+  PLAN_CHANGE_APPROVED:   { icon: <Sparkles className="h-4 w-4" />, tint: "text-ok bg-ok/10" },
+  PLAN_CHANGE_REJECTED:   { icon: <AlertCircle className="h-4 w-4" />, tint: "text-warn bg-warn/10" },
+  NEW_TENANT_SIGNUP:      { icon: <Building2 className="h-4 w-4" />, tint: "text-info bg-info/10" },
+  BULK_UPLOAD_COMPLETED:  { icon: <Upload className="h-4 w-4" />, tint: "text-ok bg-ok/10" },
+  SEAT_LIMIT_REACHED:     { icon: <AlertCircle className="h-4 w-4" />, tint: "text-warn bg-warn/10" },
+  INTERVIEW_FEEDBACK_NEW: { icon: <Calendar className="h-4 w-4" />, tint: "text-info bg-info/10" },
   SYSTEM:                 { icon: <Bell className="h-4 w-4" />,    tint: "text-muted-foreground bg-muted" },
 };
 
@@ -58,12 +58,12 @@ export default function NotificationsPage() {
         actions={
           <div className="flex items-center gap-2">
             {streamMode === "sse" && (
-              <Badge variant="outline" className="gap-1 text-emerald-600">
+              <Badge variant="outline" className="gap-1 text-ok">
                 <Wifi className="h-3 w-3" /> Live
               </Badge>
             )}
             {streamMode === "polling" && (
-              <Badge variant="outline" className="gap-1 text-amber-600">
+              <Badge variant="outline" className="gap-1 text-warn">
                 <WifiOff className="h-3 w-3" /> Polling
               </Badge>
             )}

@@ -71,8 +71,8 @@ const DEFAULT_FOR_TYPE: Record<string, { subject: string; bodyText: string; body
   },
   PLAN_CHANGE_APPROVED: {
     subject: "Your {{tenantName}} plan is now {{newPlan}}",
-    bodyText: "Good news — your plan change to {{newPlan}} has been approved by {{reviewerName}}.\n\nThe new features are available immediately.",
-    bodyHtml: "<p>Good news — your plan change to <strong>{{newPlan}}</strong> has been approved by {{reviewerName}}.</p><p>The new features are available immediately.</p>",
+    bodyText: "Good news, your plan change to {{newPlan}} has been approved by {{reviewerName}}.\n\nThe new features are available immediately.",
+    bodyHtml: "<p>Good news, your plan change to <strong>{{newPlan}}</strong> has been approved by {{reviewerName}}.</p><p>The new features are available immediately.</p>",
   },
   PLAN_CHANGE_REJECTED: {
     subject: "Your plan change request was declined",
@@ -257,7 +257,7 @@ export default function EmailTemplatesPage() {
 
       <PageHeader
         title="Email templates"
-        description="Customize the subject and body of every notification email your workspace sends. Branding (logo + colors) is applied automatically — set those in Brand & Career Portal."
+        description="Customize the subject and body of every notification email your workspace sends. Branding (logo + colors) is applied automatically, set those in Brand & Career Portal."
       />
 
       <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
@@ -424,7 +424,7 @@ export default function EmailTemplatesPage() {
           <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50 text-xs text-muted-foreground">
             <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <div>
-              Unknown variables render as empty strings — your email won&apos;t leak <code>{`{{typo}}`}</code> tokens.
+              Unknown variables render as empty strings, your email won&apos;t leak <code>{`{{typo}}`}</code> tokens.
               Hover the variable chips above to see which fields are populated for this notification type.
             </div>
           </div>

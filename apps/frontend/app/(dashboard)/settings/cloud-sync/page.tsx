@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 34g — Google Drive + Dropbox folder-sync configuration page.
+ * Phase 34g, Google Drive + Dropbox folder-sync configuration page.
  *
  * Flow per provider:
  *   1. If not connected: "Connect" button → OAuth dance → tenant returns
@@ -59,7 +59,7 @@ function CloudSyncInner() {
 
   const fetchStatus = useCallback(async () => {
     // We piggy-back on the integrations list endpoint which returns all kinds.
-    // No single "status" endpoint exists — folder GET fails when not connected, which is our signal.
+    // No single "status" endpoint exists, folder GET fails when not connected, which is our signal.
     try {
       const driveRes = await fetch(`${API_BASE}/cloud-sync/google-drive/folders`, { credentials: "include", headers: authHeaders() });
       if (driveRes.ok) {
@@ -117,7 +117,7 @@ function CloudSyncInner() {
         body: JSON.stringify({ folderId: driveFolderId }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
-      toast.success("Watching that folder — first scan within 5 minutes.");
+      toast.success("Watching that folder, first scan within 5 minutes.");
     } catch { toast.error("Couldn't save"); }
     finally { setSavingDrive(false); }
   };
@@ -130,7 +130,7 @@ function CloudSyncInner() {
         body: JSON.stringify({ folderPath: dropboxPath }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
-      toast.success("Watching that path — first scan within 5 minutes.");
+      toast.success("Watching that path, first scan within 5 minutes.");
     } catch { toast.error("Couldn't save"); }
     finally { setSavingDropbox(false); }
   };
@@ -163,9 +163,9 @@ function CloudSyncInner() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2"><FolderSync className="h-4 w-4" /> Google Drive</CardTitle>
-            {driveConnected && <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-2xs"><CheckCircle2 className="h-3 w-3 mr-1" /> Connected</Badge>}
+            {driveConnected && <Badge variant="outline" className="bg-ok/15 text-ok dark:text-ok text-2xs"><CheckCircle2 className="h-3 w-3 mr-1" /> Connected</Badge>}
           </div>
-          <CardDescription className="text-xs">Polls every 5 minutes. Read-only access — we never modify your Drive.</CardDescription>
+          <CardDescription className="text-xs">Polls every 5 minutes. Read-only access, we never modify your Drive.</CardDescription>
         </CardHeader>
         <CardContent>
           {driveConnected === null ? (
@@ -200,9 +200,9 @@ function CloudSyncInner() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2"><FolderSync className="h-4 w-4" /> Dropbox</CardTitle>
-            {dropboxConnected && <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-2xs"><CheckCircle2 className="h-3 w-3 mr-1" /> Connected</Badge>}
+            {dropboxConnected && <Badge variant="outline" className="bg-ok/15 text-ok dark:text-ok text-2xs"><CheckCircle2 className="h-3 w-3 mr-1" /> Connected</Badge>}
           </div>
-          <CardDescription className="text-xs">Polls every 5 minutes. Read-only access — we never modify your Dropbox.</CardDescription>
+          <CardDescription className="text-xs">Polls every 5 minutes. Read-only access, we never modify your Dropbox.</CardDescription>
         </CardHeader>
         <CardContent>
           {dropboxConnected === null ? (

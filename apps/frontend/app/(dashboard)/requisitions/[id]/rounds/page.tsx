@@ -57,11 +57,11 @@ interface InterviewRound {
 }
 
 const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
-  PHONE_SCREEN: { icon: <Phone className="h-3.5 w-3.5" />,   color: "text-blue-600 bg-blue-500/10" },
-  TECHNICAL:    { icon: <Code2 className="h-3.5 w-3.5" />,   color: "text-violet-600 bg-violet-500/10" },
-  BEHAVIORAL:   { icon: <Heart className="h-3.5 w-3.5" />,   color: "text-rose-600 bg-rose-500/10" },
-  PANEL:        { icon: <Users className="h-3.5 w-3.5" />,   color: "text-amber-600 bg-amber-500/10" },
-  FINAL:        { icon: <Trophy className="h-3.5 w-3.5" />,  color: "text-emerald-600 bg-emerald-500/10" },
+  PHONE_SCREEN: { icon: <Phone className="h-3.5 w-3.5" />,   color: "text-info bg-info/10" },
+  TECHNICAL:    { icon: <Code2 className="h-3.5 w-3.5" />,   color: "text-ai-ink bg-ai/10" },
+  BEHAVIORAL:   { icon: <Heart className="h-3.5 w-3.5" />,   color: "text-danger bg-danger/10" },
+  PANEL:        { icon: <Users className="h-3.5 w-3.5" />,   color: "text-warn bg-warn/10" },
+  FINAL:        { icon: <Trophy className="h-3.5 w-3.5" />,  color: "text-ok bg-ok/10" },
 };
 
 const EMPTY_FORM: Omit<InterviewRound, "id" | "order"> = {
@@ -232,18 +232,18 @@ export default function InterviewRoundsPage() {
 
       {/* Plan upgrade banner */}
       {planBlocked && (
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900">
+        <Card className="border-warn/40 bg-warn-tint">
           <CardContent className="p-5 flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <Sparkles className="h-5 w-5 text-ai shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              <p className="text-sm font-semibold text-warn">
                 Custom interview rounds require STARTER plan or higher
               </p>
-              <p className="text-xs text-amber-800 dark:text-amber-300 mt-1">
+              <p className="text-xs text-warn dark:text-warn mt-1">
                 On the FREE plan, all interviews use a single default round. Upgrade to design
                 multi-round pipelines unique to each role (e.g. Phone Screen → Coding → HR Loop).
               </p>
-              <Link href="/billing" className="inline-block text-xs font-semibold text-amber-900 dark:text-amber-200 underline mt-2">
+              <Link href="/billing" className="inline-block text-xs font-semibold text-warn underline mt-2">
                 View pricing →
               </Link>
             </div>
@@ -310,7 +310,7 @@ export default function InterviewRoundsPage() {
                   <Button variant="ghost" size="icon-sm" onClick={() => openEdit(r)}>
                     <Edit2 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => deleteRound(r.id)} className="text-rose-500 hover:text-rose-600">
+                  <Button variant="ghost" size="icon-sm" onClick={() => deleteRound(r.id)} className="text-danger hover:text-danger">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>

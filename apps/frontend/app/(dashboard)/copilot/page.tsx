@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Recruiter Copilot — a chat surface over the agentic /api/copilot endpoint.
+ * Recruiter Copilot, a chat surface over the agentic /api/copilot endpoint.
  * The agent decides what to retrieve (candidates / requisitions / metrics),
  * answers grounded in what it pulled, and exposes its full ReAct reasoning
  * trace under each answer.
@@ -87,14 +87,14 @@ export default function CopilotPage() {
     <div className="space-y-4">
       <PageHeader
         title="Recruiter Copilot"
-        description="Ask about candidates, requisitions, or pipeline metrics — the agent retrieves the answer and shows its reasoning."
+        description="Ask about candidates, requisitions, or pipeline metrics, the agent retrieves the answer and shows its reasoning."
         breadcrumbs={[{ label: "Copilot" }]}
       />
 
       {turns.length === 0 && (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground space-y-2">
-            <p className="font-medium text-foreground flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Try asking:</p>
+            <p className="font-medium text-foreground flex items-center gap-2"><Sparkles className="h-4 w-4 text-ai" /> Try asking:</p>
             <div className="flex flex-wrap gap-2">
               {["Which candidates know React?", "How many AI runs have we done in total?", "What roles are open right now?"].map((ex) => (
                 <button key={ex} onClick={() => send(ex)} className="rounded-full border px-3 py-1 text-xs hover:bg-muted transition-colors">{ex}</button>
@@ -119,7 +119,7 @@ export default function CopilotPage() {
                     <Loader2 className="h-4 w-4 animate-spin" /> The copilot is retrieving…
                   </div>
                 ) : t.error ? (
-                  <p className="text-sm text-rose-600">{t.error}</p>
+                  <p className="text-sm text-danger">{t.error}</p>
                 ) : (
                   <>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{t.answer}</p>

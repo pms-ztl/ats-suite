@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Phase 20 — public, tenant-branded shell for the candidate-facing career
+ * Phase 20, public, tenant-branded shell for the candidate-facing career
  * portal. Wraps any child route under /c/[slug]/* with the tenant's logo,
  * brand color, tagline, and an optional hero image + welcome message.
  *
  * Server-side rendering is intentionally avoided so the shell stays simple
  * (no need for cross-service SSR fetch). The few hundred ms latency before
- * the brand renders is acceptable for a careers page — and the layout is
+ * the brand renders is acceptable for a careers page, and the layout is
  * stable so there's no CLS.
  */
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ interface Props {
 }
 
 /**
- * Same hex → "h s% l%" converter as dashboard-layout.tsx — repeated here
+ * Same hex → "h s% l%" converter as dashboard-layout.tsx, repeated here
  * rather than imported because this component lives in the public bundle
  * and we want zero coupling to the dashboard tree.
  */
@@ -121,7 +121,7 @@ export function BrandedShell({ slug, children, hero = true }: Props) {
 
   return (
     <div className="min-h-screen bg-background" style={style}>
-      {/* Top nav — minimal, tenant-branded */}
+      {/* Top nav, minimal, tenant-branded */}
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
           <Link href={`/c/${slug}/jobs`} className="flex items-center gap-2 min-w-0">
@@ -181,7 +181,7 @@ export function BrandedShell({ slug, children, hero = true }: Props) {
         <section className="border-t bg-muted/30 mt-12">
           <div
             className="container mx-auto px-4 py-12 max-w-3xl prose prose-sm dark:prose-invert"
-            // Sanitization happens server-side at /api/branding PUT — we only
+            // Sanitization happens server-side at /api/branding PUT, we only
             // accept basic HTML (no scripts) so this is intentional and safe.
             dangerouslySetInnerHTML={{ __html: branding.careerPortalAboutHtml }}
           />

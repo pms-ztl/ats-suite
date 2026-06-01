@@ -53,10 +53,10 @@ interface WebhookRow {
 }
 
 const PROVIDERS = [
-  { key: "GOOGLE_CALENDAR", label: "Google Calendar", icon: Calendar, color: "text-blue-600", oauthUrl: "/api/calendar/google/auth-url" },
-  { key: "MICROSOFT_CALENDAR", label: "Microsoft Calendar", icon: Calendar, color: "text-purple-600", oauthUrl: null },
-  { key: "SLACK", label: "Slack", icon: MessageSquare, color: "text-green-600", oauthUrl: null },
-  { key: "SENDGRID", label: "Email (SendGrid)", icon: Mail, color: "text-yellow-600", oauthUrl: null },
+  { key: "GOOGLE_CALENDAR", label: "Google Calendar", icon: Calendar, color: "text-info", oauthUrl: "/api/calendar/google/auth-url" },
+  { key: "MICROSOFT_CALENDAR", label: "Microsoft Calendar", icon: Calendar, color: "text-ai-ink", oauthUrl: null },
+  { key: "SLACK", label: "Slack", icon: MessageSquare, color: "text-ok", oauthUrl: null },
+  { key: "SENDGRID", label: "Email (SendGrid)", icon: Mail, color: "text-warn", oauthUrl: null },
 ] as const;
 
 export default function IntegrationsPage() {
@@ -139,7 +139,7 @@ export default function IntegrationsPage() {
       />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+        <div className="bg-danger-tint border border-danger/40 text-danger px-4 py-3 rounded-md text-sm">
           {error}
           <button className="ml-2 underline" onClick={() => setError(null)}>dismiss</button>
         </div>
@@ -188,7 +188,7 @@ export default function IntegrationsPage() {
                     <div className="flex items-center gap-2">
                       {isConnected ? (
                         <>
-                          <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
+                          <Badge variant="default" className="bg-ok-tint text-ok hover:bg-ok-tint">
                             <CheckCircle className="h-3 w-3 mr-1" /> Connected
                           </Badge>
                           <Button variant="outline" size="sm" onClick={() => disconnect(p.key)}>
@@ -221,7 +221,7 @@ export default function IntegrationsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-600" /> Connect Slack
+              <MessageSquare className="h-5 w-5 text-ok" /> Connect Slack
             </CardTitle>
             <CardDescription>
               Paste your Slack incoming webhook URL to receive pipeline notifications in a channel.

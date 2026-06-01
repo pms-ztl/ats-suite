@@ -65,7 +65,7 @@ export default function SecuritySettingsPage() {
     if (/[^a-zA-Z0-9]/.test(p)) s++;
     if (p.length >= 16) s++;
     const labels = ["Too short", "Weak", "Fair", "Good", "Strong", "Excellent"];
-    const colors = ["text-destructive", "text-destructive", "text-amber-600", "text-emerald-600", "text-emerald-600", "text-emerald-600"];
+    const colors = ["text-destructive", "text-destructive", "text-warn", "text-ok", "text-ok", "text-ok"];
     return { score: s, label: labels[s] ?? labels[0]!, color: colors[s] ?? colors[0]! };
   }
 
@@ -268,7 +268,7 @@ export default function SecuritySettingsPage() {
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Loading
               </Badge>
             ) : mfaEnabled ? (
-              <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">
+              <Badge className="bg-ok/15 text-ok border-ok/40/30">
                 <CheckCircle2 className="h-3 w-3 mr-1" /> Enabled
               </Badge>
             ) : (

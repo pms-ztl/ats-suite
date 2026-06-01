@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Phase 34g — Chrome extension install + setup instructions.
+ * Phase 34g, Chrome extension install + setup instructions.
  *
  * Two distribution paths:
- *   1. Sideload (developer mode) — download a zip of packages/chrome-extension/
+ *   1. Sideload (developer mode), download a zip of packages/chrome-extension/
  *      and Load Unpacked. Quickest, works today, no Web Store review.
- *   2. Chrome Web Store — link out to your published listing once it exists.
+ *   2. Chrome Web Store, link out to your published listing once it exists.
  *
- * The zip is generated at deploy time by a build script — if it's missing,
+ * The zip is generated at deploy time by a build script, if it's missing,
  * the download button falls back to a "Setup pending" state with the
  * sideload instructions still visible.
  */
@@ -54,7 +54,7 @@ export default function ChromeExtensionPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 p-4">
+            <div className="rounded-lg border bg-warn-tint/60 border-warn/40 p-4">
               <p className="text-sm font-medium">Chrome Web Store listing not yet published.</p>
               <p className="text-xs text-muted-foreground mt-1">Use the sideload method below until the listing goes live.</p>
             </div>

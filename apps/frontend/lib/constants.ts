@@ -92,13 +92,13 @@ const ALL_CATEGORIES = ["platform", "security", "compliance", "ai", "analytics",
 
 // Both UPPERCASE (backend enum) and lowercase (legacy) keys for compatibility.
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  // Platform tier — sees everything
+  // Platform tier, sees everything
   SUPER_ADMIN: ALL_CATEGORIES,
   super_admin: ALL_CATEGORIES,
-  // Tier 2 — Tenant Admin (semantic alias for ADMIN)
+  // Tier 2, Tenant Admin (semantic alias for ADMIN)
   ADMIN: ALL_CATEGORIES,
   admin: ALL_CATEGORIES,
-  // Tier 3 — Staff
+  // Tier 3, Staff
   RECRUITER: ["sourcing", "screening", "candidates", "interviews", "scheduling", "decisions", "offers", "analytics"],
   recruiter: ["sourcing", "screening", "candidates", "interviews", "scheduling", "decisions", "offers", "analytics"],
   HIRING_MANAGER: ["interviews", "decisions", "offers", "analytics", "candidates"],

@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Phase 28 — SSO post-callback landing.
+ * Phase 28, SSO post-callback landing.
  *
  * The gateway's /api/auth/sso/saml or /oidc callback handler signs the JWT, sets the
  * httpOnly ats-token cookie, then 302s the browser here. We do nothing
- * useful ourselves — just confirm /auth/me works (the cookie is being
+ * useful ourselves, just confirm /auth/me works (the cookie is being
  * sent) and let the Phase 23 role dispatcher take over by navigating
  * to /.
  */

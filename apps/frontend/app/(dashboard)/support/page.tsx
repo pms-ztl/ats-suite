@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Phase 32b — tenant-side support page.
+ * Phase 32b, tenant-side support page.
  *
  * Tenants open and track tickets here. Clicking a ticket opens an inline
  * thread view; the FE-side state stays simple (no separate route per
- * ticket — easier to keep the wider conversation list in view).
+ * ticket, easier to keep the wider conversation list in view).
  *
  * Customer rules:
  *   - Can open new tickets
@@ -49,9 +49,9 @@ interface TicketMessage {
 }
 
 const STATUS_COLOR: Record<Ticket["status"], string> = {
-  OPEN: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  AWAITING_CUSTOMER: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  RESOLVED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  OPEN: "bg-info/15 text-info dark:text-info",
+  AWAITING_CUSTOMER: "bg-warn/15 text-warn dark:text-warn",
+  RESOLVED: "bg-ok/15 text-ok dark:text-ok",
 };
 
 function authHeaders(): Record<string, string> {
@@ -173,7 +173,7 @@ function NewTicketDialog({ onClose, onCreated }: { onClose: () => void; onCreate
         body: JSON.stringify({ subject, body, priority, category: category || undefined }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
-      toast.success("Ticket opened — we'll be in touch.");
+      toast.success("Ticket opened, we'll be in touch.");
       onCreated();
     } catch { toast.error("Couldn't open ticket"); }
     finally { setSubmitting(false); }

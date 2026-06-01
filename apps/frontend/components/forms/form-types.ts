@@ -1,6 +1,6 @@
 /**
  * Shared types for the form builder + renderer (Batch 4).
- * Mirrors backend FormField shape — keep in sync with
+ * Mirrors backend FormField shape, keep in sync with
  * backend/src/lib/form-validator.ts.
  */
 export type FieldType =

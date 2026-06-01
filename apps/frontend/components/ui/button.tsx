@@ -15,8 +15,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-success text-white hover:bg-emerald-600",
-        warning: "bg-warning text-white hover:bg-amber-600",
+        success: "bg-success text-white hover:bg-ok",
+        warning: "bg-warning text-white hover:bg-warn",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -36,7 +36,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, loading, disabled, children, ...props }, ref) => {
-  // Radix Slot uses React.Children.only — it requires EXACTLY one element child.
+  // Radix Slot uses React.Children.only, it requires EXACTLY one element child.
   // When `asChild` is true we must pass `children` straight through; we cannot
   // emit `{loading && <Loader2/>}` next to `{children}` because that yields
   // `[false, <Link/>]` which throws "React.Children.only expected to receive

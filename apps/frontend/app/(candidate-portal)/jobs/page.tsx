@@ -104,7 +104,7 @@ export default function JobBoardPage() {
         const apiBase =
           process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-        // Use public API — no auth required
+        // Use public API, no auth required
         const res = await fetch(`${apiBase}/public/jobs?pageSize=50`, {
           headers: { "Content-Type": "application/json" },
         });

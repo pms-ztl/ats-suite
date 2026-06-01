@@ -8,7 +8,7 @@
  *
  *   - Company name (mirrors Tenant.name; read-only here, edit via /settings)
  *   - Logo URL (preview shown live)
- *   - Brand colors (primary / secondary / accent — applied to dashboard + emails)
+ *   - Brand colors (primary / secondary / accent, applied to dashboard + emails)
  *   - Tagline
  *   - Career portal: welcome message + about HTML + hero image URL
  *
@@ -363,7 +363,7 @@ function ColorRow({ id, label, hint, value, onChange }: { id: string; label: str
 
 function EmailPreview({ companyName, logoUrl, primaryColor, tagline }: { companyName: string; logoUrl: string | null; primaryColor: string; tagline: string }) {
   return (
-    <div className="border rounded-md overflow-hidden bg-white text-gray-900 text-xs">
+    <div className="border rounded-md overflow-hidden bg-white text-ink text-xs">
       <div className="px-3 py-2 border-b" style={{ borderColor: primaryColor + "33" }}>
         {logoUrl ? (
           <img src={logoUrl} alt={companyName} className="h-5 max-w-[120px] object-contain" />
@@ -372,8 +372,8 @@ function EmailPreview({ companyName, logoUrl, primaryColor, tagline }: { company
         )}
       </div>
       <div className="p-3 space-y-2">
-        <p className="font-semibold text-gray-900">New interview feedback</p>
-        <p className="text-gray-600 leading-relaxed">
+        <p className="font-semibold text-ink">New interview feedback</p>
+        <p className="text-muted-foreground leading-relaxed">
           Sam Patel submitted feedback on Alex Morgan&apos;s round 2 interview for Senior Engineer:
           <strong> STRONG_HIRE</strong>.
         </p>
@@ -384,7 +384,7 @@ function EmailPreview({ companyName, logoUrl, primaryColor, tagline }: { company
         >
           View feedback →
         </button>
-        <p className="text-gray-400 text-[10px] pt-2 border-t border-gray-100">
+        <p className="text-muted-foreground text-[10px] pt-2 border-t border-line">
           {tagline || `You're receiving this because you're a member of the ${companyName} workspace on CDC ATS.`}
         </p>
       </div>
@@ -426,14 +426,14 @@ function CareerPortalPreview({ companyName, logoUrl, primaryColor, tagline, welc
   heroImageUrl: string | null;
 }) {
   return (
-    <div className="border rounded-md overflow-hidden bg-white text-gray-900 text-xs">
+    <div className="border rounded-md overflow-hidden bg-white text-ink text-xs">
       <div className="px-3 py-2 border-b flex items-center gap-2" style={{ borderColor: primaryColor + "33" }}>
         {logoUrl ? (
           <img src={logoUrl} alt={companyName} className="h-5 max-w-[80px] object-contain" />
         ) : (
           <strong style={{ color: primaryColor }}>{companyName}</strong>
         )}
-        <span className="text-gray-400">/ Careers</span>
+        <span className="text-muted-foreground">/ Careers</span>
       </div>
       <div
         className="px-3 py-4 text-white"

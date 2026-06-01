@@ -183,10 +183,10 @@ export default function CsvImportPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">2. Preview ({summary.total} rows)</CardTitle>
             <div className="flex items-center gap-3 mt-2 text-xs">
-              <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+              <Badge variant="outline" className="bg-ok/15 text-ok dark:text-ok">
                 {summary.newCount} new
               </Badge>
-              <Badge variant="outline" className="bg-blue-500/15 text-blue-700 dark:text-blue-300">
+              <Badge variant="outline" className="bg-info/15 text-info dark:text-info">
                 {summary.updateCount} updates
               </Badge>
               {summary.invalidEmailCount > 0 && (
@@ -196,7 +196,7 @@ export default function CsvImportPage() {
                 <Badge variant="outline" className="bg-destructive/15 text-destructive">{summary.missingRequiredCount} missing name</Badge>
               )}
               {summary.duplicateInFileCount > 0 && (
-                <Badge variant="outline" className="bg-amber-500/15 text-amber-700 dark:text-amber-300">{summary.duplicateInFileCount} dupes in file</Badge>
+                <Badge variant="outline" className="bg-warn/15 text-warn dark:text-warn">{summary.duplicateInFileCount} dupes in file</Badge>
               )}
             </div>
           </CardHeader>
@@ -218,11 +218,11 @@ export default function CsvImportPage() {
                     <tr key={p.row} className={p.status.startsWith("valid") ? "" : "bg-destructive/5"}>
                       <td className="px-3 py-1.5 font-mono">{p.row}</td>
                       <td className="px-3 py-1.5">
-                        {p.status === "valid_new" && <span className="text-emerald-600 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />new</span>}
-                        {p.status === "valid_update" && <span className="text-blue-600 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />update</span>}
+                        {p.status === "valid_new" && <span className="text-ok inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />new</span>}
+                        {p.status === "valid_update" && <span className="text-info inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />update</span>}
                         {p.status === "invalid_email" && <span className="text-destructive inline-flex items-center gap-1"><XCircle className="h-3 w-3" />bad email</span>}
                         {p.status === "missing_required" && <span className="text-destructive inline-flex items-center gap-1"><XCircle className="h-3 w-3" />no name</span>}
-                        {p.status === "duplicate_in_file" && <span className="text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />dupe</span>}
+                        {p.status === "duplicate_in_file" && <span className="text-warn inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />dupe</span>}
                       </td>
                       <td className="px-3 py-1.5 font-mono">{p.candidate.email ?? "-"}</td>
                       <td className="px-3 py-1.5">{[p.candidate.firstName, p.candidate.lastName].filter(Boolean).join(" ") || "-"}</td>
@@ -254,7 +254,7 @@ export default function CsvImportPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Import complete
+              <CheckCircle2 className="h-4 w-4 text-ok" /> Import complete
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -263,8 +263,8 @@ export default function CsvImportPage() {
                 <div key={o.row} className="flex items-center gap-2 font-mono">
                   <span className="text-muted-foreground w-12">#{o.row}</span>
                   <span className={
-                    o.status === "created" ? "text-emerald-600"
-                    : o.status === "updated" ? "text-blue-600"
+                    o.status === "created" ? "text-ok"
+                    : o.status === "updated" ? "text-info"
                     : o.status.includes("skipped") ? "text-muted-foreground"
                     : "text-destructive"
                   }>{o.status}</span>

@@ -17,10 +17,10 @@ interface FlowDiagramProps {
 
 export function FlowDiagram({ stages, className }: FlowDiagramProps) {
   const statusStyles = {
-    complete: { bg: "bg-emerald-50 border-emerald-200", icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />, text: "text-emerald-700" },
-    active: { bg: "bg-indigo-50 border-indigo-200 ring-2 ring-indigo-300", icon: <Clock className="h-4 w-4 text-indigo-600 animate-pulse" />, text: "text-indigo-700" },
+    complete: { bg: "bg-ok-tint border-ok/40", icon: <CheckCircle2 className="h-4 w-4 text-ok" />, text: "text-ok" },
+    active: { bg: "bg-info-tint border-info/40 ring-2 ring-indigo-300", icon: <Clock className="h-4 w-4 text-info animate-pulse" />, text: "text-info" },
     pending: { bg: "bg-muted/40 border-border", icon: <Clock className="h-4 w-4 text-muted-foreground" />, text: "text-muted-foreground" },
-    error: { bg: "bg-rose-50 border-rose-200", icon: <AlertTriangle className="h-4 w-4 text-rose-600" />, text: "text-rose-700" },
+    error: { bg: "bg-danger-tint border-danger/40", icon: <AlertTriangle className="h-4 w-4 text-danger" />, text: "text-danger" },
   };
 
   return (
@@ -37,7 +37,7 @@ export function FlowDiagram({ stages, className }: FlowDiagramProps) {
               <span className="text-2xs text-muted-foreground">{stage.subtitle}</span>
             )}
           </div>
-          {i < stages.length - 1 && <ArrowRight className="h-4 w-4 text-slate-300 shrink-0" />}
+          {i < stages.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3 shrink-0" />}
         </div>
       ))}
     </div>

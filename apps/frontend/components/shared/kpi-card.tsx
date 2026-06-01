@@ -40,10 +40,10 @@ export function KPICard({ label, value, change, changeLabel, sparklineData, icon
             <p className="text-4xl font-bold tracking-tight mt-2 text-foreground tabular-nums">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1 mt-2">
-                {isPositive && <TrendingUp className="h-3 w-3 text-emerald-500" />}
-                {isNegative && <TrendingDown className="h-3 w-3 text-red-500" />}
+                {isPositive && <TrendingUp className="h-3 w-3 text-ok" />}
+                {isNegative && <TrendingDown className="h-3 w-3 text-danger" />}
                 {!isPositive && !isNegative && <Minus className="h-3 w-3 text-muted-foreground" />}
-                <span className={cn("text-xs font-semibold", isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "text-muted-foreground")}>
+                <span className={cn("text-xs font-semibold", isPositive ? "text-ok" : isNegative ? "text-danger" : "text-muted-foreground")}>
                   {isPositive ? "+" : ""}{change}%
                 </span>
                 {changeLabel && <span className="text-xs text-muted-foreground">{changeLabel}</span>}

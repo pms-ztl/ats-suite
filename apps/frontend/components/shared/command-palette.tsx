@@ -119,7 +119,7 @@ export function CommandPalette() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="overflow-hidden p-0 shadow-lg max-w-lg">
-        <DialogTitle className="sr-only">Command Palette — Search all features</DialogTitle>
+        <DialogTitle className="sr-only">Command Palette, Search all features</DialogTitle>
         <Command
           shouldFilter={false}
           className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3"
@@ -188,7 +188,7 @@ export function CommandPalette() {
 
             {/* Search results */}
             {showResults && (
-              <Command.Group heading={`Results — ${filtered.length} of ${ALL_FEATURES.length}`}>
+              <Command.Group heading={`Results, ${filtered.length} of ${ALL_FEATURES.length}`}>
                 {filtered.map(item => (
                   <Command.Item
                     key={item.route}

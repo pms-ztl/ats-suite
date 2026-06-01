@@ -163,7 +163,7 @@ export default function FormBuilderPage() {
             <div className="flex items-center gap-2 mt-1">
               <p className="text-sm text-muted-foreground">Customize the application form for this job</p>
               {isDefault && <Badge variant="outline" className="text-2xs">Using default form</Badge>}
-              {dirty && <Badge variant="outline" className="text-2xs text-amber-600">Unsaved changes</Badge>}
+              {dirty && <Badge variant="outline" className="text-2xs text-warn">Unsaved changes</Badge>}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export default function FormBuilderPage() {
           ) : (
             <Card>
               <CardContent className="p-6 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold mb-1">No published job posting yet</p>
                   <p className="text-xs text-muted-foreground">

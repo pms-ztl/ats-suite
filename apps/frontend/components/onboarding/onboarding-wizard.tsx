@@ -1,21 +1,21 @@
 "use client";
 
 /**
- * Phase 29 — first-run onboarding wizard.
+ * Phase 29, first-run onboarding wizard.
  *
  * Lives mounted inside DashboardLayout. Pops automatically the first time a
  * tenant-admin lands on the dashboard, walks them through 5 quick setup
  * steps, then never auto-pops again. State lives on Tenant (per-tenant, not
- * per-user) — once any admin completes/dismisses, others don't see it.
+ * per-user), once any admin completes/dismisses, others don't see it.
  *
  * Steps:
- *   1. Brand color (one click — pick a hex)
+ *   1. Brand color (one click, pick a hex)
  *   2. Invite a teammate (email + role)
  *   3. Create first requisition (title + dept + location)
  *   4. Add one interview round (name + type)
  *   5. Copy the public job link
  *
- * Each step has a "skip this step" link that doesn't dismiss the wizard —
+ * Each step has a "skip this step" link that doesn't dismiss the wizard -
  * it just moves on. "Skip onboarding" in the header dismisses for good.
  *
  * Why a single inline wizard rather than separate routes:
@@ -122,7 +122,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
           setOpen(true);
         }
       } catch {
-        // Silent — onboarding is a nice-to-have; if it fails (e.g. user is
+        // Silent, onboarding is a nice-to-have; if it fails (e.g. user is
         // not a tenant-admin, the endpoint 403s), we just don't show it.
         if (!cancelled) setState(null);
       }
@@ -156,7 +156,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
       const data = (body as any).data ?? body;
       setState((prev) => prev ? { ...prev, ...data } : data);
     } catch {
-      // Non-fatal — step still works, just won't be remembered.
+      // Non-fatal, step still works, just won't be remembered.
     }
   }
 
@@ -172,7 +172,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
         return;
       }
     }
-    // All done — refetch state to confirm completedAt was stamped, then close.
+    // All done, refetch state to confirm completedAt was stamped, then close.
     api<{ data?: OnboardingState } | OnboardingState>("/onboarding")
       .then((b: any) => setState(b.data ?? b))
       .catch(() => undefined);
@@ -185,7 +185,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
     return Math.round((state.completedCount / state.totalSteps) * 100);
   }, [state]);
 
-  // Don't render until state loaded — avoids a flash of empty dialog.
+  // Don't render until state loaded, avoids a flash of empty dialog.
   if (!state) return null;
 
   return (
@@ -194,7 +194,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 pb-4 border-b">
           <div className="flex items-start gap-3">
             <div className="rounded-xl bg-primary/15 p-2.5">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Sparkles className="h-5 w-5 text-ai" />
             </div>
             <div className="flex-1 min-w-0">
               <DialogHeader>
@@ -228,7 +228,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
               >
                 <div className="flex items-center justify-center gap-1.5">
                   {done ? (
-                    <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <div className="h-4 w-4 rounded-full bg-ok flex items-center justify-center">
                       <Check className="h-2.5 w-2.5 text-white" />
                     </div>
                   ) : (
@@ -273,7 +273,7 @@ export function OnboardingWizard({ forceOpen, onClose }: OnboardingWizardProps) 
   );
 }
 
-// ─── Step 1 — Branding ────────────────────────────────────────────────────
+// ─── Step 1, Branding ────────────────────────────────────────────────────
 function BrandingStep({ onDone }: { onDone: () => void }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -332,7 +332,7 @@ function BrandingStep({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ─── Step 2 — Invite teammate ─────────────────────────────────────────────
+// ─── Step 2, Invite teammate ─────────────────────────────────────────────
 function TeamStep({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("RECRUITER");
@@ -345,12 +345,12 @@ function TeamStep({ onDone }: { onDone: () => void }) {
     }
     const trimmed = name.trim();
     if (!trimmed) { toast.error("Enter a name"); return; }
-    // Split on the first space — "Alex Chen" → first="Alex", last="Chen";
-    // single-word names become first="Mononym", last="—" since the backend
+    // Split on the first space, "Alex Chen" → first="Alex", last="Chen";
+    // single-word names become first="Mononym", last="-" since the backend
     // schema requires both fields non-empty.
     const sp = trimmed.indexOf(" ");
     const firstName = sp === -1 ? trimmed : trimmed.slice(0, sp);
-    const lastName = sp === -1 ? "—" : trimmed.slice(sp + 1).trim() || "—";
+    const lastName = sp === -1 ? "-" : trimmed.slice(sp + 1).trim() || "-";
     setSaving(true);
     try {
       await api("/users/invite", {
@@ -371,7 +371,7 @@ function TeamStep({ onDone }: { onDone: () => void }) {
       <div>
         <h3 className="text-base font-semibold">Invite a teammate</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Add one person now — you can invite the rest later from Settings → Team.
+          Add one person now, you can invite the rest later from Settings → Team.
           Recruiters and Hiring Managers don't count against your interview-only seats.
         </p>
       </div>
@@ -405,7 +405,7 @@ function TeamStep({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ─── Step 3 — First requisition ───────────────────────────────────────────
+// ─── Step 3, First requisition ───────────────────────────────────────────
 function RequisitionStep({ onDone }: { onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
@@ -439,7 +439,7 @@ function RequisitionStep({ onDone }: { onDone: () => void }) {
       <div>
         <h3 className="text-base font-semibold">Create your first job</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Start simple — three fields. You can flesh out the description and
+          Start simple, three fields. You can flesh out the description and
           screening questions later from the requisition page.
         </p>
       </div>
@@ -468,7 +468,7 @@ function RequisitionStep({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ─── Step 4 — Interview round ─────────────────────────────────────────────
+// ─── Step 4, Interview round ─────────────────────────────────────────────
 function RoundsStep({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("Initial Screen");
   const [type, setType] = useState("PHONE_SCREEN");
@@ -541,7 +541,7 @@ function RoundsStep({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ─── Step 5 — Share career page ───────────────────────────────────────────
+// ─── Step 5, Share career page ───────────────────────────────────────────
 function ShareStep({ onDone }: { onDone: () => void }) {
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
 
@@ -559,7 +559,7 @@ function ShareStep({ onDone }: { onDone: () => void }) {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard");
     } catch {
-      toast.error("Copy failed — select the link manually");
+      toast.error("Copy failed, select the link manually");
     }
   }
 

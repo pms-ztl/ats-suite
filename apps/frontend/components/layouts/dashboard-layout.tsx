@@ -38,16 +38,16 @@ function isHex(hex: string | null | undefined): hex is string {
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
   // uppercase (backend)
-  ADMIN: "bg-violet-100 text-violet-700 border-violet-200",
-  RECRUITER: "bg-blue-100 text-blue-700 border-blue-200",
-  HIRING_MANAGER: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  COMPLIANCE_OFFICER: "bg-amber-100 text-amber-700 border-amber-200",
+  ADMIN: "bg-ai-tint text-ai-ink border-ai/40",
+  RECRUITER: "bg-info-tint text-info border-info/40",
+  HIRING_MANAGER: "bg-ok-tint text-ok border-ok/40",
+  COMPLIANCE_OFFICER: "bg-warn-tint text-warn border-warn/40",
   CANDIDATE: "bg-muted text-muted-foreground border-border",
   // lowercase (legacy mock fallback)
-  admin: "bg-violet-100 text-violet-700 border-violet-200",
-  recruiter: "bg-blue-100 text-blue-700 border-blue-200",
-  hiring_manager: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  compliance_officer: "bg-amber-100 text-amber-700 border-amber-200",
+  admin: "bg-ai-tint text-ai-ink border-ai/40",
+  recruiter: "bg-info-tint text-info border-info/40",
+  hiring_manager: "bg-ok-tint text-ok border-ok/40",
+  compliance_officer: "bg-warn-tint text-warn border-warn/40",
   candidate: "bg-muted text-muted-foreground border-border",
 };
 
@@ -188,7 +188,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Notifications — live unread count via /api/notifications */}
+            {/* Notifications, live unread count via /api/notifications */}
             <NotificationDropdown />
 
             {/* User Menu */}
@@ -215,7 +215,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user?.name ?? "—"}</p>
+                    <p className="text-sm font-medium">{user?.name ?? "-"}</p>
                     <p className="text-2xs text-muted-foreground">{user?.email ?? ""}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -229,18 +229,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Phase 32a — bright-red impersonation banner. Renders FIRST so
+        {/* Phase 32a, bright-red impersonation banner. Renders FIRST so
             it's the most visible thing on the page. */}
         <ImpersonationBanner />
 
-        {/* Phase 31b — dismissable confirm-email banner (top of every page) */}
+        {/* Phase 31b, dismissable confirm-email banner (top of every page) */}
         <VerifyEmailBanner />
 
         {/* Main Content */}
         <main id="main-content" className="p-6 animate-page-in">{children}</main>
       </div>
 
-      {/* Phase 29 — first-run onboarding wizard. Internally checks if the
+      {/* Phase 29, first-run onboarding wizard. Internally checks if the
           tenant has dismissed/completed it; only shows for tenant-admins on
           first dashboard visit. No-op for non-admins (endpoint 403s, wizard
           stays hidden). */}

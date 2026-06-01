@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 31b — email verification landing page.
+ * Phase 31b, email verification landing page.
  * URL: /verify-email?token=<uuid>
  *
  * Validates the token via /api/auth/verify-email. Shows success or error.
@@ -59,8 +59,8 @@ function VerifyEmailInner() {
             <div className="mx-auto w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           )}
           {state === "ok" && (
-            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
-              <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+            <div className="mx-auto h-12 w-12 rounded-full bg-ok/15 flex items-center justify-center">
+              <CheckCircle2 className="h-7 w-7 text-ok" />
             </div>
           )}
           {state === "fail" && (
