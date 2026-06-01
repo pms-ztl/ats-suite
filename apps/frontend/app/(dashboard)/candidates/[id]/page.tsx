@@ -46,7 +46,7 @@ interface CandidateDetail {
     createdAt?: string;
     requisition?: { id: string; title: string; department?: string };
   }[];
-  // Phase 37k — rich parsed data + fairness view
+  // Phase 37k, rich parsed data + fairness view
   parsedSummary?: Record<string, unknown> | null;
   parsedSummaryFair?: Record<string, unknown> | null;
 }
@@ -89,22 +89,22 @@ export default function CandidateDetailPage() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(true);
   const [advancing, setAdvancing] = useState(false);
-  // Phase 37k — toggles ParsedResumeView between the full parsedSummary and
+  // Phase 37k, toggles ParsedResumeView between the full parsedSummary and
   // the PII-stripped parsedSummaryFair view. Off by default.
   const [fairnessMode, setFairnessMode] = useState(false);
-  // Phase 38 — latest agentic screening (carries the ReAct reasoning trace).
+  // Phase 38, latest agentic screening (carries the ReAct reasoning trace).
   const [screening, setScreening] = useState<{
     score?: number; matchPercentage?: number; result?: string; reasoning?: string;
     agentTrace?: AgentStep[] | null;
   } | null>(null);
-  // Phase 38 — candidate assistant (agentic candidate-experience) chat
+  // Phase 38, candidate assistant (agentic candidate-experience) chat
   const [asstInput, setAsstInput] = useState("");
   const [asstBusy, setAsstBusy] = useState(false);
   const [asstTurns, setAsstTurns] = useState<Array<{
     query: string; response?: string; shouldEscalate?: boolean; escalationReason?: string | null;
     agentTrace?: AgentStep[]; toolsUsed?: string[]; loading: boolean; error?: string;
   }>>([]);
-  // Phase 38 — AI offer drafting (agentic offer) per application
+  // Phase 38, AI offer drafting (agentic offer) per application
   const [offerAppId, setOfferAppId] = useState("");
   const [offerExpectation, setOfferExpectation] = useState("");
   const [offerBusy, setOfferBusy] = useState(false);
@@ -442,7 +442,7 @@ export default function CandidateDetailPage() {
 
         {/* Right: Applications + Timeline + parsed resume + interview questions */}
         <div className="lg:col-span-2">
-          {/* Phase 37k — fairness mode toggle, only visible when parsed data exists */}
+          {/* Phase 37k, fairness mode toggle, only visible when parsed data exists */}
           {candidate.parsedSummary && (
             <div className="flex items-center justify-end gap-2 mb-2">
               <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" />
@@ -531,7 +531,7 @@ export default function CandidateDetailPage() {
 
             <TabsContent value="assistant" className="mt-4 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Preview the candidate assistant — it answers about this candidate's application using tools, and escalates to a recruiter when needed.
+                Preview the candidate assistant, it answers about this candidate's application using tools, and escalates to a recruiter when needed.
               </p>
               {asstTurns.map((t, i) => (
                 <div key={i} className="space-y-2">
@@ -584,7 +584,7 @@ export default function CandidateDetailPage() {
                 <Card>
                   <CardContent className="p-4 space-y-3">
                     <p className="text-xs text-muted-foreground">
-                      The offer agent gathers the comp band, market rate, and interview signal, then drafts a package within band — and flags out-of-band exceptions.
+                      The offer agent gathers the comp band, market rate, and interview signal, then drafts a package within band, and flags out-of-band exceptions.
                     </p>
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="space-y-1">

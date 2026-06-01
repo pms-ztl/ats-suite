@@ -123,11 +123,11 @@ export function BulkUploadDialog({
     for (const f of arr) {
       const ext = "." + f.name.split(".").pop()?.toLowerCase();
       if (!ACCEPTED.includes(ext)) {
-        rejected.push(`${f.name} — not a supported file type`);
+        rejected.push(`${f.name}, not a supported file type`);
         continue;
       }
       if (f.size > MAX_SIZE_MB * 1024 * 1024) {
-        rejected.push(`${f.name} — exceeds ${MAX_SIZE_MB}MB`);
+        rejected.push(`${f.name}, exceeds ${MAX_SIZE_MB}MB`);
         continue;
       }
       accepted.push(f);
@@ -169,7 +169,7 @@ export function BulkUploadDialog({
         throw new Error(data?.error?.message ?? data?.message ?? `Upload failed (${res.status})`);
       }
       const { bulkUploadId, totalFiles, enqueued, failed } = data.data ?? data;
-      toast.success(`Uploaded ${enqueued} file(s) — parsing in background`);
+      toast.success(`Uploaded ${enqueued} file(s), parsing in background`);
       setUploadStatus({
         id: bulkUploadId,
         status: "PROCESSING",
@@ -199,7 +199,7 @@ export function BulkUploadDialog({
             Bulk Resume Upload
           </DialogTitle>
           <DialogDescription>
-            Drop up to <strong>1,000 resumes</strong> at once (PDF, DOC, DOCX, TXT — max {MAX_SIZE_MB}MB each).
+            Drop up to <strong>1,000 resumes</strong> at once (PDF, DOC, DOCX, TXT, max {MAX_SIZE_MB}MB each).
             We&apos;ll parse them in the background.
           </DialogDescription>
         </DialogHeader>

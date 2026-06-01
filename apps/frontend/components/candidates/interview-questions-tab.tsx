@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phase 37k — Interview Questions tab for the candidate detail page.
+ * Phase 37k, Interview Questions tab for the candidate detail page.
  *
  * Flow:
  *   1. Recruiter picks a requisition from the candidate's applications
@@ -11,7 +11,7 @@
  *   4. Render question cards with type / difficulty badges + citation +
  *      expectedSignal
  *
- * Costs ~$0.05–0.15 per generation. Each question carries its citation
+ * Costs ~$0.05-0.15 per generation. Each question carries its citation
  * back to the resume so the recruiter can verify in real-time during the
  * interview.
  */
@@ -124,7 +124,7 @@ export function InterviewQuestionsTab({ candidateId, applications }: Props) {
             <Sparkles className="h-4 w-4 text-primary" /> Generate personalized questions
           </CardTitle>
           <CardDescription className="text-xs">
-            We'll write 5–10 questions targeting this candidate's claims + your job's requirements, each with a citation.
+            We'll write 5-10 questions targeting this candidate's claims + your job's requirements, each with a citation.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -139,7 +139,7 @@ export function InterviewQuestionsTab({ candidateId, applications }: Props) {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-2xs text-muted-foreground">— or —</p>
+              <p className="text-2xs text-muted-foreground">- or -</p>
             </div>
           )}
           <div className="space-y-1.5">

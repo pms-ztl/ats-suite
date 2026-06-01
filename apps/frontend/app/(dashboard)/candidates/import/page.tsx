@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Phase 34a — CSV bulk candidate import.
+ * Phase 34a, CSV bulk candidate import.
  *
  * Three-step inline flow on one page:
  *   1. Upload CSV (drag/drop or file picker)
  *   2. Preview parsed rows + show validation results per row
- *   3. Commit — actual upsert, shows per-row outcome
+ *   3. Commit, actual upsert, shows per-row outcome
  *
  * Why one page instead of a wizard: the preview ↔ adjust ↔ preview loop
  * is too common to make page transitions worth it. Upload, see, fix-or-go.
@@ -142,7 +142,7 @@ export default function CsvImportPage() {
         </a>
       </div>
 
-      {/* Step 1 — upload */}
+      {/* Step 1, upload */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -177,7 +177,7 @@ export default function CsvImportPage() {
         </CardContent>
       </Card>
 
-      {/* Step 2 — preview */}
+      {/* Step 2, preview */}
       {preview && summary && (
         <Card>
           <CardHeader className="pb-3">
@@ -224,10 +224,10 @@ export default function CsvImportPage() {
                         {p.status === "missing_required" && <span className="text-destructive inline-flex items-center gap-1"><XCircle className="h-3 w-3" />no name</span>}
                         {p.status === "duplicate_in_file" && <span className="text-amber-600 inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />dupe</span>}
                       </td>
-                      <td className="px-3 py-1.5 font-mono">{p.candidate.email ?? "—"}</td>
-                      <td className="px-3 py-1.5">{[p.candidate.firstName, p.candidate.lastName].filter(Boolean).join(" ") || "—"}</td>
-                      <td className="px-3 py-1.5">{p.candidate.phone ?? "—"}</td>
-                      <td className="px-3 py-1.5">{p.candidate.location ?? "—"}</td>
+                      <td className="px-3 py-1.5 font-mono">{p.candidate.email ?? "-"}</td>
+                      <td className="px-3 py-1.5">{[p.candidate.firstName, p.candidate.lastName].filter(Boolean).join(" ") || "-"}</td>
+                      <td className="px-3 py-1.5">{p.candidate.phone ?? "-"}</td>
+                      <td className="px-3 py-1.5">{p.candidate.location ?? "-"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -249,7 +249,7 @@ export default function CsvImportPage() {
         </Card>
       )}
 
-      {/* Step 3 — outcomes */}
+      {/* Step 3, outcomes */}
       {commitOutcomes && (
         <Card>
           <CardHeader className="pb-3">
@@ -268,7 +268,7 @@ export default function CsvImportPage() {
                     : o.status.includes("skipped") ? "text-muted-foreground"
                     : "text-destructive"
                   }>{o.status}</span>
-                  {o.reason && <span className="text-muted-foreground">— {o.reason}</span>}
+                  {o.reason && <span className="text-muted-foreground">- {o.reason}</span>}
                   {o.candidateId && <span className="text-muted-foreground">→ {o.candidateId.slice(0, 8)}</span>}
                 </div>
               ))}

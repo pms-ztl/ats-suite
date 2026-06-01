@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AgentReasoningTrace — renders an agent's ReAct step trace so recruiters can
+ * AgentReasoningTrace, renders an agent's ReAct step trace so recruiters can
  * see HOW the AI reached its verdict: each thought, tool call, observation, and
  * the final answer, as a vertical timeline. Collapsed by default.
  *
@@ -30,11 +30,11 @@ const KIND_META: Record<
   AgentStep["kind"],
   { icon: typeof Brain; label: string; color: string; dot: string }
 > = {
-  reasoning:   { icon: Brain,        label: "Thought",     color: "text-violet-600 dark:text-violet-300", dot: "bg-violet-400" },
-  tool_call:   { icon: Wrench,       label: "Action",      color: "text-blue-600 dark:text-blue-300",     dot: "bg-blue-400" },
-  observation: { icon: Eye,          label: "Observation", color: "text-muted-foreground",                dot: "bg-muted-foreground/50" },
-  answer:      { icon: CheckCircle2, label: "Verdict",     color: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-400" },
-  error:       { icon: AlertTriangle,label: "Error",       color: "text-rose-600 dark:text-rose-300",     dot: "bg-rose-400" },
+  reasoning:   { icon: Brain,        label: "Thought",     color: "text-ai-ink", dot: "bg-ai" },
+  tool_call:   { icon: Wrench,       label: "Action",      color: "text-info",   dot: "bg-info" },
+  observation: { icon: Eye,          label: "Observation", color: "text-ink-3",  dot: "bg-line-strong" },
+  answer:      { icon: CheckCircle2, label: "Verdict",     color: "text-ok",     dot: "bg-ok" },
+  error:       { icon: AlertTriangle,label: "Error",       color: "text-danger", dot: "bg-danger" },
 };
 
 function compact(value: unknown, max = 160): string {
@@ -58,7 +58,7 @@ export function AgentReasoningTrace({
   const toolCalls = steps.filter((s) => s.kind === "tool_call").length;
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border-ai/25">
       <CardHeader className="pb-2">
         <button
           type="button"
@@ -67,7 +67,7 @@ export function AgentReasoningTrace({
           aria-expanded={open}
         >
           <CardTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="h-4 w-4 text-ai" />
             How the AI reached this decision
             <Badge variant="outline" className="text-2xs font-normal">
               {steps.length} steps · {toolCalls} tool calls
@@ -93,13 +93,13 @@ export function AgentReasoningTrace({
                 <li key={i} className="relative">
                   <span
                     className={`absolute -left-[1.42rem] top-1 h-2.5 w-2.5 rounded-full ring-2 ring-background ${
-                      failed ? "bg-rose-400" : meta.dot
+                      failed ? "bg-danger" : meta.dot
                     }`}
                   />
                   <div className="flex items-start gap-2">
-                    <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${failed ? "text-rose-500" : meta.color}`} />
+                    <Icon className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${failed ? "text-danger" : meta.color}`} />
                     <div className="min-w-0 flex-1">
-                      <span className={`text-2xs font-semibold uppercase tracking-wide ${failed ? "text-rose-500" : meta.color}`}>
+                      <span className={`text-2xs font-semibold uppercase tracking-wide ${failed ? "text-danger" : meta.color}`}>
                         {failed ? "Observation (failed)" : meta.label}
                       </span>
                       {step.kind === "tool_call" && (
@@ -109,7 +109,7 @@ export function AgentReasoningTrace({
                         </p>
                       )}
                       {step.kind === "observation" && (
-                        <p className={`text-xs break-words ${failed ? "text-rose-600" : "text-muted-foreground"}`}>
+                        <p className={`text-xs break-words ${failed ? "text-danger" : "text-muted-foreground"}`}>
                           {compact(step.observation, 220)}
                         </p>
                       )}

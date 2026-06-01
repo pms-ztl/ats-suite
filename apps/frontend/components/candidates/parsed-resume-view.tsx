@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * Phase 37k — ParsedResumeView component.
+ * Phase 37k, ParsedResumeView component.
  *
  * Renders the rich Phase 37 parsedSummary on the candidate detail page.
  *
  * Sections (only rendered when data exists):
  *   1. Top summary chips (total YOE, # companies, avg tenure, format)
  *   2. Honesty flags banner (medium/high severity only)
- *   3. Skills grid — chips with depth + recency + confidence badges
- *   4. Experience timeline — company + title + tenure, achievements decomposed
+ *   3. Skills grid, chips with depth + recency + confidence badges
+ *   4. Experience timeline, company + title + tenure, achievements decomposed
  *      with metric/change badges
  *   5. Education
  *   6. Languages + certifications
@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertTriangle, Building2, GraduationCap, Globe, Award, GitBranch, ExternalLink, Sparkles, ShieldQuestion, Star } from "lucide-react";
 
-// Loose types — the backend may add fields the UI doesn't render yet.
+// Loose types, the backend may add fields the UI doesn't render yet.
 interface AnyMap { [k: string]: any }
 
 interface Props {
@@ -45,7 +45,7 @@ function ConfidenceBadge({ conf }: { conf?: number }) {
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Low confidence ({(conf! * 100).toFixed(0)}%) — verify in interview</p>
+          <p className="text-xs">Low confidence ({(conf! * 100).toFixed(0)}%), verify in interview</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -63,7 +63,7 @@ function Field({ label, value, conf, mono }: { label: string; value: any; conf?:
   );
 }
 
-// Skill chip — color by depth, recency dot, confidence indicator
+// Skill chip, color by depth, recency dot, confidence indicator
 function SkillChip({ skill }: { skill: AnyMap }) {
   const depthColor =
     skill.depth === "lead"      ? "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30"
@@ -98,7 +98,7 @@ function SkillChip({ skill }: { skill: AnyMap }) {
   );
 }
 
-// Achievement chip — shows metric + change visually
+// Achievement chip, shows metric + change visually
 function AchievementBadge({ achievement }: { achievement: AnyMap }) {
   const hasMetric = achievement.metric && achievement.changeValue !== null && achievement.changeValue !== undefined;
   if (!hasMetric) return null;
@@ -116,7 +116,7 @@ function AchievementBadge({ achievement }: { achievement: AnyMap }) {
 export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props) {
   const data = parsedSummary;
 
-  // Defensive guards — the backend shape evolved
+  // Defensive guards, the backend shape evolved
   const skills = useMemo<AnyMap[]>(() => Array.isArray(data.skills) ? data.skills : [], [data.skills]);
   const experience = useMemo<AnyMap[]>(() => Array.isArray(data.experience) ? data.experience : [], [data.experience]);
   const education = useMemo<AnyMap[]>(() => Array.isArray(data.education) ? data.education : [], [data.education]);
@@ -173,7 +173,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
         )}
       </div>
 
-      {/* Verification & trust (Phase 38 — agentic resume-verifier) */}
+      {/* Verification & trust (Phase 38, agentic resume-verifier) */}
       {data.verification && (
         <Card>
           <CardHeader className="pb-2">
@@ -208,7 +208,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
                     >
                       {f.status}
                     </Badge>
-                    <span><span className="font-medium">{f.claim}</span>{f.evidence ? ` — ${f.evidence}` : ""}</span>
+                    <span><span className="font-medium">{f.claim}</span>{f.evidence ? `, ${f.evidence}` : ""}</span>
                   </div>
                 ))}
               </div>
@@ -401,7 +401,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
                 <p className="font-medium text-emerald-600 mb-1">Confirmed</p>
                 <ul className="list-disc pl-4 space-y-0.5 text-muted-foreground">
                   {ghCorro.confirmed.map((c: AnyMap, i: number) => (
-                    <li key={i}><span className="text-foreground">{c.claim}</span> — {c.evidence}</li>
+                    <li key={i}><span className="text-foreground">{c.claim}</span>, {c.evidence}</li>
                   ))}
                 </ul>
               </div>
@@ -413,7 +413,7 @@ export function ParsedResumeView({ parsedSummary, fairnessMode = false }: Props)
                   {ghCorro.discrepancies.map((d: AnyMap, i: number) => (
                     <li key={i} className="flex items-start gap-2">
                       <Badge variant="outline" className="text-2xs shrink-0">{d.severity}</Badge>
-                      <div><span className="text-foreground">{d.claim}</span> — <span className="text-muted-foreground">{d.discrepancy}</span></div>
+                      <div><span className="text-foreground">{d.claim}</span>, <span className="text-muted-foreground">{d.discrepancy}</span></div>
                     </li>
                   ))}
                 </ul>

@@ -71,7 +71,7 @@ const candidateColumns: ColumnDef<Candidate, any>[] = [
   {
     accessorKey: "currentTitle",
     header: "Title",
-    cell: ({ getValue }) => <span className="text-sm">{(getValue() as string) ?? "—"}</span>,
+    cell: ({ getValue }) => <span className="text-sm">{(getValue() as string) ?? "-"}</span>,
   },
   {
     accessorKey: "location",
@@ -82,7 +82,7 @@ const candidateColumns: ColumnDef<Candidate, any>[] = [
         <span className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPin className="h-3 w-3" />{v}
         </span>
-      ) : <span className="text-muted-foreground">—</span>;
+      ) : <span className="text-muted-foreground">-</span>;
     },
   },
   {
@@ -94,7 +94,7 @@ const candidateColumns: ColumnDef<Candidate, any>[] = [
         <span className="flex items-center gap-1 text-sm">
           <Briefcase className="h-3 w-3 text-muted-foreground" />{title}
         </span>
-      ) : <span className="text-muted-foreground text-sm">—</span>;
+      ) : <span className="text-muted-foreground text-sm">-</span>;
     },
   },
   {
@@ -102,14 +102,14 @@ const candidateColumns: ColumnDef<Candidate, any>[] = [
     header: "Stage",
     cell: ({ row }) => {
       const stage = row.original.applications?.[0]?.stage ?? row.original.stage;
-      if (!stage) return <span className="text-muted-foreground text-sm">—</span>;
+      if (!stage) return <span className="text-muted-foreground text-sm">-</span>;
       return <StatusBadge status={stage} />;
     },
   },
   {
     accessorKey: "source",
     header: "Source",
-    cell: ({ getValue }) => <span className="text-sm text-muted-foreground">{(getValue() as string) ?? "—"}</span>,
+    cell: ({ getValue }) => <span className="text-sm text-muted-foreground">{(getValue() as string) ?? "-"}</span>,
   },
 ];
 
@@ -377,7 +377,7 @@ export default function CandidatesPage() {
                 );
                 toast.success(`Exported ${rows.length} candidates`);
               } else {
-                toast.info(`${action}: ${rows.length} candidates — this will be available soon.`);
+                toast.info(`${action}: ${rows.length} candidates, this will be available soon.`);
               }
             }}
             emptyTitle="No candidates found"

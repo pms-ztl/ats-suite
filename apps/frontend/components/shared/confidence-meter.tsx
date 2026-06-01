@@ -10,8 +10,11 @@ interface ConfidenceMeterProps {
 export function ConfidenceMeter({ value, showLabel = true, size = "md", className }: ConfidenceMeterProps) {
   const clamped = Math.min(1, Math.max(0, value));
   const percentage = Math.round(clamped * 100);
-  const color = percentage >= 90 ? "bg-emerald-500" : percentage >= 70 ? "bg-amber-500" : "bg-rose-500";
-  const textColor = percentage >= 90 ? "text-emerald-700" : percentage >= 70 ? "text-amber-700" : "text-rose-700";
+  // AI confidence carries the violet AI accent; below the 0.70 auto-advance
+  // threshold it flips to warn (human verification recommended).
+  const low = percentage < 70;
+  const color = low ? "bg-warn" : "bg-ai";
+  const textColor = low ? "text-warn" : "text-ai-ink";
   const heights = { sm: "h-1.5", md: "h-2", lg: "h-3" };
 
   return (
