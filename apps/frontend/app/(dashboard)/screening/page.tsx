@@ -41,12 +41,12 @@ interface Screening {
 const STATUS_OPTIONS = ["ALL", "PENDING", "IN_PROGRESS", "COMPLETED", "FAILED"] as const;
 
 const statusColor: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  IN_PROGRESS: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  FAILED: "bg-red-100 text-red-700",
-  APPLIED: "bg-blue-100 text-blue-800",
-  SCREENING: "bg-yellow-100 text-yellow-800",
+  PENDING: "bg-warn-tint text-warn",
+  IN_PROGRESS: "bg-info-tint text-info",
+  COMPLETED: "bg-ok-tint text-ok",
+  FAILED: "bg-danger-tint text-danger",
+  APPLIED: "bg-info-tint text-info",
+  SCREENING: "bg-warn-tint text-warn",
 };
 
 export default function ScreeningPage() {
@@ -201,33 +201,33 @@ export default function ScreeningPage() {
                         ? `${s.application.candidate.firstName} ${s.application.candidate.lastName}`
                         : "Unknown");
                     const reqTitle =
-                      s.requisitionTitle ?? s.application?.requisition?.title ?? "—";
+                      s.requisitionTitle ?? s.application?.requisition?.title ?? "-";
                     const displayStatus = s.status ?? s.stage ?? "PENDING";
                     const isPending = displayStatus === "PENDING";
                     return (
                       <tr
                         key={s.id}
-                        className={`hover:bg-muted/40 transition-colors ${isPending ? "bg-yellow-50/50" : ""}`}
+                        className={`hover:bg-muted/40 transition-colors ${isPending ? "bg-warn-tint/50" : ""}`}
                       >
                         <td className="px-4 py-3 font-medium">{name}</td>
                         <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                           {reqTitle}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
-                          {s.type?.replace(/_/g, " ") ?? "—"}
+                          {s.type?.replace(/_/g, " ") ?? "-"}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-gray-100 text-gray-600"}`}
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-muted text-muted-foreground"}`}
                           >
                             {displayStatus.replace(/_/g, " ")}
                           </span>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
-                          {s.score != null ? `${Math.round(s.score * 100)}%` : "—"}
+                          {s.score != null ? `${Math.round(s.score * 100)}%` : "-"}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
-                          {s.result ?? s.recommendation ?? "—"}
+                          {s.result ?? s.recommendation ?? "-"}
                         </td>
                       </tr>
                     );

@@ -34,7 +34,7 @@ function renderByType(type: string, payload: Record<string, unknown>) {
 
 export function HITLPayloadRenderer({ type, payload }: HITLPayloadRendererProps) {
   // When the underlying agent ran the ReAct loop, its step trace rides along on
-  // the payload — surface it so reviewers can see the AI's reasoning.
+  // the payload, surface it so reviewers can see the AI's reasoning.
   const trace = Array.isArray(payload.agentTrace) ? (payload.agentTrace as AgentStep[]) : null;
   const toolsUsed = Array.isArray(payload.toolsUsed) ? (payload.toolsUsed as string[]) : undefined;
   return (
@@ -81,7 +81,7 @@ function ScreeningReviewPayload({ payload }: { payload: Record<string, unknown> 
                 <span className="text-xs text-muted-foreground">Overall Score</span>
                 <span className={cn(
                   "text-sm font-bold",
-                  score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-rose-600"
+                  score >= 80 ? "text-ok" : score >= 60 ? "text-warn" : "text-danger"
                 )}>
                   {score}/100
                 </span>
@@ -109,9 +109,9 @@ function ScreeningReviewPayload({ payload }: { payload: Record<string, unknown> 
 
       {/* Concerns */}
       {concerns && concerns.length > 0 && (
-        <Card className="border-amber-200">
+        <Card className="border-warn/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
+            <CardTitle className="text-sm flex items-center gap-2 text-warn">
               <AlertTriangle className="h-4 w-4" /> Concerns
             </CardTitle>
           </CardHeader>
@@ -119,7 +119,7 @@ function ScreeningReviewPayload({ payload }: { payload: Record<string, unknown> 
             <ul className="space-y-1.5">
               {concerns.map((concern, i) => (
                 <li key={i} className="text-sm flex items-start gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-warn mt-1.5 shrink-0" />
                   {concern}
                 </li>
               ))}
@@ -143,7 +143,7 @@ function ScreeningReviewPayload({ payload }: { payload: Record<string, unknown> 
                   <span className="text-sm font-medium">{dim.name}</span>
                   <span className={cn(
                     "text-xs font-bold",
-                    dim.score >= 80 ? "text-emerald-600" : dim.score >= 60 ? "text-amber-600" : "text-rose-600"
+                    dim.score >= 80 ? "text-ok" : dim.score >= 60 ? "text-warn" : "text-danger"
                   )}>
                     {dim.score}/100
                   </span>
@@ -384,7 +384,7 @@ function OfferApprovalPayload({ payload }: { payload: Record<string, unknown> })
             <ul className="space-y-1.5">
               {benefits.map((benefit, i) => (
                 <li key={i} className="text-sm flex items-start gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-ok mt-1.5 shrink-0" />
                   {benefit}
                 </li>
               ))}
@@ -395,9 +395,9 @@ function OfferApprovalPayload({ payload }: { payload: Record<string, unknown> })
 
       {/* Approval Chain */}
       {approvalChain && approvalChain.length > 0 && (
-        <Card className="border-blue-200">
+        <Card className="border-info/40">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
+            <CardTitle className="text-sm flex items-center gap-2 text-info">
               <User className="h-4 w-4" /> Approval Chain
             </CardTitle>
           </CardHeader>
@@ -405,7 +405,7 @@ function OfferApprovalPayload({ payload }: { payload: Record<string, unknown> })
             <div className="space-y-2">
               {approvalChain.map((approver, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
-                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">
+                  <div className="flex items-center justify-center h-6 w-6 rounded-full bg-info-tint text-info text-xs font-bold shrink-0">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -448,9 +448,9 @@ function InterviewScorecardPayload({ payload }: { payload: Record<string, unknow
   }> | undefined;
 
   const recommendationColor = (rec: string) => {
-    if (rec === "STRONG_YES" || rec === "YES") return "text-emerald-600";
-    if (rec === "NEUTRAL") return "text-amber-600";
-    return "text-rose-600";
+    if (rec === "STRONG_YES" || rec === "YES") return "text-ok";
+    if (rec === "NEUTRAL") return "text-warn";
+    return "text-danger";
   };
 
   const recommendationVariant = (rec: string): "default" | "destructive" | "secondary" => {
@@ -460,16 +460,16 @@ function InterviewScorecardPayload({ payload }: { payload: Record<string, unknow
   };
 
   const ratingColor = (rating: string) => {
-    if (rating === "strong") return "text-emerald-600 bg-emerald-50";
-    if (rating === "adequate") return "text-amber-600 bg-amber-50";
-    if (rating === "weak") return "text-rose-600 bg-rose-50";
-    return "text-gray-500 bg-gray-50";
+    if (rating === "strong") return "text-ok bg-ok-tint";
+    if (rating === "adequate") return "text-warn bg-warn-tint";
+    if (rating === "weak") return "text-danger bg-danger-tint";
+    return "text-muted-foreground bg-muted";
   };
 
   const scoreColor = (score: number) => {
-    if (score >= 4) return "text-emerald-600";
-    if (score >= 3) return "text-amber-600";
-    return "text-rose-600";
+    if (score >= 4) return "text-ok";
+    if (score >= 3) return "text-warn";
+    return "text-danger";
   };
 
   return (
@@ -599,8 +599,8 @@ function InterviewScorecardPayload({ payload }: { payload: Record<string, unknow
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <span className={cn(
                     "h-2 w-2 rounded-full mt-1.5 shrink-0",
-                    moment.significance === "positive" ? "bg-emerald-500" :
-                    moment.significance === "negative" ? "bg-rose-500" : "bg-gray-400"
+                    moment.significance === "positive" ? "bg-ok" :
+                    moment.significance === "negative" ? "bg-danger" : "bg-line-strong"
                   )} />
                   <div className="flex-1">
                     <p>{moment.description}</p>

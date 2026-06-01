@@ -40,7 +40,7 @@ export function ReviewQueue({ items, onApprove, onReject, onEscalate, className 
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium truncate">{item.candidateName}</span>
-                {isOverdue(item.slaDeadline) && <AlertTriangle className="h-3.5 w-3.5 text-rose-500 shrink-0" />}
+                {isOverdue(item.slaDeadline) && <AlertTriangle className="h-3.5 w-3.5 text-danger shrink-0" />}
               </div>
               <p className="text-2xs text-muted-foreground truncate mt-0.5">{item.requisitionTitle}</p>
               <div className="flex items-center gap-2 mt-1">
@@ -49,7 +49,7 @@ export function ReviewQueue({ items, onApprove, onReject, onEscalate, className 
               </div>
               <div className="flex items-center gap-1 mt-1 text-2xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                <span className={isOverdue(item.slaDeadline) ? "text-rose-600 font-medium" : ""}>{formatDateRelative(item.slaDeadline)}</span>
+                <span className={isOverdue(item.slaDeadline) ? "text-danger font-medium" : ""}>{formatDateRelative(item.slaDeadline)}</span>
               </div>
             </button>
           ))}

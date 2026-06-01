@@ -101,10 +101,10 @@ const AGENT_LABELS: Record<string, string> = {
 
 function getTraceIcon(type: string) {
   switch (type) {
-    case "llm_call": return <Cpu className="h-4 w-4 text-indigo-500" />;
-    case "tool_call": return <Wrench className="h-4 w-4 text-emerald-500" />;
-    case "reasoning": return <Bot className="h-4 w-4 text-blue-500" />;
-    case "error": return <AlertTriangle className="h-4 w-4 text-rose-500" />;
+    case "llm_call": return <Cpu className="h-4 w-4 text-info" />;
+    case "tool_call": return <Wrench className="h-4 w-4 text-ok" />;
+    case "reasoning": return <Bot className="h-4 w-4 text-info" />;
+    case "error": return <AlertTriangle className="h-4 w-4 text-danger" />;
     default: return <Bot className="h-4 w-4 text-muted-foreground" />;
   }
 }
@@ -273,19 +273,19 @@ export default function HITLCheckpointDetailPage() {
             </Badge>
             <span className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-semibold",
-              checkpoint.type === "rejection_review" ? "bg-rose-50 text-rose-700" :
-              checkpoint.type === "offer_approval" ? "bg-violet-50 text-violet-700" :
-              checkpoint.type === "scheduling_review" ? "bg-blue-50 text-blue-700" :
+              checkpoint.type === "rejection_review" ? "bg-danger-tint text-danger" :
+              checkpoint.type === "offer_approval" ? "bg-ai-tint text-ai-ink" :
+              checkpoint.type === "scheduling_review" ? "bg-info-tint text-info" :
               "bg-muted text-muted-foreground"
             )}>
               {checkpoint.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </span>
             {sla && (
               <div className="flex items-center gap-1.5">
-                <Timer className={cn("h-4 w-4", sla.overdue ? "text-rose-500" : sla.minutesLeft < 60 ? "text-amber-500" : "text-muted-foreground")} />
+                <Timer className={cn("h-4 w-4", sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : "text-muted-foreground")} />
                 <span className={cn(
                   "text-sm font-medium",
-                  sla.overdue ? "text-rose-600" : sla.minutesLeft < 60 ? "text-amber-600" : "text-muted-foreground"
+                  sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : "text-muted-foreground"
                 )}>
                   {sla.label}
                 </span>

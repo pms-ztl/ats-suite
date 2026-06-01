@@ -25,16 +25,16 @@ export function ExplanationCard({ title, decision, confidence, reasoning, reason
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <Card className={cn("border-indigo-200 bg-indigo-50/30", className)}>
+    <Card className={cn("border-ai/30 bg-ai-tint/40", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-indigo-100 flex items-center justify-center">
-              <Brain className="h-3.5 w-3.5 text-indigo-600" />
+            <div className="h-6 w-6 rounded bg-ai-tint flex items-center justify-center">
+              <Brain className="h-3.5 w-3.5 text-ai" />
             </div>
             <CardTitle className="text-sm">{title}</CardTitle>
           </div>
-          <Badge variant="info">AI Decision</Badge>
+          <Badge className="bg-ai-tint text-ai-ink border-transparent">AI Decision</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -49,12 +49,12 @@ export function ExplanationCard({ title, decision, confidence, reasoning, reason
             ))}
           </div>
         )}
-        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-2xs text-indigo-600 hover:text-indigo-800 font-medium">
+        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-2xs text-ai-ink hover:text-ai font-medium">
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           {expanded ? "Hide" : "Show"} reasoning
         </button>
         {expanded && (
-          <div className="space-y-2 text-sm bg-white rounded-md p-3 border">
+          <div className="space-y-2 text-sm bg-surface rounded-md p-3 border">
             {reasoning.map((r, i) => (
               <p key={i} className="text-muted-foreground">{i + 1}. {r}</p>
             ))}

@@ -70,10 +70,10 @@ function getSlaRemaining(createdAt: string, slaMinutes: number): { label: string
 
 function getTypeBadgeColor(type: string): string {
   switch (type) {
-    case "rejection_review": return "bg-rose-50 text-rose-700";
-    case "approval": return "bg-emerald-50 text-emerald-700";
-    case "offer_approval": return "bg-violet-50 text-violet-700";
-    case "scheduling_review": return "bg-blue-50 text-blue-700";
+    case "rejection_review": return "bg-danger-tint text-danger";
+    case "approval": return "bg-ok-tint text-ok";
+    case "offer_approval": return "bg-ai-tint text-ai-ink";
+    case "scheduling_review": return "bg-info-tint text-info";
     default: return "bg-muted text-muted-foreground";
   }
 }
@@ -147,10 +147,10 @@ function buildColumns(
         const sla = getSlaRemaining(row.original.createdAt, row.original.slaMinutes);
         return (
           <div className="flex items-center gap-1.5">
-            <Timer className={cn("h-3.5 w-3.5", sla.overdue ? "text-rose-500" : sla.minutesLeft < 60 ? "text-amber-500" : "text-muted-foreground")} />
+            <Timer className={cn("h-3.5 w-3.5", sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : "text-muted-foreground")} />
             <span className={cn(
               "text-sm font-medium",
-              sla.overdue ? "text-rose-600" : sla.minutesLeft < 60 ? "text-amber-600" : ""
+              sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : ""
             )}>
               {sla.label}
             </span>
@@ -201,7 +201,7 @@ function buildColumns(
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs text-emerald-700 border-emerald-500/30 hover:bg-emerald-50"
+              className="h-7 text-xs text-ok border-ok/30 hover:bg-ok-tint"
               disabled={busy}
               onClick={() => handlers.onApprove(item.id)}
             >
@@ -373,7 +373,7 @@ export default function HITLQueuePage() {
               label="Overdue"
               value={overdue.length}
               icon={<AlertTriangle className="h-5 w-5" />}
-              className={overdue.length > 0 ? "border-rose-200 bg-rose-50/30" : undefined}
+              className={overdue.length > 0 ? "border-danger/40 bg-danger-tint/30" : undefined}
             />
             <KPICard
               label="Avg Resolution"
@@ -446,7 +446,7 @@ export default function HITLQueuePage() {
         emptyDescription={activeTab === "pending" ? "All caught up! No pending reviews." : "No checkpoints match your filters."}
       />
 
-      {/* Review dialog — shows full payload + decision actions */}
+      {/* Review dialog, shows full payload + decision actions */}
       {reviewing && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -487,7 +487,7 @@ export default function HITLQueuePage() {
                   {reviewing.resolvedBy && (
                     <p className="text-xs text-muted-foreground">
                       Resolved by {reviewing.resolvedBy.slice(0, 8)}… at{" "}
-                      {reviewing.resolvedAt ? formatDateRelative(reviewing.resolvedAt) : "—"}
+                      {reviewing.resolvedAt ? formatDateRelative(reviewing.resolvedAt) : "-"}
                     </p>
                   )}
                 </div>
@@ -497,7 +497,7 @@ export default function HITLQueuePage() {
                 <div className="flex gap-2 pt-2 border-t border-border/60">
                   <Button
                     size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-ok hover:bg-ok text-white"
                     disabled={busyId === reviewing.id}
                     onClick={() => submitDecision(reviewing.id, "APPROVED")}
                   >

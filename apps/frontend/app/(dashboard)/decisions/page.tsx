@@ -46,15 +46,15 @@ const STATUS_OPTIONS = [
 ] as const;
 
 const statusColor: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  APPROVED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-700",
-  OFFER_SENT: "bg-blue-100 text-blue-800",
-  OFFER_ACCEPTED: "bg-emerald-100 text-emerald-800",
-  OFFER_DECLINED: "bg-orange-100 text-orange-800",
-  HIRED: "bg-emerald-100 text-emerald-800",
-  FINAL_REVIEW: "bg-orange-100 text-orange-800",
-  OFFER: "bg-green-100 text-green-800",
+  PENDING: "bg-warn-tint text-warn",
+  APPROVED: "bg-ok-tint text-ok",
+  REJECTED: "bg-danger-tint text-danger",
+  OFFER_SENT: "bg-info-tint text-info",
+  OFFER_ACCEPTED: "bg-ok-tint text-ok",
+  OFFER_DECLINED: "bg-warn-tint text-warn",
+  HIRED: "bg-ok-tint text-ok",
+  FINAL_REVIEW: "bg-warn-tint text-warn",
+  OFFER: "bg-ok-tint text-ok",
 };
 
 export default function DecisionsPage() {
@@ -199,7 +199,7 @@ export default function DecisionsPage() {
                         ? `${d.candidate.firstName} ${d.candidate.lastName}`
                         : "Unknown");
                     const reqTitle =
-                      d.requisitionTitle ?? d.requisition?.title ?? "—";
+                      d.requisitionTitle ?? d.requisition?.title ?? "-";
                     const displayStatus = d.status ?? "PENDING";
                     return (
                       <tr
@@ -220,11 +220,11 @@ export default function DecisionsPage() {
                           {reqTitle}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
-                          {d.recommendation ?? d.decisionType ?? "—"}
+                          {d.recommendation ?? d.decisionType ?? "-"}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-gray-100 text-gray-600"}`}
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-muted text-muted-foreground"}`}
                           >
                             {displayStatus.replace(/_/g, " ")}
                           </span>
@@ -236,7 +236,7 @@ export default function DecisionsPage() {
                                 day: "numeric",
                                 year: "numeric",
                               })
-                            : "—"}
+                            : "-"}
                         </td>
                       </tr>
                     );
