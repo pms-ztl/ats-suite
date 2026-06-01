@@ -80,10 +80,10 @@ const RECOMMENDATIONS = [
 ] as const;
 
 const statusColor: Record<string, string> = {
-  SCHEDULED: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-700",
-  NO_SHOW: "bg-orange-100 text-orange-800",
+  SCHEDULED: "bg-info-tint text-info",
+  COMPLETED: "bg-ok-tint text-ok",
+  CANCELLED: "bg-danger-tint text-danger",
+  NO_SHOW: "bg-warn-tint text-warn",
 };
 
 export default function InterviewDetailPage() {
@@ -258,7 +258,7 @@ export default function InterviewDetailPage() {
             <div className="flex items-center gap-2">
               <Briefcase className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Requisition:</span>
-              <span>{interview.requisition?.title ?? "—"}</span>
+              <span>{interview.requisition?.title ?? "-"}</span>
             </div>
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -269,21 +269,21 @@ export default function InterviewDetailPage() {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })
-                  : "—"}
+                  : "-"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium ml-6">Type:</span>
-              <span>{interview.type?.replace(/_/g, " ") ?? "—"}</span>
+              <span>{interview.type?.replace(/_/g, " ") ?? "-"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium ml-6">Duration:</span>
-              <span>{interview.durationMinutes ? `${interview.durationMinutes} min` : "—"}</span>
+              <span>{interview.durationMinutes ? `${interview.durationMinutes} min` : "-"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium ml-6">Status:</span>
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[interview.status] ?? "bg-gray-100 text-gray-600"}`}
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[interview.status] ?? "bg-muted text-muted-foreground"}`}
               >
                 {interview.status}
               </span>
@@ -292,7 +292,7 @@ export default function InterviewDetailPage() {
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Location:</span>
-                <span>{interview.location ?? interview.meetingLink ?? "—"}</span>
+                <span>{interview.location ?? interview.meetingLink ?? "-"}</span>
               </div>
             )}
           </CardContent>
@@ -364,12 +364,12 @@ export default function InterviewDetailPage() {
                       {m.role?.replace(/_/g, " ")}
                     </span>
                     {m.isRequired && (
-                      <span className="text-[10px] uppercase tracking-wide rounded bg-amber-100 text-amber-700 px-1.5 py-0.5">
+                      <span className="text-[10px] uppercase tracking-wide rounded bg-warn-tint text-warn px-1.5 py-0.5">
                         Required
                       </span>
                     )}
                     {m.confirmed && (
-                      <span className="text-[10px] uppercase tracking-wide rounded bg-green-100 text-green-700 px-1.5 py-0.5">
+                      <span className="text-[10px] uppercase tracking-wide rounded bg-ok-tint text-ok px-1.5 py-0.5">
                         Confirmed
                       </span>
                     )}
@@ -485,12 +485,12 @@ export default function InterviewDetailPage() {
                   </div>
                   {fb.notes && <p className="text-sm text-muted-foreground">{fb.notes}</p>}
                   {fb.strengths && fb.strengths.length > 0 && (
-                    <p className="text-xs text-green-700">
+                    <p className="text-xs text-ok">
                       Strengths: {fb.strengths.join(", ")}
                     </p>
                   )}
                   {fb.concerns && fb.concerns.length > 0 && (
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-danger">
                       Concerns: {fb.concerns.join(", ")}
                     </p>
                   )}

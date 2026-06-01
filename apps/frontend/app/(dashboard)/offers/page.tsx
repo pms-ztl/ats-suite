@@ -57,12 +57,12 @@ const STATUS_OPTIONS = [
 ] as const;
 
 const statusColor: Record<string, string> = {
-  DRAFT: "bg-blue-100 text-blue-800",
-  PENDING_APPROVAL: "bg-yellow-100 text-yellow-800",
-  APPROVED: "bg-green-100 text-green-800",
-  SENT: "bg-indigo-100 text-indigo-800",
-  ACCEPTED: "bg-emerald-100 text-emerald-800",
-  DECLINED: "bg-red-100 text-red-700",
+  DRAFT: "bg-info-tint text-info",
+  PENDING_APPROVAL: "bg-warn-tint text-warn",
+  APPROVED: "bg-ok-tint text-ok",
+  SENT: "bg-info-tint text-info",
+  ACCEPTED: "bg-ok-tint text-ok",
+  DECLINED: "bg-danger-tint text-danger",
 };
 
 export default function OffersPage() {
@@ -125,7 +125,7 @@ export default function OffersPage() {
 
   function getRole(o: Offer): string {
     return (
-      o.requisitionTitle ?? o.application?.requisition?.title ?? "—"
+      o.requisitionTitle ?? o.application?.requisition?.title ?? "-"
     );
   }
 
@@ -253,7 +253,7 @@ export default function OffersPage() {
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                               statusColor[displayStatus] ??
-                              "bg-gray-100 text-gray-600"
+                              "bg-muted text-muted-foreground"
                             }`}
                           >
                             {displayStatus.replace(/_/g, " ")}
@@ -262,22 +262,22 @@ export default function OffersPage() {
                         <td className="px-4 py-3 text-right hidden lg:table-cell font-mono text-muted-foreground">
                           {o.baseSalary
                             ? formatCurrency(o.baseSalary)
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-right hidden lg:table-cell font-mono">
                           {o.totalComp
                             ? formatCurrency(o.totalComp)
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                           {o.createdAt
                             ? formatDate(o.createdAt, "MMM d, yyyy")
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden xl:table-cell">
                           {o.expiresAt
                             ? formatDate(o.expiresAt, "MMM d, yyyy")
-                            : "—"}
+                            : "-"}
                         </td>
                       </tr>
                     );

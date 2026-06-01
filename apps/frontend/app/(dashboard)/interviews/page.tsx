@@ -36,11 +36,11 @@ const STATUS_OPTIONS = ["ALL", "SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]
 const TYPE_OPTIONS = ["ALL", "PHONE_SCREEN", "TECHNICAL", "BEHAVIORAL", "PANEL", "FINAL"] as const;
 
 const statusColor: Record<string, string> = {
-  SCHEDULED: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-700",
-  NO_SHOW: "bg-orange-100 text-orange-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
+  SCHEDULED: "bg-info-tint text-info",
+  COMPLETED: "bg-ok-tint text-ok",
+  CANCELLED: "bg-danger-tint text-danger",
+  NO_SHOW: "bg-warn-tint text-warn",
+  PENDING: "bg-warn-tint text-warn",
 };
 
 export default function InterviewsPage() {
@@ -179,7 +179,7 @@ export default function InterviewsPage() {
                     const interviewer =
                       iv.panelists?.[0]?.user
                         ? `${iv.panelists[0].user.firstName} ${iv.panelists[0].user.lastName}`
-                        : "—";
+                        : "-";
                     return (
                       <tr
                         key={iv.id}
@@ -194,14 +194,14 @@ export default function InterviewsPage() {
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                          {iv.requisition?.title ?? "—"}
+                          {iv.requisition?.title ?? "-"}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
-                          {iv.type?.replace(/_/g, " ") ?? "—"}
+                          {iv.type?.replace(/_/g, " ") ?? "-"}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[iv.status] ?? "bg-gray-100 text-gray-600"}`}
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[iv.status] ?? "bg-muted text-muted-foreground"}`}
                           >
                             {iv.status}
                           </span>
@@ -214,7 +214,7 @@ export default function InterviewsPage() {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                           {interviewer}

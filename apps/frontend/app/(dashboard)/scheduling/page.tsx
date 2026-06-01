@@ -50,12 +50,12 @@ interface ScheduleEvent {
 const TYPE_OPTIONS = ["ALL", "INTERVIEW", "MEETING", "OTHER"] as const;
 
 const statusColor: Record<string, string> = {
-  SCHEDULED: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-700",
-  NO_SHOW: "bg-orange-100 text-orange-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
-  CONFIRMED: "bg-green-100 text-green-800",
+  SCHEDULED: "bg-info-tint text-info",
+  COMPLETED: "bg-ok-tint text-ok",
+  CANCELLED: "bg-danger-tint text-danger",
+  NO_SHOW: "bg-warn-tint text-warn",
+  PENDING: "bg-warn-tint text-warn",
+  CONFIRMED: "bg-ok-tint text-ok",
 };
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -183,7 +183,7 @@ export default function SchedulingPage() {
       return;
     }
     if (!formCandidateId || !formReqId) {
-      toast.error("Pick a candidate and a requisition — interviews are tied to both.");
+      toast.error("Pick a candidate and a requisition, interviews are tied to both.");
       return;
     }
     setSubmitting(true);
@@ -347,7 +347,7 @@ export default function SchedulingPage() {
                     onClick={runAiSuggest}
                     disabled={suggesting}
                   >
-                    {suggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
+                    {suggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-ai" />}
                     {suggesting ? "Finding times…" : "AI suggest times"}
                   </Button>
                   {suggestion?.proposedSlots && suggestion.proposedSlots.length > 0 && (
@@ -360,7 +360,7 @@ export default function SchedulingPage() {
                           className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-xs hover:bg-muted transition-colors"
                         >
                           <span>{new Date(s.start).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
-                          <span className={s.conflicts.length === 0 ? "text-emerald-600" : "text-amber-600"}>
+                          <span className={s.conflicts.length === 0 ? "text-ok" : "text-warn"}>
                             {s.conflicts.length === 0 ? "all free" : `${s.conflicts.length} conflict${s.conflicts.length > 1 ? "s" : ""}`} · {(s.score * 100).toFixed(0)}%
                           </span>
                         </button>
@@ -475,7 +475,7 @@ export default function SchedulingPage() {
                       >
                         <td className="px-4 py-3 font-medium">{title}</td>
                         <td className="px-4 py-3 hidden md:table-cell">
-                          {ev.type?.replace(/_/g, " ") ?? "—"}
+                          {ev.type?.replace(/_/g, " ") ?? "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {start
@@ -485,7 +485,7 @@ export default function SchedulingPage() {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                           {ev.endAt
@@ -497,14 +497,14 @@ export default function SchedulingPage() {
                               })
                             : ev.durationMinutes
                               ? `${ev.durationMinutes} min`
-                              : "—"}
+                              : "-"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                          {ev.location ?? ev.format ?? "—"}
+                          {ev.location ?? ev.format ?? "-"}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-gray-100 text-gray-600"}`}
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-muted text-muted-foreground"}`}
                           >
                             {displayStatus}
                           </span>

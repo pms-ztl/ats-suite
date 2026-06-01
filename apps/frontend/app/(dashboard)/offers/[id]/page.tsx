@@ -77,18 +77,18 @@ interface OfferDetail {
 }
 
 const statusColor: Record<string, string> = {
-  DRAFT: "bg-blue-100 text-blue-800",
-  PENDING_APPROVAL: "bg-yellow-100 text-yellow-800",
-  APPROVED: "bg-green-100 text-green-800",
-  SENT: "bg-indigo-100 text-indigo-800",
-  ACCEPTED: "bg-emerald-100 text-emerald-800",
-  DECLINED: "bg-red-100 text-red-700",
+  DRAFT: "bg-info-tint text-info",
+  PENDING_APPROVAL: "bg-warn-tint text-warn",
+  APPROVED: "bg-ok-tint text-ok",
+  SENT: "bg-info-tint text-info",
+  ACCEPTED: "bg-ok-tint text-ok",
+  DECLINED: "bg-danger-tint text-danger",
 };
 
 const approvalStatusColor: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  APPROVED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-700",
+  PENDING: "bg-warn-tint text-warn",
+  APPROVED: "bg-ok-tint text-ok",
+  REJECTED: "bg-danger-tint text-danger",
 };
 
 export default function OfferDetailPage() {
@@ -166,10 +166,10 @@ export default function OfferDetailPage() {
       : "Unknown");
 
   const candidateEmail =
-    offer.candidateEmail ?? offer.application?.candidate?.email ?? "—";
+    offer.candidateEmail ?? offer.application?.candidate?.email ?? "-";
 
   const role =
-    offer.requisitionTitle ?? offer.application?.requisition?.title ?? "—";
+    offer.requisitionTitle ?? offer.application?.requisition?.title ?? "-";
 
   const displayStatus = offer.status ?? "DRAFT";
 
@@ -216,19 +216,19 @@ export default function OfferDetailPage() {
                   <p className="text-lg font-bold font-mono">
                     {offer.baseSalary
                       ? formatCurrency(offer.baseSalary)
-                      : "—"}
+                      : "-"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Equity</p>
                   <p className="text-lg font-bold font-mono">
-                    {offer.equity ?? "—"}
+                    {offer.equity ?? "-"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Bonus</p>
                   <p className="text-lg font-bold font-mono">
-                    {offer.bonus ? formatCurrency(offer.bonus) : "—"}
+                    {offer.bonus ? formatCurrency(offer.bonus) : "-"}
                   </p>
                 </div>
                 <div>
@@ -238,7 +238,7 @@ export default function OfferDetailPage() {
                   <p className="text-lg font-bold font-mono text-primary">
                     {offer.totalComp
                       ? formatCurrency(offer.totalComp)
-                      : "—"}
+                      : "-"}
                   </p>
                 </div>
               </div>
@@ -367,7 +367,7 @@ export default function OfferDetailPage() {
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                               approvalStatusColor[approval.status] ??
-                              "bg-gray-100 text-gray-600"
+                              "bg-muted text-muted-foreground"
                             }`}
                           >
                             {approval.status}
@@ -379,9 +379,9 @@ export default function OfferDetailPage() {
 
                 {/* Approval actions for pending approvers */}
                 {displayStatus === "PENDING_APPROVAL" && (
-                  <div className="mt-4 p-4 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50/50">
+                  <div className="mt-4 p-4 rounded-lg border-2 border-dashed border-warn/40 bg-warn-tint/50">
                     <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <AlertCircle className="h-4 w-4 text-warn" />
                       Your Approval Required
                     </p>
                     <Textarea
@@ -428,7 +428,7 @@ export default function OfferDetailPage() {
               <div className="flex items-center justify-center">
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    statusColor[displayStatus] ?? "bg-gray-100 text-gray-600"
+                    statusColor[displayStatus] ?? "bg-muted text-muted-foreground"
                   }`}
                 >
                   {displayStatus.replace(/_/g, " ")}
@@ -443,7 +443,7 @@ export default function OfferDetailPage() {
                   <span>
                     {offer.createdAt
                       ? formatDate(offer.createdAt, "MMM d, yyyy")
-                      : "—"}
+                      : "-"}
                   </span>
                 </div>
                 {offer.sentAt && (
