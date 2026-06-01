@@ -20,17 +20,17 @@ interface AIModel {
 }
 
 const statusColor: Record<string, string> = {
-  DEPLOYED: "bg-green-100 text-green-800",
-  SHADOW_EVAL: "bg-yellow-100 text-yellow-800",
-  RETIRED: "bg-gray-100 text-gray-600",
-  PENDING_REVIEW: "bg-blue-100 text-blue-800",
+  DEPLOYED: "bg-ok-tint text-ok",
+  SHADOW_EVAL: "bg-warn-tint text-warn",
+  RETIRED: "bg-muted text-muted-foreground",
+  PENDING_REVIEW: "bg-info-tint text-info",
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
-  DEPLOYED: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
-  SHADOW_EVAL: <Clock className="h-3.5 w-3.5 text-yellow-600" />,
-  RETIRED: <Activity className="h-3.5 w-3.5 text-gray-400" />,
-  PENDING_REVIEW: <AlertTriangle className="h-3.5 w-3.5 text-blue-600" />,
+  DEPLOYED: <CheckCircle className="h-3.5 w-3.5 text-ok" />,
+  SHADOW_EVAL: <Clock className="h-3.5 w-3.5 text-warn" />,
+  RETIRED: <Activity className="h-3.5 w-3.5 text-muted-foreground" />,
+  PENDING_REVIEW: <AlertTriangle className="h-3.5 w-3.5 text-info" />,
 };
 
 export default function AiPage() {
@@ -78,7 +78,7 @@ export default function AiPage() {
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{loading ? "—" : stat.value}</p>
+                  <p className="text-2xl font-bold">{loading ? "-" : stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
@@ -130,7 +130,7 @@ export default function AiPage() {
                         Fairness: {(model.fairnessScore * 100).toFixed(1)}%
                       </span>
                     )}
-                    <span className={`inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[model.status] ?? "bg-gray-100 text-gray-600"}`}>
+                    <span className={`inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[model.status] ?? "bg-muted text-muted-foreground"}`}>
                       {statusIcon[model.status]}
                       {model.status.replace(/_/g, " ")}
                     </span>

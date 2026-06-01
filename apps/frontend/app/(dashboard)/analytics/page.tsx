@@ -48,11 +48,11 @@ interface FunnelStage {
 
 const FUNNEL_STAGES = ["APPLIED", "SCREENED", "INTERVIEW", "OFFER", "HIRED"];
 const FUNNEL_COLORS: Record<string, string> = {
-  APPLIED: "bg-blue-500",
+  APPLIED: "bg-info",
   SCREENED: "bg-cyan-500",
-  INTERVIEW: "bg-violet-500",
-  OFFER: "bg-amber-500",
-  HIRED: "bg-emerald-500",
+  INTERVIEW: "bg-ai",
+  OFFER: "bg-warn",
+  HIRED: "bg-ok",
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
     setAiResult(null);
     try {
       const token = getToken();
-      // Agentic analytics route — the agent pulls only the metric slices it
+      // Agentic analytics route, the agent pulls only the metric slices it
       // needs, then returns structured insights + its ReAct reasoning trace.
       const res = await fetch(`${API_BASE}/analytics`, {
         method: "POST",
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
         <Link href="/analytics/time-to-hire">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-center gap-3">
-              <Clock className="h-5 w-5 text-blue-500 shrink-0" />
+              <Clock className="h-5 w-5 text-info shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">Time to Hire</p>
               </div>
@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
         <Link href="/analytics/source-effectiveness">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-center gap-3">
-              <Globe className="h-5 w-5 text-violet-500 shrink-0" />
+              <Globe className="h-5 w-5 text-ai-ink shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">Source Effectiveness</p>
               </div>
@@ -219,7 +219,7 @@ export default function AnalyticsPage() {
         <Link href="/analytics/diversity">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex items-center gap-3">
-              <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+              <ShieldCheck className="h-5 w-5 text-ok shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">Diversity & Compliance</p>
               </div>
@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
           onClick={runAiInsights}
         >
           <CardContent className="p-4 flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-amber-500 shrink-0" />
+            <Sparkles className="h-5 w-5 text-ai shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">AI Insights</p>
             </div>
@@ -257,7 +257,7 @@ export default function AnalyticsPage() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
+              <Sparkles className="h-5 w-5 text-ai" />
               AI Insights
             </DialogTitle>
           </DialogHeader>
@@ -268,7 +268,7 @@ export default function AnalyticsPage() {
                 The analytics agent is investigating…
               </div>
             ) : aiResult?.error ? (
-              <p className="text-sm text-rose-600">{aiResult.error}</p>
+              <p className="text-sm text-danger">{aiResult.error}</p>
             ) : aiResult ? (
               <>
                 {aiResult.answer && <p className="text-sm leading-relaxed">{aiResult.answer}</p>}
@@ -282,9 +282,9 @@ export default function AnalyticsPage() {
                               variant="outline"
                               className={
                                 ins.severity === "critical"
-                                  ? "text-rose-600 border-rose-300"
+                                  ? "text-danger border-danger/40"
                                   : ins.severity === "warning"
-                                    ? "text-amber-600 border-amber-300"
+                                    ? "text-warn border-warn/40"
                                     : "text-muted-foreground"
                               }
                             >
@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
                   <span className="text-sm font-medium w-24 shrink-0">{f.stage}</span>
                   <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
                     <div
-                      className={`h-full rounded-md transition-all duration-500 ${FUNNEL_COLORS[f.stage] ?? "bg-gray-400"}`}
+                      className={`h-full rounded-md transition-all duration-500 ${FUNNEL_COLORS[f.stage] ?? "bg-surface-3"}`}
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">

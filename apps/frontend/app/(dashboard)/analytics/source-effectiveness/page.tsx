@@ -114,8 +114,8 @@ export default function SourceEffectivenessPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Globe className="h-5 w-5 text-blue-500" />
+            <div className="h-9 w-9 rounded-lg bg-info/10 flex items-center justify-center">
+              <Globe className="h-5 w-5 text-info" />
             </div>
             <div>
               <p className="text-2xl font-bold">{totalSources}</p>
@@ -125,8 +125,8 @@ export default function SourceEffectivenessPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-violet-500" />
+            <div className="h-9 w-9 rounded-lg bg-ai/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-ai-ink" />
             </div>
             <div>
               <p className="text-2xl font-bold">{totalCandidates}</p>
@@ -136,8 +136,8 @@ export default function SourceEffectivenessPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-emerald-500" />
+            <div className="h-9 w-9 rounded-lg bg-ok/10 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-ok" />
             </div>
             <div>
               <p className="text-2xl font-bold">{totalHired}</p>
@@ -147,8 +147,8 @@ export default function SourceEffectivenessPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <Award className="h-5 w-5 text-amber-500" />
+            <div className="h-9 w-9 rounded-lg bg-warn/10 flex items-center justify-center">
+              <Award className="h-5 w-5 text-warn" />
             </div>
             <div>
               <p className="text-2xl font-bold">{topSource?.source ?? "--"}</p>

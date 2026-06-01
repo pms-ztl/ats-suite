@@ -12,13 +12,13 @@ interface Policy { id: string; name: string; type: string; status: string; juris
 interface ReviewItem { id: string; decisionId?: string; reason?: string; priority?: string; createdAt: string; }
 
 const statusColor: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800",
-  DRAFT: "bg-gray-100 text-gray-600",
-  ARCHIVED: "bg-yellow-100 text-yellow-800",
-  PENDING: "bg-blue-100 text-blue-800",
-  HIGH: "bg-red-100 text-red-800",
-  MEDIUM: "bg-yellow-100 text-yellow-800",
-  LOW: "bg-green-100 text-green-800",
+  ACTIVE: "bg-ok-tint text-ok",
+  DRAFT: "bg-muted text-muted-foreground",
+  ARCHIVED: "bg-warn-tint text-warn",
+  PENDING: "bg-info-tint text-info",
+  HIGH: "bg-danger-tint text-danger",
+  MEDIUM: "bg-warn-tint text-warn",
+  LOW: "bg-ok-tint text-ok",
 };
 
 export default function CompliancePage() {
@@ -61,7 +61,7 @@ export default function CompliancePage() {
         ].map(s => { const Icon = s.icon; return (
           <Card key={s.label}><CardContent className="p-4 flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Icon className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold">{loading ? "—" : s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
+            <div><p className="text-2xl font-bold">{loading ? "-" : s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
           </CardContent></Card>
         );})}
       </div>
@@ -75,7 +75,7 @@ export default function CompliancePage() {
             {!loading && policies.length > 0 && <div className="divide-y">{policies.slice(0,8).map(p => (
               <div key={p.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 transition-colors">
                 <div><p className="text-sm font-medium">{p.name}</p><p className="text-xs text-muted-foreground">{p.type}{p.jurisdiction ? ` · ${p.jurisdiction}` : ""}</p></div>
-                <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[p.status] ?? "bg-gray-100 text-gray-600"}`}>{p.status}</span>
+                <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[p.status] ?? "bg-muted text-muted-foreground"}`}>{p.status}</span>
               </div>
             ))}</div>}
           </CardContent>
@@ -91,7 +91,7 @@ export default function CompliancePage() {
                 <div><p className="text-sm font-medium">{r.reason ?? r.decisionId ?? r.id}</p>
                   <p className="text-xs text-muted-foreground">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}</p>
                 </div>
-                {r.priority && <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[r.priority] ?? "bg-gray-100 text-gray-600"}`}>{r.priority}</span>}
+                {r.priority && <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${statusColor[r.priority] ?? "bg-muted text-muted-foreground"}`}>{r.priority}</span>}
               </div>
             ))}</div>}
           </CardContent>

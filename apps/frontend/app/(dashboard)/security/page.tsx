@@ -29,10 +29,10 @@ interface AccessConfig {
 }
 
 const riskColor: Record<string, string> = {
-  HIGH: "bg-red-100 text-red-800",
-  MEDIUM: "bg-yellow-100 text-yellow-800",
-  LOW: "bg-green-100 text-green-800",
-  CRITICAL: "bg-red-200 text-red-900",
+  HIGH: "bg-danger-tint text-danger",
+  MEDIUM: "bg-warn-tint text-warn",
+  LOW: "bg-ok-tint text-ok",
+  CRITICAL: "bg-danger-tint text-danger",
 };
 
 export default function SecurityPage() {
@@ -88,7 +88,7 @@ export default function SecurityPage() {
           { label: "Audit Events (recent)", value: auditLog.length, icon: Activity },
           { label: "Blocked Actions", value: blocked, icon: AlertTriangle },
           { label: "High Risk Events", value: highRisk, icon: AlertTriangle },
-          { label: "Session Timeout", value: accessConfig?.sessionTimeoutMinutes ? `${accessConfig.sessionTimeoutMinutes}m` : "—", icon: Lock },
+          { label: "Session Timeout", value: accessConfig?.sessionTimeoutMinutes ? `${accessConfig.sessionTimeoutMinutes}m` : "-", icon: Lock },
         ].map(stat => {
           const Icon = stat.icon;
           return (
@@ -98,7 +98,7 @@ export default function SecurityPage() {
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{loading ? "—" : stat.value}</p>
+                  <p className="text-2xl font-bold">{loading ? "-" : stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
@@ -132,8 +132,8 @@ export default function SecurityPage() {
                       {item.label}
                     </div>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      unknown ? "bg-gray-100 text-gray-500" :
-                      enabled ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      unknown ? "bg-muted text-muted-foreground" :
+                      enabled ? "bg-ok-tint text-ok" : "bg-danger-tint text-danger"
                     }`}>
                       {unknown ? "Unknown" : enabled ? "Enabled" : "Disabled"}
                     </span>
@@ -171,19 +171,19 @@ export default function SecurityPage() {
                           ? new Date(entry.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
                           : entry.createdAt
                           ? new Date(entry.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                          : "—"}
+                          : "-"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {entry.risk && (
-                        <span className={`text-2xs font-medium px-1.5 py-0.5 rounded ${riskColor[entry.risk] ?? "bg-gray-100 text-gray-600"}`}>
+                        <span className={`text-2xs font-medium px-1.5 py-0.5 rounded ${riskColor[entry.risk] ?? "bg-muted text-muted-foreground"}`}>
                           {entry.risk}
                         </span>
                       )}
                       {entry.allowed === false || entry.blocked ? (
-                        <span className="text-2xs font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-700">BLOCKED</span>
+                        <span className="text-2xs font-medium px-1.5 py-0.5 rounded bg-danger-tint text-danger">BLOCKED</span>
                       ) : (
-                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                        <CheckCircle className="h-3.5 w-3.5 text-ok" />
                       )}
                     </div>
                   </div>
@@ -193,7 +193,7 @@ export default function SecurityPage() {
           </CardContent>
         </Card>
       </div>
-      {/* Audit Log — prominent compliance shortcut */}
+      {/* Audit Log, prominent compliance shortcut */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -203,7 +203,7 @@ export default function SecurityPage() {
             <div>
               <p className="font-semibold text-sm">Audit Log</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Immutable, tamper-evident record of all system actions — failed logins, PII access, role changes, and more.
+                Immutable, tamper-evident record of all system actions, failed logins, PII access, role changes, and more.
               </p>
             </div>
           </div>

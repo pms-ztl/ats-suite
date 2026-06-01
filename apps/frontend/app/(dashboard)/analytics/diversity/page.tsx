@@ -113,7 +113,7 @@ export default function DiversityPage() {
 
   async function runBiasAudit() {
     // Transform the displayed cohort metrics into the agent's input (group
-    // COUNTS only — no PII) and let the agent compute 4/5ths + flag failures.
+    // COUNTS only, no PII) and let the agent compute 4/5ths + flag failures.
     const auditData = Object.entries(byStage)
       .map(([stage, ms]) => ({
         attribute: "demographic",
@@ -192,7 +192,7 @@ export default function DiversityPage() {
         <Card className="border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> AI Compliance Audit
+              <Sparkles className="h-4 w-4 text-ai" /> AI Compliance Audit
               {audit.overallCompliance != null && (
                 <Badge variant={audit.overallCompliance ? "default" : "destructive"} className="font-normal">
                   {audit.overallCompliance ? "Compliant" : "Adverse impact found"}
@@ -202,7 +202,7 @@ export default function DiversityPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {audit.error ? (
-              <p className="text-sm text-rose-600">{audit.error}</p>
+              <p className="text-sm text-danger">{audit.error}</p>
             ) : (
               <>
                 {audit.narrative && <p className="text-sm leading-relaxed">{audit.narrative}</p>}
@@ -235,8 +235,8 @@ export default function DiversityPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-blue-500" />
+            <div className="h-9 w-9 rounded-lg bg-info/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-info" />
             </div>
             <div>
               <p className="text-2xl font-bold">{data?.summary.totalApplications ?? 0}</p>
@@ -246,8 +246,8 @@ export default function DiversityPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <BarChart2 className="h-5 w-5 text-violet-500" />
+            <div className="h-9 w-9 rounded-lg bg-ai/10 flex items-center justify-center">
+              <BarChart2 className="h-5 w-5 text-ai-ink" />
             </div>
             <div>
               <p className="text-2xl font-bold">{withResult.length}</p>
@@ -257,11 +257,11 @@ export default function DiversityPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${overallPass ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+            <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${overallPass ? "bg-ok/10" : "bg-danger/10"}`}>
               {overallPass ? (
-                <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                <ShieldCheck className="h-5 w-5 text-ok" />
               ) : (
-                <ShieldAlert className="h-5 w-5 text-red-500" />
+                <ShieldAlert className="h-5 w-5 text-danger" />
               )}
             </div>
             <div>
@@ -272,8 +272,8 @@ export default function DiversityPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-amber-500" />
+            <div className="h-9 w-9 rounded-lg bg-warn/10 flex items-center justify-center">
+              <ShieldCheck className="h-5 w-5 text-warn" />
             </div>
             <div>
               <p className="text-2xl font-bold">
