@@ -150,7 +150,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               "text-muted-foreground",
               "opacity-0 -translate-x-1 group-hover/rail:opacity-100 group-hover/rail:translate-x-1/2",
               "group-hover/rail:border-primary/60 group-hover/rail:text-primary",
-              "group-hover/rail:shadow-[0_0_0_3px_hsl(var(--primary)/0.15),0_8px_20px_-6px_hsl(var(--primary)/0.45)]",
+              "group-hover/rail:shadow-[0_0_0_3px_oklch(var(--primary)/0.15),0_8px_20px_-6px_oklch(var(--primary)/0.45)]",
               "transition-all duration-200 ease-out"
             )}
           >

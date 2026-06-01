@@ -229,7 +229,7 @@ export default function PricingPage() {
                 className={cn(
                   "relative flex flex-col rounded-2xl border p-6 transition-shadow",
                   isPro
-                    ? "border-primary/60 bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.3),0_8px_32px_-8px_hsl(var(--primary)/0.25)]"
+                    ? "border-primary/60 bg-primary/5 shadow-[0_0_0_1px_oklch(var(--primary)/0.3),0_8px_32px_-8px_oklch(var(--primary)/0.25)]"
                     : "border-border/60 bg-card glass-hover"
                 )}
               >

@@ -159,8 +159,8 @@ export default function PlatformCostPage() {
               <AreaChart data={data.byDay} margin={{ left: 8, right: 8 }}>
                 <defs>
                   <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                    <stop offset="0%" stopColor="oklch(var(--primary))" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="oklch(var(--primary))" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -171,7 +171,7 @@ export default function PlatformCostPage() {
                   labelFormatter={(d) => d}
                   contentStyle={{ fontSize: 12 }}
                 />
-                <Area type="monotone" dataKey="costUsd" stroke="hsl(var(--primary))" fill="url(#costGrad)" />
+                <Area type="monotone" dataKey="costUsd" stroke="oklch(var(--primary))" fill="url(#costGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -240,7 +240,7 @@ export default function PlatformCostPage() {
                     formatter={(v: any) => [`$${Number(v).toFixed(4)}`, "Cost"]}
                     contentStyle={{ fontSize: 12 }}
                   />
-                  <Bar dataKey="costUsd" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="costUsd" fill="oklch(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

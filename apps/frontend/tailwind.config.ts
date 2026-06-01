@@ -1,10 +1,13 @@
 import type { Config } from "tailwindcss";
 
 /**
- * CDC ATS "Aurora" Tailwind config. CSS variables (oklch) in app/globals.css
- * drive every value, so light/dark switch via the `.dark` class with no dark:
- * color variants. Pairs with shadcn/ui via the alias tokens in globals.css.
+ * CDC ATS "Aurora" Tailwind config. Palette tokens are bare oklch channels in
+ * app/globals.css, wrapped here as oklch(var(--x) / <alpha-value>) so opacity
+ * modifiers (bg-primary/10, border-border/40, ...) work. Light/dark switch via
+ * the `.dark` class. shadcn/ui inherits via the alias tokens.
  */
+const c = (v: string) => `oklch(var(${v}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -16,38 +19,35 @@ const config: Config = {
     extend: {
       colors: {
         // Aurora semantic surfaces
-        bg: "var(--bg)",
-        "bg-deep": "var(--bg-deep)",
-        surface: { DEFAULT: "var(--surface)", 2: "var(--surface-2)", 3: "var(--surface-3)" },
-        ink: { DEFAULT: "var(--ink)", 2: "var(--ink-2)", 3: "var(--ink-3)", inv: "var(--ink-inv)" },
-        line: { DEFAULT: "var(--line)", 2: "var(--line-2)", strong: "var(--line-strong)" },
-        brand: { DEFAULT: "var(--brand)", 2: "var(--brand-2)", ink: "var(--brand-ink)", tint: "var(--brand-tint)", "tint-2": "var(--brand-tint-2)", on: "var(--on-brand)" },
-        ai: { DEFAULT: "var(--ai)", 2: "var(--ai-2)", ink: "var(--ai-ink)", tint: "var(--ai-tint)", "tint-2": "var(--ai-tint-2)", on: "var(--on-ai)" },
-        ok: { DEFAULT: "var(--ok)", tint: "var(--ok-tint)" },
-        warn: { DEFAULT: "var(--warn)", tint: "var(--warn-tint)" },
-        danger: { DEFAULT: "var(--danger)", tint: "var(--danger-tint)" },
-        info: { DEFAULT: "var(--info)", tint: "var(--info-tint)" },
+        bg: c("--bg"),
+        "bg-deep": c("--bg-deep"),
+        surface: { DEFAULT: c("--surface"), 2: c("--surface-2"), 3: c("--surface-3") },
+        ink: { DEFAULT: c("--ink"), 2: c("--ink-2"), 3: c("--ink-3"), inv: c("--ink-inv") },
+        line: { DEFAULT: c("--line"), 2: c("--line-2"), strong: c("--line-strong") },
+        brand: { DEFAULT: c("--brand"), 2: c("--brand-2"), ink: c("--brand-ink"), tint: c("--brand-tint"), "tint-2": c("--brand-tint-2"), on: c("--on-brand") },
+        ai: { DEFAULT: c("--ai"), 2: c("--ai-2"), ink: c("--ai-ink"), tint: c("--ai-tint"), "tint-2": c("--ai-tint-2"), on: c("--on-ai") },
+        ok: { DEFAULT: c("--ok"), tint: c("--ok-tint") },
+        warn: { DEFAULT: c("--warn"), tint: c("--warn-tint") },
+        danger: { DEFAULT: c("--danger"), tint: c("--danger-tint") },
+        info: { DEFAULT: c("--info"), tint: c("--info-tint") },
         // shadcn/ui contract
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        card: { DEFAULT: "var(--card)", foreground: "var(--card-foreground)" },
-        popover: { DEFAULT: "var(--popover)", foreground: "var(--popover-foreground)" },
-        primary: { DEFAULT: "var(--primary)", foreground: "var(--primary-foreground)" },
-        secondary: { DEFAULT: "var(--secondary)", foreground: "var(--secondary-foreground)" },
-        muted: { DEFAULT: "var(--muted)", foreground: "var(--muted-foreground)" },
-        accent: { DEFAULT: "var(--accent)", foreground: "var(--accent-foreground)" },
-        destructive: { DEFAULT: "var(--destructive)", foreground: "var(--destructive-foreground)" },
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
+        background: c("--background"),
+        foreground: c("--foreground"),
+        card: { DEFAULT: c("--card"), foreground: c("--card-foreground") },
+        popover: { DEFAULT: c("--popover"), foreground: c("--popover-foreground") },
+        primary: { DEFAULT: c("--primary"), foreground: c("--primary-foreground") },
+        secondary: { DEFAULT: c("--secondary"), foreground: c("--secondary-foreground") },
+        muted: { DEFAULT: c("--muted"), foreground: c("--muted-foreground") },
+        accent: { DEFAULT: c("--accent"), foreground: c("--accent-foreground") },
+        destructive: { DEFAULT: c("--destructive"), foreground: c("--destructive-foreground") },
+        border: c("--border"),
+        input: c("--input"),
+        ring: c("--brand"),
         // legacy-compat (pre-Aurora components used these)
-        success: { DEFAULT: "var(--ok)", foreground: "var(--on-brand)" },
-        warning: { DEFAULT: "var(--warn)", foreground: "var(--on-brand)" },
+        success: { DEFAULT: c("--ok"), foreground: c("--on-brand") },
+        warning: { DEFAULT: c("--warn"), foreground: c("--on-brand") },
       },
-      fontFamily: {
-        sans: ["var(--font-sans)"],
-        mono: ["var(--font-mono)"],
-      },
+      fontFamily: { sans: ["var(--font-sans)"], mono: ["var(--font-mono)"] },
       fontSize: {
         "2xs": "var(--fs-2xs)", xs: "var(--fs-xs)", sm: "var(--fs-sm)", base: "var(--fs-base)",
         md: "var(--fs-md)", lg: "var(--fs-lg)", xl: "var(--fs-xl)", "2xl": "var(--fs-2xl)",

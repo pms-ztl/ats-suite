@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 /* =========================================================================
-   CDC ATS "Aurora" design tokens. Light = :root, dark = .dark. All oklch.
-   Pairs with tailwind.config.ts. A legacy-compat layer at the bottom keeps
-   pre-Aurora components rendering during the migration.
+   CDC ATS "Aurora" design tokens. Light = :root, dark = .dark.
+   PALETTE tokens hold BARE oklch channels ("L C H") and are wrapped as
+   oklch(var(--x) / <alpha-value>) in tailwind.config.ts, so opacity modifiers
+   (bg-primary/10, border-border/40, ...) work exactly like the old hsl setup.
+   EFFECT tokens (glass/elevation/ring) keep full values for raw CSS use.
    ========================================================================= */
 :root {
   /* ---- Typography ---- */
@@ -25,20 +27,22 @@
   --ease-spring: cubic-bezier(.34,1.4,.5,1);
   --t-fast: .13s; --t: .24s; --t-slow: .46s;
 
-  /* ---- LIGHT THEME ---- */
+  /* ---- LIGHT THEME palette (bare oklch channels) ---- */
   color-scheme: light;
-  --bg: oklch(0.984 0.006 165); --bg-deep: oklch(0.972 0.008 165);
-  --surface: oklch(0.997 0.003 165); --surface-2: oklch(0.978 0.006 165); --surface-3: oklch(0.962 0.008 165);
-  --ink: oklch(0.245 0.013 175); --ink-2: oklch(0.47 0.013 175); --ink-3: oklch(0.605 0.012 175); --ink-inv: oklch(0.99 0.003 165);
-  --line: oklch(0.905 0.008 175); --line-2: oklch(0.86 0.01 175); --line-strong: oklch(0.80 0.012 175);
-  --brand: oklch(0.585 0.122 162); --brand-2: oklch(0.515 0.118 162); --brand-ink: oklch(0.40 0.10 162);
-  --brand-tint: oklch(0.955 0.028 162); --brand-tint-2: oklch(0.925 0.045 162); --on-brand: oklch(0.99 0.01 162);
-  --ai: oklch(0.555 0.185 292); --ai-2: oklch(0.49 0.19 292); --ai-ink: oklch(0.44 0.16 292);
-  --ai-tint: oklch(0.955 0.03 292); --ai-tint-2: oklch(0.925 0.05 292); --on-ai: oklch(0.99 0.01 292);
-  --ok: oklch(0.60 0.13 152); --ok-tint: oklch(0.95 0.04 152);
-  --warn: oklch(0.69 0.135 73); --warn-tint: oklch(0.955 0.05 80);
-  --danger: oklch(0.565 0.185 25); --danger-tint: oklch(0.955 0.035 25);
-  --info: oklch(0.585 0.13 245); --info-tint: oklch(0.95 0.04 245);
+  --bg: 0.984 0.006 165; --bg-deep: 0.972 0.008 165;
+  --surface: 0.997 0.003 165; --surface-2: 0.978 0.006 165; --surface-3: 0.962 0.008 165;
+  --ink: 0.245 0.013 175; --ink-2: 0.47 0.013 175; --ink-3: 0.605 0.012 175; --ink-inv: 0.99 0.003 165;
+  --line: 0.905 0.008 175; --line-2: 0.86 0.01 175; --line-strong: 0.80 0.012 175;
+  --brand: 0.585 0.122 162; --brand-2: 0.515 0.118 162; --brand-ink: 0.40 0.10 162;
+  --brand-tint: 0.955 0.028 162; --brand-tint-2: 0.925 0.045 162; --on-brand: 0.99 0.01 162;
+  --ai: 0.555 0.185 292; --ai-2: 0.49 0.19 292; --ai-ink: 0.44 0.16 292;
+  --ai-tint: 0.955 0.03 292; --ai-tint-2: 0.925 0.05 292; --on-ai: 0.99 0.01 292;
+  --ok: 0.60 0.13 152; --ok-tint: 0.95 0.04 152;
+  --warn: 0.69 0.135 73; --warn-tint: 0.955 0.05 80;
+  --danger: 0.565 0.185 25; --danger-tint: 0.955 0.035 25;
+  --info: 0.585 0.13 245; --info-tint: 0.95 0.04 245;
+
+  /* ---- EFFECTS (full values, used raw in CSS) ---- */
   --glass: oklch(0.99 0.004 165 / 0.72); --glass-2: oklch(0.995 0.003 165 / 0.86);
   --glass-line: oklch(1 0 0 / 0.65); --glass-edge: oklch(0.80 0.012 175 / 0.55); --glass-blur: 20px;
   --e1: 0 1px 2px oklch(0.4 0.03 165 / .05), 0 1px 1px oklch(0.4 0.03 165 / .04);
@@ -47,7 +51,7 @@
   --ring: 0 0 0 3px oklch(0.585 0.122 162 / .35); --ai-ring: 0 0 0 3px oklch(0.555 0.185 292 / .30);
   --grain-opacity: .5; --aurora-opacity: .85;
 
-  /* shadcn/ui aliases (so existing <Button>/<Card>/<Input> inherit Aurora) */
+  /* ---- shadcn/ui aliases (bare channels; tailwind wraps in oklch) ---- */
   --background: var(--bg); --foreground: var(--ink);
   --card: var(--surface); --card-foreground: var(--ink);
   --popover: var(--surface); --popover-foreground: var(--ink);
@@ -61,18 +65,18 @@
 
 .dark {
   color-scheme: dark;
-  --bg: oklch(0.168 0.012 178); --bg-deep: oklch(0.145 0.012 178);
-  --surface: oklch(0.206 0.014 178); --surface-2: oklch(0.238 0.015 178); --surface-3: oklch(0.272 0.016 178);
-  --ink: oklch(0.955 0.005 175); --ink-2: oklch(0.74 0.012 175); --ink-3: oklch(0.595 0.014 175); --ink-inv: oklch(0.20 0.012 175);
-  --line: oklch(0.305 0.014 178); --line-2: oklch(0.36 0.016 178); --line-strong: oklch(0.44 0.018 178);
-  --brand: oklch(0.755 0.13 162); --brand-2: oklch(0.82 0.13 162); --brand-ink: oklch(0.86 0.10 162);
-  --brand-tint: oklch(0.30 0.05 162); --brand-tint-2: oklch(0.36 0.07 162); --on-brand: oklch(0.17 0.04 162);
-  --ai: oklch(0.715 0.155 292); --ai-2: oklch(0.78 0.15 292); --ai-ink: oklch(0.82 0.12 292);
-  --ai-tint: oklch(0.31 0.07 292); --ai-tint-2: oklch(0.37 0.09 292); --on-ai: oklch(0.17 0.05 292);
-  --ok: oklch(0.74 0.14 152); --ok-tint: oklch(0.31 0.06 152);
-  --warn: oklch(0.80 0.135 80); --warn-tint: oklch(0.33 0.06 80);
-  --danger: oklch(0.685 0.16 25); --danger-tint: oklch(0.33 0.07 25);
-  --info: oklch(0.71 0.12 245); --info-tint: oklch(0.31 0.06 245);
+  --bg: 0.168 0.012 178; --bg-deep: 0.145 0.012 178;
+  --surface: 0.206 0.014 178; --surface-2: 0.238 0.015 178; --surface-3: 0.272 0.016 178;
+  --ink: 0.955 0.005 175; --ink-2: 0.74 0.012 175; --ink-3: 0.595 0.014 175; --ink-inv: 0.20 0.012 175;
+  --line: 0.305 0.014 178; --line-2: 0.36 0.016 178; --line-strong: 0.44 0.018 178;
+  --brand: 0.755 0.13 162; --brand-2: 0.82 0.13 162; --brand-ink: 0.86 0.10 162;
+  --brand-tint: 0.30 0.05 162; --brand-tint-2: 0.36 0.07 162; --on-brand: 0.17 0.04 162;
+  --ai: 0.715 0.155 292; --ai-2: 0.78 0.15 292; --ai-ink: 0.82 0.12 292;
+  --ai-tint: 0.31 0.07 292; --ai-tint-2: 0.37 0.09 292; --on-ai: 0.17 0.05 292;
+  --ok: 0.74 0.14 152; --ok-tint: 0.31 0.06 152;
+  --warn: 0.80 0.135 80; --warn-tint: 0.33 0.06 80;
+  --danger: 0.685 0.16 25; --danger-tint: 0.33 0.07 25;
+  --info: 0.71 0.12 245; --info-tint: 0.31 0.06 245;
   --glass: oklch(0.225 0.014 178 / 0.62); --glass-2: oklch(0.245 0.015 178 / 0.82);
   --glass-line: oklch(0.85 0.02 178 / 0.10); --glass-edge: oklch(0.55 0.02 178 / 0.30); --glass-blur: 22px;
   --e1: 0 1px 2px oklch(0 0 0 / .35), 0 1px 1px oklch(0 0 0 / .25);
@@ -92,11 +96,11 @@
 }
 
 /* ---- base ---- */
-* { border-color: var(--border); }
+* { border-color: oklch(var(--border)); }
 body {
   font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--ink);
+  background: oklch(var(--bg));
+  color: oklch(var(--ink));
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01" 1, "cv11" 1;
   min-height: 100vh;
@@ -119,15 +123,15 @@ body {
   box-shadow: var(--e2), inset 0 1px 0 var(--glass-line);
 }
 .clay {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, white), var(--surface));
-  border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in oklab, oklch(var(--surface)) 96%, white), oklch(var(--surface)));
+  border: 1px solid oklch(var(--line));
   box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .5);
 }
-.dark .clay { background: linear-gradient(180deg, var(--surface-2), var(--surface)); box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .06); }
-.flat { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--e1); }
+.dark .clay { background: linear-gradient(180deg, oklch(var(--surface-2)), oklch(var(--surface))); box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .06); }
+.flat { background: oklch(var(--surface)); border: 1px solid oklch(var(--line)); box-shadow: var(--e1); }
 
 /* skeleton */
-.skeleton { position: relative; overflow: hidden; background: var(--surface-2); border-radius: var(--r-sm); }
+.skeleton { position: relative; overflow: hidden; background: oklch(var(--surface-2)); border-radius: var(--r-sm); }
 .skeleton::after { content:""; position:absolute; inset:0; transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, oklch(1 0 0 / .14), transparent); animation: shimmer 1.5s infinite; }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -145,31 +149,29 @@ body {
 
 /* =========================================================================
    LEGACY COMPAT — keep pre-Aurora components rendering during migration.
-   These re-point old class names onto Aurora tokens. Remove a block once
-   the components that use it have been ported.
    ========================================================================= */
 .glass-card { background: var(--glass); border: 1px solid var(--glass-edge); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); box-shadow: var(--e2), inset 0 1px 0 var(--glass-line); border-radius: var(--r-lg); }
 .glass-surface { background: var(--glass-2); border-color: var(--glass-edge); -webkit-backdrop-filter: blur(24px) saturate(1.3); backdrop-filter: blur(24px) saturate(1.3); }
-.glass-input { background: var(--surface); border: 1px solid var(--line-2); }
+.glass-input { background: oklch(var(--surface)); border: 1px solid oklch(var(--line-2)); }
 .glass-hover { transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out), border-color .2s var(--ease-out); }
-.glass-hover:hover { transform: translateY(-2px); box-shadow: var(--e3); border-color: color-mix(in oklab, var(--brand) 35%, transparent); }
-.glow-primary { box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 40%, transparent), 0 10px 30px -10px color-mix(in oklab, var(--brand) 45%, transparent); }
-.gradient-card { background-image: linear-gradient(135deg, color-mix(in oklab, var(--brand) 8%, transparent) 0%, transparent 40%, color-mix(in oklab, var(--info) 8%, transparent) 100%); }
-.skeleton-shimmer { position: relative; overflow: hidden; background: var(--surface-2); }
+.glass-hover:hover { transform: translateY(-2px); box-shadow: var(--e3); border-color: color-mix(in oklab, oklch(var(--brand)) 35%, transparent); }
+.glow-primary { box-shadow: 0 0 0 1px color-mix(in oklab, oklch(var(--brand)) 40%, transparent), 0 10px 30px -10px color-mix(in oklab, oklch(var(--brand)) 45%, transparent); }
+.gradient-card { background-image: linear-gradient(135deg, color-mix(in oklab, oklch(var(--brand)) 8%, transparent) 0%, transparent 40%, color-mix(in oklab, oklch(var(--info)) 8%, transparent) 100%); }
+.skeleton-shimmer { position: relative; overflow: hidden; background: oklch(var(--surface-2)); }
 .skeleton-shimmer::after { content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, oklch(1 0 0 / .14), transparent); animation: shimmer 1.5s infinite; }
 .animate-page-in { animation: fadeInUp .2s var(--ease-out) forwards; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* scrollbars */
-.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: oklch(var(--line)) transparent; }
 .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background-color: var(--line); border-radius: 3px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background-color: oklch(var(--line)); border-radius: 3px; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
-* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+::-webkit-scrollbar-thumb { background: oklch(var(--line)); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: oklch(var(--ink-3)); }
+* { scrollbar-width: thin; scrollbar-color: oklch(var(--line)) transparent; }
 
 /* print */
 @media print {

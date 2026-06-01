@@ -117,7 +117,7 @@ export function BrandedShell({ slug, children, hero = true }: Props) {
   const style = hsl ? ({ "--primary": hsl } as React.CSSProperties) : undefined;
   const heroBg = branding?.careerPortalHeroImageUrl
     ? `linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url(${branding.careerPortalHeroImageUrl}) center/cover`
-    : `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)) 70%)`;
+    : `linear-gradient(135deg, oklch(var(--primary)), oklch(var(--primary)) 70%)`;
 
   return (
     <div className="min-h-screen bg-background" style={style}>
