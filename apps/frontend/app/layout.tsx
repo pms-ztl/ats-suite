@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ClientProviders } from "@/components/shared/client-providers";
 import { AuthProvider } from "@/lib/auth-context";
 
-const inter = Inter({
+const sans = Hanken_Grotesk({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "CDC ATS — AI-Powered Applicant Tracking System",
+    default: "CDC ATS · AI-Powered Applicant Tracking System",
     template: "%s | CDC ATS",
   },
   description: "Enterprise-grade AI-powered applicant tracking system for modern hiring teams. Automate sourcing, screening, interviews, and compliance.",
@@ -28,19 +30,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://ats.cdc.com",
-    title: "CDC ATS — AI-Powered Applicant Tracking System",
+    title: "CDC ATS · AI-Powered Applicant Tracking System",
     description: "Enterprise-grade AI-powered ATS for modern hiring teams.",
     siteName: "CDC ATS",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CDC ATS — AI-Powered Applicant Tracking System",
+    title: "CDC ATS · AI-Powered Applicant Tracking System",
     description: "Enterprise-grade AI-powered ATS for modern hiring teams.",
   },
-  robots: {
-    index: false, // internal enterprise app
-    follow: false,
-  },
+  robots: { index: false, follow: false },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
@@ -48,11 +47,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -69,9 +64,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
+        <a
+          href="#main"
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-3 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-sm focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:shadow-ring"
+        >
+          Skip to content
+        </a>
         <AuthProvider>
-          {children}
+          <div id="main">{children}</div>
           <ClientProviders />
         </AuthProvider>
       </body>

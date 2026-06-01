@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * CDC ATS "Aurora" Tailwind config. CSS variables (oklch) in app/globals.css
+ * drive every value, so light/dark switch via the `.dark` class with no dark:
+ * color variants. Pairs with shadcn/ui via the alias tokens in globals.css.
+ */
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -10,88 +15,66 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        success: {
-          DEFAULT: "#10B981",
-          foreground: "#FFFFFF",
-        },
-        warning: {
-          DEFAULT: "#F59E0B",
-          foreground: "#FFFFFF",
-        },
-        danger: {
-          DEFAULT: "#F43F5E",
-          foreground: "#FFFFFF",
-        },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        // Aurora semantic surfaces
+        bg: "var(--bg)",
+        "bg-deep": "var(--bg-deep)",
+        surface: { DEFAULT: "var(--surface)", 2: "var(--surface-2)", 3: "var(--surface-3)" },
+        ink: { DEFAULT: "var(--ink)", 2: "var(--ink-2)", 3: "var(--ink-3)", inv: "var(--ink-inv)" },
+        line: { DEFAULT: "var(--line)", 2: "var(--line-2)", strong: "var(--line-strong)" },
+        brand: { DEFAULT: "var(--brand)", 2: "var(--brand-2)", ink: "var(--brand-ink)", tint: "var(--brand-tint)", "tint-2": "var(--brand-tint-2)", on: "var(--on-brand)" },
+        ai: { DEFAULT: "var(--ai)", 2: "var(--ai-2)", ink: "var(--ai-ink)", tint: "var(--ai-tint)", "tint-2": "var(--ai-tint-2)", on: "var(--on-ai)" },
+        ok: { DEFAULT: "var(--ok)", tint: "var(--ok-tint)" },
+        warn: { DEFAULT: "var(--warn)", tint: "var(--warn-tint)" },
+        danger: { DEFAULT: "var(--danger)", tint: "var(--danger-tint)" },
+        info: { DEFAULT: "var(--info)", tint: "var(--info-tint)" },
+        // shadcn/ui contract
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: { DEFAULT: "var(--card)", foreground: "var(--card-foreground)" },
+        popover: { DEFAULT: "var(--popover)", foreground: "var(--popover-foreground)" },
+        primary: { DEFAULT: "var(--primary)", foreground: "var(--primary-foreground)" },
+        secondary: { DEFAULT: "var(--secondary)", foreground: "var(--secondary-foreground)" },
+        muted: { DEFAULT: "var(--muted)", foreground: "var(--muted-foreground)" },
+        accent: { DEFAULT: "var(--accent)", foreground: "var(--accent-foreground)" },
+        destructive: { DEFAULT: "var(--destructive)", foreground: "var(--destructive-foreground)" },
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        // legacy-compat (pre-Aurora components used these)
+        success: { DEFAULT: "var(--ok)", foreground: "var(--on-brand)" },
+        warning: { DEFAULT: "var(--warn)", foreground: "var(--on-brand)" },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["var(--font-sans)"],
+        mono: ["var(--font-mono)"],
       },
       fontSize: {
-        "2xs": ["11px", { lineHeight: "1.4" }],
-        xs: ["12px", { lineHeight: "1.4" }],
-        sm: ["13px", { lineHeight: "1.4" }],
-        base: ["14px", { lineHeight: "1.4" }],
-        lg: ["16px", { lineHeight: "1.4" }],
-        xl: ["18px", { lineHeight: "1.2" }],
-        "2xl": ["24px", { lineHeight: "1.2" }],
+        "2xs": "var(--fs-2xs)", xs: "var(--fs-xs)", sm: "var(--fs-sm)", base: "var(--fs-base)",
+        md: "var(--fs-md)", lg: "var(--fs-lg)", xl: "var(--fs-xl)", "2xl": "var(--fs-2xl)",
+        "3xl": "var(--fs-3xl)", "4xl": "var(--fs-4xl)", "5xl": "var(--fs-5xl)",
       },
+      borderRadius: {
+        xs: "var(--r-xs)", sm: "var(--r-sm)", DEFAULT: "var(--r)", md: "var(--r)",
+        lg: "var(--r-lg)", xl: "var(--r-xl)", "2xl": "var(--r-2xl)", pill: "var(--r-pill)",
+      },
+      boxShadow: { e1: "var(--e1)", e2: "var(--e2)", e3: "var(--e3)", ring: "var(--ring)", "ai-ring": "var(--ai-ring)" },
+      transitionTimingFunction: { out: "var(--ease-out)", io: "var(--ease-io)", spring: "var(--ease-spring)" },
+      transitionDuration: { fast: "130ms", DEFAULT: "240ms", slow: "460ms" },
+      backdropBlur: { glass: "var(--glass-blur)" },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-        pulse: {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
+        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        shimmer: { "100%": { transform: "translateX(100%)" } },
+        rise: { from: { opacity: "0", transform: "translateY(12px)" }, to: { opacity: "1", transform: "none" } },
+        pop: { from: { opacity: "0", transform: "scale(.96)" }, to: { opacity: "1", transform: "none" } },
+        floaty: { to: { transform: "translateY(-6px)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        shimmer: "shimmer 1.5s infinite",
+        rise: "rise .45s var(--ease-out) both",
+        pop: "pop .3s var(--ease-spring) both",
       },
     },
   },
