@@ -210,3 +210,32 @@ export async function getAdverseImpact(): Promise<FairnessMetric[]> {
     };
   });
 }
+
+/* ---------- Dashboard (home) ---------- */
+// Matches the aurora-kit `Kpi` shape so KpiRow/KPICard render directly.
+export type DashKpi = {
+  id: string; label: string; value: number; icon: string; spark: number[];
+  delta: number; good?: boolean; ai?: boolean; prefix?: string; suffix?: string;
+};
+export async function getDashboardKpis(): Promise<DashKpi[]> {
+  const res: any = await raw("GET", "/platform/unified-overview").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const flat = (v: number) => [v, v, v, v, v, v];
+  const mk = (
+    id: string, label: string, icon: string, value: any, change: any, spark: any,
+    opts: Partial<DashKpi> = {},
+  ): DashKpi => {
+    const v = Number(value) || 0;
+    return {
+      id, label, icon, value: v, delta: Math.round(Number(change) || 0),
+      spark: Array.isArray(spark) && spark.length ? spark.map(Number) : flat(v),
+      ...opts,
+    };
+  };
+  return [
+    mk("reqs", "Open requisitions", "briefcase", d.openRequisitions, d.openRequisitionsChange, d.openRequisitionsSparkline, { good: true }),
+    mk("cands", "Active candidates", "users", d.activeCandidates, d.activeCandidatesChange, d.activeCandidatesSparkline, { good: true }),
+    mk("tth", "Time to hire", "clock", d.avgTimeToHire, d.avgTimeToHireChange, d.avgTimeToHireSparkline, { suffix: "d", good: false }),
+    mk("ai", "AI decisions today", "sparkles", d.aiDecisionsToday, d.aiDecisionsTodayChange, d.aiDecisionsTodaySparkline, { ai: true, good: true }),
+  ];
+}
