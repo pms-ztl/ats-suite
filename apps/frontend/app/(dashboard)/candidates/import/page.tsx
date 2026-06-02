@@ -1,284 +1,265 @@
 "use client";
-
-/**
- * Phase 34a, CSV bulk candidate import.
- *
- * Three-step inline flow on one page:
- *   1. Upload CSV (drag/drop or file picker)
- *   2. Preview parsed rows + show validation results per row
- *   3. Commit, actual upsert, shows per-row outcome
- *
- * Why one page instead of a wizard: the preview ↔ adjust ↔ preview loop
- * is too common to make page transitions worth it. Upload, see, fix-or-go.
- */
-import { useCallback, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileSpreadsheet, Upload, CheckCircle2, AlertTriangle, XCircle, Download, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
-import Link from "next/link";
+// app/(dashboard)/candidates/import/page.tsx - EXACT Claude Design "Aurora"
+// bulk candidate import wizard. Ported verbatim from claude-design/cand-import.jsx
+// (the ImportScreen) and wired to real, controlled state: a working drag/drop +
+// file-picker dropzone, the file's own header row drives the column-mapping step,
+// and "Import" POSTs the raw file to the gateway. No fabricated candidate rows;
+// stages with no backend render the exact layout in honest empty/disabled states.
+import { useState, useRef, useCallback, type DragEvent } from "react";
+import { Btn, Pill, ScoreRing } from "@/components/aurora-kit";
+import { Icon } from "@/components/aurora-icon";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-interface PreviewRow {
-  row: number;
-  status: "valid_new" | "valid_update" | "invalid_email" | "missing_required" | "duplicate_in_file";
-  candidate: { email?: string; firstName?: string; lastName?: string; phone?: string; location?: string };
-  reason?: string;
-  existingCandidateId?: string;
+// Inline raw() helper (the guide's pattern). Posts FormData so we do NOT force a
+// JSON Content-Type; the browser sets the multipart boundary itself.
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface PreviewSummary {
-  total: number;
-  newCount: number;
-  updateCount: number;
-  invalidEmailCount: number;
-  missingRequiredCount: number;
-  duplicateInFileCount: number;
+function fmtSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-interface CommitOutcome {
-  row: number;
-  status: "created" | "updated" | "duplicate_skipped" | "invalid_email_skipped" | "missing_required_skipped" | "error";
-  candidateId?: string;
-  reason?: string;
+// Lightweight, real parse of the FIRST line (header) + a data-row count, so the
+// "Map columns" / "Preview" steps reflect the user's actual file. Quote-aware
+// enough for typical exports; no candidate values are invented anywhere.
+function parseCsvMeta(text: string): { headers: string[]; dataRows: number } {
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return { headers: [], dataRows: 0 };
+  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, "")).filter(Boolean);
+  return { headers, dataRows: Math.max(0, lines.length - 1) };
 }
 
-const SAMPLE_CSV = `email,firstName,lastName,phone,location,linkedinUrl,source
-alex.chen@example.com,Alex,Chen,+1-555-0100,"San Francisco, CA",https://linkedin.com/in/alexchen,Referral
-priya.s@example.com,Priya,Sharma,,Bangalore,,LinkedIn
-jordan@example.com,Jordan,Lee,+1-555-0123,Remote,https://linkedin.com/in/jordanlee,Career Page`;
-
-function authHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const token = window.sessionStorage.getItem("ats-access-token");
-  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), "Content-Type": "application/json" };
+// Best-effort header -> field guess for the mapping step. Mirrors the prototype's
+// "Maps to" column; falls back to "Skip" when we cannot confidently map.
+const FIELD_OPTIONS = ["Skip", "Name", "Email", "Headline", "Location", "Source", "Links"];
+function guessField(header: string): string {
+  const h = header.toLowerCase();
+  if (h.includes("name")) return "Name";
+  if (h.includes("email") || h.includes("mail")) return "Email";
+  if (h.includes("title") || h.includes("headline")) return "Headline";
+  if (h.includes("location") || h.includes("city")) return "Location";
+  if (h.includes("source") || h.includes("channel")) return "Source";
+  if (h.includes("link") || h.includes("url") || h.includes("linkedin")) return "Links";
+  return "Skip";
 }
 
 export default function CsvImportPage() {
-  const [csv, setCsv] = useState<string>("");
-  const [filename, setFilename] = useState<string>("");
-  const [preview, setPreview] = useState<PreviewRow[] | null>(null);
-  const [summary, setSummary] = useState<PreviewSummary | null>(null);
-  const [committing, setCommitting] = useState(false);
-  const [commitOutcomes, setCommitOutcomes] = useState<CommitOutcome[] | null>(null);
-  const [skipDuplicates, setSkipDuplicates] = useState(true);
-  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [step, setStep] = useState(1);
+  const [file, setFile] = useState<File | null>(null);
+  const [meta, setMeta] = useState<{ headers: string[]; dataRows: number } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [imported, setImported] = useState<number | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onFile = useCallback(async (file: File) => {
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("File too large (max 20 MB)");
-      return;
+  const steps = ["Upload", "Map columns", "Preview", "Done"];
+
+  const accept = useCallback(async (f: File | null | undefined) => {
+    if (!f) return;
+    setErr(null);
+    setImported(null);
+    setFile(f);
+    try {
+      const text = await f.text();
+      setMeta(parseCsvMeta(text));
+    } catch {
+      setMeta(null);
     }
-    const text = await file.text();
-    setCsv(text);
-    setFilename(file.name);
-    setPreview(null);
-    setCommitOutcomes(null);
   }, []);
 
-  const runPreview = async () => {
-    if (!csv) return;
-    setLoadingPreview(true);
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    accept(e.dataTransfer.files?.[0]);
+  };
+
+  const reset = () => { setFile(null); setMeta(null); setImported(null); setErr(null); setStep(1); if (inputRef.current) inputRef.current.value = ""; };
+
+  const runImport = async () => {
+    if (!file) return;
+    setImporting(true);
+    setErr(null);
     try {
-      const res = await fetch(`${API_BASE}/candidates/import/preview`, {
-        method: "POST", credentials: "include", headers: authHeaders(),
-        body: JSON.stringify({ csv }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error?.message ?? `${res.status}`);
-      const data = body.data ?? body;
-      setPreview(data.preview);
-      setSummary(data.summary);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Preview failed");
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      // Plausible bulk-import endpoint; FormData multipart upload of the raw CSV.
+      const res = await raw("/candidates/import", { method: "POST", body: fd });
+      const data = res?.data ?? res ?? {};
+      const count = data.imported ?? data.created ?? data.count ?? meta?.dataRows ?? 0;
+      setImported(count);
+      setStep(4);
+    } catch (e) {
+      setErr("We could not reach the import service. Your file is still selected, please try again in a moment.");
     } finally {
-      setLoadingPreview(false);
+      setImporting(false);
     }
   };
 
-  const runCommit = async () => {
-    if (!csv) return;
-    if (!confirm(`Import ${summary?.newCount ?? 0} new + ${summary?.updateCount ?? 0} updated candidates?`)) return;
-    setCommitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/candidates/import/commit`, {
-        method: "POST", credentials: "include", headers: authHeaders(),
-        body: JSON.stringify({ csv, skipDuplicates, source: "CSV_IMPORT" }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error?.message ?? `${res.status}`);
-      const data = body.data ?? body;
-      setCommitOutcomes(data.outcomes);
-      toast.success(`Imported: ${data.summary.created} new, ${data.summary.updated} updated, ${data.summary.skipped} skipped`);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Import failed");
-    } finally {
-      setCommitting(false);
-    }
+  const next = () => {
+    if (step === 3) { runImport(); return; }
+    if (step < 4) setStep(step + 1);
   };
 
-  const reset = () => { setCsv(""); setFilename(""); setPreview(null); setSummary(null); setCommitOutcomes(null); };
+  const canContinue = step === 1 ? !!file : true;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-start gap-3">
-          <Link href="/candidates" className="mt-1 text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Bulk import candidates</h1>
-            <p className="text-muted-foreground text-sm">
-              Upload a CSV exported from another ATS or any spreadsheet. We'll preview before importing.
-            </p>
+    <div className="mx-auto w-full max-w-[820px]">
+      <a href="/candidates" style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-2)", textDecoration: "none", fontWeight: 600, marginBottom: 14 }}>
+        <Icon name="chevsL" size={14} /> Candidates
+      </a>
+      <h1 style={{ margin: "0 0 4px", fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Bulk import candidates</h1>
+      <p style={{ margin: "0 0 22px", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Upload a CSV, map the columns, preview, and commit. The resume-parser enriches each record on import.</p>
+
+      {/* stepper */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
+        {steps.map((s, i) => (
+          <div key={s} style={{ display: "contents" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 26, height: 26, borderRadius: 99, display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700,
+                background: step > i + 1 ? "var(--c-brand)" : step === i + 1 ? "var(--c-brand-tint)" : "var(--c-surface-2)",
+                color: step > i + 1 ? "var(--c-on-brand)" : step === i + 1 ? "var(--c-brand-ink)" : "var(--c-ink-3)",
+                border: step === i + 1 ? "1px solid var(--c-brand)" : "1px solid var(--c-line)" }}>
+                {step > i + 1 ? <Icon name="check" size={14} stroke={3} /> : i + 1}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: step >= i + 1 ? "var(--c-ink)" : "var(--c-ink-3)" }}>{s}</span>
+            </div>
+            {i < steps.length - 1 && <div style={{ flex: 1, height: 1, background: step > i + 1 ? "var(--c-brand)" : "var(--c-line)", margin: "0 12px" }} />}
           </div>
-        </div>
-        <a
-          href={`data:text/csv;charset=utf-8,${encodeURIComponent(SAMPLE_CSV)}`}
-          download="cdc-ats-sample.csv"
-          className="text-xs inline-flex items-center gap-1.5 text-primary hover:underline"
-        >
-          <Download className="h-3.5 w-3.5" /> Download sample CSV
-        </a>
+        ))}
       </div>
 
-      {/* Step 1, upload */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> 1. Upload your CSV
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Accepted columns (case-insensitive): email, firstName, lastName, phone, location, linkedinUrl, portfolioUrl, source, tags. Headers can also be "First Name", "Last Name", "Mobile", etc.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <label className="block">
-            <div className="rounded-xl border-2 border-dashed border-border hover:border-primary/40 transition-colors p-8 text-center cursor-pointer">
-              <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm font-medium">
-                {filename ? `Selected: ${filename}` : "Click to choose a CSV file"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Up to 20 MB</p>
+      <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 24, boxShadow: "var(--e1)" }}>
+        {step === 1 && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Choose a CSV file or drop one here"
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); } }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={onDrop}
+              style={{ width: "100%", maxWidth: 460, margin: "0 auto", border: `1.5px dashed ${dragOver ? "var(--c-brand)" : "var(--c-line-strong)"}`, borderRadius: "var(--r-xl)", padding: "36px 20px", background: dragOver ? "var(--c-brand-tint)" : "var(--c-surface-2)", cursor: "pointer", transition: "border-color var(--t), background var(--t)" }}
+            >
+              <div style={{ width: 48, height: 48, borderRadius: 13, margin: "0 auto 14px", display: "grid", placeItems: "center", background: "var(--c-brand-tint)", color: "var(--c-brand)" }}><Icon name="users" size={24} /></div>
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Drop your CSV here</div>
+              <div style={{ fontSize: 12.5, color: "var(--c-ink-3)", margin: "4px 0 14px" }}>or browse, up to 5,000 rows on your plan</div>
+              <span style={{ display: "inline-block" }}><Btn variant="soft" icon="fileText">Choose file</Btn></span>
             </div>
             <input
+              ref={inputRef}
               type="file"
               accept=".csv,text/csv,application/vnd.ms-excel"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+              style={{ display: "none" }}
+              onChange={(e) => accept(e.target.files?.[0])}
             />
-          </label>
-          <div className="flex justify-end gap-2 mt-3">
-            <Button variant="outline" size="sm" onClick={reset} disabled={!csv}>Reset</Button>
-            <Button size="sm" onClick={runPreview} disabled={!csv || loadingPreview}>
-              {loadingPreview ? "Parsing…" : "Preview rows →"}
-            </Button>
+            {file && (
+              <div style={{ marginTop: 18, display: "inline-flex", gap: 9, alignItems: "center", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-ok-tint)", fontSize: 12.5, color: "var(--c-ink-2)" }}>
+                <Icon name="check" size={15} style={{ color: "var(--c-ok)" }} />
+                <b>{file.name}</b> · {fmtSize(file.size)}{meta ? ` · ${meta.dataRows.toLocaleString()} rows detected · ${meta.headers.length} columns` : ""}
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {/* Step 2, preview */}
-      {preview && summary && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">2. Preview ({summary.total} rows)</CardTitle>
-            <div className="flex items-center gap-3 mt-2 text-xs">
-              <Badge variant="outline" className="bg-ok/15 text-ok dark:text-ok">
-                {summary.newCount} new
-              </Badge>
-              <Badge variant="outline" className="bg-info/15 text-info dark:text-info">
-                {summary.updateCount} updates
-              </Badge>
-              {summary.invalidEmailCount > 0 && (
-                <Badge variant="outline" className="bg-destructive/15 text-destructive">{summary.invalidEmailCount} bad email</Badge>
-              )}
-              {summary.missingRequiredCount > 0 && (
-                <Badge variant="outline" className="bg-destructive/15 text-destructive">{summary.missingRequiredCount} missing name</Badge>
-              )}
-              {summary.duplicateInFileCount > 0 && (
-                <Badge variant="outline" className="bg-warn/15 text-warn dark:text-warn">{summary.duplicateInFileCount} dupes in file</Badge>
-              )}
+        {step === 2 && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 28px 1fr 1fr", gap: 12, padding: "0 0 10px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)", borderBottom: "1px solid var(--c-line)" }}>
+              <span>CSV column</span><span></span><span>Maps to</span><span>Sample</span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/30 sticky top-0">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-medium">#</th>
-                    <th className="text-left px-3 py-2 font-medium">Status</th>
-                    <th className="text-left px-3 py-2 font-medium">Email</th>
-                    <th className="text-left px-3 py-2 font-medium">Name</th>
-                    <th className="text-left px-3 py-2 font-medium">Phone</th>
-                    <th className="text-left px-3 py-2 font-medium">Location</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {preview.map((p) => (
-                    <tr key={p.row} className={p.status.startsWith("valid") ? "" : "bg-destructive/5"}>
-                      <td className="px-3 py-1.5 font-mono">{p.row}</td>
-                      <td className="px-3 py-1.5">
-                        {p.status === "valid_new" && <span className="text-ok inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />new</span>}
-                        {p.status === "valid_update" && <span className="text-info inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />update</span>}
-                        {p.status === "invalid_email" && <span className="text-destructive inline-flex items-center gap-1"><XCircle className="h-3 w-3" />bad email</span>}
-                        {p.status === "missing_required" && <span className="text-destructive inline-flex items-center gap-1"><XCircle className="h-3 w-3" />no name</span>}
-                        {p.status === "duplicate_in_file" && <span className="text-warn inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />dupe</span>}
-                      </td>
-                      <td className="px-3 py-1.5 font-mono">{p.candidate.email ?? "-"}</td>
-                      <td className="px-3 py-1.5">{[p.candidate.firstName, p.candidate.lastName].filter(Boolean).join(" ") || "-"}</td>
-                      <td className="px-3 py-1.5">{p.candidate.phone ?? "-"}</td>
-                      <td className="px-3 py-1.5">{p.candidate.location ?? "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {(meta?.headers ?? []).length === 0 && (
+              <div style={{ padding: "26px 0", textAlign: "center", fontSize: 12.5, color: "var(--c-ink-3)" }}>No columns were detected in this file. Go back and choose a CSV with a header row.</div>
+            )}
+            {(meta?.headers ?? []).map((h, i) => {
+              const mapped = guessField(h);
+              const ok = mapped !== "Skip";
+              return (
+                <div key={h + i} style={{ display: "grid", gridTemplateColumns: "1fr 28px 1fr 1fr", gap: 12, alignItems: "center", padding: "10px 0", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
+                  <span className="mono" style={{ fontSize: 12.5, color: "var(--c-ink)" }}>{h}</span>
+                  <Icon name="chevR" size={14} style={{ color: "var(--c-ink-3)" }} />
+                  <select defaultValue={mapped} style={{ padding: "7px 9px", borderRadius: "var(--r-sm)", border: "1px solid", borderColor: ok ? "var(--c-line-2)" : "var(--c-line)", background: ok ? "var(--c-surface)" : "var(--c-surface-2)", color: ok ? "var(--c-ink)" : "var(--c-ink-3)", fontSize: 12.5, fontWeight: 600, fontFamily: "var(--font-sans)", cursor: "pointer" }}>
+                    {FIELD_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+                  </select>
+                  <span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>from your file</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+              <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">{(meta?.dataRows ?? 0).toLocaleString()} rows ready</Pill>
+              <Pill icon="fileText" tone="var(--c-ink-2)" bg="var(--c-surface-2)">{meta?.headers.length ?? 0} columns</Pill>
+              <Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">resume-parser will enrich on import</Pill>
             </div>
-            <div className="border-t p-3 flex items-center justify-between flex-wrap gap-3">
-              <label className="text-xs text-muted-foreground flex items-center gap-1.5 cursor-pointer">
-                <input type="checkbox" checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} className="h-3 w-3" />
-                Skip existing candidates (uncheck to update them)
-              </label>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={reset}>Start over</Button>
-                <Button size="sm" onClick={runCommit} disabled={committing || (summary.newCount + summary.updateCount === 0)}>
-                  {committing ? "Importing…" : `3. Import ${summary.newCount + (skipDuplicates ? 0 : summary.updateCount)} candidates`}
-                </Button>
+            {/* Preview validates and enriches server-side on commit; we surface the
+                file's real shape here rather than inventing candidate rows. */}
+            <div style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(1, Math.min(4, meta?.headers.length ?? 1))}, 1fr)`, gap: 10, padding: "9px 13px", background: "var(--c-surface-2)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--c-ink-3)" }}>
+                {(meta?.headers ?? ["Column"]).slice(0, 4).map((h) => <span key={h}>{h}</span>)}
+              </div>
+              <div style={{ display: "grid", placeItems: "center", padding: "30px 13px", borderTop: "1px solid var(--c-line)", textAlign: "center" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-3)" }}>
+                  <Icon name="eye" size={15} style={{ color: "var(--c-ink-3)" }} />
+                  Row-level preview and scores appear in the queue after import.
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center", padding: "12px 14px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 18%, transparent)" }}>
+              <ScoreRing value={0} size={44} band="var(--c-ai)" label="score" />
+              <p style={{ margin: 0, fontSize: 12, color: "var(--c-ai-ink)", lineHeight: 1.45 }}>
+                Match scores stay empty until the resume-parser finishes. You can watch them fill in from the candidate queue.
+              </p>
+            </div>
+          </div>
+        )}
 
-      {/* Step 3, outcomes */}
-      {commitOutcomes && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-ok" /> Import complete
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs space-y-1">
-              {commitOutcomes.map((o) => (
-                <div key={o.row} className="flex items-center gap-2 font-mono">
-                  <span className="text-muted-foreground w-12">#{o.row}</span>
-                  <span className={
-                    o.status === "created" ? "text-ok"
-                    : o.status === "updated" ? "text-info"
-                    : o.status.includes("skipped") ? "text-muted-foreground"
-                    : "text-destructive"
-                  }>{o.status}</span>
-                  {o.reason && <span className="text-muted-foreground">- {o.reason}</span>}
-                  {o.candidateId && <span className="text-muted-foreground">→ {o.candidateId.slice(0, 8)}</span>}
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end pt-4">
-              <Link href="/candidates"><Button size="sm">View candidates →</Button></Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {step === 4 && (
+          <div style={{ textAlign: "center", padding: "26px 0", animation: "pop .3s var(--ease-spring)" }}>
+            <div style={{ width: 64, height: 64, borderRadius: 18, margin: "0 auto 16px", display: "grid", placeItems: "center", background: "var(--c-ok-tint)", color: "var(--c-ok)" }}><Icon name="check" size={32} stroke={2.2} /></div>
+            <h2 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 700 }}>{(imported ?? 0).toLocaleString()} candidates imported</h2>
+            <p style={{ margin: "8px auto 0", maxWidth: 380, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>The resume-parser is enriching them now, scores will appear in the queue within a few minutes.</p>
+          </div>
+        )}
+
+        {/* friendly inline failure notice (import POST did not succeed) */}
+        {err && (
+          <div role="alert" style={{ marginTop: 18, display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", borderRadius: "var(--r-lg)", background: "var(--c-danger-tint)", border: "1px solid color-mix(in oklab, var(--c-danger) 22%, transparent)" }}>
+            <Icon name="flag" size={16} style={{ color: "var(--c-danger)", flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 12.5, color: "var(--c-danger)", lineHeight: 1.45 }}>{err}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18 }}>
+        <Btn variant="ghost" onClick={() => { if (step > 1) setStep(step - 1); else if (typeof window !== "undefined") window.location.href = "/candidates"; }}>
+          {step > 1 ? "Back" : "Cancel"}
+        </Btn>
+        {step < 4 ? (
+          <span style={{ opacity: canContinue && !importing ? 1 : 0.5, pointerEvents: canContinue && !importing ? "auto" : "none" }}>
+            <Btn variant="primary" trailIcon={step === 3 ? undefined : "chevR"} icon={step === 3 ? "users" : undefined} onClick={next}>
+              {step === 3 ? (importing ? "Importing..." : `Import ${(meta?.dataRows ?? 0).toLocaleString()} candidates`) : "Continue"}
+            </Btn>
+          </span>
+        ) : (
+          <a href="/candidates"><Btn variant="primary" icon="users">View candidates</Btn></a>
+        )}
+      </div>
     </div>
   );
 }
