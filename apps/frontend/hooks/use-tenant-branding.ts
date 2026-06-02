@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Tenant branding hook — fetches /api/branding once per session and caches
+ * Tenant branding hook, fetches /api/branding once per session and caches
  * the result in module-local state with a 5-minute TTL.
  *
  * Used by:
@@ -10,7 +10,7 @@
  *   - any future component that wants brand-aware rendering
  *
  * Returns null while loading or when the user isn't authenticated (silent
- * fail — branding is non-essential).
+ * fail, branding is non-essential).
  */
 import { useState, useEffect } from "react";
 
@@ -93,7 +93,7 @@ export function useTenantBranding(): { branding: TenantBranding | null; loading:
   return { branding, loading, refresh };
 }
 
-/** Test seam — clear the module-local cache (used after PUT /branding). */
+/** Test seam, clear the module-local cache (used after PUT /branding). */
 export function clearTenantBrandingCache() {
   cached = null;
 }

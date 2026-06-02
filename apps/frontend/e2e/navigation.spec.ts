@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// These tests run against the real app — if no server is running, they'll fail gracefully
+// These tests run against the real app, if no server is running, they'll fail gracefully
 test.describe('Navigation smoke (requires running app)', () => {
   test.skip(!!process.env.CI, 'Skip in CI without running server');
 

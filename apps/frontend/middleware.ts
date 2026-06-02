@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Auth-flow routes + the entire anonymous candidate portal.
 // `/jobs`, `/status`, `/transparency`, `/appeal`, `/profile` belong to the
-// (candidate-portal) route group — anonymous applicants browse jobs, apply,
+// (candidate-portal) route group, anonymous applicants browse jobs, apply,
 // check status, etc. without a recruiter login.
 const PUBLIC_PATHS = [
   "/login",

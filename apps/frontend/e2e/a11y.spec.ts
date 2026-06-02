@@ -1,10 +1,10 @@
 /**
- * Phase 32f — accessibility audit via axe-core.
+ * Phase 32f, accessibility audit via axe-core.
  *
  * Runs axe against every public + critical authenticated page and asserts
  * zero WCAG 2.1 A + AA violations. Public pages (login, careers) run as
  * an unauthenticated user; authenticated pages need NEXT_PUBLIC_USE_MOCKS=true
- * + a token-stub helper (left as a TODO for now — the public surface alone
+ * + a token-stub helper (left as a TODO for now, the public surface alone
  * catches most of the high-impact issues).
  *
  * Run:
@@ -17,7 +17,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-// Pages that don't require auth — the bulk of our procurement-blocker
+// Pages that don't require auth, the bulk of our procurement-blocker
 // surface. Adding authenticated pages requires a login fixture, which
 // is more setup than this baseline justifies.
 const PUBLIC_PAGES = [
@@ -46,7 +46,7 @@ for (const page of PUBLIC_PAGES) {
       // We assert against it separately (warnings only, not failures) below.
       .analyze();
 
-    // Custom failure message — surface every violation with selector + help URL
+    // Custom failure message, surface every violation with selector + help URL
     // so a CI failure tells the developer exactly what to fix and how.
     if (results.violations.length > 0) {
       const summary = results.violations

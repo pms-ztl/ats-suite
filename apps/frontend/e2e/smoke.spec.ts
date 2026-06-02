@@ -23,7 +23,7 @@ test.describe('Smoke tests', () => {
 
     await page.click('button[type="submit"]');
 
-    // Wait for redirect — either to dashboard or stay on login with error
+    // Wait for redirect, either to dashboard or stay on login with error
     await page.waitForURL(/\/(dashboard|auth\/login)/, { timeout: 10000 });
     // Either a dashboard page or an error message should be visible
     const url = page.url();

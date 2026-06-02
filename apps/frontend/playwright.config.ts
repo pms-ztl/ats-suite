@@ -18,5 +18,5 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  // Don't start a server — tests run against an already-running instance
+  // Don't start a server, tests run against an already-running instance
 });
