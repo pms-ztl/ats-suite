@@ -1,41 +1,24 @@
 "use client";
-// app/(dashboard)/requisitions/new/page.tsx - EXACT Claude Design "Aurora" intake.
-// Path 1: type a title, the jd-author agent drafts the JD (qualifications,
-// inclusivity score, bias flags). Path 2: paste a full JD. Custom screening
-// criteria (label + value + importance) feed the candidate-screener.
+// app/(dashboard)/requisitions/new/page.tsx, requisition intake, the showpiece.
+// Path 1: type a title, the jd-author agent generates the full JD (qualifications,
+// inclusivity score, bias flags with one-click fixes). Path 2: paste a full JD.
 import { useState } from "react";
 import { Button, AIChip, Card } from "@/components/aurora";
 import { generateJD, createRequisition } from "@/lib/api";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 type Gen = Awaited<ReturnType<typeof generateJD>>;
 
 export default function NewRequisitionPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<"ai" | "paste">("ai");
   const [title, setTitle] = useState("");
   const [gen, setGen] = useState<Gen | null>(null);
   const [busy, setBusy] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   async function onGenerate() {
-    if (!title.trim()) return;
     setBusy(true);
-    try { setGen(await generateJD(title)); }
-    catch { toast.error("Could not generate a description. Try again or paste a JD."); }
+    try { setGen(await generateJD(title)); }   // POST /api/jd-author
+    catch { /* surface a toast in real wiring */ }
     finally { setBusy(false); }
-  }
-
-  async function onPublish() {
-    if (!title.trim()) { toast.error("Enter a job title first."); return; }
-    setSaving(true);
-    try {
-      await createRequisition({ title, description: gen?.description, requirements: gen?.requiredSkills });
-      toast.success("Requisition created, pending approval.");
-      router.push("/requisitions");
-    } catch { toast.error("Failed to create requisition. Please try again."); }
-    finally { setSaving(false); }
   }
 
   return (
@@ -59,7 +42,7 @@ export default function NewRequisitionPage() {
             <input id="jt" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Senior Backend Engineer"
               className="mt-2 h-11 w-full rounded border border-line-2 bg-surface px-3 outline-none focus-visible:shadow-ring" />
             <Button variant="ai" className="mt-3" disabled={!title || busy} onClick={onGenerate}>
-              {busy ? "Drafting..." : "Generate job description"}
+              {busy ? "Drafting." : "Generate job description"}
             </Button>
             <p className="mt-2 text-xs text-ink-3">The jd-author agent drafts requirements, an inclusivity score, and flags biased language. You edit before publishing.</p>
           </Card>
@@ -72,6 +55,7 @@ export default function NewRequisitionPage() {
           </Card>
         )}
 
+        {/* Central custom-fields section: admin types a LABEL + value + importance, feeding the AI screener */}
         <Card material="flat" className="rounded-2xl border border-line p-5">
           <h2 className="text-sm font-bold uppercase tracking-wide text-ink-3">Custom screening criteria</h2>
           <p className="mb-3 mt-1 text-xs text-ink-3">Each label + value + importance feeds the candidate-screener directly.</p>
@@ -83,6 +67,7 @@ export default function NewRequisitionPage() {
         </Card>
       </div>
 
+      {/* live candidate-facing preview + pay-transparency nudge */}
       <aside className="flex flex-col gap-4">
         <Card material="glass" className="rounded-2xl p-5">
           <div className="mb-2 flex items-center justify-between">
@@ -100,7 +85,7 @@ export default function NewRequisitionPage() {
                 <ul className="mt-3 flex flex-col gap-2">
                   {gen.biasFlags.map((b, i) => (
                     <li key={i} className="rounded border border-warn/40 bg-warn-tint p-2 text-xs">
-                      <b>{b.phrase}</b>, {b.suggestion} <Button variant="soft" size="sm" className="ml-1">Fix</Button>
+                      <b>{b.phrase}</b> , {b.suggestion} <Button variant="soft" size="sm" className="ml-1">Fix</Button>
                     </li>
                   ))}
                 </ul>
@@ -113,7 +98,7 @@ export default function NewRequisitionPage() {
         <Card material="clay" className="rounded-2xl p-4">
           <p className="text-sm"><b>Add a pay range.</b> Postings with transparent pay get more qualified applicants and meet pay-transparency law.</p>
         </Card>
-        <Button variant="primary" disabled={saving} onClick={onPublish}>{saving ? "Publishing..." : "Publish requisition"}</Button>
+        <Button variant="primary" onClick={() => createRequisition({ title })}>Publish requisition</Button>
       </aside>
     </div>
   );

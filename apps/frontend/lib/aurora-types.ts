@@ -39,6 +39,7 @@ export interface Requisition {
   employmentType?: string;
   description?: string;
   requirements?: string[];          // backend stores as JSON
+  requiredSkills?: string[];        // design alias for requirements (job board, etc.)
   customFields?: CustomField[];     // admin-defined label + value + importance
   niceToHave?: string[];
   inclusivityScore?: number;        // 0..100

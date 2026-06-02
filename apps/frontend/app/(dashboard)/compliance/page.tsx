@@ -1,8 +1,7 @@
 "use client";
-// app/(dashboard)/compliance/page.tsx - EXACT Claude Design "Aurora" layout.
-// Adverse-impact / fairness dashboard: impact ratio vs the 0.80 four-fifths
-// threshold, per group. Wired to api.bias.getFourFifthsReport.
-import { StatusBadge, Card, Skeleton, EmptyState, ErrorState, Button } from "@/components/aurora";
+// app/(dashboard)/compliance/page.tsx, adverse-impact / fairness dashboard.
+// Impact ratio vs the 0.80 four-fifths threshold, per group, date-stamped, EEOC export.
+import { AIChip, Card, StatusBadge, Skeleton, EmptyState, ErrorState, Button } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { getAdverseImpact } from "@/lib/api";
 import type { FairnessMetric } from "@/lib/types";

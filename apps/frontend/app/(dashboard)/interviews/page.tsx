@@ -1,14 +1,14 @@
 "use client";
-// app/(dashboard)/interviews/page.tsx - EXACT Claude Design "Aurora" layout.
-// Interviews list; InterviewStatus drives the badges. Wired to api.interviews.
-import { StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/interviews/page.tsx, interviews list (detail adds panelist feedback
+// + AI interview-intelligence summary). InterviewStatus enum drives the badges.
+import { AIChip, StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { listInterviews } from "@/lib/api";
 import type { Interview, InterviewStatus } from "@/lib/types";
 
 const BADGE: Record<InterviewStatus, "open" | "review" | "pass" | "fail" | "draft"> = {
-  SCHEDULED: "open", CONFIRMED: "pass", IN_PROGRESS: "review", COMPLETED: "review",
-  CANCELLED: "fail", NO_SHOW: "fail", RESCHEDULED: "open",
+  SCHEDULED: "open", CONFIRMED: "pass", COMPLETED: "review", CANCELLED: "fail", NO_SHOW: "fail",
+  IN_PROGRESS: "review", RESCHEDULED: "open",
 };
 
 export default function InterviewsPage() {
@@ -28,9 +28,9 @@ export default function InterviewsPage() {
             <Card key={iv.id} material="flat" className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-4">
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{iv.round}</div>
-                <div className="text-xs text-ink-3">{iv.startsAt ? new Date(iv.startsAt).toLocaleString() : "Unscheduled"} · {iv.durationMins}m · {iv.mode}</div>
+                <div className="text-xs text-ink-3">{new Date(iv.startsAt).toLocaleString()} · {iv.durationMins}m · {iv.mode}</div>
               </div>
-              <StatusBadge status={BADGE[iv.status] ?? "draft"} icon={null} />
+              <StatusBadge status={BADGE[iv.status]} icon={null} />
             </Card>
           ))}
         </div>

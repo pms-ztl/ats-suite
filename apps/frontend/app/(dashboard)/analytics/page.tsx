@@ -1,6 +1,6 @@
 "use client";
-// app/(dashboard)/analytics/page.tsx - EXACT Claude Design "Aurora" layout.
-// Analytics overview: conversion funnel + AI insights. Wired to api.analytics.
+// app/(dashboard)/analytics/page.tsx, analytics overview (funnel + KPIs + AI insights).
+// Sub-routes: /analytics/time-to-hire, /source-effectiveness, /diversity reuse this shell.
 import { AIChip, Card, Skeleton, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { getFunnel } from "@/lib/api";
@@ -20,8 +20,7 @@ export default function AnalyticsPage() {
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-3">Conversion funnel</h2>
           {funnel.loading && <Skeleton className="h-48 rounded-lg" />}
           {funnel.error && <ErrorState title="Funnel unavailable" body="Could not load funnel." code="GET /api/analytics/funnel" onRetry={funnel.reload} />}
-          {funnel.data && funnel.data.length === 0 && <p className="text-sm text-ink-3">No funnel data yet.</p>}
-          {funnel.data && funnel.data.length > 0 && (
+          {funnel.data && (
             <div className="flex flex-col gap-2">
               {funnel.data.map((s) => (
                 <div key={s.stage} className="flex items-center gap-3">
@@ -37,11 +36,6 @@ export default function AnalyticsPage() {
         <Card material="clay" className="rounded-xl p-5">
           <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-wide text-ink-3">Insights</h2><AIChip>copilot</AIChip></div>
           <p className="text-sm text-ink-2">AI-surfaced trends and anomalies appear here, each one a starting point for your own analysis, not a conclusion.</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <a href="/analytics/time-to-hire" className="rounded-pill bg-surface-2 px-3 py-1 font-semibold text-ink-2 hover:text-ink">Time to hire</a>
-            <a href="/analytics/source-effectiveness" className="rounded-pill bg-surface-2 px-3 py-1 font-semibold text-ink-2 hover:text-ink">Source effectiveness</a>
-            <a href="/analytics/diversity" className="rounded-pill bg-surface-2 px-3 py-1 font-semibold text-ink-2 hover:text-ink">Diversity</a>
-          </div>
         </Card>
       </div>
     </div>

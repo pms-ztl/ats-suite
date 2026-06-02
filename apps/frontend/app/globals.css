@@ -201,7 +201,7 @@ body {
 }
 
 /* =========================================================================
-   LEGACY COMPAT — keep pre-Aurora components rendering during migration.
+   LEGACY COMPAT, keep pre-Aurora components rendering during migration.
    ========================================================================= */
 .glass-card { background: var(--glass); border: 1px solid var(--glass-edge); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); box-shadow: var(--e2), inset 0 1px 0 var(--glass-line); border-radius: var(--r-lg); }
 .glass-surface { background: var(--glass-2); border-color: var(--glass-edge); -webkit-backdrop-filter: blur(24px) saturate(1.3); backdrop-filter: blur(24px) saturate(1.3); }

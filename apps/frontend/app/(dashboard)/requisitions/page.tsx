@@ -1,7 +1,6 @@
 "use client";
-// app/(dashboard)/requisitions/page.tsx - EXACT Claude Design "Aurora" layout.
-// Requisitions list. Wired to api.platform.getRequisitions.
-import { Button, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/requisitions/page.tsx, requisitions list.
+import { Button, StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { listRequisitions } from "@/lib/api";
 import type { Requisition } from "@/lib/types";
@@ -29,7 +28,7 @@ export default function RequisitionsPage() {
               <Card material="flat" className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-4 hover:bg-surface-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">{r.title}</div>
-                  <div className="text-xs text-ink-3">{r.department}{r.location ? ` · ${r.location}` : ""}</div>
+                  <div className="text-xs text-ink-3">{r.department} · {r.location}</div>
                 </div>
                 <span className="rounded-pill bg-surface-3 px-2 py-0.5 text-xs font-semibold">{r.status}</span>
                 <span className="font-mono text-sm tabular-nums text-ink-2">{r.candidateCount} candidates</span>

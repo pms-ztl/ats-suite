@@ -1,7 +1,7 @@
 "use client";
-// app/(dashboard)/hitl/page.tsx - EXACT Claude Design "Aurora" layout.
-// Human-in-the-loop review queue. Evidence packs, reason codes, SLAs.
-// Wired to the gateway /agents/hitl via lib/api.
+// app/(dashboard)/hitl/page.tsx, human-in-the-loop review queue.
+// Evidence packs, reason codes, SLAs, reasoning trace. Anti-rubber-stamp: a reviewer
+// must record a reason before resolving (enforced in the detail route).
 import { AIChip, ConfidenceMeter, Card, Skeleton, EmptyState, ErrorState, Button } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { listReviewQueue } from "@/lib/api";
@@ -27,7 +27,7 @@ export default function HitlPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <AIChip>{r.verdict.agent}</AIChip>
                 <span className="rounded-pill bg-warn-tint px-2 py-0.5 text-xs font-bold text-warn">{r.reasonCode}</span>
-                <span className="ml-auto font-mono text-xs tabular-nums text-ink-3">SLA due {r.slaDueAt ? new Date(r.slaDueAt).toLocaleString() : "-"}</span>
+                <span className="ml-auto font-mono text-xs tabular-nums text-ink-3">SLA due {new Date(r.slaDueAt).toLocaleString()}</span>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_200px]">
                 <p className="text-sm text-ink-2">{r.verdict.summary}</p>

@@ -1,7 +1,6 @@
 "use client";
-// app/(dashboard)/screening/page.tsx - EXACT Claude Design "Aurora" layout.
-// Screening queue + glass verdict side panel. Result states: PASS / REVIEW / FAIL.
-// AI is advisory; a human advances or declines. Wired to api.screening via lib/api.
+// app/(dashboard)/screening/page.tsx, Screening queue. Opens a verdict side panel.
+// Result states: PASS / REVIEW / FAIL. AI is advisory; a human advances or declines.
 import { useState } from "react";
 import { Button, AIChip, ConfidenceMeter, Card, StatusBadge, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
@@ -36,6 +35,7 @@ export default function ScreeningPage() {
       )}
 
       {data && data.length > 0 && (
+        // table scrolls inside its own container, never the page
         <Card material="flat" className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="border-b border-line text-xs uppercase tracking-wide text-ink-3">
@@ -43,7 +43,7 @@ export default function ScreeningPage() {
             </thead>
             <tbody>
               {data.map((v) => (
-                <tr key={v.id ?? v.candidateId} className="border-b border-line last:border-0">
+                <tr key={v.candidateId} className="border-b border-line last:border-0">
                   <td className="p-3 font-semibold">{v.candidateId}</td>
                   <td className="p-3 font-mono tabular-nums">{v.score}</td>
                   <td className="w-48 p-3"><ConfidenceMeter value={v.confidence} /></td>
@@ -67,6 +67,7 @@ function VerdictPanel({ v, onClose }: { v: ScreeningVerdict; onClose: () => void
   return (
     <div role="dialog" aria-modal="true" aria-label="Screening verdict"
       className="fixed inset-0 z-50 flex justify-end bg-black/40">
+      {/* full-screen on mobile, side panel on desktop */}
       <Card material="glass" className="h-full w-full max-w-[460px] overflow-y-auto p-6">
         <div className="flex items-start justify-between">
           <AIChip>{v.agent}</AIChip>

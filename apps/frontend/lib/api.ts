@@ -77,8 +77,25 @@ function toCandidate(c: any): Candidate {
     appliedAt: c?.appliedAt ?? app?.appliedAt ?? c?.createdAt ?? "",
   };
 }
-export async function listCandidates(): Promise<Candidate[]> {
-  return arr(await api.candidates.listCandidates({ page: 1, pageSize: 100 })).map(toCandidate);
+export async function listCandidates(q?: { stage?: ApplicationStage; requisitionId?: string }): Promise<Candidate[]> {
+  const params: any = { page: 1, pageSize: 100 };
+  if (q?.stage) params.stage = q.stage;
+  if (q?.requisitionId) params.requisitionId = q.requisitionId;
+  return arr(await api.candidates.listCandidates(params)).map(toCandidate);
+}
+export async function advanceStage(id: string, stage: ApplicationStage): Promise<Candidate> {
+  const res: any = await raw("PATCH", `/candidates/${id}/stage`, { stage });
+  return toCandidate(res?.data ?? res);
+}
+export async function importCandidates(file: FormData): Promise<{ imported: number; flagged: number }> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/candidates/import`, {
+    method: "POST", credentials: "include",
+    headers: { ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: file,
+  });
+  if (!r.ok) throw new Error(`POST /candidates/import -> ${r.status}`);
+  const res: any = await r.json();
+  return { imported: Number(res?.imported ?? res?.data?.imported ?? 0), flagged: Number(res?.flagged ?? res?.data?.flagged ?? 0) };
 }
 export async function getCandidate(id: string): Promise<Candidate> {
   const res: any = await api.candidates.getCandidate(id);
@@ -91,6 +108,7 @@ function toRequisition(r: any): Requisition {
     id: r?.id, title: r?.title ?? "Untitled role", department: r?.department ?? "", location: r?.location ?? "",
     status: (r?.status ?? "DRAFT") as Requisition["status"], employmentType: r?.employmentType ?? r?.jobFamily ?? "",
     requirements: Array.isArray(r?.requirements) ? r.requirements : undefined,
+    requiredSkills: Array.isArray(r?.requiredSkills) ? r.requiredSkills : (Array.isArray(r?.requirements) ? r.requirements : []),
     customFields: Array.isArray(r?.customFields) ? r.customFields : undefined,
     salaryMin: r?.salaryMin ?? undefined, salaryMax: r?.salaryMax ?? undefined,
     openings: r?.headcount ?? r?.openings ?? undefined,
@@ -132,8 +150,9 @@ function toDecision(d: any): Decision {
 export async function listDecisions(): Promise<Decision[]> {
   return arr(await api.decisions.listDecisions({ page: 1, pageSize: 100 })).map(toDecision);
 }
-export async function recordDecision(b: { id: string; type: DecisionType }): Promise<void> {
-  try { await raw("POST", "/decisions", { decisionId: b.id, type: b.type }); } catch { /* surfaced via toast in the page when wired */ }
+export async function recordDecision(b: Partial<Decision>): Promise<Decision> {
+  const res: any = await raw("POST", "/decisions", { ...(b.id ? { decisionId: b.id } : {}), ...b });
+  return toDecision(res?.data ?? res ?? b);
 }
 
 /* ---------- HITL review queue ---------- */
@@ -148,6 +167,18 @@ function toReviewItem(r: any): ReviewItem {
 }
 export async function listReviewQueue(): Promise<ReviewItem[]> {
   return arr(await raw("GET", "/agents/hitl")).map(toReviewItem);
+}
+export async function getReviewItem(id: string): Promise<ReviewItem> {
+  const res: any = await raw("GET", `/agents/hitl/${id}`);
+  return toReviewItem(res?.data ?? res);
+}
+export async function resolveReview(id: string, b: { result: string; note: string }): Promise<ReviewItem> {
+  const res: any = await raw("POST", `/agents/hitl/${id}/resolve`, b);
+  return toReviewItem(res?.data ?? res ?? {});
+}
+export async function runScreening(requisitionId: string): Promise<{ queued: number }> {
+  const res: any = await raw("POST", "/screening", { requisitionId });
+  return { queued: Number(res?.queued ?? res?.data?.queued ?? 0) };
 }
 
 /* ---------- Interviews ---------- */

@@ -1,9 +1,9 @@
 "use client";
-// app/(dashboard)/candidates/[id]/page.tsx - EXACT Claude Design "Aurora" layout.
-// Rich multi-zone candidate profile: screening verdict + scorecards + activity +
-// parsed résumé. prev/next + blind mode. Single column on small viewports.
+// app/(dashboard)/candidates/[id]/page.tsx, rich multi-zone candidate profile.
+// Screening verdict + scorecards + activity + parsed résumé. prev/next + blind mode.
+// Reflows to a single column on small viewports.
 import { useParams } from "next/navigation";
-import { Button, AIChip, ConfidenceMeter, Card, Skeleton, ErrorState } from "@/components/aurora";
+import { Button, AIChip, ConfidenceMeter, Card, StatusBadge, Skeleton, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { getCandidate, getVerdict } from "@/lib/api";
 import type { Candidate, ScreeningVerdict } from "@/lib/types";
@@ -29,11 +29,12 @@ export default function CandidateProfilePage() {
         </label>
       </div>
 
+      {/* multi-zone: collapses 1.6fr/1fr to single column under 920px */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
           <Card material="clay" className="rounded-2xl p-5">
             <h1 className="text-xl font-extrabold tracking-tight">{c.name}</h1>
-            <p className="text-ink-3">{c.email}{c.location ? ` · ${c.location}` : ""}</p>
+            <p className="text-ink-3">{c.email} · {c.location}</p>
             <div className="mt-3"><span className="rounded-pill bg-surface-3 px-2 py-0.5 text-xs font-semibold">{c.stage}</span></div>
           </Card>
 
@@ -50,7 +51,6 @@ export default function CandidateProfilePage() {
                 <p className="mt-3 text-sm text-ink-2">{verdict.data.summary}</p>
               </div>
             )}
-            {!verdict.loading && !verdict.data && <p className="text-sm text-ink-3">No screening verdict yet for this candidate.</p>}
           </Card>
         </div>
 

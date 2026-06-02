@@ -1,8 +1,7 @@
 "use client";
-// app/(dashboard)/decisions/page.tsx - EXACT Claude Design "Aurora" layout.
-// Human-approval-gated decisions queue. AI is advisory; the decision is empty
-// until a human acts. Wired to api.decisions.
-import { Button, AIChip, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/decisions/page.tsx, human-approval-gated decisions queue.
+// AI is shown as an advisory recommendation; the decision field is empty until a human acts.
+import { Button, AIChip, StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { listDecisions, recordDecision } from "@/lib/api";
 import type { Decision } from "@/lib/types";

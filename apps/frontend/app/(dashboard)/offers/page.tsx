@@ -1,8 +1,6 @@
 "use client";
-// app/(dashboard)/offers/page.tsx - EXACT Claude Design "Aurora" layout.
-// AI drafts the letter; a human approves comp + chain before send. OfferStatus
-// drives the badges. Wired to lib/api (offers list is best-effort until the
-// gateway exposes it).
+// app/(dashboard)/offers/page.tsx, offers list. Composer is AI-drafted and editable,
+// human-approved before send. OfferStatus enum drives the badges.
 import { Button, AIChip, StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { listOffers, approveOffer } from "@/lib/api";
@@ -29,10 +27,10 @@ export default function OffersPage() {
             <Card key={o.id} material="flat" className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-4">
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{o.candidateId}</div>
-                <div className="font-mono text-xs tabular-nums text-ink-3">${o.baseSalary.toLocaleString()} base · starts {o.startDate || "TBD"}</div>
+                <div className="font-mono text-xs tabular-nums text-ink-3">${o.baseSalary.toLocaleString()} base · starts {o.startDate}</div>
               </div>
               {o.aiDrafted && <AIChip>offer-agent draft</AIChip>}
-              <StatusBadge status={BADGE[o.status] ?? "draft"} icon={null} />
+              <StatusBadge status={BADGE[o.status]} icon={null} />
               {o.status === "PENDING_APPROVAL" && <Button variant="primary" size="sm" onClick={() => approveOffer(o.id)}>Approve &amp; send</Button>}
             </Card>
           ))}

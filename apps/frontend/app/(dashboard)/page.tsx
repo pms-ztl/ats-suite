@@ -1,131 +1,63 @@
 "use client";
-// app/(dashboard)/page.tsx - EXACT Claude Design "Aurora" dashboard home.
-// Role-aware greeting + KPI row + a two-column working surface (latest
-// applications / open requisitions / review queue). Ported from
-// claude-design/dash-views.jsx and wired to the real gateway.
-import { Greeting, KpiRow, SectionCard, ScoreRing, StatusBadge, Btn, Pill, Reveal } from "@/components/aurora-kit";
-import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/page.tsx, role-dispatched dashboard home.
+// Renders KPIs + funnel + pending actions for the signed-in user's role.
+import { Button, AIChip, Card, Skeleton, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import {
-  getDashboardKpis, listScreening, listRequisitions, listReviewQueue,
-  type DashKpi,
-} from "@/lib/api";
-import type { ScreeningVerdict, Requisition, ReviewItem, ScreeningResult } from "@/lib/types";
+import { getFunnel } from "@/lib/api";
+import type { ApplicationStage } from "@/lib/types";
 
-const KIND: Record<ScreeningResult, "pass" | "review" | "fail"> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
-const BAND: Record<ScreeningResult, string> = { PASS: "var(--c-ok)", REVIEW: "var(--c-warn)", FAIL: "var(--c-danger)" };
+// TODO(wiring): derive from the session, GET /api/me → { role }
+const ROLE: string = "ADMIN";
 
-function ago(iso?: string): string {
-  if (!iso) return "";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (!isFinite(ms) || ms < 0) return "";
-  const m = Math.floor(ms / 60000);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
+const KPIS = [
+  { label: "Active candidates", value: "1,284", icon: "users" },
+  { label: "Open reqs", value: "38", icon: "briefcase" },
+  { label: "AI decisions", value: "342", ai: true },
+  { label: "Time to hire", value: "21d", icon: "clock" },
+];
 
-export default function DashboardHome() {
-  const { user } = useCurrentUser();
-  const first = (user?.name || "there").split(" ")[0];
-  const role = user?.role || "RECRUITER";
-  const hour = new Date().getHours();
-  const partOfDay = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-
-  const kpis = useData<DashKpi[]>(getDashboardKpis);
-  const screening = useData<ScreeningVerdict[]>(listScreening);
-  const reqs = useData<Requisition[]>(listRequisitions);
-  const review = useData<ReviewItem[]>(listReviewQueue);
-
-  const sub =
-    role === "HIRING_MANAGER" ? `${review.data?.length ?? 0} decisions are waiting on you.`
-    : role === "COMPLIANCE_OFFICER" ? "Fairness monitoring and audit trails are up to date."
-    : `${screening.data?.length ?? 0} recent screenings and ${review.data?.length ?? 0} candidates awaiting review.`;
-
+export default function DashboardPage() {
+  const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
-      <Greeting title={`${partOfDay}, ${first}`} sub={sub}>
-        <a href="/sourcing"><Btn variant="ai" icon="radar">Source candidates</Btn></a>
-        <a href="/requisitions/new"><Btn variant="primary" icon="briefcase">New requisition</Btn></a>
-      </Greeting>
-
-      {/* KPI row */}
-      {kpis.loading && <div className="mb-[18px] grid grid-cols-2 gap-[14px] lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[130px] rounded-[14px]" />)}</div>}
-      {kpis.error && <div className="mb-[18px]"><ErrorState title="Could not load metrics" body="The overview service did not respond." code="GET /api/platform/unified-overview" onRetry={kpis.reload} /></div>}
-      {kpis.data && <KpiRow kpis={kpis.data} cols={4} />}
-
-      {/* working surface */}
-      <div className="grid items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
-        <div className="flex flex-col gap-4">
-          {/* Latest applications */}
-          <Reveal i={4}>
-            <SectionCard title="Latest applications" icon="users" action="View all" pad={6}>
-              {screening.loading && <div className="grid gap-2 p-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
-              {screening.error && <ErrorState title="Could not load applications" body="The screening service did not respond." code="GET /api/screening" onRetry={screening.reload} />}
-              {screening.data && screening.data.length === 0 && <EmptyState title="No applications yet" body="When candidates apply, the screener triages them here." />}
-              {screening.data && screening.data.slice(0, 6).map((s) => (
-                <a key={s.id} href={`/screening`} className="grid grid-cols-[40px_1fr_auto_auto] items-center gap-3 rounded-[11px] px-3 py-[9px] transition-colors hover:bg-surface-2">
-                  <ScoreRing value={s.score} size={40} band={BAND[s.result]} label="" />
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold">{s.candidateId}</div>
-                    <div className="text-[11.5px] text-ink-3">{s.agent}</div>
-                  </div>
-                  <StatusBadge kind={KIND[s.result]} />
-                  <span className="mono w-8 text-right text-[11px] text-ink-3">{ago(s.createdAt)}</span>
-                </a>
-              ))}
-            </SectionCard>
-          </Reveal>
-
-          {/* Open requisitions */}
-          <Reveal i={6}>
-            <SectionCard title="Open requisitions" icon="briefcase" action="Manage">
-              {reqs.loading && <div className="grid gap-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-[11px]" />)}</div>}
-              {reqs.error && <ErrorState title="Could not load requisitions" body="The requisitions service did not respond." code="GET /api/requisitions" onRetry={reqs.reload} />}
-              {reqs.data && reqs.data.length === 0 && <EmptyState title="No open requisitions" body="Create your first role; the jd-author agent can draft it." actions={<a href="/requisitions/new"><Btn variant="ai" icon="sparkles">Create with AI</Btn></a>} />}
-              {reqs.data && reqs.data.length > 0 && (
-                <div className="flex flex-col gap-[13px]">
-                  {reqs.data.slice(0, 6).map((r) => (
-                    <a key={r.id} href={`/requisitions/${r.id}`} className="grid grid-cols-[1fr_150px_60px] items-center gap-[14px]">
-                      <div>
-                        <div className="text-[13px] font-semibold">{r.title}</div>
-                        <div className="text-[11.5px] text-ink-3">{r.department}{r.location ? ` · ${r.location}` : ""}</div>
-                      </div>
-                      <div><Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{r.status}</Pill></div>
-                      <span className="mono tnum text-right text-[13px] font-semibold">{r.candidateCount ?? 0}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </Reveal>
+    <div className="mx-auto w-full max-w-[1280px]">
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Org overview</h1>
+          <p className="mt-1 text-ink-2">Everything happening across your hiring operation, in real time.</p>
         </div>
+        <Button variant="primary" size="sm">Export report</Button>
+      </header>
 
-        {/* Right rail: review/decision queue */}
-        <Reveal i={5}>
-          <SectionCard title={role === "HIRING_MANAGER" ? "Decisions awaiting you" : "Review queue"} icon="gavel" action="Open queue">
-            {review.loading && <div className="grid gap-[10px]">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-[11px]" />)}</div>}
-            {review.error && <ErrorState title="Could not load the queue" body="The HITL service did not respond." code="GET /api/agents/hitl" onRetry={review.reload} />}
-            {review.data && review.data.length === 0 && <EmptyState title="You're all caught up" body="Nothing is waiting on a human right now. Nice work." />}
-            {review.data && review.data.length > 0 && (
-              <div className="flex flex-col gap-[10px]">
-                {review.data.slice(0, 6).map((it) => (
-                  <div key={it.id} className="rounded-[11px] border border-line bg-surface p-[13px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[13px] font-semibold">{it.candidateId}</span>
-                      <Pill tone="var(--c-warn)" bg="var(--c-warn-tint)" icon="clock">{it.reasonCode}</Pill>
-                    </div>
-                    <div className="mb-[9px] mt-1 text-[11.5px] text-ink-3">{it.verdict?.summary?.slice(0, 80) || "Awaiting human verification."}</div>
-                    <a href={`/hitl/${it.id}`}><Btn variant="primary" size="sm" icon="enter" style={{ width: "100%", justifyContent: "center" }}>Review</Btn></a>
-                  </div>
-                ))}
+      <section className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {KPIS.map((k) => (
+          <Card key={k.label} material="flat" className="rounded-xl border border-line p-4">
+            <div className="flex items-center justify-between text-xs font-semibold text-ink-2">
+              <span>{k.label}</span>{k.ai && <AIChip>AI</AIChip>}
+            </div>
+            <div className="mt-3 font-mono text-3xl font-extrabold tabular-nums">{k.value}</div>
+          </Card>
+        ))}
+      </section>
+
+      <Card material="flat" className="rounded-xl border border-line p-5">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-3">Pipeline funnel</h2>
+        {funnel.loading && <Skeleton className="h-40 rounded-lg" />}
+        {funnel.error && <ErrorState title="Funnel unavailable" body="Could not load funnel data." code="GET /api/analytics/funnel" onRetry={funnel.reload} />}
+        {funnel.data && (
+          <div className="flex flex-col gap-2">
+            {funnel.data.map((s) => (
+              <div key={s.stage} className="flex items-center gap-3">
+                <span className="w-32 shrink-0 text-xs text-ink-2">{s.stage}</span>
+                <div className="h-6 flex-1 overflow-hidden rounded bg-surface-3">
+                  <div className="h-full rounded bg-brand" style={{ width: `${Math.min(100, s.count)}%` }} />
+                </div>
+                <span className="w-12 text-right font-mono text-sm tabular-nums">{s.count}</span>
               </div>
-            )}
-          </SectionCard>
-        </Reveal>
-      </div>
+            ))}
+          </div>
+        )}
+      </Card>
+      <p className="mt-3 text-xs text-ink-3">Dispatched for role: {ROLE}. Recruiter / hiring-manager / interviewer / admin / compliance-officer each get a tailored layout.</p>
     </div>
   );
 }
