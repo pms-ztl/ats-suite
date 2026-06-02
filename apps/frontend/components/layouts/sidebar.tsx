@@ -366,7 +366,7 @@ function NavItem({
       href={href}
       title={label}
       className={cn(
-        "grid items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
+        "relative grid items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
         collapsed
           ? "grid-cols-[auto] justify-center px-2"
           : "grid-cols-[auto_minmax(0,1fr)_auto]",
@@ -375,6 +375,10 @@ function NavItem({
           : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
       )}
     >
+      {/* Aurora signature: emerald left accent bar on the active item */}
+      {active && !collapsed && (
+        <span aria-hidden="true" className="absolute left-0 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+      )}
       <span className="shrink-0 leading-none">{icon}</span>
       {!collapsed && (
         <>
