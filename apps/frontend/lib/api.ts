@@ -264,9 +264,13 @@ export async function getDashboardKpis(): Promise<DashKpi[]> {
     };
   };
   return [
-    mk("reqs", "Open requisitions", "briefcase", d.openRequisitions, d.openRequisitionsChange, d.openRequisitionsSparkline, { good: true }),
+    mk("reqs", "Open reqs", "briefcase", d.openRequisitions, d.openRequisitionsChange, d.openRequisitionsSparkline, { good: true }),
     mk("cands", "Active candidates", "users", d.activeCandidates, d.activeCandidatesChange, d.activeCandidatesSparkline, { good: true }),
-    mk("tth", "Time to hire", "clock", d.avgTimeToHire, d.avgTimeToHireChange, d.avgTimeToHireSparkline, { suffix: "d", good: false }),
+    mk("tth", "Time-to-hire", "clock", d.avgTimeToHire, d.avgTimeToHireChange, d.avgTimeToHireSparkline, { suffix: "d", good: false }),
+    mk("offer", "Offer accept", "fileText", d.offerAcceptRate, d.offerAcceptRateChange, d.offerAcceptRateSparkline, { suffix: "%", good: true }),
     mk("ai", "AI decisions today", "sparkles", d.aiDecisionsToday, d.aiDecisionsTodayChange, d.aiDecisionsTodaySparkline, { ai: true, good: true }),
+    mk("comp", "Compliance score", "shield", d.complianceScore, d.complianceScoreChange, d.complianceScoreSparkline, { suffix: "%", good: true }),
+    mk("div", "Diversity index", "grid", d.diversityScore, d.diversityScoreChange, d.diversityScoreSparkline, { good: true }),
+    mk("cost", "Cost per hire", "card", d.costPerHire, d.costPerHireChange, d.costPerHireSparkline, { prefix: "$", good: false }),
   ];
 }

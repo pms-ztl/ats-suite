@@ -7,8 +7,20 @@ import { Greeting, KpiRow, SectionCard, ScoreRing, StatusBadge, Btn, Pill, Revea
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { OrgOverview } from "@/components/dashboards/org-overview";
 import { getDashboardKpis, listScreening, listRequisitions, listReviewQueue, type DashKpi } from "@/lib/api";
 import type { ScreeningVerdict, Requisition, ReviewItem, ScreeningResult } from "@/lib/types";
+
+// Role-dispatched home (matches the design's DashboardHome): admins / compliance /
+// super-admins land on the org-overview command center; recruiters, hiring
+// managers, and interviewers get the focused working home below.
+const ORG_ROLES = ["ADMIN", "SUPER_ADMIN", "COMPLIANCE_OFFICER"];
+
+export default function DashboardHome() {
+  const { user } = useCurrentUser();
+  if (ORG_ROLES.includes(user?.role ?? "")) return <OrgOverview />;
+  return <RoleHome />;
+}
 
 const KIND: Record<ScreeningResult, "pass" | "review" | "fail"> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
 const BAND: Record<ScreeningResult, string> = { PASS: "var(--c-ok)", REVIEW: "var(--c-warn)", FAIL: "var(--c-danger)" };
@@ -23,7 +35,7 @@ function ago(iso?: string): string {
   return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
-export default function DashboardHome() {
+function RoleHome() {
   const { user } = useCurrentUser();
   const first = (user?.name || "there").split(" ")[0];
   const role = user?.role || "RECRUITER";

@@ -51,8 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var theme = localStorage.getItem('theme');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                // Light is the Aurora default; dark only when the user has
+                // explicitly chosen it (never auto-follow the OS preference).
+                if (localStorage.getItem('theme') === 'dark') {
                   document.documentElement.classList.add('dark');
                 }
               } catch(e) {}
