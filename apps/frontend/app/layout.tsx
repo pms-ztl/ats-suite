@@ -62,6 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${sans.variable} ${GeistMono.variable} font-sans antialiased`}>
+        {/* Aurora ambient field + film grain, the System & Shell background */}
+        <div className="aurora" aria-hidden="true"><i className="b1" /><i className="b2" /><i className="b3" /></div>
+        <div className="grain" aria-hidden="true" />
         <a
           href="#main"
           className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-3 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-sm focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:shadow-ring"
@@ -69,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <AuthProvider>
-          <div id="main">{children}</div>
+          <div id="main" className="relative z-[2]">{children}</div>
           <ClientProviders />
         </AuthProvider>
       </body>

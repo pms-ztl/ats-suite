@@ -190,6 +190,20 @@ body {
 .accent-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; transform-origin: left; animation: growx .8s var(--ease-out) both; }
 .hero-mesh i { position: absolute; display: block; border-radius: 50%; filter: blur(10px); }
 
+/* ---- Aurora ambient field + film grain (the System & Shell background) ---- */
+.aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; opacity: var(--aurora-opacity); transition: opacity var(--t-slow) var(--ease-out); }
+.aurora i { position: absolute; display: block; border-radius: 50%; filter: blur(70px); will-change: transform; }
+.aurora .b1 { width: 46vw; height: 46vw; left: -8vw; top: -12vw; background: radial-gradient(circle at 50% 50%, var(--c-brand) 0%, transparent 68%); opacity: .26; animation: drift1 26s var(--ease-io) infinite alternate; }
+.aurora .b2 { width: 40vw; height: 40vw; right: -10vw; top: 4vw; background: radial-gradient(circle at 50% 50%, var(--c-ai) 0%, transparent 68%); opacity: .20; animation: drift2 32s var(--ease-io) infinite alternate; }
+.aurora .b3 { width: 38vw; height: 38vw; left: 28vw; bottom: -16vw; background: radial-gradient(circle at 50% 50%, oklch(0.70 0.12 200) 0%, transparent 66%); opacity: .16; animation: drift3 30s var(--ease-io) infinite alternate; }
+.dark .aurora i { filter: blur(80px); }
+.dark .aurora .b1 { opacity: .30; } .dark .aurora .b2 { opacity: .26; } .dark .aurora .b3 { opacity: .20; }
+@keyframes drift1 { to { transform: translate(8vw, 6vw) scale(1.12); } }
+@keyframes drift2 { to { transform: translate(-6vw, 8vw) scale(1.08); } }
+@keyframes drift3 { to { transform: translate(4vw, -6vw) scale(1.14); } }
+.grain { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: var(--grain-opacity); mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
 /* graceful reduced-motion (global guarantee) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

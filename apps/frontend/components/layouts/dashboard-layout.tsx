@@ -27,7 +27,6 @@ import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { refreshTokenIfNeeded, getTokenExpiryMs } from "@/lib/token-refresh";
-import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
 import { ImpersonationBanner } from "@/components/auth/impersonation-banner";
 
@@ -264,11 +263,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main id="main-content" className="p-6 animate-page-in">{children}</main>
       </div>
 
-      {/* Phase 29, first-run onboarding wizard. Internally checks if the
-          tenant has dismissed/completed it; only shows for tenant-admins on
-          first dashboard visit. No-op for non-admins (endpoint 403s, wizard
-          stays hidden). */}
-      {user?.role === "ADMIN" && <OnboardingWizard />}
     </div>
   );
 }
