@@ -122,6 +122,10 @@
 }
 
 /* ---- base ---- */
+/* Default UI scale: render the whole app at 90% (equivalent to a 90% browser
+   zoom) so the dense Aurora chrome is not oversized. Scales fixed elements,
+   modals, and the design iframe uniformly, just like native browser zoom. */
+html { zoom: 0.9; }
 * { border-color: oklch(var(--border)); }
 body {
   font-family: var(--font-sans);
