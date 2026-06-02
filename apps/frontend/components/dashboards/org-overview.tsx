@@ -82,12 +82,12 @@ export function OrgOverview() {
   const overallConv = applied > 0 ? +((hired / applied) * 100).toFixed(1) : 0;
 
   const totalSel = (fairness.data ?? []).reduce((acc, m) => acc + (m.selectionRate || 0), 0) || 1;
-  const donutData = (fairness.data ?? []).map((m, i) => ({ g: m.group, v: Math.round((m.selectionRate / totalSel) * 100), color: m.flagged ? "var(--c-warn)" : GROUP_COLORS[i % GROUP_COLORS.length] }));
+  const donutData = (fairness.data ?? []).map((m, i) => ({ g: m.group, v: Math.round(((m.selectionRate || 0) / totalSel) * 100), color: m.flagged ? "var(--c-warn)" : GROUP_COLORS[i % GROUP_COLORS.length] }));
   const flaggedGroups = (fairness.data ?? []).filter((m) => m.flagged);
-  const minRatio = (fairness.data ?? []).reduce((m, x) => Math.min(m, x.impactRatio), 1);
+  const minRatio = (fairness.data ?? []).reduce((m, x) => Math.min(m, x.impactRatio || 1), 1);
   const pending = flaggedGroups.map((g): { title: string; meta: string; ic: string; tone: "ok" | "warn" | "danger" } => ({
-    title: `Adverse-impact flag: ${g.group}`, meta: `Impact ratio ${g.impactRatio.toFixed(2)} · below 0.80 four-fifths threshold`,
-    ic: "flag", tone: g.impactRatio < 0.6 ? "danger" : "warn",
+    title: `Adverse-impact flag: ${g.group}`, meta: `Impact ratio ${(g.impactRatio ?? 0).toFixed(2)} · below 0.80 four-fifths threshold`,
+    ic: "flag", tone: (g.impactRatio ?? 1) < 0.6 ? "danger" : "warn",
   }));
 
   return (
