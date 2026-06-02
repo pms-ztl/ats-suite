@@ -27,6 +27,9 @@
   --ease-spring: cubic-bezier(.34,1.4,.5,1);
   --t-fast: .13s; --t: .24s; --t-slow: .46s;
 
+  /* ---- Shell layout dimensions (used by the Aurora app shell) ---- */
+  --topbar: 56px; --side: 268px; --rail: 64px;
+
   /* ---- LIGHT THEME palette (bare oklch channels) ---- */
   color-scheme: light;
   --bg: 0.984 0.006 165; --bg-deep: 0.972 0.008 165;
@@ -95,6 +98,29 @@
   --border: var(--line); --input: var(--line-2);
 }
 
+/* =========================================================================
+   FULL-COLOR companions (--c-*). The palette tokens above hold BARE oklch
+   channels (for Tailwind's <alpha-value> wrapper), so raw `var(--brand)` is
+   NOT a valid color. The Aurora prototype components use inline styles like
+   style={{ background: "var(--c-brand)" }}; these wrap each bare channel in
+   oklch(). Defined once (not per-theme): `oklch(var(--brand))` re-resolves
+   lazily, so it picks up the dark channel automatically under `.dark`.
+   ========================================================================= */
+:root {
+  --c-bg: oklch(var(--bg)); --c-bg-deep: oklch(var(--bg-deep));
+  --c-surface: oklch(var(--surface)); --c-surface-2: oklch(var(--surface-2)); --c-surface-3: oklch(var(--surface-3));
+  --c-ink: oklch(var(--ink)); --c-ink-2: oklch(var(--ink-2)); --c-ink-3: oklch(var(--ink-3)); --c-ink-inv: oklch(var(--ink-inv));
+  --c-line: oklch(var(--line)); --c-line-2: oklch(var(--line-2)); --c-line-strong: oklch(var(--line-strong));
+  --c-brand: oklch(var(--brand)); --c-brand-2: oklch(var(--brand-2)); --c-brand-ink: oklch(var(--brand-ink));
+  --c-brand-tint: oklch(var(--brand-tint)); --c-brand-tint-2: oklch(var(--brand-tint-2)); --c-on-brand: oklch(var(--on-brand));
+  --c-ai: oklch(var(--ai)); --c-ai-2: oklch(var(--ai-2)); --c-ai-ink: oklch(var(--ai-ink));
+  --c-ai-tint: oklch(var(--ai-tint)); --c-ai-tint-2: oklch(var(--ai-tint-2)); --c-on-ai: oklch(var(--on-ai));
+  --c-ok: oklch(var(--ok)); --c-ok-tint: oklch(var(--ok-tint));
+  --c-warn: oklch(var(--warn)); --c-warn-tint: oklch(var(--warn-tint));
+  --c-danger: oklch(var(--danger)); --c-danger-tint: oklch(var(--danger-tint));
+  --c-info: oklch(var(--info)); --c-info-tint: oklch(var(--info-tint));
+}
+
 /* ---- base ---- */
 * { border-color: oklch(var(--border)); }
 body {
@@ -136,6 +162,33 @@ body {
   background: linear-gradient(90deg, transparent, oklch(1 0 0 / .14), transparent); animation: shimmer 1.5s infinite; }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 @keyframes floaty { to { transform: translateY(-6px); } }
+
+/* ---- Aurora prototype animations (entrance, draw-ins, ambient) ---- */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tickup { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@keyframes slide { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+/* origin-correct bar grow without needing transform-origin on every element */
+@keyframes growx { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes growy { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.07); opacity: .45; } }
+@keyframes drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(16px, 12px); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes livedot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
+
+/* mono / tabular-number helpers (prototypes use className="mono tnum") */
+.mono { font-family: var(--font-mono); letter-spacing: -0.01em; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* decorative bits referenced by the dashboard kit */
+.kpi-prem { position: relative; overflow: hidden; }
+.kpi-prem .sheen { position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(120deg, transparent 38%, oklch(1 0 0 / .07) 50%, transparent 62%); opacity: 0; transition: opacity var(--t); }
+.kpi-prem:hover .sheen { opacity: 1; }
+.accent-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; transform-origin: left; animation: growx .8s var(--ease-out) both; }
+.hero-mesh i { position: absolute; display: block; border-radius: 50%; filter: blur(10px); }
 
 /* graceful reduced-motion (global guarantee) */
 @media (prefers-reduced-motion: reduce) {
