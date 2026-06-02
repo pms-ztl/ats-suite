@@ -1,111 +1,189 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ConfidenceMeter } from "@/components/shared/confidence-meter";
-import { Brain, Shield, Eye, Scale, FileText, Users } from "lucide-react";
+// Public candidate-portal "How we use AI in hiring" explainer.
+// Ported from claude-design/portal.jsx (the Transparency component): a static
+// trust/explainability page. The (candidate-portal) layout already provides the
+// nav, footer and the max-w-5xl content shell, so this file renders page content
+// only. Reuses aurora-kit Btn / Pill / Icon and the aurora "clay" Card.
+// Inline palette colors use the full-color var(--c-NAME) companions.
 
-const aiUsage = [
-  { stage: "Resume Screening", model: "Resume Scorer v3.2", confidence: 0.91, decision: "Advanced", explanation: "Your resume matched 5 of 6 required skills. Experience level exceeds minimum requirements." },
-  { stage: "Skills Assessment", model: "Skills Matcher v2.8", confidence: 0.87, decision: "Strong Match", explanation: "Technical skills in React, TypeScript, and Node.js align closely with role requirements." },
-  { stage: "Interview Scheduling", model: "Scheduler v1.5", confidence: 0.95, decision: "Optimal Slot Found", explanation: "Matched your availability preferences with interviewer calendars." },
-];
+import { Btn } from "@/components/aurora-kit";
+import { Icon } from "@/components/aurora-icon";
+import { Card } from "@/components/aurora";
+
+/* AI-assistive banner, appears wherever AI touches the candidate. */
+function AINotice({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: compact ? "center" : "flex-start",
+        padding: compact ? "11px 14px" : "16px 18px",
+        borderRadius: "var(--r-lg)",
+        background: "var(--c-ai-tint)",
+        border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)",
+      }}
+    >
+      <span
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 10,
+          background: "var(--c-ai)",
+          color: "var(--c-on-ai)",
+          display: "grid",
+          placeItems: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Icon name="sparkles" size={17} />
+      </span>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", color: "var(--c-ai-ink)" }}>
+          AI is assistive, a human decides.
+        </div>
+        {!compact && (
+          <p style={{ margin: "3px 0 0", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.5 }}>
+            We use AI to help our team review applications fairly. It produces a recommendation only, a person always
+            makes the final call, and you can ask for a human review at any time.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function CandidateTransparencyPage() {
+  const assessed = [
+    "Your skills and experience against the role's requirements",
+    "Relevant projects and measurable impact",
+    "Strengths and areas to explore in interviews",
+  ];
+  const never = [
+    "Your name, photo, age, gender, race, or any protected characteristic",
+    "Where you went to school as a ranking factor",
+    "Anything you didn't choose to share",
+  ];
+  const columns: [string, string[], string, string][] = [
+    ["What the AI looks at", assessed, "check", "var(--c-ok)"],
+    ["What it never sees", never, "x", "var(--c-brand)"],
+  ];
+  const steps: [string, string][] = [
+    ["You apply", "Your resume and answers come straight to our team."],
+    [
+      "AI assists",
+      "An assistant compares your experience to the role and writes a recommendation, with its reasoning shown.",
+    ],
+    ["A human reviews", "A recruiter reads your application and the AI's notes, and makes the call."],
+    ["You can appeal", "If you think something was missed, you can ask a person to take another look."],
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">AI Transparency</h1>
-        <p className="text-sm text-muted-foreground mt-1">Understand how AI is used in your application process</p>
+    <div style={{ maxWidth: 760, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+      <div style={{ textAlign: "center", marginBottom: 26 }}>
+        <span
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            background: "var(--c-ai-tint)",
+            color: "var(--c-ai)",
+            display: "grid",
+            placeItems: "center",
+            margin: "0 auto 16px",
+          }}
+        >
+          <Icon name="sparkles" size={28} />
+        </span>
+        <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 10px" }}>
+          How we use AI in hiring
+        </h1>
+        <p
+          style={{
+            fontSize: "var(--fs-md)",
+            color: "var(--c-ink-2)",
+            maxWidth: 560,
+            margin: "0 auto",
+            lineHeight: 1.6,
+          }}
+        >
+          We believe AI should make hiring fairer and faster, never less human. Here's exactly how it works, in plain
+          language.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-info-tint flex items-center justify-center shrink-0">
-              <Brain className="h-4 w-4 text-ai" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">AI-Assisted</p>
-              <p className="text-2xs text-muted-foreground">AI helps screen and match, but humans make all final decisions</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-ok-tint flex items-center justify-center shrink-0">
-              <Shield className="h-4 w-4 text-ok" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Bias-Monitored</p>
-              <p className="text-2xs text-muted-foreground">All AI models are continuously audited for fairness</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-warn-tint flex items-center justify-center shrink-0">
-              <Scale className="h-4 w-4 text-warn" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Your Rights</p>
-              <p className="text-2xs text-muted-foreground">You can appeal any AI decision and request human review</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div style={{ marginBottom: 18 }}>
+        <AINotice />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Usage in Your Application</CardTitle>
-          <CardDescription>Each stage where AI was used to assist decision-making</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {aiUsage.map((usage, i) => (
-            <div key={i} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="info">{usage.stage}</Badge>
-                  <span className="text-2xs text-muted-foreground font-mono">{usage.model}</span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+        {columns.map(([title, items, ic, col]) => (
+          <Card key={title} material="clay" style={{ borderRadius: "var(--r-xl)", padding: 20 }}>
+            <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 12 }}>{title}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {items.map((x) => (
+                <div
+                  key={x}
+                  style={{
+                    display: "flex",
+                    gap: 9,
+                    fontSize: "var(--fs-sm)",
+                    color: "var(--c-ink-2)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <Icon name={ic} size={17} style={{ color: col, flexShrink: 0, marginTop: 1 }} />
+                  {x}
                 </div>
-                <Badge variant="success">{usage.decision}</Badge>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <Card material="clay" style={{ borderRadius: "var(--r-xl)", padding: 22, marginBottom: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 14 }}>How a decision gets made</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          {steps.map(([title, desc], i, arr) => (
+            <div key={i} style={{ display: "flex", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <span
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 99,
+                    background: i === 2 ? "var(--c-brand)" : "var(--c-brand-tint)",
+                    color: i === 2 ? "var(--c-on-brand)" : "var(--c-brand)",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    flexShrink: 0,
+                  }}
+                >
+                  {i + 1}
+                </span>
+                {i < arr.length - 1 && (
+                  <span style={{ width: 2, flex: 1, background: "var(--c-line)", minHeight: 14 }} />
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xs text-muted-foreground">AI Confidence:</span>
-                <ConfidenceMeter value={usage.confidence} size="sm" className="w-32" />
-              </div>
-              <div className="bg-muted/50 rounded p-3">
-                <p className="text-2xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                  <Eye className="h-3 w-3" /> Why this decision:
-                </p>
-                <p className="text-sm">{usage.explanation}</p>
+              <div style={{ paddingBottom: i < arr.length - 1 ? 16 : 0 }}>
+                <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{title}</div>
+                <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 1 }}>{desc}</div>
               </div>
             </div>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Data Usage & Privacy</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-start gap-3">
-            <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">What data is used</p>
-              <p className="text-2xs text-muted-foreground">Resume content, skills, experience level, and assessment responses. Demographic data is segregated and never used in AI decisions.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">Human oversight</p>
-              <p className="text-2xs text-muted-foreground">All consequential decisions (rejection, advancement) are reviewed by a human recruiter before being finalized.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div style={{ textAlign: "center" }}>
+        <a href="/appeal" style={{ textDecoration: "none", display: "inline-block" }}>
+          <Btn variant="ai" size="lg" icon="users">
+            Request a human review
+          </Btn>
+        </a>
+      </div>
     </div>
   );
 }

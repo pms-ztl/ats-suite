@@ -1,383 +1,310 @@
 "use client";
+// app/(candidate-portal)/status/page.tsx
+// Exact port of the Northwind candidate portal "Status" view from
+// claude-design/portal.jsx. The candidate-layout already provides the page
+// chrome (sticky nav + footer), so this file renders ONLY the page content.
+// Mock STATUS_STAGES is replaced with real data: a controlled email/reference
+// lookup hits GET /candidate-portal/status (falling back to /applications/
+// status), coerces res?.data ?? res, and renders the real stage/timeline.
+// AI is framed as advisory; a human always decides.
+import { Fragment, useState, type CSSProperties, type FormEvent } from "react";
+import { EmptyState, ErrorState, Skeleton } from "@/components/aurora";
 
-import { useState, FormEvent } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  CheckCircle2,
-  Clock,
-  Circle,
-  Search,
-  FileText,
-  ArrowRight,
-  Mail,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-
-const PIPELINE_STAGES = [
-  { key: "APPLIED", label: "Applied" },
-  { key: "SCREENED", label: "Screened" },
-  { key: "INTERVIEW", label: "Interview" },
-  { key: "OFFER", label: "Offer" },
-  { key: "HIRED", label: "Hired" },
-] as const;
-
-type StageKey = (typeof PIPELINE_STAGES)[number]["key"];
-
-interface Application {
-  id: string;
-  requisition: {
-    id: string;
-    title: string;
-    department: string;
-    location: string;
-  };
-  currentStage: StageKey;
-  status: string;
-  appliedAt: string;
-  updatedAt: string;
-}
-
+/* ---- inline raw() helper (do NOT edit lib/api.ts) ---- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function getStageIndex(stage: StageKey): number {
-  return PIPELINE_STAGES.findIndex((s) => s.key === stage);
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try {
+    t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null;
+  } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
   });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-function getStatusBadge(status: string) {
-  switch (status.toUpperCase()) {
-    case "ACTIVE":
-    case "IN_PROGRESS":
-      return <Badge variant="info">In Progress</Badge>;
-    case "HIRED":
-    case "ACCEPTED":
-      return <Badge variant="default" className="bg-ok">Hired</Badge>;
-    case "REJECTED":
-    case "DECLINED":
-      return <Badge variant="destructive">Not Selected</Badge>;
-    case "WITHDRAWN":
-      return <Badge variant="secondary">Withdrawn</Badge>;
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
-  }
+/* ---- icons (subset, from the prototype) ---- */
+const PI: Record<string, string> = {
+  search: "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM20 20l-4.8-4.8",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  sparkles: "M12 4.5l1.4 3.6L17 9.5l-3.6 1.4L12 14.5l-1.4-3.6L7 9.5l3.6-1.4z",
+  users: "M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11.5A3.25 3.25 0 1 0 10 5a3.25 3.25 0 0 0 0 6.5",
+  eye: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+};
+function I({ n, s = 20, sw = 1.7, c, style }: { n: string; s?: number; sw?: number; c?: string; style?: CSSProperties }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c || "currentColor"} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={style} aria-hidden="true">
+      <path d={PI[n]} />
+    </svg>
+  );
+}
+
+/* ---- shared (ported from the prototype, palette refs use var(--c-*)) ---- */
+type BtnKind = "primary" | "soft" | "ghost" | "ai";
+function Btn({ kind = "primary", icon, trail, children, onClick, type = "button", style = {} }: {
+  kind?: BtnKind; icon?: string; trail?: string; children: React.ReactNode;
+  onClick?: () => void; type?: "button" | "submit"; style?: CSSProperties;
+}) {
+  const V: Record<BtnKind, CSSProperties> = {
+    primary: { background: "var(--c-brand)", color: "var(--c-on-brand)", boxShadow: "var(--e1)" },
+    soft: { background: "var(--c-surface)", color: "var(--c-ink)", border: "1px solid var(--c-line-2)" },
+    ghost: { background: "transparent", color: "var(--c-ink-2)" },
+    ai: { background: "var(--c-ai)", color: "var(--c-on-brand)" },
+  };
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: "10px 18px", fontSize: "var(--fs-sm)", fontWeight: 700, borderRadius: "var(--r)", cursor: "pointer", border: "1px solid transparent", transition: "transform var(--t) var(--ease-out), box-shadow var(--t)", ...V[kind], ...style }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+    >
+      {icon && <I n={icon} s={17} />}
+      {children}
+      {trail && <I n={trail} s={17} />}
+    </button>
+  );
+}
+function Chip({ icon, children, tone = "var(--c-ink-2)", bg = "var(--c-surface-2)" }: {
+  icon?: string; children: React.ReactNode; tone?: string; bg?: string;
+}) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: tone, background: bg }}>
+      {icon && <I n={icon} s={13} />}
+      {children}
+    </span>
+  );
+}
+/* AI-assistive banner, appears wherever AI touches the candidate */
+function AINotice({ compact }: { compact?: boolean }) {
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: compact ? "center" : "flex-start", padding: compact ? "11px 14px" : "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)" }}>
+      <span style={{ width: 32, height: 32, borderRadius: 10, background: "var(--c-ai)", color: "var(--c-on-brand)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+        <I n="sparkles" s={17} />
+      </span>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", color: "var(--c-ai-ink)" }}>AI is assistive, a human decides.</div>
+        {!compact && (
+          <p style={{ margin: "3px 0 0", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.5 }}>
+            We use AI to help our team review applications fairly. It produces a recommendation only, a person always makes the final call, and you can ask for a human review at any time.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---- real-data shapes + stage mapping ---- */
+// Canonical hiring pipeline; the live "current stage" drives done/current flags.
+const STAGE_ORDER = ["APPLIED", "SCREENED", "INTERVIEW", "DECISION"] as const;
+type StageKey = (typeof STAGE_ORDER)[number];
+const STAGE_LABEL: Record<StageKey, string> = {
+  APPLIED: "Applied",
+  SCREENED: "Under review",
+  INTERVIEW: "Interview",
+  DECISION: "Decision",
+};
+
+type ApiApplication = {
+  applicationId?: string;
+  role?: string;
+  title?: string;
+  department?: string;
+  company?: string;
+  co?: string;
+  stage?: string;
+  status?: string;
+  appliedAt?: string;
+};
+
+type StatusView = {
+  role: string;
+  company: string | null;
+  appliedAt: string | null;
+  stageIndex: number;
+  statusRaw: string;
+};
+
+function fmtDate(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// Normalise a backend stage string to an index into STAGE_ORDER.
+function stageIndexOf(stage?: string): number {
+  if (!stage) return 0;
+  const s = stage.toUpperCase();
+  const direct = STAGE_ORDER.findIndex((k) => k === s);
+  if (direct >= 0) return direct;
+  if (s.includes("HIRED") || s.includes("OFFER") || s.includes("DECISION") || s.includes("REJECT") || s.includes("DECLINE")) return 3;
+  if (s.includes("INTERVIEW")) return 2;
+  if (s.includes("SCREEN") || s.includes("REVIEW")) return 1;
+  return 0;
+}
+
+// Coerce the wide range of payloads (the gateway may return {data:{applications:[...]}},
+// {applications:[...]}, [...], or a single application) into a single StatusView.
+function toView(payload: unknown): StatusView | null {
+  const root = (payload as { data?: unknown })?.data ?? payload;
+  let app: ApiApplication | undefined;
+  const apps = (root as { applications?: ApiApplication[] })?.applications;
+  if (Array.isArray(apps)) app = apps[0];
+  else if (Array.isArray(root)) app = (root as ApiApplication[])[0];
+  else if (root && typeof root === "object") app = root as ApiApplication;
+  if (!app || (!app.role && !app.title)) return null;
+  return {
+    role: app.role ?? app.title ?? "Your application",
+    company: app.company ?? app.co ?? null,
+    appliedAt: app.appliedAt ?? null,
+    stageIndex: stageIndexOf(app.stage ?? app.status),
+    statusRaw: (app.stage ?? app.status ?? "Under review").toString(),
+  };
 }
 
 export default function ApplicationStatusPage() {
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const [lookup, setLookup] = useState("");
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<StatusView | null>(null);
+  const [errored, setErrored] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [fetchError, setFetchError] = useState("");
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
-    setEmailError("");
-    setFetchError("");
-
-    if (!email.trim()) {
-      setEmailError("Please enter your email address");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email address");
-      return;
-    }
-
+    const q = lookup.trim();
+    if (!q) return;
     setLoading(true);
+    setErrored(false);
+    setNotFound(false);
     setSearched(true);
-
+    const qs = `?email=${encodeURIComponent(q)}&reference=${encodeURIComponent(q)}`;
     try {
-      // Use public API, no auth required
-      const res = await fetch(
-        `${API_BASE}/public/status?email=${encodeURIComponent(email.trim())}`,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (res.status === 404) {
-        setApplications([]);
-        setLoading(false);
-        return;
+      let payload: unknown;
+      try {
+        payload = await raw(`/candidate-portal/status${qs}`);
+      } catch {
+        // Fall back to the alternate route before surfacing an error.
+        payload = await raw(`/applications/status${qs}`);
       }
-
-      if (!res.ok) throw new Error("Failed to look up applications");
-
-      const json = await res.json();
-      const result = json.data ?? json;
-
-      // Map public API response to our Application interface
-      const items: Application[] = (result.applications ?? []).map(
-        (a: any) => ({
-          id: a.applicationId,
-          requisition: {
-            id: "",
-            title: a.role,
-            department: a.department,
-            location: "",
-          },
-          currentStage: a.stage ?? "APPLIED",
-          status: a.status ?? "ACTIVE",
-          appliedAt: a.appliedAt,
-          updatedAt: a.appliedAt,
-        })
-      );
-      setApplications(items);
-    } catch {
-      setFetchError(
-        "Unable to look up your applications right now. Please try again later."
-      );
-      setApplications([]);
+      const v = toView(payload);
+      if (!v) setNotFound(true);
+      else setView(v);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("404")) setNotFound(true);
+      else setErrored(true);
     } finally {
       setLoading(false);
     }
   }
 
+  function reset() {
+    setSearched(false);
+    setView(null);
+    setErrored(false);
+    setNotFound(false);
+  }
+
+  const stages = STAGE_ORDER.map((k, i) => ({
+    k: STAGE_LABEL[k],
+    done: view ? i < view.stageIndex : false,
+    current: view ? i === view.stageIndex : false,
+    date: view && i === 0 ? fmtDate(view.appliedAt) : view && i === view.stageIndex ? "In progress" : "",
+  }));
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Track Your Applications</h1>
-        <p className="text-muted-foreground mt-1">
-          Enter your email to see the status of all your applications.
-        </p>
-      </div>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "36px 0 20px", animation: "rise .4s var(--ease-out)" }}>
+      <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 8px", textAlign: "center" }}>Check your application status</h1>
+      <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", textAlign: "center", margin: "0 0 24px" }}>Enter the email you applied with, we'll show you exactly where things stand.</p>
 
-      {/* Email lookup form */}
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleLookup} className="flex items-end gap-3">
-            <div className="flex-1 space-y-1.5">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="jane@example.com"
-                  className={cn("pl-10", emailError && "border-destructive")}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (emailError) setEmailError("");
-                  }}
-                />
-              </div>
-              {emailError && (
-                <p className="text-xs text-destructive">{emailError}</p>
-              )}
-            </div>
-            <Button type="submit" disabled={loading} className="shrink-0">
-              {loading ? (
-                <Clock className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4 mr-2" />
-              )}
-              Look Up
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-2/3" />
-                <Skeleton className="h-4 w-1/3 mt-2" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  {[1, 2, 3, 4, 5].map((j) => (
-                    <Skeleton key={j} className="h-8 w-8 rounded-full" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {!searched ? (
+        <form onSubmit={handleLookup} className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 24, maxWidth: 460, margin: "0 auto" }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <input
+              value={lookup}
+              onChange={(e) => setLookup(e.target.value)}
+              type="text"
+              aria-label="Email or reference"
+              style={{ flex: 1, padding: "12px 15px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-md)", outline: "none", fontFamily: "var(--font-sans)" }}
+              placeholder="you@email.com"
+            />
+            <Btn kind="primary" type="submit">Look up</Btn>
+          </div>
+        </form>
+      ) : loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Skeleton className="h-[150px] rounded-[var(--r-2xl)]" />
+          <Skeleton className="h-[80px] rounded-[var(--r-lg)]" />
+          <Skeleton className="h-[64px] rounded-[var(--r-lg)]" />
         </div>
-      )}
-
-      {/* Error */}
-      {fetchError && (
-        <Card className="border-destructive/30">
-          <CardContent className="py-6 text-center">
-            <p className="text-sm text-destructive">{fetchError}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Results */}
-      {!loading && searched && !fetchError && (
-        <>
-          {applications.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-                <h2 className="text-lg font-semibold">
-                  No applications found
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                  We could not find any applications for{" "}
-                  <strong>{email}</strong>. If you recently applied, it may take
-                  a few minutes to appear.
-                </p>
-                <Button variant="outline" className="mt-4" asChild>
-                  <Link href="/jobs">
-                    Browse open positions <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Found {applications.length} application
-                {applications.length !== 1 ? "s" : ""} for{" "}
-                <strong>{email}</strong>
-              </p>
-
-              {applications.map((app) => {
-                const currentIdx = getStageIndex(app.currentStage);
-
-                return (
-                  <Card key={app.id}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <CardTitle className="text-base">
-                            {app.requisition.title}
-                          </CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {app.requisition.department} -{" "}
-                            {app.requisition.location}
-                          </p>
-                        </div>
-                        {getStatusBadge(app.status)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Applied {formatDate(app.appliedAt)} - Last updated{" "}
-                        {formatDate(app.updatedAt)}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Pipeline stepper */}
-                      <div className="flex items-center gap-0">
-                        {PIPELINE_STAGES.map((stage, i) => {
-                          const isCompleted = i < currentIdx;
-                          const isCurrent = i === currentIdx;
-                          const isUpcoming = i > currentIdx;
-
-                          return (
-                            <div
-                              key={stage.key}
-                              className="flex items-center flex-1"
-                            >
-                              <div className="flex flex-col items-center gap-1.5 flex-1">
-                                <div
-                                  className={cn(
-                                    "h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                                    isCompleted &&
-                                      "bg-ok-tint text-ok",
-                                    isCurrent &&
-                                      "bg-primary/10 text-primary ring-2 ring-primary",
-                                    isUpcoming &&
-                                      "bg-muted text-muted-foreground"
-                                  )}
-                                >
-                                  {isCompleted ? (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                  ) : isCurrent ? (
-                                    <Clock className="h-4 w-4" />
-                                  ) : (
-                                    <Circle className="h-4 w-4" />
-                                  )}
-                                </div>
-                                <span
-                                  className={cn(
-                                    "text-xs text-center",
-                                    isCompleted && "text-ok font-medium",
-                                    isCurrent && "text-primary font-medium",
-                                    isUpcoming && "text-muted-foreground"
-                                  )}
-                                >
-                                  {stage.label}
-                                </span>
-                              </div>
-                              {i < PIPELINE_STAGES.length - 1 && (
-                                <div
-                                  className={cn(
-                                    "h-0.5 flex-1 -mt-5",
-                                    i < currentIdx
-                                      ? "bg-ok"
-                                      : "bg-border"
-                                  )}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Info cards (always shown) */}
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Your Rights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                AI assists in our hiring process. You have the right to request a
-                human review of any AI-assisted decision.
-              </p>
-              <div className="flex gap-2 mt-4">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/transparency">View AI Transparency</Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/appeal">Appeal a Decision</Link>
-                </Button>
+      ) : errored ? (
+        <div className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 26, display: "grid", placeItems: "center", minHeight: 220 }}>
+          <ErrorState
+            title="Could not load your status"
+            body="We could not reach the application service. Please try again in a moment."
+            code="GET /candidate-portal/status"
+            onRetry={reset}
+          />
+        </div>
+      ) : notFound || !view ? (
+        <div className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 26, display: "grid", placeItems: "center", minHeight: 220 }}>
+          <EmptyState
+            title="No application found"
+            body="We could not find an application for that email or reference. If you applied recently, it may take a little time to appear."
+            actions={
+              <>
+                <Btn kind="primary" onClick={reset}>Try another email</Btn>
+                <a href="/jobs" style={{ textDecoration: "none" }}><Btn kind="soft">Browse open roles</Btn></a>
+              </>
+            }
+          />
+        </div>
+      ) : (
+        <div style={{ animation: "rise .35s var(--ease-out)" }}>
+          <div className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 26, marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>{view.role}</div>
+                <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-3)" }}>
+                  {view.appliedAt ? `Applied ${fmtDate(view.appliedAt)}` : "Application received"}
+                  {view.company ? ` · ${view.company}` : ""}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Need Help?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                If you have questions about your application or our process,
-                please do not hesitate to reach out.
-              </p>
-              <Button variant="outline" size="sm" className="mt-4">
-                Contact Recruiting Team
-              </Button>
-            </CardContent>
-          </Card>
+              <Chip icon="clock" tone="var(--c-warn)" bg="var(--c-warn-tint)">Under review</Chip>
+            </div>
+            {/* tracker */}
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              {stages.map((s, i) => (
+                <Fragment key={s.k}>
+                  <div style={{ flex: 1, textAlign: "center", position: "relative" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 99, margin: "0 auto", display: "grid", placeItems: "center", background: s.done ? "var(--c-brand)" : "var(--c-surface-2)", color: s.done ? "var(--c-on-brand)" : "var(--c-ink-3)", border: s.current ? "2px solid var(--c-brand)" : s.done ? "none" : "1px solid var(--c-line)", boxShadow: s.current ? "0 0 0 4px var(--c-brand-tint)" : "none" }}>
+                      {s.done ? <I n="check" s={18} sw={2.4} /> : i + 1}
+                    </div>
+                    <div style={{ fontSize: "var(--fs-sm)", fontWeight: s.current ? 700 : 500, color: s.done ? "var(--c-ink)" : "var(--c-ink-3)", marginTop: 8 }}>{s.k}</div>
+                    {s.date && <div style={{ fontSize: 11, color: "var(--c-ink-3)", marginTop: 1 }}>{s.date}</div>}
+                  </div>
+                  {i < stages.length - 1 && <div style={{ flex: 1, height: 2, background: s.done ? "var(--c-brand)" : "var(--c-line)", marginTop: 17 }} />}
+                </Fragment>
+              ))}
+            </div>
+          </div>
+          <div style={{ padding: "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-surface)", border: "1px solid var(--c-line)", marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", marginBottom: 4 }}>What's happening now</div>
+            <p style={{ margin: 0, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.55 }}>
+              A recruiter on the team is reviewing your application alongside an AI-assisted summary. The recommendation is advisory only, a person makes the final call. You'll hear from us soon, and no action is needed from you right now.
+            </p>
+          </div>
+          <AINotice />
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href="/transparency" style={{ textDecoration: "none" }}><Btn kind="soft" icon="eye">See how AI was used</Btn></a>
+            <a href="/appeal" style={{ textDecoration: "none" }}><Btn kind="ai" icon="users">Request human review</Btn></a>
+          </div>
         </div>
       )}
     </div>
