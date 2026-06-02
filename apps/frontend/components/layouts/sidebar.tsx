@@ -1,426 +1,203 @@
 "use client";
-
+// components/layouts/sidebar.tsx
+// EXACT Claude Design shell sidebar (claude-design/shell.jsx + data.jsx NAV):
+// brand + workspace header, grouped role-gated nav with AI dots + count badges,
+// active item (brand-tint + left accent), and the plan-usage footer. Wired to
+// the real app: next/link + usePathname (active), usePermissions/useCurrentUser
+// (role-gating + tenant), live HITL count + seat usage.
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_CATEGORIES, CATEGORY_FEATURES_COUNT } from "@/lib/constants";
 import { usePermissions } from "@/lib/use-permissions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  LayoutDashboard, Shield, Scale, Brain, BarChart3, Users, Video,
-  ClipboardCheck, Search, CheckCircle2, ArrowUpRight, Plug, Calendar,
-  Rocket, Home, Settings, Bell, ExternalLink, FileText,
-  PanelLeftClose, PanelLeft, Sparkles, ShieldCheck, DollarSign,
-  ChevronLeft, ChevronRight, Building2, Zap, Crown, Tag,
-} from "lucide-react";
+import { Icon, Logo } from "@/components/aurora-icon";
 
-const PLAN_META: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
-  FREE:         { label: "Free",         icon: <Rocket className="h-2.5 w-2.5" />,   className: "bg-muted text-muted-foreground" },
-  STARTER:      { label: "Starter",      icon: <Zap className="h-2.5 w-2.5" />,      className: "bg-info-tint text-info dark:text-info" },
-  PROFESSIONAL: { label: "Pro",          icon: <Crown className="h-2.5 w-2.5" />,    className: "bg-ai-tint text-ai-ink dark:text-ai-ink" },
-  ENTERPRISE:   { label: "Enterprise",   icon: <Building2 className="h-2.5 w-2.5" />, className: "bg-warn-tint text-warn dark:text-warn" },
+interface SidebarProps { collapsed: boolean; onToggle: () => void; }
+
+type Item = { label: string; icon: string; href: string; roles: string[]; ai?: boolean; count?: number; countKey?: "hitl" };
+type Group = { section: string | null; platform?: boolean; items: Item[] };
+
+const ALL = ["admin", "recruiter", "hiring_manager", "interviewer", "compliance_officer", "super_admin"];
+
+// Design NAV (data.jsx) mapped to the real app routes.
+const NAV: Group[] = [
+  { section: null, items: [
+    { label: "Home", icon: "home", href: "/", roles: ALL },
+  ] },
+  { section: "Hiring", items: [
+    { label: "Candidates", icon: "users", href: "/candidates", roles: ["admin", "recruiter", "hiring_manager"] },
+    { label: "Requisitions", icon: "briefcase", href: "/requisitions", roles: ["admin", "recruiter", "hiring_manager"] },
+    { label: "Sourcing", icon: "radar", href: "/sourcing", roles: ["admin", "recruiter"], ai: true },
+    { label: "Screening", icon: "scan", href: "/screening", roles: ["admin", "recruiter", "hiring_manager"], ai: true },
+    { label: "Interviews", icon: "calendar", href: "/interviews", roles: ["admin", "recruiter", "hiring_manager", "interviewer"] },
+    { label: "Scheduling", icon: "clock", href: "/scheduling", roles: ["admin", "recruiter", "hiring_manager"] },
+    { label: "Decisions", icon: "gavel", href: "/decisions", roles: ["admin", "recruiter", "hiring_manager"] },
+    { label: "Offers", icon: "fileText", href: "/offers", roles: ["admin", "recruiter", "hiring_manager"] },
+  ] },
+  { section: "Intelligence", items: [
+    { label: "Copilot", icon: "sparkles", href: "/copilot", roles: ["admin", "recruiter", "hiring_manager"], ai: true },
+    { label: "Review Queue", icon: "listChecks", href: "/hitl", roles: ["admin", "hiring_manager", "compliance_officer"], ai: true, countKey: "hitl" },
+    { label: "AI Operations", icon: "cpu", href: "/ai", roles: ["admin", "compliance_officer", "super_admin"], ai: true },
+    { label: "Analytics", icon: "chart", href: "/analytics", roles: ["admin", "recruiter", "hiring_manager", "compliance_officer"] },
+  ] },
+  { section: "Governance", items: [
+    { label: "Compliance", icon: "shield", href: "/compliance", roles: ["admin", "compliance_officer"] },
+    { label: "Security", icon: "shield", href: "/security", roles: ["admin", "compliance_officer"] },
+    { label: "Audit Log", icon: "scroll", href: "/admin/audit", roles: ["admin", "compliance_officer"] },
+  ] },
+  { section: "Workspace", items: [
+    { label: "Team", icon: "userCog", href: "/settings/team", roles: ["admin"] },
+    { label: "Internal Mobility", icon: "mobility", href: "/mobility", roles: ["admin", "hiring_manager"] },
+    { label: "Integrations", icon: "plug", href: "/integrations", roles: ["admin", "recruiter"] },
+    { label: "Billing & Plan", icon: "card", href: "/billing", roles: ["admin"] },
+    { label: "Settings", icon: "settings", href: "/settings", roles: ["admin"] },
+    { label: "Support", icon: "lifebuoy", href: "/support", roles: ["admin"] },
+  ] },
+  { section: "Platform", platform: true, items: [
+    { label: "Tenants", icon: "building", href: "/admin", roles: ["super_admin"] },
+    { label: "Platform Agents", icon: "server", href: "/admin/platform/agents", roles: ["super_admin"], ai: true },
+    { label: "Cost Analytics", icon: "chart", href: "/admin/platform/cost", roles: ["super_admin"] },
+    { label: "Agent Prompts", icon: "terminal", href: "/admin/platform/prompts", roles: ["super_admin"], ai: true },
+    { label: "Plan Requests", icon: "inbox", href: "/admin/plan-requests", roles: ["super_admin"] },
+    { label: "Platform Audit", icon: "scroll", href: "/admin/platform/audit", roles: ["super_admin"] },
+  ] },
+];
+
+const ROLE_MAP: Record<string, string> = {
+  ADMIN: "admin", RECRUITER: "recruiter", HIRING_MANAGER: "hiring_manager",
+  INTERVIEWER: "interviewer", COMPLIANCE_OFFICER: "compliance_officer", SUPER_ADMIN: "super_admin",
 };
-
-const iconMap: Record<string, React.ReactNode> = {
-  LayoutDashboard: <LayoutDashboard className="h-4 w-4" />,
-  Shield: <Shield className="h-4 w-4" />,
-  Scale: <Scale className="h-4 w-4" />,
-  Brain: <Brain className="h-4 w-4" />,
-  BarChart3: <BarChart3 className="h-4 w-4" />,
-  Users: <Users className="h-4 w-4" />,
-  Video: <Video className="h-4 w-4" />,
-  ClipboardCheck: <ClipboardCheck className="h-4 w-4" />,
-  Search: <Search className="h-4 w-4" />,
-  CheckCircle2: <CheckCircle2 className="h-4 w-4" />,
-  ArrowUpRight: <ArrowUpRight className="h-4 w-4" />,
-  Plug: <Plug className="h-4 w-4" />,
-  Calendar: <Calendar className="h-4 w-4" />,
-  Rocket: <Rocket className="h-4 w-4" />,
-  FileText: <FileText className="h-4 w-4" />,
+const PLAN_TONE: Record<string, { tone: string; bg: string }> = {
+  FREE: { tone: "var(--c-ink-3)", bg: "var(--c-surface-3)" },
+  STARTER: { tone: "var(--c-info)", bg: "var(--c-info-tint)" },
+  PROFESSIONAL: { tone: "var(--c-brand)", bg: "var(--c-brand-tint)" },
+  ENTERPRISE: { tone: "var(--c-ai)", bg: "var(--c-ai-tint)" },
 };
-
-interface SidebarProps {
-  collapsed: boolean;
-  onToggle: () => void;
-}
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const { can, isSuperAdmin, isTenantAdmin } = usePermissions();
+  const { isSuperAdmin, isTenantAdmin } = usePermissions();
   const { user } = useCurrentUser();
   const { branding } = useTenantBranding();
-  const [hitlPendingCount, setHitlPendingCount] = useState(0);
+  const [hitl, setHitl] = useState(0);
   const [seats, setSeats] = useState<{ used: number; limit: number; unlimited: boolean } | null>(null);
-  const plan = PLAN_META[user?.tenant?.plan ?? "FREE"] ?? PLAN_META.FREE;
 
-  // Fetch seat usage for tenant admin (Batch 1)
-  useEffect(() => {
-    if (!isTenantAdmin || !user) return;
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-    let token: string | null = null;
-    if (typeof window !== "undefined") {
-      try { token = window.sessionStorage.getItem("ats-access-token"); } catch {}
-    }
-    fetch(`${API_BASE}/users/seats`, {
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(res => {
-        if (res?.data) setSeats({ used: res.data.used, limit: res.data.limit, unlimited: res.data.unlimited });
-      })
-      .catch(() => {});
-  }, [isTenantAdmin, user]);
+  const role = ROLE_MAP[user?.role ?? ""] ?? "admin";
+  const planName = user?.tenant?.plan ?? "FREE";
+  const plan = PLAN_TONE[planName] ?? PLAN_TONE.FREE;
+  const wsName = branding?.name ?? user?.tenant?.name ?? "CDC ATS";
+  const wsInitials = wsName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "CD";
 
   useEffect(() => {
-    // Use absolute backend URL + JWT (sessionStorage primary, HttpOnly cookie
-    // fallback via credentials:"include"). Previously hit relative "/api/..."
-    // on port 3000 with a fake "x-tenant-id" header, always 401, retried
-    // on every layout mount, added perceptible click latency.
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-    let token: string | null = null;
-    if (typeof window !== "undefined") {
-      try { token = window.sessionStorage?.getItem("ats-access-token") || null; } catch {}
-    }
-    fetch(`${API_BASE}/agents/hitl`, {
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let t: string | null = null;
+    try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+    const h = { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+    fetch(`${API}/agents/hitl`, { credentials: "include", headers: h })
       .then((r) => (r.ok ? r.json() : { data: [] }))
-      .then((res) => {
-        const data = Array.isArray(res) ? res : res.data ?? [];
-        setHitlPendingCount(data.filter((c: { status: string }) => c.status === "PENDING").length);
-      })
+      .then((res) => { const d = Array.isArray(res) ? res : res.data ?? []; setHitl(d.filter((c: { status: string }) => c.status === "PENDING").length); })
       .catch(() => {});
-  }, []);
+    if (isTenantAdmin) {
+      fetch(`${API}/users/seats`, { credentials: "include", headers: h })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((res) => { if (res?.data) setSeats({ used: res.data.used, limit: res.data.limit, unlimited: res.data.unlimited }); })
+        .catch(() => {});
+    }
+  }, [isTenantAdmin]);
+
+  const visible = NAV
+    .map((g) => ({ ...g, items: g.items.filter((it) => it.roles.includes(role) || (it.roles.includes("super_admin") && isSuperAdmin)) }))
+    .filter((g) => g.items.length > 0);
+
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
+  const seatPct = seats && !seats.unlimited && seats.limit > 0 ? Math.min(100, Math.round((seats.used / seats.limit) * 100)) : 64;
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <aside
-        className={cn(
-          "group/sidebar fixed left-0 top-0 z-40 h-screen border-r border-border/40 glass-surface transition-all duration-300 flex flex-col",
-          collapsed ? "w-16" : "w-64"
-        )}
-      >
-        {/* ───── Premium edge-rail toggle ─────────────────────────────────
-            Full-height hit zone hugging the sidebar's outer right edge.
-            Sits MOSTLY outside the sidebar (-mr-2.5 → 10px outside, 2px
-            inside) so it doesn't visually cover or intercept clicks on
-            the rightmost portion of NavItem rows (badges, etc.).
-            On hover an emerald vertical bar fades in + a pill toggle slides
-            in. Click anywhere on the rail to toggle.
-            ───────────────────────────────────────────────────────────── */}
-        <div className="absolute top-0 right-0 h-full w-3 -mr-2.5 group/rail z-50">
-          {/* Invisible widened hit-target, makes the edge forgiving to grab */}
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="absolute inset-0 cursor-pointer"
-          />
-          {/* Animated emerald rail that lights up on hover */}
-          <span
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-full w-px",
-              "bg-gradient-to-b from-transparent via-primary/0 to-transparent",
-              "group-hover/rail:via-primary/70 transition-all duration-300"
-            )}
-          />
-          {/* Floating pill toggle, premium look with glow on hover */}
-          <span
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute top-20 left-1/2 -translate-x-1/2",
-              "h-10 w-6 rounded-full border border-border/60",
-              "bg-background/90 backdrop-blur-md shadow-md",
-              "flex items-center justify-center",
-              "text-muted-foreground",
-              "opacity-0 -translate-x-1 group-hover/rail:opacity-100 group-hover/rail:translate-x-1/2",
-              "group-hover/rail:border-primary/60 group-hover/rail:text-primary",
-              "group-hover/rail:shadow-[0_0_0_3px_oklch(var(--primary)/0.15),0_8px_20px_-6px_oklch(var(--primary)/0.45)]",
-              "transition-all duration-200 ease-out"
-            )}
-          >
-            {collapsed
-              ? <ChevronRight className="h-3.5 w-3.5" />
-              : <ChevronLeft className="h-3.5 w-3.5" />}
-          </span>
-        </div>
-        {/* Logo */}
-        <div className="flex h-14 items-center border-b border-border/40 px-4">
-          <Link href="/" className={cn("flex items-center gap-2 min-w-0", collapsed && "mx-auto")}>
-            {branding?.logoUrl ? (
-              // Branded: real logo at 32×32, object-contain so any aspect renders cleanly.
-              <img
-                src={branding.logoUrl}
-                alt={branding.name}
-                className="h-8 w-8 shrink-0 rounded-lg object-contain bg-white/5 p-0.5"
-              />
-            ) : (
-              // Fallback: initial letter on primary-colored tile.
-              <div
-                className="h-8 w-8 shrink-0 rounded-lg glow-primary flex items-center justify-center"
-                style={{ backgroundColor: branding?.brandPrimaryColor ?? undefined }}
-              >
-                <span className="text-sm font-bold text-primary-foreground">
-                  {(branding?.name ?? user?.tenant?.name)?.charAt(0)?.toUpperCase() ?? "C"}
-                </span>
-              </div>
-            )}
-            <div
-              className={cn(
-                "min-w-0 overflow-hidden transition-all duration-200",
-                collapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
-              )}
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="block text-sm font-bold text-foreground truncate leading-tight">
-                  {branding?.name ?? user?.tenant?.name ?? "CDC ATS"}
-                </span>
-                <span className={cn(
-                  "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0",
-                  plan.className
-                )}>
-                  {plan.icon}{plan.label}
-                </span>
-              </div>
-              <p className="text-2xs text-muted-foreground truncate">{branding?.brandTagline ?? "AI-Powered Hiring"}</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Navigation */}
-        <ScrollArea className="flex-1 py-2">
-          <div className="space-y-1 px-2">
-            {/* Home */}
-            <NavItem
-              href="/"
-              icon={<Home className="h-4 w-4" />}
-              label="Dashboard"
-              active={pathname === "/"}
-              collapsed={collapsed}
-            />
-
-            {/* HITL Review Queue */}
-            <NavItem
-              href="/hitl"
-              icon={<ShieldCheck className="h-4 w-4" />}
-              label="Review Queue"
-              badge={hitlPendingCount > 0 ? hitlPendingCount : undefined}
-              active={pathname.startsWith("/hitl")}
-              collapsed={collapsed}
-              urgent={hitlPendingCount > 0}
-            />
-
-            <Separator className="my-2" />
-
-            {/* Category links, filtered by role */}
-            {SIDEBAR_CATEGORIES.filter((cat) => can(cat.key)).map((cat) => (
-              <NavItem
-                key={cat.key}
-                href={cat.path}
-                icon={iconMap[cat.icon]}
-                label={cat.label}
-                badge={CATEGORY_FEATURES_COUNT[cat.key]}
-                active={pathname.startsWith(cat.path)}
-                collapsed={collapsed}
-              />
-            ))}
-          </div>
-        </ScrollArea>
-
-        {/* Footer */}
-        <div className="border-t p-2 space-y-1">
-          {/* Platform admin portal, SUPER_ADMIN only */}
-          {isSuperAdmin && (
-            <NavItem
-              href="/admin"
-              icon={<Building2 className="h-4 w-4" />}
-              label="Admin Portal"
-              active={pathname.startsWith("/admin")}
-              collapsed={collapsed}
-            />
-          )}
-          {/* Seat usage indicator, Tenant admin only */}
-          {isTenantAdmin && seats && !collapsed && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-2xs">
-              <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground truncate">
-                Seats:{" "}
-                <strong className={cn(
-                  "text-foreground",
-                  !seats.unlimited && seats.used >= seats.limit && "text-danger"
-                )}>
-                  {seats.used}{seats.unlimited ? "" : ` / ${seats.limit}`}
-                </strong>
-              </span>
-            </div>
-          )}
-          <NavItem href="/status" icon={<ExternalLink className="h-4 w-4" />} label="Candidate Portal" collapsed={collapsed} />
-          <NavItem href="/billing" icon={<DollarSign className="h-4 w-4" />} label="Cost & Usage" collapsed={collapsed} active={pathname.startsWith("/billing")} />
-          <NavItem href="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" collapsed={collapsed} />
-          {/* Upgrade prompt for FREE plan */}
-          {!collapsed && (user?.tenant?.plan === "FREE" || !user?.tenant) && (
-            <Link
-              href="/pricing"
-              className="flex items-center gap-2 rounded-lg mx-1 px-3 py-2 bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors"
-            >
-              <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-primary truncate">Upgrade plan</p>
-                <p className="text-[10px] text-muted-foreground truncate">Unlock all AI agents</p>
-              </div>
-            </Link>
-          )}
-          <Link
-            href="/platform"
-            title="What's New"
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors min-w-0",
-              collapsed && "justify-center"
-            )}
-          >
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-ai" />
-            <span
-              className={cn(
-                "flex-1 min-w-0 truncate transition-all duration-200",
-                collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
-              )}
-            >
-              What&apos;s New
-            </span>
-            <span
-              className={cn(
-                "shrink-0 overflow-hidden transition-all duration-200 bg-primary text-primary-foreground text-2xs px-1.5 py-0.5 rounded-full whitespace-nowrap",
-                collapsed ? "opacity-0 w-0 px-0" : "opacity-100"
-              )}
-            >
-              New
-            </span>
-          </Link>
-          <NavItem href="/settings" icon={<Settings className="h-4 w-4" />} label="Settings" collapsed={collapsed} />
-          <button
-            onClick={onToggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors min-w-0",
-              collapsed && "justify-center"
-            )}
-          >
-            {collapsed
-              ? <PanelLeft className="h-4 w-4 shrink-0" />
-              : <PanelLeftClose className="h-4 w-4 shrink-0" />}
-            <span
-              className={cn(
-                "flex-1 min-w-0 truncate text-left transition-all duration-200",
-                collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
-              )}
-            >
-              Collapse
-            </span>
-          </button>
-        </div>
-      </aside>
-    </TooltipProvider>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-  badge,
-  active,
-  collapsed,
-  urgent,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  badge?: number;
-  active?: boolean;
-  collapsed: boolean;
-  urgent?: boolean;
-}) {
-  // Grid layout: [icon] [label that truncates] [badge].
-  // Grid is more bulletproof than flex for "label must truncate and badge must
-  // stay visible", the badge column is `auto` so it sizes to content and never
-  // collapses, the label column is `minmax(0, 1fr)` so it CAN shrink below
-  // content width (which is what makes text-overflow:ellipsis kick in), and
-  // the icon column is `auto` so it stays at its natural 16px.
-  const content = (
-    <Link
-      href={href}
-      title={label}
-      className={cn(
-        "relative grid items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
-        collapsed
-          ? "grid-cols-[auto] justify-center px-2"
-          : "grid-cols-[auto_minmax(0,1fr)_auto]",
-        active
-          ? "bg-primary/10 text-primary font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-      )}
+    <aside
+      className={cn("fixed left-0 top-0 z-40 flex h-screen flex-col overflow-hidden border-r transition-[width] duration-300", collapsed ? "w-16" : "w-64")}
+      style={{ borderColor: "var(--c-line)", background: "color-mix(in oklab, var(--c-surface) 70%, transparent)", backdropFilter: "blur(10px)" }}
     >
-      {/* Aurora signature: emerald left accent bar on the active item */}
-      {active && !collapsed && (
-        <span aria-hidden="true" className="absolute left-0 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
-      )}
-      <span className="shrink-0 leading-none">{icon}</span>
+      {/* brand + workspace */}
+      <div style={{ padding: collapsed ? "14px 12px 10px" : "14px 14px 10px" }}>
+        <Link href="/" className="mb-3 flex items-center gap-2" style={{ justifyContent: collapsed ? "center" : "flex-start", paddingLeft: collapsed ? 0 : 3 }}>
+          {collapsed ? <Logo size={26} /> : (
+            branding?.logoUrl
+              ? <img src={branding.logoUrl} alt={wsName} style={{ height: 24, width: "auto", display: "block" }} />
+              : <><Logo size={24} /><span style={{ fontSize: 14, fontWeight: 700, color: "var(--c-ink)" }}>CDC <span style={{ color: "var(--c-ink-3)", fontWeight: 500 }}>ATS</span></span></>
+          )}
+        </Link>
+        {/* workspace header */}
+        <div className="flex w-full items-center gap-2.5 rounded-[var(--r-lg)] p-[8px_9px]" style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
+          <div className="mono grid shrink-0 place-items-center" style={{ width: 34, height: 34, borderRadius: "var(--r-sm)", background: "color-mix(in oklab, var(--c-brand) 16%, var(--c-surface))", color: "var(--c-brand)", fontWeight: 700, fontSize: 13, border: "1px solid color-mix(in oklab, var(--c-brand) 24%, transparent)" }}>{wsInitials}</div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1 text-left">
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--c-ink)" }}>{wsName}</div>
+              <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".05em", color: plan.tone, background: plan.bg, padding: "1px 6px", borderRadius: 5 }}>{planName}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* nav */}
+      <nav className="scrollbar-thin flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden" style={{ padding: collapsed ? "4px 12px 16px" : "4px 10px 16px" }}>
+        {visible.map((g, gi) => (
+          <div key={gi} style={{ marginTop: g.section ? 14 : 2 }}>
+            {g.section && !collapsed && (
+              <div className="flex items-center gap-1.5 px-2.5 pb-1.5" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: g.platform ? "var(--c-danger)" : "var(--c-ink-3)" }}>
+                {g.platform && <Icon name="bolt" size={11} />} {g.section}
+              </div>
+            )}
+            {g.section && collapsed && <div style={{ height: 1, background: "var(--c-line)", margin: "10px 6px" }} />}
+            {g.items.map((it) => {
+              const on = isActive(it.href);
+              const count = it.countKey === "hitl" ? (hitl > 0 ? hitl : undefined) : it.count;
+              return (
+                <Link key={it.href} href={it.href} title={collapsed ? it.label : undefined}
+                  className="relative mb-px flex items-center rounded-[var(--r)] transition-colors"
+                  style={{ gap: 11, padding: collapsed ? "9px 0" : "8px 10px", justifyContent: collapsed ? "center" : "flex-start",
+                    background: on ? "var(--c-brand-tint)" : "transparent", color: on ? "var(--c-brand-ink)" : "var(--c-ink-2)", fontWeight: on ? 700 : 500, fontSize: "var(--fs-sm)" }}>
+                  {on && !collapsed && <span aria-hidden style={{ position: "absolute", left: -10, top: "50%", transform: "translateY(-50%)", width: 3, height: 18, borderRadius: 3, background: "var(--c-brand)" }} />}
+                  <span className="relative shrink-0" style={{ color: on ? "var(--c-brand)" : "var(--c-ink-3)" }}>
+                    <Icon name={it.icon} size={18} stroke={on ? 2 : 1.7} />
+                    {it.ai && <span aria-hidden style={{ position: "absolute", top: -2, right: -3, width: 6, height: 6, borderRadius: 99, background: "var(--c-ai)", boxShadow: "0 0 0 2px var(--c-surface)" }} />}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 whitespace-nowrap text-left">{it.label}</span>
+                      {count != null && <span className="mono tnum" style={{ fontSize: 11, fontWeight: 600, color: on ? "var(--c-brand)" : "var(--c-ink-3)", background: on ? "var(--c-surface)" : "var(--c-surface-2)", padding: "1px 7px", borderRadius: 99 }}>{count}</span>}
+                    </>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* plan usage footer */}
       {!collapsed && (
-        <>
-          <span className="min-w-0 truncate">
-            {label}
-          </span>
-          {badge !== undefined ? (
-            <Badge
-              variant={urgent ? "destructive" : "secondary"}
-              className={cn(
-                "h-5 px-1.5 text-2xs min-w-[20px] justify-center tabular-nums shrink-0",
-                urgent
-                  ? "bg-danger text-white border-transparent"
-                  : active
-                    ? "bg-primary/20 text-primary border-transparent"
-                    : "bg-muted text-muted-foreground border-transparent"
-              )}
-            >
-              {badge}
-            </Badge>
-          ) : (
-            // Empty cell so grid columns stay aligned across rows
-            <span aria-hidden="true" />
-          )}
-        </>
+        <div style={{ padding: 12, borderTop: "1px solid var(--c-line)" }}>
+          <div style={{ background: "var(--c-surface-2)", border: "1px solid var(--c-line)", borderRadius: "var(--r-lg)", padding: "11px 12px" }}>
+            <div className="mb-[7px] flex items-center justify-between">
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--c-ink-2)" }}>{seats ? "Seats used" : "Plan"}</span>
+              <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{seats ? `${seats.used} / ${seats.unlimited ? "∞" : seats.limit}` : planName}</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 99, background: "var(--c-surface-3)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${seatPct}%`, borderRadius: 99, background: "linear-gradient(90deg, var(--c-brand-2), var(--c-brand))" }} />
+            </div>
+            <Link href="/billing" className="mt-[9px] block w-full rounded-[var(--r-sm)] text-center" style={{ padding: "6px", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontWeight: 600, fontSize: 11.5 }}>Upgrade plan</Link>
+          </div>
+        </div>
       )}
-    </Link>
+
+      {/* collapse toggle */}
+      <button onClick={onToggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="flex items-center gap-3 border-t" style={{ padding: collapsed ? "12px 0" : "12px 16px", justifyContent: collapsed ? "center" : "flex-start", borderColor: "var(--c-line)", color: "var(--c-ink-3)", background: "transparent" }}>
+        <Icon name="chevsL" size={17} style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform var(--t)" }} />
+        {!collapsed && <span style={{ fontSize: "var(--fs-sm)", fontWeight: 500 }}>Collapse</span>}
+      </button>
+    </aside>
   );
-
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right" className="flex items-center gap-2">
-          {label}
-          {badge !== undefined && (
-            <Badge variant="secondary" className="text-2xs">{badge}</Badge>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return content;
 }
