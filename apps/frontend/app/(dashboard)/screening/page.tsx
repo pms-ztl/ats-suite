@@ -1,242 +1,102 @@
 "use client";
+// app/(dashboard)/screening/page.tsx - EXACT Claude Design "Aurora" layout.
+// Screening queue + glass verdict side panel. Result states: PASS / REVIEW / FAIL.
+// AI is advisory; a human advances or declines. Wired to api.screening via lib/api.
+import { useState } from "react";
+import { Button, AIChip, ConfidenceMeter, Card, StatusBadge, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { useData } from "@/lib/use-data";
+import { listScreening } from "@/lib/api";
+import type { ScreeningVerdict, ScreeningResult } from "@/lib/types";
 
-import { useEffect, useState, useMemo } from "react";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ClipboardList, Search, Zap } from "lucide-react";
-import { api } from "@/lib/api-client";
-import { toast } from "sonner";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
-import { PageSkeleton } from "@/components/shared/page-skeleton";
-import { PageError } from "@/components/shared/page-error";
-
-interface Screening {
-  id: string;
-  candidateName?: string;
-  candidateId?: string;
-  requisitionTitle?: string;
-  type?: string;
-  status?: string;
-  stage?: string;
-  score?: number;
-  result?: string;
-  recommendation?: string;
-  createdAt?: string;
-  application?: {
-    candidate?: { firstName: string; lastName: string };
-    requisition?: { title: string };
-  };
-}
-
-const STATUS_OPTIONS = ["ALL", "PENDING", "IN_PROGRESS", "COMPLETED", "FAILED"] as const;
-
-const statusColor: Record<string, string> = {
-  PENDING: "bg-warn-tint text-warn",
-  IN_PROGRESS: "bg-info-tint text-info",
-  COMPLETED: "bg-ok-tint text-ok",
-  FAILED: "bg-danger-tint text-danger",
-  APPLIED: "bg-info-tint text-info",
-  SCREENING: "bg-warn-tint text-warn",
+const RESULT_BADGE: Record<ScreeningResult, "pass" | "review" | "fail"> = {
+  PASS: "pass", REVIEW: "review", FAIL: "fail",
 };
 
 export default function ScreeningPage() {
-  const { can } = usePermissions();
-  const [screenings, setScreenings] = useState<Screening[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const result = await api.screening.listScreenings({ page: 1, pageSize: 100 });
-        const list = result?.data ?? [];
-        setScreenings(Array.isArray(list) ? list : []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load screenings");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [retryCount]);
-
-  const filtered = useMemo(() => {
-    let rows = screenings;
-    if (statusFilter !== "ALL") {
-      rows = rows.filter(
-        (s) => s.status === statusFilter || s.stage === statusFilter
-      );
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      rows = rows.filter((s) => {
-        const name =
-          s.candidateName?.toLowerCase() ??
-          `${s.application?.candidate?.firstName ?? ""} ${s.application?.candidate?.lastName ?? ""}`.toLowerCase();
-        return name.includes(q);
-      });
-    }
-    return rows;
-  }, [screenings, statusFilter, search]);
-
-  async function handleRunAIScreen() {
-    try {
-      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-      const token = document.cookie.match(/ats-token=([^;]+)/)?.[1] ?? "";
-      await fetch(`${API}/ai/jobs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          type: "CANDIDATE_MATCH",
-          status: "QUEUED",
-          params: { batchSize: 10 },
-        }),
-      });
-      toast.success("AI screening batch job queued.");
-    } catch {
-      toast.error("Failed to queue AI screening job.");
-    }
-  }
-
-  if (!can("screening")) return <AccessDenied />;
-  if (loading) return <PageSkeleton />;
-  if (error)
-    return <PageError message={error} onRetry={() => setRetryCount((n) => n + 1)} />;
+  const { data, loading, error, reload } = useData<ScreeningVerdict[]>(listScreening);
+  const [open, setOpen] = useState<ScreeningVerdict | null>(null);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Screening & Assessment"
-        description="Application intake, skills matching, blind review, and structured evaluation"
-        breadcrumbs={[{ label: "Screening & Assessment" }]}
-        actions={
-          <Button size="sm" variant="outline" onClick={handleRunAIScreen}>
-            <Zap className="h-3.5 w-3.5 mr-1" />
-            Run AI Screen
-          </Button>
-        }
-      />
+    <div className="mx-auto w-full max-w-[1280px]">
+      <header className="mb-5">
+        <h1 className="text-2xl font-extrabold tracking-tight">Screening queue</h1>
+        <p className="mt-1 text-ink-2">Evidence-backed AI verdicts. Open one to review and decide. A human always advances.</p>
+      </header>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by candidate name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      {loading && (
+        <div className="grid gap-3" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s === "ALL" ? "All Statuses" : s.replace(/_/g, " ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      )}
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <ClipboardList className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm font-medium">No screenings to review</p>
-              <p className="text-xs mt-1">
-                Candidates will appear here once they enter the screening pipeline.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="text-left px-4 py-3 font-medium">Candidate</th>
-                    <th className="text-left px-4 py-3 font-medium hidden md:table-cell">
-                      Requisition
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 font-medium hidden md:table-cell">
-                      Score
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">
-                      Result
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filtered.map((s) => {
-                    const name =
-                      s.candidateName ??
-                      (s.application?.candidate
-                        ? `${s.application.candidate.firstName} ${s.application.candidate.lastName}`
-                        : "Unknown");
-                    const reqTitle =
-                      s.requisitionTitle ?? s.application?.requisition?.title ?? "-";
-                    const displayStatus = s.status ?? s.stage ?? "PENDING";
-                    const isPending = displayStatus === "PENDING";
-                    return (
-                      <tr
-                        key={s.id}
-                        className={`hover:bg-muted/40 transition-colors ${isPending ? "bg-warn-tint/50" : ""}`}
-                      >
-                        <td className="px-4 py-3 font-medium">{name}</td>
-                        <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                          {reqTitle}
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          {s.type?.replace(/_/g, " ") ?? "-"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-muted text-muted-foreground"}`}
-                          >
-                            {displayStatus.replace(/_/g, " ")}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          {s.score != null ? `${Math.round(s.score * 100)}%` : "-"}
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          {s.result ?? s.recommendation ?? "-"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
+      {error && <ErrorState title="Could not load screening" body="The screening service did not respond." code="GET /api/screening" onRetry={reload} />}
+
+      {data && data.length === 0 && (
+        <EmptyState title="Nothing to screen yet" body="When candidates apply, the candidate-screener scores them here for your review." />
+      )}
+
+      {data && data.length > 0 && (
+        <Card material="flat" className="overflow-x-auto rounded-xl border border-line">
+          <table className="w-full min-w-[680px] text-left text-sm">
+            <thead className="border-b border-line text-xs uppercase tracking-wide text-ink-3">
+              <tr><th className="p-3">Candidate</th><th className="p-3">Score</th><th className="p-3">Confidence</th><th className="p-3">Result</th><th className="p-3"></th></tr>
+            </thead>
+            <tbody>
+              {data.map((v) => (
+                <tr key={v.id ?? v.candidateId} className="border-b border-line last:border-0">
+                  <td className="p-3 font-semibold">{v.candidateId}</td>
+                  <td className="p-3 font-mono tabular-nums">{v.score}</td>
+                  <td className="w-48 p-3"><ConfidenceMeter value={v.confidence} /></td>
+                  <td className="p-3"><StatusBadge status={RESULT_BADGE[v.result]} icon={null} /></td>
+                  <td className="p-3 text-right">
+                    <Button variant="soft" size="sm" onClick={() => setOpen(v)} aria-haspopup="dialog">Open verdict</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {open && <VerdictPanel v={open} onClose={() => setOpen(null)} />}
+    </div>
+  );
+}
+
+function VerdictPanel({ v, onClose }: { v: ScreeningVerdict; onClose: () => void }) {
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Screening verdict"
+      className="fixed inset-0 z-50 flex justify-end bg-black/40">
+      <Card material="glass" className="h-full w-full max-w-[460px] overflow-y-auto p-6">
+        <div className="flex items-start justify-between">
+          <AIChip>{v.agent}</AIChip>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">Close</Button>
+        </div>
+        <div className="mt-4 flex items-end gap-3">
+          <span className="font-mono text-4xl font-extrabold tabular-nums">{v.score}</span>
+          <span className="pb-1 text-ink-3">match score</span>
+        </div>
+        <div className="mt-3"><ConfidenceMeter value={v.confidence} /></div>
+        <p className="mt-4 text-sm text-ink-2">{v.summary}</p>
+        <h2 className="mt-5 mb-2 text-xs font-bold uppercase tracking-wide text-ink-3">Per-requirement evidence</h2>
+        <ul className="flex flex-col gap-2">
+          {v.requirements.map((r, i) => (
+            <li key={i} className="rounded border border-line bg-surface p-3">
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span>{r.requirement}</span>
+                <span className={r.met === true ? "text-ok" : r.met === "partial" ? "text-warn" : "text-ink-3"}>
+                  {r.met === true ? "Met" : r.met === "partial" ? "Partial" : "Not met"}
+                </span>
+              </div>
+              <p className="mt-1 flex gap-1.5 text-xs text-ink-3"><span className="text-ai">AI</span>{r.evidence}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="sticky bottom-0 mt-5 flex gap-2 border-t border-line bg-surface/80 py-3 backdrop-blur">
+          <Button variant="danger" className="flex-1">Decline</Button>
+          <Button variant="primary" className="flex-1">Advance</Button>
+        </div>
+        <p className="mt-3 text-center text-xs text-ink-3">AI is advisory. This verdict supports your judgment, it does not replace it.</p>
       </Card>
     </div>
   );
