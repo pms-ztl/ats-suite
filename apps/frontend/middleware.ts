@@ -57,6 +57,13 @@ function roleFromJwt(token: string | undefined): string | null {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Logged-out visitors to the root see the public welcome landing as the
+  // default front door (rewrite, so the URL stays at "/"). Logged-in users
+  // fall through to their dashboard at "/" below.
+  if (!request.cookies.get("ats-token")?.value && (pathname === "/" || pathname === "")) {
+    return NextResponse.rewrite(new URL("/welcome", request.url));
+  }
+
   // Allow public paths
   if (PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
