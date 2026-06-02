@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Command } from "lucide-react";
+import { Search, Command, Sun, Moon, ChevronRight } from "lucide-react";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import {
   Tooltip,
@@ -134,6 +134,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     ? ({ "--brand": branding!.brandPrimaryColor, "--primary": branding!.brandPrimaryColor } as React.CSSProperties)
     : undefined;
 
+  // Top-bar breadcrumb + theme toggle (exact Aurora shell top bar).
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => { setIsDark(document.documentElement.classList.contains("dark")); }, [pathname]);
+  const toggleTheme = () => {
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
+    setIsDark(next);
+    try { window.localStorage?.setItem("theme", next ? "dark" : "light"); } catch {}
+  };
+  const wsName = branding?.name ?? user?.tenant?.name ?? "CDC ATS";
+  const pageTitle = pathname === "/"
+    ? "Home"
+    : (pathname.split("/").filter(Boolean)[0] ?? "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
     <div className="min-h-screen" style={brandStyle}>
       <a
@@ -147,7 +161,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className={cn("transition-all duration-300", sidebarCollapsed ? "ml-16" : "ml-64")}>
         {/* Top Bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 glass-surface px-6">
-          <div className="flex-1 flex items-center gap-4">
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            {/* breadcrumb: workspace > section */}
+            <div className="hidden items-center gap-2 min-w-0 md:flex">
+              <span className="truncate max-w-[150px] text-sm font-medium text-muted-foreground">{wsName}</span>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-semibold tracking-tight">{pageTitle}</span>
+            </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -188,6 +208,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* theme toggle */}
+            <button onClick={toggleTheme} aria-label="Toggle theme" className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             {/* Notifications, live unread count via /api/notifications */}
             <NotificationDropdown />
 
