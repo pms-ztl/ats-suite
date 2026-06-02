@@ -1,14 +1,15 @@
 "use client";
 // app/(dashboard)/billing/page.tsx - EXACT Claude Design "Aurora" billing &
-// plan screen. Ported from claude-design/screen-billing.jsx: plan card, usage
-// meters, payment method, invoices, and the "Choose your plan" upgrade modal.
+// plan screen. Ported faithfully from claude-design/screen-billing.jsx: plan
+// card, usage meters, payment method, invoices, and the "Choose your plan"
+// upgrade modal with tiers.
 //
-// Real data: the gateway exposes GET /billing/usage (AI agent run/token/cost
-// rollup, the only billing numbers that are genuinely measured). We wire the
-// usage meters to it and fall back to EmptyState if it 404s/errors. The plan
-// tiers, prices, payment card chrome and invoice scaffold are static
-// marketing chrome in the prototype, so we keep the layout but render
-// honest empty/placeholder states instead of fabricating dollar amounts.
+// WIRING (rule 3): the gateway exposes GET /billing/usage?days=30 (an AI agent
+// run / token / cost rollup, the only billing numbers genuinely measured), so
+// the usage meters read from it. The current plan comes from
+// useCurrentUser().user.tenant.plan. Tier prices/features are static marketing
+// chrome and kept verbatim. We do NOT fabricate invoices or a payment card, so
+// those sections render honest EmptyStates instead of fake rows.
 import { useState } from "react";
 import { Btn, Pill, Reveal } from "@/components/aurora-kit";
 import { Skeleton, EmptyState } from "@/components/aurora";
@@ -18,16 +19,20 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 /* ----------------------------- inline raw() ----------------------------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-async function raw(path: string, init?: RequestInit) {
+async function raw(path: string, init?: RequestInit): Promise<any> {
   let t: string | null = null;
-  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  try {
+    t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null;
+  } catch {}
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
     ...init,
   });
   if (!res.ok) throw new Error(`${path} -> ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  // Gateway wraps successes as { success, data }; unwrap to the payload.
+  return json?.data ?? json;
 }
 
 /* ------------------------------ real types ------------------------------ */
@@ -53,8 +58,8 @@ const PLAN_META: Record<Plan, { label: string; price: number | null; cycle: stri
 };
 
 const TIERS: { n: Plan; price: number | null; feats: string[] }[] = [
-  { n: "STARTER",      price: 299, feats: ["5 seats", "20 active jobs", "500 resumes / mo", "Core AI agents"] },
-  { n: "PROFESSIONAL", price: 999, feats: ["15 seats", "Unlimited jobs", "5,000 resumes / mo", "All 12 AI agents"] },
+  { n: "STARTER",      price: 299,  feats: ["5 seats", "20 active jobs", "500 resumes / mo", "Core AI agents"] },
+  { n: "PROFESSIONAL", price: 999,  feats: ["15 seats", "Unlimited jobs", "5,000 resumes / mo", "All 12 AI agents"] },
   { n: "ENTERPRISE",   price: null, feats: ["Unlimited seats", "SSO & SAML", "Dedicated support", "Custom SLAs"] },
 ];
 
@@ -67,7 +72,7 @@ const fStylesLabel: React.CSSProperties = {
 /* ------------------------------ usage meter ----------------------------- */
 function UsageMeter({ k, used, limit }: { k: string; used: number; limit: number | string }) {
   const unlimited = typeof limit === "string";
-  const pct = unlimited ? Math.min(100, (used / 50000) * 100) : Math.min(100, (used / (limit || 1)) * 100);
+  const pct = unlimited ? Math.min(100, (used / 50000) * 100) : Math.min(100, (used / ((limit as number) || 1)) * 100);
   const hot = !unlimited && pct >= 80;
   return (
     <div>
@@ -104,14 +109,14 @@ export default function BillingScreen() {
   // the product has no hard monthly cap (runs / tokens are unbounded today).
   const meters = u
     ? [
-        { k: "Agent runs", used: u.totalRuns, limit: "unlimited" as const },
-        { k: "Tokens in", used: u.totalTokensIn, limit: "unlimited" as const },
-        { k: "Tokens out", used: u.totalTokensOut, limit: "unlimited" as const },
+        { k: "Agent runs", used: u.totalRuns ?? 0, limit: "unlimited" as const },
+        { k: "Tokens in", used: u.totalTokensIn ?? 0, limit: "unlimited" as const },
+        { k: "Tokens out", used: u.totalTokensOut ?? 0, limit: "unlimited" as const },
       ]
     : [];
 
   return (
-    <div className="mx-auto w-full max-w-[1080px]">
+    <div className="mx-auto w-full max-w-[1280px]">
       {/* header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
         <div>
@@ -160,7 +165,7 @@ export default function BillingScreen() {
               <EmptyState title="No usage yet" body="When your AI agents run, their consumption shows up here for this billing period." />
             )}
             {!usage.loading && u && (
-              u.totalRuns === 0
+              (u.totalRuns ?? 0) === 0
                 ? <EmptyState title="No usage yet" body="When your AI agents run, their consumption shows up here for this billing period." />
                 : <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {meters.map((mm) => <UsageMeter key={mm.k} {...mm} />)}
@@ -201,7 +206,7 @@ export default function BillingScreen() {
               <button style={{ fontSize: 12, fontWeight: 600, color: "var(--c-brand)", background: "none", border: "none", cursor: "pointer" }}>Download all</button>
             </div>
             <div style={{ padding: "28px 18px" }}>
-              <EmptyState title="No invoices yet" body="Paid invoices will appear here once your subscription bills. Nothing has been charged." />
+              <EmptyState title="No invoices yet" body="Paid invoices appear here once your subscription bills. Nothing has been charged." />
             </div>
           </div>
         </Reveal>

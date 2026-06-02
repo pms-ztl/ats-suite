@@ -1,41 +1,170 @@
 "use client";
-// app/(dashboard)/requisitions/page.tsx, requisitions list.
-import { Button, StatusBadge, Card, Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/requisitions/page.tsx
+// EXACT Claude Design "Aurora" requisitions list (claude-design/req-list.jsx):
+// a DataTable with a FilterBar (search + status + department + density toggle),
+// status chips, salary range, candidate / headcount counts, the required-skill
+// AI accents, and a "Create requisition" CTA. Wired to the real gateway via
+// listRequisitions; loading -> Skeleton, error -> ErrorState, empty -> EmptyState.
+import { useState, useMemo } from "react";
+import { Btn, Pill } from "@/components/aurora-kit";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
 import { listRequisitions } from "@/lib/api";
-import type { Requisition } from "@/lib/types";
+import type { Requisition, RequisitionStatus } from "@/lib/types";
+
+type StatusMeta = { label: string; tone: string; bg: string; icon: string };
+const REQ_STATUS: Record<RequisitionStatus, StatusMeta> = {
+  DRAFT:     { label: "Draft",     tone: "var(--c-ink-3)",  bg: "var(--c-surface-3)",  icon: "dot" },
+  OPEN:      { label: "Open",      tone: "var(--c-brand)",  bg: "var(--c-brand-tint)", icon: "dot" },
+  ON_HOLD:   { label: "On hold",   tone: "var(--c-warn)",   bg: "var(--c-warn-tint)",  icon: "clock" },
+  FILLED:    { label: "Filled",    tone: "var(--c-ok)",     bg: "var(--c-ok-tint)",    icon: "check" },
+  CLOSED:    { label: "Closed",    tone: "var(--c-ink-2)",  bg: "var(--c-surface-3)",  icon: "x" },
+  CANCELLED: { label: "Cancelled", tone: "var(--c-danger)", bg: "var(--c-danger-tint)", icon: "x" },
+};
+const STATUS_ORDER: RequisitionStatus[] = ["OPEN", "DRAFT", "ON_HOLD", "FILLED", "CLOSED", "CANCELLED"];
+
+function StatusChip({ s }: { s: RequisitionStatus }) {
+  const m = REQ_STATUS[s] ?? REQ_STATUS.DRAFT;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 8px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: m.tone, background: m.bg }}>
+      <Icon name={m.icon} size={12} stroke={2.4} />{m.label}
+    </span>
+  );
+}
+
+function money(n?: number) { return `$${Math.round((n ?? 0) / 1000)}k`; }
+
+function created(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 export default function RequisitionsPage() {
   const { data, loading, error, reload } = useData<Requisition[]>(listRequisitions);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("All");
+  const [dept, setDept] = useState("All");
+  const [dense, setDense] = useState(false);
+
+  const all = data ?? [];
+  const depts = useMemo(() => ["All", ...Array.from(new Set(all.map((r) => r.department).filter(Boolean)))], [all]);
+  const statuses = ["All", ...STATUS_ORDER];
+  const rows = all.filter((r) =>
+    (!q || `${r.title} ${r.id} ${r.department}`.toLowerCase().includes(q.toLowerCase())) &&
+    (status === "All" || r.status === status) &&
+    (dept === "All" || r.department === dept));
+  const openCount = all.filter((r) => r.status === "OPEN").length;
+  const pad = dense ? "8px 16px" : "13px 16px";
+
+  const selStyle: React.CSSProperties = { padding: "8px 10px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontWeight: 600, fontFamily: "var(--font-sans)", cursor: "pointer" };
+  const cols = "1.9fr 1fr 1.2fr 90px 80px 90px";
+
   return (
     <div className="mx-auto w-full max-w-[1280px]">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      {/* header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Requisitions</h1>
-          <p className="mt-1 text-ink-2">Open roles and their pipelines.</p>
+          <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Requisitions</h1>
+          <p style={{ margin: "6px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>
+            {openCount} open of {all.length} total across Northwind Talent.
+          </p>
         </div>
-        <a href="/requisitions/new"><Button variant="primary" size="sm">New requisition</Button></a>
-      </header>
+        <div style={{ display: "flex", gap: 9 }}>
+          <Btn variant="soft" icon="arrowUpRight">Export</Btn>
+          <a href="/requisitions/new"><Btn variant="primary" icon="plus">Create requisition</Btn></a>
+        </div>
+      </div>
 
-      {loading && <div className="grid gap-2" aria-busy="true">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>}
+      {/* filter bar */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "0 12px", height: 38, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", flex: "1 1 240px", maxWidth: 320 }}>
+          <Icon name="search" size={16} style={{ color: "var(--c-ink-3)" }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, ID, department" style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontSize: "var(--fs-sm)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }} />
+        </div>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} style={selStyle}>
+          {statuses.map((o) => <option key={o} value={o}>{o === "All" ? "All statuses" : REQ_STATUS[o as RequisitionStatus].label}</option>)}
+        </select>
+        <select value={dept} onChange={(e) => setDept(e.target.value)} style={selStyle}>
+          {depts.map((o) => <option key={o} value={o}>{o === "All" ? "All departments" : o}</option>)}
+        </select>
+        <div style={{ flex: 1 }} />
+        <button onClick={() => setDense((d) => !d)} title="Density" style={{ display: "inline-flex", gap: 6, alignItems: "center", height: 38, padding: "0 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: dense ? "var(--c-surface-2)" : "var(--c-surface)", color: "var(--c-ink-2)", cursor: "pointer", fontSize: "var(--fs-sm)", fontWeight: 600 }}>
+          <Icon name="listChecks" size={15} />{dense ? "Comfortable" : "Compact"}
+        </button>
+      </div>
+
+      {/* loading / error / empty */}
+      {loading && (
+        <div className="grid gap-2" aria-busy="true">
+          {Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-[58px] rounded-xl" />)}
+        </div>
+      )}
       {error && <ErrorState title="Could not load requisitions" body="The requisitions service did not respond." code="GET /api/requisitions" onRetry={reload} />}
-      {data && data.length === 0 && <EmptyState title="No requisitions yet" body="Create your first role, the jd-author agent can draft it for you." actions={<a href="/requisitions/new"><Button variant="ai">Create with AI</Button></a>} />}
+      {data && data.length === 0 && (
+        <EmptyState
+          title="No requisitions yet"
+          body="Create your first role, the jd-author agent can draft it for you."
+          actions={<a href="/requisitions/new"><Btn variant="ai" icon="sparkles">Create with AI</Btn></a>}
+        />
+      )}
 
+      {/* table */}
       {data && data.length > 0 && (
-        <div className="grid gap-2">
-          {data.map((r) => (
-            <a key={r.id} href={`/requisitions/${r.id}`}>
-              <Card material="flat" className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-4 hover:bg-surface-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold">{r.title}</div>
-                  <div className="text-xs text-ink-3">{r.department} · {r.location}</div>
+        <>
+          <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--c-line)", background: "var(--c-surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)" }}>
+              <span>Requisition</span><span>Status</span><span>Salary range</span><span style={{ textAlign: "center" }}>Cands</span><span style={{ textAlign: "center" }}>Heads</span><span style={{ textAlign: "right" }}>Created</span>
+            </div>
+            {rows.map((r, i) => (
+              <a
+                key={r.id}
+                href={`/requisitions/${r.id}`}
+                style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: pad, alignItems: "center", borderTop: i ? "1px solid var(--c-line)" : "none", cursor: "pointer", transition: "background var(--t-fast) var(--ease-out)", textDecoration: "none", color: "inherit" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--c-surface-2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ fontWeight: 600, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.title}</span>
+                  </div>
+                  <div className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {r.id}{r.department ? ` · ${r.department}` : ""}{r.location ? ` · ${r.location}` : ""}
+                  </div>
+                  {r.requiredSkills && r.requiredSkills.length > 0 && (
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6 }}>
+                      {r.requiredSkills.slice(0, 3).map((sk) => (
+                        <Pill key={sk} tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" icon="sparkles" style={{ fontSize: 10, padding: "1px 7px" }}>{sk}</Pill>
+                      ))}
+                      {r.requiredSkills.length > 3 && (
+                        <Pill tone="var(--c-ink-3)" bg="var(--c-surface-2)" style={{ fontSize: 10, padding: "1px 7px" }}>+{r.requiredSkills.length - 3}</Pill>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <span className="rounded-pill bg-surface-3 px-2 py-0.5 text-xs font-semibold">{r.status}</span>
-                <span className="font-mono text-sm tabular-nums text-ink-2">{r.candidateCount} candidates</span>
-              </Card>
-            </a>
-          ))}
-        </div>
+                <StatusChip s={r.status} />
+                <span className="mono tnum" style={{ fontSize: 12.5, color: r.salaryMin ? "var(--c-ink)" : "var(--c-warn)" }}>
+                  {r.salaryMin && r.salaryMax ? `${money(r.salaryMin)} to ${money(r.salaryMax)}` : "Not set"}
+                </span>
+                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, textAlign: "center" }}>{r.candidateCount ?? 0}</span>
+                <span className="mono tnum" style={{ fontSize: 13, textAlign: "center", color: "var(--c-ink-2)" }}>{r.openings ?? "-"}</span>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-3)", textAlign: "right" }}>{created(r.createdAt)}</span>
+              </a>
+            ))}
+            {rows.length === 0 && (
+              <div style={{ padding: "40px", textAlign: "center", color: "var(--c-ink-3)", fontSize: "var(--fs-sm)" }}>No requisitions match your filters.</div>
+            )}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, fontSize: 12.5, color: "var(--c-ink-3)" }}>
+            <span>Showing {rows.length} of {all.length}</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink-3)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font-sans)" }}>Previous</button>
+              <button style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 600 }}>Next</button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
