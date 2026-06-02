@@ -136,7 +136,15 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push("/");
+      // Honor the ?redirect=<path> the auth guard appended, so a deep link like
+      // /workspace returns the user there after sign-in. Only same-origin
+      // relative paths are allowed (prevents an open redirect to an external URL).
+      let dest = "/";
+      try {
+        const rp = new URLSearchParams(window.location.search).get("redirect");
+        if (rp && rp.startsWith("/") && !rp.startsWith("//")) dest = rp;
+      } catch {}
+      router.push(dest);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed. Please try again.");
       setLoading(false);
