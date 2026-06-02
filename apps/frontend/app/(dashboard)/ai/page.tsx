@@ -1,183 +1,79 @@
 "use client";
-// app/(dashboard)/ai/page.tsx - EXACT Claude Design "Aurora" AI operations screen
-// (claude-design/screen-secai.jsx AiOpsScreen): a KPI strip, the agent-fleet
-// table (status / runs / cost per agent, violet AI accent throughout), an
-// explainability / model-confidence panel, and a drift-watch advisory banner.
-// Wired to the real gateway: GET /platform/agents. All output is advisory.
-import * as React from "react";
-import {
-  KpiRow, SectionCard, Pill, Btn, Confidence, Spark, Reveal, type Kpi,
-} from "@/components/aurora-kit";
-import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+// app/(dashboard)/ai/page.tsx - EXACT Claude Design "Cost analytics" platform-operator
+// screen (claude-design/screen-aix.jsx PlatformCostScreen): inference spend across
+// agents and tenants this month. A 4-card KPI strip, a "Spend by agent" bar list
+// (8 agents, violet AI accent), and a "Top tenant spenders" bar list with an
+// over-budget flag for Vertex Capital. The agent/cost data has no single gateway
+// endpoint, so the prototype's exact example content is kept inline.
+import { Reveal, SectionCard, KPICard, Pill, type Kpi } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
-import { useData } from "@/lib/use-data";
 
-/* ---------- local data access (do not touch lib/api.ts) ---------- */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-function authToken(): string | null {
-  try { return typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch { return null; }
-}
-async function raw(method: string, path: string, body?: unknown): Promise<any> {
-  const t = authToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method, credentials: "include",
-    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  if (!res.ok) throw new Error(`${method} ${path} -> ${res.status}`);
-  return res.json();
-}
+/* ---------- prototype example data (claude-design/plat-data.jsx) ---------- */
+const TENANTS = [
+  { id: "t1", name: "Northwind Talent", slug: "northwind", plan: "PROFESSIONAL", seats: "12/15", users: 12, mrr: 399, cost: 284, runs: "8.4k", health: "healthy", created: "Jan 2026", focus: true },
+  { id: "t2", name: "Helios Robotics", slug: "helios", plan: "STARTER", seats: "5/5", users: 5, mrr: 149, cost: 96, runs: "2.1k", health: "healthy", created: "Feb 2026" },
+  { id: "t3", name: "Atlas Health Group", slug: "atlas", plan: "ENTERPRISE", seats: "240", users: 240, mrr: 4200, cost: 3180, runs: "112k", health: "watch", created: "Nov 2025" },
+  { id: "t4", name: "Meridian Studio", slug: "meridian", plan: "FREE", seats: "1/1", users: 1, mrr: 0, cost: 12, runs: "180", health: "healthy", created: "May 2026" },
+  { id: "t5", name: "Vertex Capital", slug: "vertex", plan: "PROFESSIONAL", seats: "14/15", users: 14, mrr: 399, cost: 410, runs: "11.2k", health: "over", created: "Mar 2026" },
+  { id: "t6", name: "Quanta Bio", slug: "quanta", plan: "STARTER", seats: "3/5", users: 3, mrr: 149, cost: 64, runs: "1.4k", health: "healthy", created: "Apr 2026" },
+  { id: "t7", name: "Orbital Freight", slug: "orbital", plan: "PROFESSIONAL", seats: "9/15", users: 9, mrr: 399, cost: 220, runs: "6.0k", health: "healthy", created: "Feb 2026" },
+];
+const PLAT_KPIS: Kpi[] = [
+  { id: "tenants", label: "Active tenants", value: 142, delta: 6, good: true, spark: [120, 124, 128, 132, 136, 138, 140, 142], icon: "building" },
+  { id: "mrr", label: "Platform MRR", value: 86400, prefix: "$", delta: 4200, good: true, spark: [72, 75, 78, 80, 82, 84, 85, 86], icon: "card" },
+  { id: "cost", label: "Inference cost (mo)", value: 38200, prefix: "$", delta: -1800, good: true, spark: [42, 41, 40, 39, 39, 38, 38, 38], icon: "cpu", ai: true },
+  { id: "margin", label: "Gross margin", value: 56, suffix: "%", delta: 2, good: true, spark: [50, 51, 52, 53, 54, 55, 55, 56], icon: "chart" },
+];
+const PLAT_AGENTS = [
+  { n: "candidate-screener", tenants: 142, runs: "1.2M", cost: 14200, status: "deployed", err: 0.4 },
+  { n: "resume-parser", tenants: 142, runs: "4.8M", cost: 8600, status: "deployed", err: 0.2 },
+  { n: "jd-author", tenants: 138, runs: "210k", cost: 4100, status: "deployed", err: 0.6 },
+  { n: "bias-auditor", tenants: 96, runs: "64k", cost: 2800, status: "degraded", err: 2.1 },
+  { n: "copilot", tenants: 120, runs: "640k", cost: 5200, status: "deployed", err: 0.5 },
+  { n: "sourcing", tenants: 88, runs: "180k", cost: 3400, status: "deployed", err: 0.8 },
+  { n: "offer", tenants: 110, runs: "42k", cost: 900, status: "deployed", err: 0.3 },
+  { n: "scheduling", tenants: 124, runs: "320k", cost: 1600, status: "paused", err: 0.1 },
+];
 
-/* ---------- view model ---------- */
-type Agent = { name: string; model: string; enabled: boolean; runs: number; cost: number };
-const num = (x: any): number => { const n = Number(x); return Number.isFinite(n) ? n : 0; };
-const fmtRuns = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "k" : String(n));
-
-async function listAgents(): Promise<Agent[]> {
-  const res = await raw("GET", "/platform/agents");
-  const payload = res?.data ?? res;
-  const list = Array.isArray(payload?.agents) ? payload.agents : Array.isArray(payload) ? payload : [];
-  return list.map((a: any): Agent => ({
-    name: String(a?.agentType ?? a?.name ?? a?.type ?? a?.id ?? "agent"),
-    model: String(a?.model ?? a?.provider ?? ""),
-    enabled: !(a?.platformKillDisabled ?? a?.disabled ?? a?.killed ?? false) && (a?.enabled ?? true) !== false,
-    runs: num(a?.runs30d ?? a?.runs ?? a?.runCount ?? a?.totalRuns),
-    cost: num(a?.costUsd30d ?? a?.costUsd ?? a?.cost ?? a?.totalCost),
-  }));
-}
-
-const COLS = "1.6fr 130px 110px 110px";
-
-export default function AiOpsPage() {
-  const agents = useData<Agent[]>(listAgents);
-  const list = agents.data ?? [];
-
-  // Honest aggregates derived from the real fleet response (no fabricated metrics).
-  const healthy = list.filter((a) => a.enabled).length;
-  const totalRuns = list.reduce((s, a) => s + a.runs, 0);
-  const totalCost = list.reduce((s, a) => s + a.cost, 0);
-  const flat = (n: number) => Array.from({ length: 8 }, () => n);
-  const kpis: Kpi[] = [
-    { id: "agents", label: "Agents online", value: healthy, suffix: `/${list.length || 0}`, delta: 0, good: true, ai: true, spark: flat(healthy), icon: "cpu" },
-    { id: "runs", label: "Agent runs (30d)", value: totalRuns, delta: 0, good: true, ai: true, spark: flat(totalRuns || 1), icon: "scan" },
-    { id: "cost", label: "Inference cost (30d)", value: Math.round(totalCost), prefix: "$", delta: 0, good: true, spark: flat(Math.round(totalCost) || 1), icon: "card" },
-    { id: "advisory", label: "Output mode", value: 100, suffix: "%", delta: 0, good: true, ai: true, spark: flat(100), icon: "shield" },
-  ];
-
+export default function PlatformCostScreen() {
+  const agents = PLAT_AGENTS.slice().sort((a, b) => b.cost - a.cost);
+  const maxC = Math.max(...agents.map((a) => a.cost));
+  const tenants = TENANTS.slice().sort((a, b) => b.cost - a.cost).slice(0, 6);
+  const maxT = Math.max(...tenants.map((t) => t.cost));
   return (
-    <div className="mx-auto w-full max-w-[1280px]">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+    <div className="mx-auto w-full max-w-[1200px]">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
         <div>
           <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
-            <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>AI operations</h1>
-            <Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">{list.length ? `${list.length} agents` : "agent fleet"}</Pill>
+            <h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Cost analytics</h1>
+            <Pill icon="bolt" tone="var(--c-danger)" bg="var(--c-danger-tint)">platform operator</Pill>
           </div>
-          <p style={{ margin: "5px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Monitor agent health, runs, and cost across the fleet. All output is advisory.</p>
+          <p style={{ margin: "4px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>Inference spend across agents and tenants · this month.</p>
         </div>
-        <a href="/admin/platform/prompts"><Btn variant="soft" icon="terminal">Manage prompts</Btn></a>
+        <Pill icon="clock" tone="var(--c-ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>May 2026</Pill>
       </div>
-
-      {/* KPI strip */}
-      {agents.loading && (
-        <div className="mb-[18px] grid grid-cols-2 gap-[14px] lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[130px] rounded-[14px]" />)}
-        </div>
-      )}
-      {agents.error && (
-        <div className="mb-[18px]">
-          <ErrorState title="Could not load the agent fleet" body="The platform agents service did not respond." code="GET /api/platform/agents" onRetry={agents.reload} />
-        </div>
-      )}
-      {agents.data && <KpiRow kpis={kpis} cols={4} />}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, alignItems: "start" }}>
-        {/* Agent fleet table */}
-        <Reveal i={4}>
-          <SectionCard
-            title="Agent fleet"
-            icon="cpu"
-            headRight={<Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">violet = AI</Pill>}
-          >
-            {agents.loading && <div className="grid gap-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
-            {agents.error && <ErrorState title="Could not load agents" body="The platform agents service did not respond." code="GET /api/platform/agents" onRetry={agents.reload} />}
-            {agents.data && agents.data.length === 0 && <EmptyState title="No agents reporting yet" body="Once your agents run, their health, run counts, and cost will appear here." />}
-            {agents.data && agents.data.length > 0 && (
-              <>
-                <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)", borderBottom: "1px solid var(--c-line)" }}>
-                  <span>Agent</span>
-                  <span>Status</span>
-                  <span style={{ textAlign: "right" }}>Runs / 30d</span>
-                  <span style={{ textAlign: "right" }}>Cost / 30d</span>
-                </div>
-                {agents.data.map((ag, i) => (
-                  <div key={ag.name + i} style={{ display: "grid", gridTemplateColumns: COLS, gap: 12, alignItems: "center", padding: "11px 4px", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
-                    <span style={{ display: "inline-flex", gap: 8, alignItems: "center", minWidth: 0 }}>
-                      <span style={{ width: 26, height: 26, borderRadius: 7, display: "grid", placeItems: "center", background: "var(--c-ai-tint)", color: "var(--c-ai)", flexShrink: 0 }}><Icon name="cpu" size={14} /></span>
-                      <span style={{ minWidth: 0 }}>
-                        <span className="mono" style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--c-ai-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ag.name}</span>
-                        {ag.model && <span className="mono" style={{ fontSize: 10.5, color: "var(--c-ink-3)" }}>{ag.model}</span>}
-                      </span>
-                    </span>
-                    <Pill
-                      tone={ag.enabled ? "var(--c-ok)" : "var(--c-ink-3)"}
-                      bg={ag.enabled ? "var(--c-ok-tint)" : "var(--c-surface-3)"}
-                      icon={ag.enabled ? "check" : "dot"}
-                      style={{ justifySelf: "start" }}
-                    >
-                      {ag.enabled ? "healthy" : "paused"}
-                    </Pill>
-                    <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>{fmtRuns(ag.runs)}</span>
-                    <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>${ag.cost.toLocaleString()}</span>
-                  </div>
-                ))}
-              </>
-            )}
-          </SectionCard>
-        </Reveal>
-
-        {/* Explainability / confidence panel */}
-        <Reveal i={5}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <SectionCard title="Explainability" icon="sparkles" headRight={<Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">AI</Pill>}>
-              <Confidence value={0.7} />
-              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 9 }}>
-                {[
-                  { ic: "scan", t: "Evidence-cited verdicts", d: "Every screening links each requirement to a quoted source." },
-                  { ic: "eye", t: "Below-threshold escalation", d: "Verdicts under 0.70 confidence route to a human reviewer." },
-                  { ic: "shield", t: "No solely-automated rejection", d: "A person signs off before any adverse decision." },
-                ].map((r) => (
-                  <div key={r.t} style={{ display: "flex", gap: 11, alignItems: "flex-start", padding: "10px 12px", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", background: "var(--c-surface)" }}>
-                    <span style={{ width: 30, height: 30, borderRadius: "var(--r-sm)", display: "grid", placeItems: "center", flexShrink: 0, color: "var(--c-ai)", background: "var(--c-ai-tint)" }}><Icon name={r.ic} size={15} /></span>
-                    <span>
-                      <span style={{ display: "block", fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.t}</span>
-                      <span style={{ display: "block", fontSize: 11.5, color: "var(--c-ink-3)" }}>{r.d}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Fleet activity" icon="chart">
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <div className="mono tnum" style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>{fmtRuns(totalRuns)}</div>
-                  <div style={{ marginTop: 5, fontSize: 11.5, color: "var(--c-ink-3)" }}>total runs in the last 30 days</div>
-                </div>
-                <Spark data={kpis[1].spark} w={110} h={34} color="var(--c-ai)" />
-              </div>
-            </SectionCard>
-          </div>
-        </Reveal>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>{PLAT_KPIS.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
+        <Reveal i={4}><SectionCard title="Spend by agent" icon="cpu" headRight={<Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">8 agents</Pill>}>
+          {agents.map((a, i) => (
+            <div key={a.n} style={{ display: "grid", gridTemplateColumns: "150px 1fr 70px", gap: 10, alignItems: "center", padding: "7px 0" }}>
+              <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ai-ink)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.n}</span>
+              <div style={{ height: 16, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}><div style={{ height: "100%", width: ((a.cost / maxC) * 100) + "%", borderRadius: 6, background: "var(--c-ai)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 60) + "ms" }} /></div>
+              <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right" }}>${a.cost.toLocaleString()}</span>
+            </div>
+          ))}
+        </SectionCard></Reveal>
+        <Reveal i={5}><SectionCard title="Top tenant spenders" icon="building" action="All tenants">
+          {tenants.map((t, i) => (
+            <div key={t.id} style={{ display: "grid", gridTemplateColumns: "150px 1fr 70px", gap: 10, alignItems: "center", padding: "7px 0" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
+              <div style={{ height: 16, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}><div style={{ height: "100%", width: ((t.cost / maxT) * 100) + "%", borderRadius: 6, background: t.health === "over" ? "var(--c-danger)" : "var(--c-brand)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 60) + "ms" }} /></div>
+              <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right", color: t.health === "over" ? "var(--c-danger)" : "var(--c-ink)" }}>${t.cost}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: "var(--r)", background: "var(--c-danger-tint)", fontSize: 11.5, color: "var(--c-ink-2)", display: "flex", gap: 8, alignItems: "center" }}><Icon name="flag" size={13} style={{ color: "var(--c-danger)" }} />Vertex Capital is over its inference budget ($410 vs $399 MRR).</div>
+        </SectionCard></Reveal>
       </div>
-
-      {/* Advisory banner, violet AI accent */}
-      {agents.data && agents.data.length > 0 && (
-        <div style={{ marginTop: 16, padding: "13px 16px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)", display: "flex", gap: 10, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-2)" }}>
-          <Icon name="shield" size={16} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
-          <span>Every agent here is <b style={{ color: "var(--c-ai-ink)" }}>advisory</b>. Recommendations are evidence-cited and a human approves any consequential decision. Review recent outputs in Compliance.</span>
-          <a href="/compliance" style={{ marginLeft: "auto" }}><Btn variant="outlineAi" size="sm" icon="eye">Investigate</Btn></a>
-        </div>
-      )}
     </div>
   );
 }
