@@ -9,6 +9,7 @@ import type {
   ReviewItem, ReviewReasonCode,
   Interview, InterviewStatus,
   Offer, OfferStatus,
+  FairnessMetric,
 } from "./types";
 
 const arr = (x: any): any[] => (Array.isArray(x) ? x : x?.data ?? x?.items ?? x?.rows ?? []);
@@ -179,4 +180,33 @@ export async function listOffers(): Promise<Offer[]> {
 }
 export async function approveOffer(id: string): Promise<void> {
   try { await raw("POST", `/offers/${id}/approve`); } catch { /* surfaced via toast when wired */ }
+}
+
+/* ---------- Analytics + Compliance ---------- */
+export async function getFunnel(): Promise<{ stage: ApplicationStage; count: number }[]> {
+  const res: any = await api.analytics.getFunnel();
+  const out = res?.data ?? res ?? {};
+  const rows = Array.isArray(out) ? out : (out?.stages ?? out?.funnel ?? out?.byStage ?? []);
+  if (Array.isArray(rows) && rows.length) {
+    return rows.map((r: any) => ({ stage: (r.stage ?? r.name ?? r.key) as ApplicationStage, count: Number(r.count ?? r.value ?? 0) }));
+  }
+  if (out && typeof out === "object") {
+    return Object.entries(out).filter(([, v]) => typeof v === "number").map(([k, v]) => ({ stage: k as ApplicationStage, count: Number(v) }));
+  }
+  return [];
+}
+
+export async function getAdverseImpact(): Promise<FairnessMetric[]> {
+  const res: any = await api.bias.getFourFifthsReport();
+  const out = res?.data ?? res ?? {};
+  const rows = Array.isArray(out) ? out : (out.reports ?? out.groups ?? out.metrics ?? []);
+  return (Array.isArray(rows) ? rows : []).map((m: any) => {
+    const impactRatio = Number(m.impactRatio ?? m.adverseImpactRatio ?? m.ratio ?? 1);
+    return {
+      group: m.group ?? m.attribute ?? m.name ?? "Group",
+      selectionRate: Number(m.selectionRate ?? m.scoringRate ?? 0),
+      impactRatio,
+      flagged: typeof m.flagged === "boolean" ? m.flagged : (m.fourFifthsPass === false || impactRatio < 0.8),
+    };
+  });
 }
