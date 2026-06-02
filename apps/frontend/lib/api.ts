@@ -215,27 +215,31 @@ export async function approveOffer(id: string): Promise<void> {
 
 /* ---------- Analytics + Compliance ---------- */
 export async function getFunnel(): Promise<{ stage: ApplicationStage; count: number }[]> {
-  const res: any = await api.analytics.getFunnel();
-  const out = res?.data ?? res ?? {};
-  const rows = Array.isArray(out) ? out : (out?.stages ?? out?.funnel ?? out?.byStage ?? []);
-  if (Array.isArray(rows) && rows.length) {
-    return rows.map((r: any) => ({ stage: (r.stage ?? r.name ?? r.key) as ApplicationStage, count: Number(r.count ?? r.value ?? 0) }));
-  }
-  if (out && typeof out === "object") {
-    return Object.entries(out).filter(([, v]) => typeof v === "number").map(([k, v]) => ({ stage: k as ApplicationStage, count: Number(v) }));
-  }
-  return [];
+  // The pipeline funnel ships inside the platform unified-overview aggregate as
+  // `pipelineData`; the standalone /analytics/funnel route is not exposed by the
+  // gateway (404). Read it from the working aggregate the KPIs already use.
+  const res: any = await raw("GET", "/platform/unified-overview").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const rows: any[] = Array.isArray(d.pipelineData) ? d.pipelineData : [];
+  return rows
+    .map((r: any) => ({ stage: (r.name ?? r.stage ?? r.key) as ApplicationStage, count: Number(r.value ?? r.count ?? 0) }))
+    .filter((r) => !!r.stage);
 }
 
 export async function getAdverseImpact(): Promise<FairnessMetric[]> {
-  const res: any = await api.bias.getFourFifthsReport();
-  const out = res?.data ?? res ?? {};
-  const rows = Array.isArray(out) ? out : (out.reports ?? out.groups ?? out.metrics ?? []);
-  return (Array.isArray(rows) ? rows : []).map((m: any) => {
+  // Diversity / four-fifths ships inside the platform unified-overview aggregate
+  // as `diversityData`; the standalone /bias/* routes are not exposed by the
+  // gateway (404). When there is no demographic data the aggregate returns null,
+  // so this resolves to [] and the panel shows its empty state (not an error).
+  const res: any = await raw("GET", "/platform/unified-overview").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const dd = d.diversityData;
+  const rows: any[] = Array.isArray(dd) ? dd : (Array.isArray(dd?.groups) ? dd.groups : (Array.isArray(dd?.metrics) ? dd.metrics : []));
+  return rows.map((m: any) => {
     const impactRatio = Number(m.impactRatio ?? m.adverseImpactRatio ?? m.ratio ?? 1);
     return {
       group: m.group ?? m.attribute ?? m.name ?? "Group",
-      selectionRate: Number(m.selectionRate ?? m.scoringRate ?? 0),
+      selectionRate: Number(m.selectionRate ?? m.scoringRate ?? m.rate ?? 0),
       impactRatio,
       flagged: typeof m.flagged === "boolean" ? m.flagged : (m.fourFifthsPass === false || impactRatio < 0.8),
     };
