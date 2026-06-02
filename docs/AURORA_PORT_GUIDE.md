@@ -137,6 +137,44 @@ stay bare. Tailwind utility classes (`bg-brand`, `text-ink-2`) are unaffected.
   file introduces. Report the prototype's `<style>`/`<body>` line counts and your
   file's line count so fidelity is auditable.
 
+## Porting a .jsx prototype screen (instead of an .html file)
+
+Many screens have NO .html file; their exact source is a top-level `.jsx` file in
+claude-design (e.g. `screen-decisions.jsx`, `req-intake.jsx`, `cand-table.jsx`,
+`dash-views.jsx`). These are browser-global prototype scripts (they do
+`const {useState}=React`, use `window.UI`/`DUI`, reference kit components attached
+to `window`, and read mock data from a `*-data.jsx` file). Port them VERBATIM the
+same way, with these specific mappings:
+
+- KIT COMPONENTS -> import from our kit (they already exist, built from these very
+  files): `Reveal, Greeting, CommandHero, KPICard, KpiRow, SectionCard, Funnel,
+  TrendArea, Donut, Timeline, PendingList, Btn, Pill, StatusBadge, ScoreRing,
+  Confidence, CountUp, Spark` all come from `@/components/aurora-kit`. `Icon, Logo`
+  from `@/components/aurora-icon`. `Skeleton, EmptyState, ErrorState, Card` from
+  `@/components/aurora`. So `DUI.CountUp` becomes `<CountUp .../>`, `<Pill>` stays
+  `<Pill>` (imported), etc. Keep the EXACT props and children the prototype used.
+- COLOR TOKENS (critical): the .jsx uses `var(--brand)`, `var(--ink-2)`,
+  `var(--surface)`, `var(--ok)`, `var(--ai)`, `var(--line)`, every `*-tint`/`*-2`/
+  `*-ink`/`on-*` as FULL colors. In our app those are bare channels, so convert
+  EVERY palette token to its companion: `var(--brand)`->`var(--c-brand)`,
+  `var(--ink-2)`->`var(--c-ink-2)`, `color-mix(in oklab, var(--brand) ...)`->
+  `color-mix(in oklab, var(--c-brand) ...)`, etc. Do NOT prefix effect/size/motion
+  tokens (`--r*`, `--e1/2/3`, `--glass*`, `--fs-*`, `--t*`, `--ease-*`, `--font-*`,
+  `--topbar`). Reproduce all inline styles exactly otherwise.
+- DATA: the prototype maps over arrays from a `*-data.jsx` file (often on
+  `window.DASH`/`window.DATA`). Replace with real gateway data via `useData` + the
+  matching `@/lib/api` function (listScreening, listRequisitions, getRequisition,
+  listDecisions, recordDecision, listReviewQueue, listInterviews, listOffers,
+  approveOffer, listCandidates, getCandidate, getFunnel, getAdverseImpact,
+  getDashboardKpis, ...). Keep the EXACT row/card markup; render loading/error/empty
+  via Skeleton/ErrorState/EmptyState inside the prototype's containers. Static
+  decorative copy stays.
+- These are dashboard screens: outer element `<div className="mx-auto w-full
+  max-w-[1200px]">` (NO `<main>`, NO `p-6`; the dashboard layout supplies them),
+  unless your prompt says otherwise. `"use client"` first line. Zero em/en dashes.
+- The prototype's `Object.assign(window,{...})` export line and the
+  `const {useState:uSk}=React` shim are NOT copied; use normal React imports.
+
 ## Fidelity is the whole job
 
 If your output is shorter or "cleaner" than the prototype, you did it wrong. A
