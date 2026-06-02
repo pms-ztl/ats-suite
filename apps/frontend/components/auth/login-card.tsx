@@ -151,9 +151,18 @@ export function LoginCard(props: LoginCardProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md flex flex-col items-center gap-5">
-        <Card className="w-full">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Aurora AuthShell: ambient brand panel beside the focused sign-in card */}
+      <aside className="relative hidden overflow-hidden bg-bg-deep lg:block" aria-hidden="true">
+        <div className="absolute inset-0" style={{ background: "radial-gradient(60% 50% at 30% 30%, var(--c-brand-tint-2), transparent 60%), radial-gradient(55% 50% at 80% 80%, var(--c-ai-tint-2), transparent 60%)" }} />
+        <div className="relative flex h-full flex-col justify-end p-12">
+          <h2 className="text-3xl font-extrabold tracking-tight">Hire with AI you can trust.</h2>
+          <p className="mt-2 max-w-[40ch] text-ink-2">Evidence-backed screening, human-in-the-loop decisions, candidate transparency.</p>
+        </div>
+      </aside>
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <div className="w-full max-w-[420px] flex flex-col items-center gap-5">
+          <Card className="w-full">
           <CardHeader className="text-center pt-8 pb-2">
             <div className={cn(
               "mx-auto h-12 w-12 rounded-2xl flex items-center justify-center mb-5",
@@ -238,11 +247,12 @@ export function LoginCard(props: LoginCardProps) {
               {props.footerSlot}
             </CardFooter>
           </form>
-        </Card>
-        <p className="text-2xs text-muted-foreground text-center">
-          &copy; {new Date().getFullYear()} CDC ATS · Enterprise edition.
-        </p>
-      </div>
+          </Card>
+          <p className="text-2xs text-muted-foreground text-center">
+            &copy; {new Date().getFullYear()} CDC ATS · Enterprise edition.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
