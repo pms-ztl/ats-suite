@@ -15,12 +15,20 @@ const PUBLIC_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/session-expired",
+  "/verify-email",             // email-link landing (user is logged out)
+  "/accept-invite",            // invite-link landing
+  "/sso-callback",             // SSO return
+  // Public marketing
+  "/welcome",                  // flagship landing ("/" is the authed dashboard)
+  "/contact",
   // Candidate portal (no auth required)
   "/jobs",
   "/status",
   "/transparency",
   "/appeal",
   "/profile",
+  "/c",                        // tenant-scoped public board: /c/[slug]/jobs
+  "/offline",
 ];
 
 /**
