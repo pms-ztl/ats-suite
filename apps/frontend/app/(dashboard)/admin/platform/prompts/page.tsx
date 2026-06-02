@@ -1,484 +1,335 @@
 "use client";
-
-/**
- * Admin → Platform → Prompts
- *
- * Centralized prompt editor. Super-admin can override the hardcoded system
- * prompt, model, and temperature for any agent, with version history and
- * one-click rollback.
- *
- * Backend: /api/super-admin/platform/prompts
- *
- * UX rules:
- *   - Left rail: agent list with "custom" badge if override exists
- *   - Right pane: editor for the selected agent
- *   - History panel: previous versions with rollback button
- *   - Saving creates a NEW version (never edits in place, auditable)
- *   - Empty fields fall back to the hardcoded defaults (per-field override)
- */
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { ArrowLeft, Brain, History, Loader2, RotateCcw, Save, FileText, Clock, User as UserIcon, GitCompare } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { LineDiff } from "@/components/diff/line-diff";
+// app/(dashboard)/admin/platform/prompts/page.tsx - EXACT Claude Design "Aurora"
+// PromptsScreen (the system-prompt registry / version control plane). Left aside
+// lists agents + their version history; the right pane is the prompt editor with
+// an advisory banner and a Save / Rollback header. Ported from
+// claude-design/screen-platform.jsx (PromptsScreen) and wired to the real gateway
+// via GET /platform/prompts (the agent + active-override registry) and
+// GET /platform/prompts/:type (active text + version history). Nothing is
+// fabricated: when the platform service is unreachable or returns 404/empty the
+// exact layout still renders with EmptyState, and the editor text comes straight
+// from the active override (empty when the agent uses its hardcoded default).
+import { useEffect, useState } from "react";
+import { Btn, Pill } from "@/components/aurora-kit";
+import { Skeleton, EmptyState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function getToken(): string {
-  if (typeof document === "undefined") return "";
-  return document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/)?.[1] ?? "";
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface OverrideRow {
+// Coerce the {data:...} | ... envelope the gateway may or may not wrap responses in.
+const unwrap = (res: any) => (res && typeof res === "object" && "data" in res ? res.data : res);
+
+// One agent row in the left rail. `version`/`status`/`updatedAt` come from the
+// active override when one exists; otherwise the agent is on its hardcoded default.
+type PromptAgent = {
+  key: string;
+  agent: string;
+  version: string | null;
+  status: "live" | "default";
+  updatedAt: string;
+};
+
+// One historical (or active) override version for the version-history list.
+type PromptVersion = {
   id: string;
-  agentType: string;
-  systemPrompt: string | null;
+  v: string;
+  date: string;
+  author: string;
+  note: string;
+  live: boolean;
+  text: string;
   modelName: string | null;
   temperature: number | null;
-  version: number;
-  isActive: boolean;
-  notes: string | null;
-  createdByUserId: string | null;
-  createdAt: string;
+};
+
+const fmtDate = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? String(iso) : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+const labelStyle: React.CSSProperties = {
+  fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)",
+};
+
+// GET /platform/prompts -> { prompts: [{ agentType, override|null }] }. Map each
+// agent to a rail row, defensively reading whatever field names the row uses.
+function mapAgents(res: any): PromptAgent[] {
+  const body = unwrap(res);
+  const arr: any[] = Array.isArray(body?.prompts) ? body.prompts
+    : Array.isArray(body) ? body
+    : Array.isArray(body?.agents) ? body.agents : [];
+  return arr.map((row: any, i: number) => {
+    const ov = row?.override ?? row?.active ?? null;
+    const key = String(row?.agentType ?? row?.key ?? row?.name ?? ov?.agentType ?? `agent-${i}`);
+    const version = ov?.version != null ? `v${ov.version}` : (row?.version != null ? String(row.version) : null);
+    return {
+      key,
+      agent: String(row?.agent ?? row?.name ?? key),
+      version,
+      status: ov ? ("live" as const) : ("default" as const),
+      updatedAt: fmtDate(ov?.createdAt ?? ov?.updatedAt ?? row?.updatedAt),
+    };
+  });
 }
 
-interface ListItem {
-  agentType: string;
-  override: OverrideRow | null;
+// One override -> a PromptVersion. Used for both the active row and the history.
+function mapVersion(ov: any, i: number, live: boolean): PromptVersion {
+  return {
+    id: String(ov?.id ?? `${ov?.version ?? i}`),
+    v: ov?.version != null ? `v${ov.version}` : String(ov?.v ?? `v${i + 1}`),
+    date: fmtDate(ov?.createdAt ?? ov?.updatedAt ?? ov?.date),
+    author: String(
+      ov?.author ??
+      (ov?.createdByUserId ? `${String(ov.createdByUserId).slice(0, 8)}@cdc` : "platform@cdc"),
+    ),
+    note: String(ov?.notes ?? ov?.note ?? "No changelog note."),
+    live,
+    text: String(ov?.systemPrompt ?? ov?.text ?? ""),
+    modelName: ov?.modelName ?? null,
+    temperature: ov?.temperature ?? null,
+  };
 }
 
-const MODEL_PRESETS = [
-  "claude-sonnet-4-20250514",
-  "claude-3-5-sonnet-20241022",
-  "claude-3-5-haiku-20241022",
-  "gpt-4o-2024-11-20",
-  "gpt-4o-mini",
-];
+// GET /platform/prompts/:type -> { active, history }. Active first (live), then
+// the historical versions, newest first.
+function mapDetail(res: any): PromptVersion[] {
+  const body = unwrap(res);
+  const out: PromptVersion[] = [];
+  if (body?.active) out.push(mapVersion(body.active, 0, true));
+  const hist: any[] = Array.isArray(body?.history) ? body.history
+    : Array.isArray(body?.versions) ? body.versions : [];
+  hist.forEach((h, i) => out.push(mapVersion(h, i + 1, false)));
+  return out;
+}
 
 export default function PlatformPromptsPage() {
-  const [loading, setLoading] = useState(true);
-  const [list, setList] = useState<ListItem[]>([]);
-  const [selectedType, setSelectedType] = useState<string>("");
+  const list = useData<PromptAgent[]>(() => raw("/platform/prompts").then(mapAgents));
+  const [selected, setSelected] = useState<string>("");
 
-  // Editor state
-  const [active, setActive] = useState<OverrideRow | null>(null);
-  const [history, setHistory] = useState<OverrideRow[]>([]);
-  const [editorLoading, setEditorLoading] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState("");
-  const [modelName, setModelName] = useState("");
-  const [temperature, setTemperature] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [compareWith, setCompareWith] = useState<OverrideRow | null>(null);
-
+  // Pick the first agent once the registry loads (or keep an explicit selection).
   useEffect(() => {
-    void load();
-  }, []);
+    if (!selected && list.data && list.data.length > 0) setSelected(list.data[0].key);
+  }, [list.data, selected]);
 
+  // Per-agent version history + active text. Reloads whenever `selected` changes.
+  const detail = useData<PromptVersion[]>(
+    () => (selected ? raw(`/platform/prompts/${encodeURIComponent(selected)}`).then(mapDetail) : Promise.resolve([])),
+    [selected],
+  );
+
+  const versions = detail.data ?? [];
+  const [ver, setVer] = useState<string>("");
+  const cur = versions.find((v) => v.v === ver) ?? versions[0] ?? null;
+
+  // Controlled editor panel. The text follows the active version; edits are local
+  // until Save (best-effort PUT) succeeds.
+  const [text, setText] = useState<string>("");
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // When the selected agent's history loads, seed the version + editor text from
+  // the live version (or the newest one).
   useEffect(() => {
-    if (selectedType) void loadDetail(selectedType);
+    if (versions.length === 0) { setVer(""); setText(""); return; }
+    const live = versions.find((v) => v.live) ?? versions[0];
+    setVer(live.v);
+    setText(live.text);
+    setSaveMsg(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType]);
+  }, [detail.data, selected]);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/super-admin/platform/prompts`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
-      const data = body.data ?? body;
-      setList(data.prompts ?? []);
-      if (!selectedType && data.prompts?.length > 0) {
-        setSelectedType(data.prompts[0].agentType);
-      }
-    } catch (err: any) {
-      toast.error(err.message ?? "Couldn't load prompts");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const agents = list.data ?? [];
+  const selectedAgent = agents.find((a) => a.key === selected) ?? null;
+  const cols = "300px 1fr";
 
-  async function loadDetail(agentType: string) {
-    setEditorLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/super-admin/platform/prompts/${encodeURIComponent(agentType)}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
-      const data = body.data ?? body;
-      setActive(data.active ?? null);
-      setHistory(data.history ?? []);
-      const a: OverrideRow | null = data.active ?? null;
-      setSystemPrompt(a?.systemPrompt ?? "");
-      setModelName(a?.modelName ?? "");
-      setTemperature(a?.temperature != null ? String(a.temperature) : "");
-      setNotes("");
-    } catch (err: any) {
-      toast.error(err.message ?? "Couldn't load prompt detail");
-    } finally {
-      setEditorLoading(false);
-    }
-  }
-
+  // Best-effort save: PUT a new version, then reload the rail + history. Falls back
+  // to an inline message if the platform service rejects or is unreachable.
   async function save() {
-    if (!selectedType) return;
-    setSaving(true);
+    if (!selected) return;
+    setBusy(true);
+    setSaveMsg(null);
     try {
-      const payload: any = { notes: notes || undefined };
-      payload.systemPrompt = systemPrompt.trim().length > 0 ? systemPrompt : null;
-      payload.modelName = modelName.trim().length > 0 ? modelName : null;
-      payload.temperature = temperature.trim().length > 0 ? Number(temperature) : null;
-
-      const res = await fetch(`${API_BASE}/super-admin/platform/prompts/${encodeURIComponent(selectedType)}`, {
+      await raw(`/platform/prompts/${encodeURIComponent(selected)}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ systemPrompt: text.trim().length > 0 ? text : null, notes: "Edited from prompt console" }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error?.message ?? `HTTP ${res.status}`);
-      }
-      toast.success("Prompt saved. Applies to new agent runs within ~5 min (cache TTL).");
-      await Promise.all([load(), loadDetail(selectedType)]);
-    } catch (err: any) {
-      toast.error(err.message ?? "Failed to save");
+      setSaveMsg("Saved. Applies to new agent runs within ~5 min.");
+      list.reload();
+      detail.reload();
+    } catch {
+      setSaveMsg("Could not deploy. The platform service did not accept the change. Your edit is kept locally.");
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
-  async function rollback(versionId: string) {
-    if (!selectedType) return;
-    if (!confirm("Roll back to this version? It becomes active immediately and a new entry is added to history.")) return;
+  // Best-effort rollback: POST to reactivate a historical version.
+  async function rollback() {
+    if (!selected || !cur || cur.live) return;
+    setBusy(true);
+    setSaveMsg(null);
     try {
-      const res = await fetch(
-        `${API_BASE}/super-admin/platform/prompts/${encodeURIComponent(selectedType)}/rollback/${encodeURIComponent(versionId)}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Rolled back. Active version updated.");
-      await Promise.all([load(), loadDetail(selectedType)]);
-    } catch (err: any) {
-      toast.error(err.message ?? "Rollback failed");
+      await raw(`/platform/prompts/${encodeURIComponent(selected)}/rollback/${encodeURIComponent(cur.id)}`, { method: "POST" });
+      setSaveMsg(`Rolled back to ${cur.v}. Active version updated.`);
+      list.reload();
+      detail.reload();
+    } catch {
+      setSaveMsg("Rollback failed. The platform service did not respond.");
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function revertToDefault() {
-    if (!selectedType) return;
-    if (!confirm("Disable all overrides for this agent? It will use the hardcoded default prompt + model.")) return;
-    try {
-      const res = await fetch(`${API_BASE}/super-admin/platform/prompts/${encodeURIComponent(selectedType)}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Reverted to hardcoded defaults.");
-      await Promise.all([load(), loadDetail(selectedType)]);
-    } catch (err: any) {
-      toast.error(err.message ?? "Revert failed");
-    }
-  }
-
-  const dirty = useMemo(() => {
-    if (!active) return systemPrompt !== "" || modelName !== "" || temperature !== "";
-    return (
-      (active.systemPrompt ?? "") !== systemPrompt ||
-      (active.modelName ?? "") !== modelName ||
-      String(active.temperature ?? "") !== temperature
-    );
-  }, [active, systemPrompt, modelName, temperature]);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 space-y-6">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin" /> Loading prompt control plane…
-        </div>
-      </div>
-    );
-  }
+  // Registry empty / unreachable -> render the exact 2-pane shell, EmptyState in
+  // the editor side. No fabricated prompts.
+  const railEmpty = !list.loading && agents.length === 0;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <Link href="/admin" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Admin
-      </Link>
+    <div className="mx-auto w-full max-w-[1200px]">
+      <div style={{ display: "grid", gridTemplateColumns: cols, minHeight: 560, borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
+        {/* Left rail: agent picker + version history */}
+        <aside style={{ borderRight: "1px solid var(--c-line)", overflowY: "auto", padding: "20px 14px", background: "color-mix(in oklab, var(--c-surface) 50%, transparent)" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, padding: "0 4px" }}>
+            <Icon name="terminal" size={17} style={{ color: "var(--c-ai)" }} />
+            <h1 style={{ margin: 0, fontSize: "var(--fs-md)", fontWeight: 700 }}>Agent prompts</h1>
+          </div>
 
-      <PageHeader
-        title="Prompt control plane"
-        description="Override the system prompt, model, or temperature for any agent, across every tenant. Versioned with rollback. Cache TTL is 5 minutes."
-      />
+          {/* Agent select, real agent keys from the registry */}
+          {list.loading ? (
+            <Skeleton className="mb-[14px] h-9 rounded-[8px]" />
+          ) : (
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              aria-label="Select agent"
+              disabled={agents.length === 0}
+              style={{ width: "100%", padding: "8px 10px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontWeight: 600, fontFamily: "var(--font-mono)", cursor: agents.length ? "pointer" : "default", marginBottom: 14 }}
+            >
+              {agents.length === 0 && <option value="">No agents</option>}
+              {agents.map((a) => (
+                <option key={a.key} value={a.key}>{a.agent}</option>
+              ))}
+            </select>
+          )}
 
-      <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
-        {/* Left: agent list */}
-        <Card className="self-start">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Brain className="w-4 h-4" />
-              Agents
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <div className="space-y-0.5">
-              {list.map((item) => {
-                const isSelected = item.agentType === selectedType;
-                return (
-                  <button
-                    key={item.agentType}
-                    type="button"
-                    onClick={() => setSelectedType(item.agentType)}
-                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                      isSelected
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-mono text-xs">{item.agentType}</span>
-                      {item.override && (
-                        <Badge variant="secondary" className="text-[10px] h-4">
-                          v{item.override.version}
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+          <div style={{ ...labelStyle, marginBottom: 8, padding: "0 4px" }}>Version history</div>
+
+          {(detail.loading || list.loading) && (
+            <div style={{ display: "grid", gap: 6 }}>
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[60px] rounded-[8px]" />)}
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Right: editor + history */}
-        <div className="space-y-6">
-          {selectedType ? (
+          {!detail.loading && !list.loading && versions.length === 0 && (
+            <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", padding: "8px 4px", lineHeight: 1.5 }}>
+              No versions yet. This agent is running its hardcoded default prompt.
+            </div>
+          )}
+
+          {!detail.loading && versions.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => { setVer(v.v); setText(v.text); setSaveMsg(null); }}
+              style={{ width: "100%", textAlign: "left", display: "block", padding: "11px 12px", borderRadius: "var(--r)", border: "1px solid", borderColor: ver === v.v ? "var(--c-ai)" : "transparent", background: ver === v.v ? "var(--c-ai-tint)" : "transparent", cursor: "pointer", marginBottom: 4 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: ver === v.v ? "var(--c-ai-ink)" : "var(--c-ink)" }}>{v.v}</span>
+                {v.live && <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="check" style={{ fontSize: 9 }}>live</Pill>}
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--c-ink-2)", marginTop: 3 }}>{v.note}</div>
+              <div className="mono" style={{ fontSize: 10, color: "var(--c-ink-3)", marginTop: 3 }}>{v.date}{v.author ? ` · ${v.author}` : ""}</div>
+            </button>
+          ))}
+        </aside>
+
+        {/* Right pane: editor header + advisory + textarea */}
+        <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+          {railEmpty ? (
+            <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "44px 26px" }}>
+              <EmptyState
+                title={list.error ? "Could not load prompts" : "No agents registered"}
+                body={
+                  list.error
+                    ? "The platform service did not respond. The prompt registry will appear here once it is reachable."
+                    : "When agents are registered, their system prompt, version history, and deploy controls appear here."
+                }
+                actions={list.error ? <Btn variant="soft" icon="arrowUpRight" onClick={list.reload}>Try again</Btn> : undefined}
+              />
+            </div>
+          ) : (
             <>
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="font-mono">{selectedType}</CardTitle>
-                      <CardDescription>
-                        {active
-                          ? `Override active (v${active.version}). Saved ${new Date(active.createdAt).toLocaleString()}.`
-                          : "Using hardcoded defaults, no override active. Save below to create a custom version."}
-                      </CardDescription>
-                    </div>
-                    {active && (
-                      <Button variant="ghost" size="sm" onClick={revertToDefault} className="text-destructive">
-                        <RotateCcw className="w-4 h-4 mr-1.5" />
-                        Revert to default
-                      </Button>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 26px", borderBottom: "1px solid var(--c-line)" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
+                    <h2 className="mono" style={{ margin: 0, fontSize: "var(--fs-lg)", fontWeight: 700 }}>{selectedAgent?.agent ?? selected ?? ""}</h2>
+                    {cur && <Pill mono tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">{cur.v}</Pill>}
+                    {cur?.live && (
+                      <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="check">deployed</Pill>
+                    )}
+                    {cur && !cur.live && (
+                      <Pill tone="var(--c-ink-3)" bg="var(--c-surface-3)" icon="dot">draft</Pill>
                     )}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {editorLoading ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Loading…
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="systemPrompt">System prompt</Label>
-                        <Textarea
-                          id="systemPrompt"
-                          rows={12}
-                          value={systemPrompt}
-                          onChange={(e) => setSystemPrompt(e.target.value)}
-                          placeholder="Empty = use the hardcoded prompt baked into the agent."
-                          className="font-mono text-xs leading-relaxed"
-                        />
-                        <p className="text-xs text-muted-foreground">{systemPrompt.length} chars · empty falls back to default</p>
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="modelName">Model</Label>
-                          <Input
-                            id="modelName"
-                            value={modelName}
-                            onChange={(e) => setModelName(e.target.value)}
-                            list="model-presets"
-                            placeholder="claude-sonnet-4-20250514"
-                          />
-                          <datalist id="model-presets">
-                            {MODEL_PRESETS.map((m) => (
-                              <option key={m} value={m} />
-                            ))}
-                          </datalist>
-                          <p className="text-xs text-muted-foreground">Empty = use agent default</p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="temperature">Temperature (0-2)</Label>
-                          <Input
-                            id="temperature"
-                            type="number"
-                            min={0}
-                            max={2}
-                            step={0.1}
-                            value={temperature}
-                            onChange={(e) => setTemperature(e.target.value)}
-                            placeholder="0.7"
-                          />
-                          <p className="text-xs text-muted-foreground">Empty = use model default</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Changelog note (optional)</Label>
-                        <Input
-                          id="notes"
-                          maxLength={500}
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Why are you saving this version? Tightened the JSON-output instructions."
-                        />
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="flex items-center justify-end gap-3">
-                <Button onClick={save} disabled={saving || !dirty}>
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save new version
-                </Button>
+                  <div className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 2 }}>
+                    {cur ? `${cur.date}${cur.author ? ` · ${cur.author}` : ""}` : "Using hardcoded default prompt."}
+                  </div>
+                </div>
+                {cur && !cur.live && (
+                  <Btn variant="soft" icon="arrowUpRight" onClick={rollback}>Roll back to {cur.v}</Btn>
+                )}
+                <Btn variant="primary" icon="check" onClick={save}>Save &amp; deploy</Btn>
               </div>
 
-              {/* History */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <History className="w-4 h-4" />
-                    Version history
-                  </CardTitle>
-                  <CardDescription>Past overrides. Click rollback to reactivate.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {history.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">No previous versions.</p>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead className="text-xs text-muted-foreground border-b">
-                        <tr>
-                          <th className="text-left px-4 py-2 font-medium">Version</th>
-                          <th className="text-left px-4 py-2 font-medium">Saved</th>
-                          <th className="text-left px-4 py-2 font-medium">Note</th>
-                          <th className="text-right px-4 py-2 font-medium" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.map((h) => (
-                          <tr key={h.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
-                            <td className="px-4 py-2 font-mono text-xs">v{h.version}</td>
-                            <td className="px-4 py-2 text-xs text-muted-foreground">
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {new Date(h.createdAt).toLocaleString()}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2 text-xs">
-                              {h.notes ?? <span className="text-muted-foreground italic">-</span>}
-                              {h.createdByUserId && (
-                                <span className="ml-2 text-muted-foreground inline-flex items-center gap-1">
-                                  <UserIcon className="w-3 h-3" />
-                                  {h.createdByUserId.slice(0, 8)}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 text-right space-x-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setCompareWith(h)}
-                                disabled={!active}
-                                title={active ? "Compare to active version" : "No active version to compare against"}
-                              >
-                                <GitCompare className="w-3 h-3 mr-1" />
-                                Diff
-                              </Button>
-                              <Button size="sm" variant="ghost" onClick={() => rollback(h.id)}>
-                                <RotateCcw className="w-3 h-3 mr-1" />
-                                Roll back
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </CardContent>
-              </Card>
+              <div style={{ flex: 1, overflowY: "auto", padding: "22px 26px" }}>
+                <div style={{ marginBottom: 14, display: "flex", gap: 10, alignItems: "center", padding: "11px 14px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)", fontSize: 12, color: "var(--c-ink-2)" }}>
+                  <Icon name="shield" size={15} style={{ color: "var(--c-ai)" }} />
+                  <span>Deploying pushes to all subscribed tenants. Changes are versioned and logged to the platform audit trail. Never expose secrets here.</span>
+                </div>
+
+                {saveMsg && (
+                  <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: "var(--r-lg)", background: "var(--c-surface-2)", border: "1px solid var(--c-line-2)", fontSize: 12, color: "var(--c-ink-2)" }}>
+                    {saveMsg}
+                  </div>
+                )}
+
+                {detail.loading ? (
+                  <Skeleton className="h-[360px] rounded-[12px]" />
+                ) : (
+                  <>
+                    <textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      spellCheck={false}
+                      disabled={busy}
+                      aria-label="System prompt"
+                      placeholder="Empty falls back to the hardcoded prompt baked into the agent."
+                      style={{ width: "100%", minHeight: 360, padding: "16px 18px", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: 13, fontFamily: "var(--font-mono)", lineHeight: 1.7, resize: "vertical", outline: "none" }}
+                    />
+                    <div style={{ marginTop: 8, display: "flex", gap: 12, alignItems: "center", fontSize: 11, color: "var(--c-ink-3)" }}>
+                      <span className="mono">{text.length} chars</span>
+                      <span>Empty falls back to the agent default.</span>
+                      {cur?.modelName && <span className="mono">model: {cur.modelName}</span>}
+                      {cur?.temperature != null && <span className="mono">temp: {cur.temperature}</span>}
+                    </div>
+                  </>
+                )}
+              </div>
             </>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Select an agent from the left to edit its prompt.
-              </CardContent>
-            </Card>
           )}
         </div>
       </div>
-
-      {/* Diff dialog, compare a historical version to the active one */}
-      <Dialog open={!!compareWith} onOpenChange={(o) => !o && setCompareWith(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="inline-flex items-center gap-2">
-              <GitCompare className="w-5 h-5" />
-              Diff: v{compareWith?.version} → v{active?.version} (active)
-            </DialogTitle>
-            <DialogDescription>
-              Showing what changed from the older version on the left to the currently-active version on the right.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-auto flex-1 space-y-4">
-            {compareWith && active && (
-              <>
-                {/* Settings diff (model + temperature) */}
-                <div className="text-xs grid grid-cols-2 gap-3 px-1">
-                  <div className="border rounded p-2 space-y-1">
-                    <div className="text-muted-foreground">v{compareWith.version}</div>
-                    <div>Model: <span className="font-mono">{compareWith.modelName ?? "(default)"}</span></div>
-                    <div>Temp: <span className="font-mono">{compareWith.temperature ?? "(default)"}</span></div>
-                  </div>
-                  <div className="border rounded p-2 space-y-1 bg-primary/5">
-                    <div className="text-primary">v{active.version} (active)</div>
-                    <div>Model: <span className="font-mono">{active.modelName ?? "(default)"}</span></div>
-                    <div>Temp: <span className="font-mono">{active.temperature ?? "(default)"}</span></div>
-                  </div>
-                </div>
-                {/* System prompt diff */}
-                <LineDiff
-                  oldText={compareWith.systemPrompt ?? ""}
-                  newText={active.systemPrompt ?? ""}
-                  oldLabel={`v${compareWith.version} · ${new Date(compareWith.createdAt).toLocaleString()}`}
-                  newLabel={`v${active.version} (active) · ${new Date(active.createdAt).toLocaleString()}`}
-                />
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -1,310 +1,255 @@
 "use client";
-
-/**
- * Admin → Platform → Audit log
- *
- * Append-only history of every super-admin platform action:
- *   - Kill switch toggles (from PlatformKillAudit)
- *   - Prompt overrides + rollbacks (from PromptOverride history)
- *
- * Combined into a single chronological feed so incident response can
- * answer "what happened to the platform between Tuesday and Wednesday?"
- *
- * Both data sources come from the same backend service, joined on the
- * frontend. Pagination is naive (limit=100 per source), sufficient for
- * months of normal activity. Add infinite scroll later if anyone ever
- * needs >100 events per kind.
- */
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { ArrowLeft, Power, Brain, Loader2, Filter, History, User as UserIcon, AlertTriangle } from "lucide-react";
+// app/(dashboard)/admin/platform/audit/page.tsx - EXACT Claude Design "Aurora"
+// PlatformAuditScreen. The immutable, system-wide platform trail: a timeline of
+// operator actions, deploys, kill-switches, billing, and agent alerts rendered
+// as event rows with an actor, an action (against a target), a relative
+// timestamp, and a severity-driven icon rail. Ported from
+// claude-design/screen-platform.jsx (PlatformAuditScreen) and wired to the real
+// gateway: it tries GET /platform/audit, then falls back to GET /audit. The
+// response (which may be {data:[...]} or [...]) is coerced to an array and each
+// row is mapped defensively (actor, action, target, createdAt, severity). The
+// severity / kind filter chips work with local useState. On error, a 404, or an
+// empty trail the exact layout still renders with EmptyState, never fabricated
+// audit events.
+import { useMemo, useState } from "react";
+import { Btn, Pill } from "@/components/aurora-kit";
+import { Skeleton, EmptyState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function getToken(): string {
-  if (typeof document === "undefined") return "";
-  return document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/)?.[1] ?? "";
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface KillAuditRow {
+// Kind -> accent color (full-color --c-* tokens; the bare channels are
+// Tailwind-only and are not valid colors on their own).
+const KIND_TONE: Record<string, string> = {
+  impersonation: "var(--c-ai)",
+  deploy: "var(--c-info)",
+  killswitch: "var(--c-danger)",
+  billing: "var(--c-brand)",
+  alert: "var(--c-warn)",
+};
+// Kind -> the icon shown in the timeline rail.
+const KIND_ICON: Record<string, string> = {
+  impersonation: "eye",
+  deploy: "terminal",
+  killswitch: "x",
+  billing: "card",
+  alert: "flag",
+};
+const KIND_ORDER = ["impersonation", "deploy", "killswitch", "billing", "alert"] as const;
+type Kind = (typeof KIND_ORDER)[number];
+
+const FILTERS: { id: "all" | Kind; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "impersonation", label: "Impersonation" },
+  { id: "deploy", label: "Deploys" },
+  { id: "killswitch", label: "Kill switches" },
+  { id: "billing", label: "Billing" },
+  { id: "alert", label: "Alerts" },
+];
+
+type AuditRow = {
   id: string;
-  agentType: string;
-  disabled: boolean;
-  reason: string | null;
-  actorUserId: string | null;
-  createdAt: string;
+  who: string;
+  act: string;
+  kind: Kind;
+  ai: boolean;
+  ts: number; // epoch ms for "ago" formatting, 0 when unknown
+};
+
+// Map an arbitrary severity / category / action string onto one of the five
+// prototype kinds so the icon and tint stay faithful to the design.
+function toKind(severity: any, action: any, category: any): Kind {
+  const hay = `${severity ?? ""} ${action ?? ""} ${category ?? ""}`.toLowerCase();
+  if (/(kill|disable|halt|pause|shutdown|critical)/.test(hay)) return "killswitch";
+  if (/(impersonat|login|access|view|session)/.test(hay)) return "impersonation";
+  if (/(deploy|release|publish|rollback|prompt|version)/.test(hay)) return "deploy";
+  if (/(bill|invoice|plan|payment|subscription|upgrade|charge)/.test(hay)) return "billing";
+  if (/(alert|warn|error|fail|anomaly|flag)/.test(hay)) return "alert";
+  return "deploy";
 }
 
-interface PromptOverrideRow {
-  id: string;
-  agentType: string;
-  systemPrompt: string | null;
-  modelName: string | null;
-  temperature: number | null;
-  version: number;
-  isActive: boolean;
-  notes: string | null;
-  createdByUserId: string | null;
-  createdAt: string;
+// Relative "Nx ago" label, mirroring the prototype's "{t} ago" output.
+function agoLabel(ms: number): string {
+  if (!ms) return "";
+  const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo}mo`;
+  return `${Math.floor(mo / 12)}y`;
 }
 
-type Event =
-  | { kind: "kill"; row: KillAuditRow }
-  | { kind: "prompt"; row: PromptOverrideRow; agentType: string };
+// Defensive mapping: the real payload may be {data:[...]} or [...] and each row
+// may use a variety of field names for actor / action / target / time. Coerce
+// to the shape the timeline renders. Never fabricate rows.
+function mapAudit(res: any): AuditRow[] {
+  const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+  return arr.map((a: any, i: number) => {
+    const actor = String(
+      a?.actor ?? a?.who ?? a?.actorName ?? a?.userName ?? a?.user?.name ??
+      a?.actorEmail ?? a?.user?.email ?? a?.actorUserId ?? a?.userId ?? "system",
+    );
+    const action = a?.action ?? a?.act ?? a?.event ?? a?.type ?? a?.message ?? "performed an action";
+    const target = a?.target ?? a?.targetName ?? a?.resource ?? a?.entity ?? a?.subject ?? a?.tenant ?? "";
+    const severity = a?.severity ?? a?.level ?? a?.status;
+    const category = a?.category ?? a?.kind ?? a?.area;
+    const act = target ? `${String(action)} ${String(target)}` : String(action);
+    const created = a?.createdAt ?? a?.created ?? a?.timestamp ?? a?.time ?? a?.at ?? a?.occurredAt;
+    const ts = created ? new Date(created).getTime() : 0;
+    return {
+      id: String(a?.id ?? a?.eventId ?? a?.uuid ?? i),
+      who: actor,
+      act,
+      kind: toKind(severity, action, category),
+      ai: Boolean(a?.ai ?? a?.isAi ?? a?.automated ?? /agent|ai|auto/i.test(`${actor} ${action}`)),
+      ts: Number.isFinite(ts) ? ts : 0,
+    };
+  });
+}
+
+// Try the platform-scoped route first, then the plain audit route.
+async function loadAudit(): Promise<AuditRow[]> {
+  try {
+    return mapAudit(await raw("/platform/audit"));
+  } catch {
+    return mapAudit(await raw("/audit"));
+  }
+}
+
+function OpHead({ title, sub, right }: { title: string; sub: string; right?: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
+      <div>
+        <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
+          <h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>{title}</h1>
+          <Pill icon="bolt" tone="var(--c-danger)" bg="var(--c-danger-tint)">platform operator</Pill>
+        </div>
+        <p style={{ margin: "4px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>{sub}</p>
+      </div>
+      {right}
+    </div>
+  );
+}
 
 export default function PlatformAuditPage() {
-  const [loading, setLoading] = useState(true);
-  const [killAudit, setKillAudit] = useState<KillAuditRow[]>([]);
-  const [promptHistory, setPromptHistory] = useState<Array<{ agentType: string; rows: PromptOverrideRow[] }>>([]);
-  const [search, setSearch] = useState("");
-  const [kindFilter, setKindFilter] = useState<"all" | "kill" | "prompt">("all");
+  const audit = useData<AuditRow[]>(loadAudit);
+  const [filter, setFilter] = useState<"all" | Kind>("all");
 
-  useEffect(() => {
-    void load();
-  }, []);
+  const all = useMemo(() => audit.data ?? [], [audit.data]);
+  const rows = useMemo(
+    () => (filter === "all" ? all : all.filter((a) => a.kind === filter)),
+    [all, filter],
+  );
 
-  async function load() {
-    setLoading(true);
-    try {
-      // 1) Kill switch audit, one call, scoped on backend
-      const auditRes = await fetch(`${API_BASE}/super-admin/platform/audit?limit=200`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (!auditRes.ok) throw new Error(`audit HTTP ${auditRes.status}`);
-      const auditBody = await auditRes.json();
-      setKillAudit((auditBody.data ?? auditBody).audit ?? []);
-
-      // 2) Prompt history, one call per agent (parallel). We list all
-      // agents then fan out to fetch each one's history. Capped at 20
-      // calls (we have <20 agents) which is fine for an audit page.
-      const promptsRes = await fetch(`${API_BASE}/super-admin/platform/prompts`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      const promptsBody = await promptsRes.json();
-      const agentTypes: string[] = ((promptsBody.data ?? promptsBody).prompts ?? []).map(
-        (p: any) => p.agentType,
-      );
-
-      const histories = await Promise.all(
-        agentTypes.map(async (agentType) => {
-          const res = await fetch(
-            `${API_BASE}/super-admin/platform/prompts/${encodeURIComponent(agentType)}`,
-            { headers: { Authorization: `Bearer ${getToken()}` } },
-          );
-          if (!res.ok) return { agentType, rows: [] as PromptOverrideRow[] };
-          const body = await res.json();
-          const data = body.data ?? body;
-          // Active row is also worth showing in the audit feed (its
-          // creation was an action). Combine active + history.
-          const rows: PromptOverrideRow[] = [
-            ...(data.active ? [data.active] : []),
-            ...(data.history ?? []),
-          ];
-          return { agentType, rows };
-        }),
-      );
-      setPromptHistory(histories);
-    } catch (err: any) {
-      toast.error(err.message ?? "Couldn't load audit log");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const events: Event[] = useMemo(() => {
-    const all: Event[] = [
-      ...killAudit.map((row) => ({ kind: "kill" as const, row })),
-      ...promptHistory.flatMap(({ agentType, rows }) =>
-        rows.map((row) => ({ kind: "prompt" as const, row, agentType })),
-      ),
-    ];
-    all.sort((a, b) => new Date(b.row.createdAt).getTime() - new Date(a.row.createdAt).getTime());
-    return all;
-  }, [killAudit, promptHistory]);
-
-  const filtered = events.filter((e) => {
-    if (kindFilter !== "all" && e.kind !== kindFilter) return false;
-    if (!search) return true;
-    const q = search.toLowerCase();
-    if (e.kind === "kill") {
-      return (
-        e.row.agentType.toLowerCase().includes(q) ||
-        (e.row.reason ?? "").toLowerCase().includes(q) ||
-        (e.row.actorUserId ?? "").toLowerCase().includes(q)
-      );
-    }
-    return (
-      e.row.agentType.toLowerCase().includes(q) ||
-      (e.row.notes ?? "").toLowerCase().includes(q) ||
-      (e.row.createdByUserId ?? "").toLowerCase().includes(q)
-    );
-  });
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 space-y-6">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin" /> Loading audit log…
-        </div>
-      </div>
-    );
-  }
+  const subCopy = audit.data
+    ? `${all.length} ${all.length === 1 ? "event" : "events"}, operator actions, deploys, kill-switches, agent alerts.`
+    : "System-wide trail, operator actions, deploys, kill-switches, agent alerts.";
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <Link href="/admin" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Admin
-      </Link>
-
-      <PageHeader
-        title="Platform audit log"
-        description="Every super-admin action that mutated the platform, kill switches, prompt overrides, rollbacks. Append-only, sorted newest first."
+    <div className="mx-auto w-full max-w-[820px]">
+      <OpHead
+        title="Platform audit"
+        sub={subCopy}
+        right={<Btn variant="soft" icon="arrowUpRight">Export</Btn>}
       />
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="relative flex-1">
-          <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by agent, reason, user…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {(["all", "kill", "prompt"] as const).map((k) => (
-            <Button
-              key={k}
-              size="sm"
-              variant={kindFilter === k ? "default" : "outline"}
-              onClick={() => setKindFilter(k)}
+      {/* Severity / kind filter chips, driven by local useState */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 14 }}>
+        {FILTERS.map((f) => {
+          const active = filter === f.id;
+          const tone = f.id === "all" ? "var(--c-brand)" : KIND_TONE[f.id] ?? "var(--c-brand)";
+          return (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              aria-pressed={active}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px",
+                borderRadius: "var(--r-pill)", border: "1px solid",
+                borderColor: active ? tone : "var(--c-line-2)",
+                background: active ? `color-mix(in oklab, ${tone} 14%, transparent)` : "var(--c-surface)",
+                color: active ? tone : "var(--c-ink-2)", cursor: "pointer",
+                fontSize: 11.5, fontWeight: 700, fontFamily: "var(--font-sans)",
+              }}
             >
-              {k === "all" ? "All" : k === "kill" ? "Kill switches" : "Prompts"}
-            </Button>
-          ))}
-        </div>
+              {f.id !== "all" && <Icon name={KIND_ICON[f.id] ?? "dot"} size={12} />}
+              {f.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <History className="w-4 h-4" />
-            {filtered.length} events
-            {filtered.length !== events.length && (
-              <span className="text-muted-foreground font-normal text-sm">(of {events.length})</span>
-            )}
-          </CardTitle>
-          <CardDescription>Most recent first. Click an event to inspect.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-12">No events match.</p>
-          ) : (
-            <ol className="divide-y">
-              {filtered.map((e) => (
-                <li key={`${e.kind}-${e.row.id}`} className="p-4 hover:bg-muted/40 transition-colors">
-                  {e.kind === "kill" ? <KillEvent row={e.row} /> : <PromptEvent row={e.row} />}
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+      <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 18, boxShadow: "var(--e1)" }}>
+        {/* loading -> skeleton rows in the exact card */}
+        {audit.loading && (
+          <div style={{ display: "grid", gap: 14 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "26px 1fr 64px", gap: 12, alignItems: "center" }}>
+                <Skeleton className="h-[26px] w-[26px] rounded-full" />
+                <Skeleton className="h-4 rounded-[6px]" />
+                <Skeleton className="h-3 rounded-[6px]" />
+              </div>
+            ))}
+          </div>
+        )}
 
-function KillEvent({ row }: { row: KillAuditRow }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div
-        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-          row.disabled
-            ? "bg-danger-tint text-danger dark:text-danger"
-            : "bg-ok-tint text-ok dark:text-ok"
-        }`}
-      >
-        <Power className="w-4 h-4" />
-      </div>
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="font-medium text-sm">
-            <span className="font-mono">{row.agentType}</span>{" "}
-            <Badge variant={row.disabled ? "destructive" : "default"} className="font-normal ml-1">
-              {row.disabled ? "killed" : "re-enabled"}
-            </Badge>
-          </div>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {new Date(row.createdAt).toLocaleString()}
-          </span>
-        </div>
-        {row.reason && (
-          <div className="text-xs text-warn dark:text-warn inline-flex items-start gap-1">
-            <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
-            <span>{row.reason}</span>
+        {/* error, 404, or empty -> exact card, EmptyState in the body */}
+        {!audit.loading && rows.length === 0 && (
+          <div style={{ padding: "32px 8px" }}>
+            <EmptyState
+              title={audit.error ? "Could not load the audit trail" : filter !== "all" ? "No events of this kind" : "No platform events yet"}
+              body={
+                audit.error
+                  ? "The platform audit service did not respond. The system-wide trail will appear here once it is reachable."
+                  : filter !== "all"
+                    ? "No events match this filter. Try a different category."
+                    : "When operators act, agents deploy, or kill-switches fire, the immutable trail appears here."
+              }
+              actions={audit.error ? <Btn variant="soft" icon="arrowUpRight" onClick={audit.reload}>Try again</Btn> : undefined}
+            />
           </div>
         )}
-        {row.actorUserId && (
-          <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
-            <UserIcon className="w-3 h-3" />
-            <span className="font-mono">{row.actorUserId.slice(0, 8)}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
-function PromptEvent({ row }: { row: PromptOverrideRow }) {
-  const fields = [
-    row.systemPrompt && "system prompt",
-    row.modelName && `model→${row.modelName}`,
-    row.temperature != null && `temp→${row.temperature}`,
-  ].filter(Boolean);
-
-  return (
-    <div className="flex items-start gap-3">
-      <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-ai-tint text-ai-ink dark:text-ai-ink">
-        <Brain className="w-4 h-4" />
-      </div>
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="font-medium text-sm">
-            <span className="font-mono">{row.agentType}</span>{" "}
-            <Badge variant="secondary" className="font-normal ml-1">
-              v{row.version} {row.isActive && "· active"}
-            </Badge>
-          </div>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {new Date(row.createdAt).toLocaleString()}
-          </span>
-        </div>
-        {fields.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            Overrode: {fields.join(", ")}
-          </div>
-        )}
-        {row.notes && <div className="text-xs">{row.notes}</div>}
-        {row.createdByUserId && (
-          <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
-            <UserIcon className="w-3 h-3" />
-            <span className="font-mono">{row.createdByUserId.slice(0, 8)}</span>
-            <Link
-              href={`/admin/platform/prompts?agent=${row.agentType}`}
-              className="ml-2 text-primary hover:underline"
-            >
-              Open in editor →
-            </Link>
-          </div>
-        )}
+        {/* data -> the faithful timeline of event rows */}
+        {!audit.loading && rows.map((a, i) => {
+          const tone = KIND_TONE[a.kind] ?? "var(--c-ink-3)";
+          const t = agoLabel(a.ts);
+          return (
+            <div key={a.id} style={{ display: "grid", gridTemplateColumns: "26px 1fr 64px", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <span style={{ width: 26, height: 26, borderRadius: 99, display: "grid", placeItems: "center", flexShrink: 0, background: `color-mix(in oklab, ${tone} 14%, transparent)`, color: tone }}>
+                  <Icon name={KIND_ICON[a.kind] ?? "flag"} size={13} />
+                </span>
+                {i < rows.length - 1 && <span style={{ width: 2, flex: 1, background: "var(--c-line)", minHeight: 12 }} />}
+              </div>
+              <div style={{ paddingBottom: 16 }}>
+                <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>
+                  <b className="mono" style={{ fontSize: 12 }}>{a.who}</b>{" "}
+                  <span style={{ color: "var(--c-ink-2)" }}>{a.act}</span>
+                  {a.ai && <Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" style={{ fontSize: 9, marginLeft: 6 }}>AI</Pill>}
+                </div>
+              </div>
+              <span className="mono" style={{ fontSize: 10.5, color: "var(--c-ink-3)", textAlign: "right" }}>{t ? `${t} ago` : ""}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
