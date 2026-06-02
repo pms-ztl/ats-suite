@@ -254,7 +254,7 @@ export default function RequisitionDetailPage() {
                 <div key={t} style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 16, boxShadow: "var(--e1)" }}>
                   <span style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center", color: c, background: `color-mix(in oklab, ${c} 13%, transparent)` }}><Icon name={ic} size={16} /></span>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 10 }}>
-                    <span className="mono tnum" style={{ fontSize: 24, fontWeight: 700, color: "var(--c-ink-3)" }}>—</span>
+                    <span className="mono tnum" style={{ fontSize: 24, fontWeight: 700, color: "var(--c-ink-3)" }}>--</span>
                     <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--c-ink-2)" }}>{t}</span>
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 3 }}>No data yet</div>

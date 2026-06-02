@@ -268,7 +268,7 @@ export default function ScreeningPage() {
                       <div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{row.agent}</div>
                     </div>
                   </div>
-                  <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-2)" }}>{row.requisitionId || "—"}</span>
+                  <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-2)" }}>{row.requisitionId || "n/a"}</span>
                   <span className="mono tnum" style={{ fontSize: 16, fontWeight: 700, color: "var(--c-ai-ink)" }}>{row.score}</span>
                   <ResultBadge kind={kind} />
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
