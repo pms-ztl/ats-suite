@@ -13,12 +13,13 @@ type CSS = React.CSSProperties;
 
 /* ----------------------------- primitives ----------------------------- */
 export function Btn({
-  variant = "soft", size = "md", icon, trailIcon, children, onClick, style = {},
+  variant = "soft", size = "md", icon, trailIcon, children, onClick, style = {}, disabled, type,
 }: {
   variant?: "primary" | "ai" | "soft" | "ghost" | "danger" | "outlineAi";
   size?: "sm" | "md" | "lg";
   icon?: string; trailIcon?: string; children?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>; style?: CSS;
+  disabled?: boolean; type?: "button" | "submit" | "reset";
 }) {
   const pad = size === "sm" ? "6px 11px" : size === "lg" ? "11px 18px" : "8px 14px";
   const fs = size === "sm" ? "var(--fs-sm)" : "var(--fs-base)";
@@ -37,8 +38,9 @@ export function Btn({
     outlineAi: { background: "var(--c-ai-tint)", color: "var(--c-ai-ink)", borderColor: "transparent" },
   };
   return (
-    <button onClick={onClick} style={{ ...base, ...V[variant], ...style }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; }}
+    <button onClick={onClick} disabled={disabled} type={type}
+      style={{ ...base, ...V[variant], ...(disabled ? { opacity: 0.55, cursor: "default", pointerEvents: "none" } : {}), ...style }}
+      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.transform = "translateY(-1px)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}>
       {icon && <Icon name={icon} size={size === "sm" ? 15 : 16} />}
       {children}
