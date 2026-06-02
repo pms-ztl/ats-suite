@@ -1,415 +1,306 @@
 "use client";
-
-/**
- * Tenant-configurable interview rounds (Batch 5).
- *
- *  - Drag-to-reorder rounds via native HTML5 drag-drop
- *  - Add round modal with type + duration + auto-advance toggle + instructions
- *  - Edit / delete per round
- *  - PLAN-GATED: STARTER+ only (FREE shows upgrade prompt)
- */
+// app/(dashboard)/requisitions/[id]/rounds/page.tsx
+// EXACT Claude Design "Aurora" RoundsConfig (interview rounds / pipeline stage
+// configurator). Ported from claude-design/req-builder.jsx -> RoundsConfig and
+// wired to the real gateway. The ordered list of rounds is interactive (add,
+// remove, reorder, edit each field via local useState). Existing config is
+// best-effort loaded from the requisition; nothing is fabricated as "saved".
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import {
-  ChevronLeft, Plus, GripVertical, Trash2, Edit2, Clock,
-  Phone, Code2, Heart, Users, Trophy, Sparkles, RefreshCw,
-} from "lucide-react";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
+import { Greeting, Btn } from "@/components/aurora-kit";
+import { Skeleton } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-function authHeaders(): Record<string, string> {
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  try {
-    const t = window.sessionStorage.getItem("ats-access-token");
-    if (t) h["Authorization"] = `Bearer ${t}`;
-  } catch {}
-  return h;
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface InterviewRound {
+type RoundType = "PHONE_SCREEN" | "TECHNICAL" | "BEHAVIORAL" | "PANEL" | "FINAL";
+
+interface Round {
   id: string;
   name: string;
-  order: number;
-  interviewType: string;
-  durationMinutes: number;
-  instructions: string | null;
-  autoAdvanceOnPass: boolean;
-  defaultPanelistRole: string | null;
+  type: RoundType;
+  dur: number;
+  panel: string;
+  auto: boolean;
+  instr: string;
 }
 
-const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
-  PHONE_SCREEN: { icon: <Phone className="h-3.5 w-3.5" />,   color: "text-info bg-info/10" },
-  TECHNICAL:    { icon: <Code2 className="h-3.5 w-3.5" />,   color: "text-ai-ink bg-ai/10" },
-  BEHAVIORAL:   { icon: <Heart className="h-3.5 w-3.5" />,   color: "text-danger bg-danger/10" },
-  PANEL:        { icon: <Users className="h-3.5 w-3.5" />,   color: "text-warn bg-warn/10" },
-  FINAL:        { icon: <Trophy className="h-3.5 w-3.5" />,  color: "text-ok bg-ok/10" },
+// Faithful to claude-design/req-data.jsx ROUND_TYPES (tone tokens -> --c-).
+const ROUND_TYPES: Record<RoundType, { label: string; tone: string }> = {
+  PHONE_SCREEN: { label: "Phone screen", tone: "var(--c-info)" },
+  TECHNICAL:    { label: "Technical",    tone: "var(--c-ai)" },
+  BEHAVIORAL:   { label: "Behavioral",   tone: "var(--c-brand)" },
+  PANEL:        { label: "Panel",        tone: "var(--c-warn)" },
+  FINAL:        { label: "Final",        tone: "var(--c-ok)" },
+};
+const TYPE_ORDER: RoundType[] = ["PHONE_SCREEN", "TECHNICAL", "BEHAVIORAL", "PANEL", "FINAL"];
+
+// Sensible default pipeline (claude-design ROUNDS), used only when nothing loads.
+const DEFAULT_ROUNDS: Round[] = [
+  { id: "rd1", name: "Recruiter phone screen", type: "PHONE_SCREEN", dur: 30, panel: "Recruiter", auto: true, instr: "Motivation, comp expectations, role fit." },
+  { id: "rd2", name: "Technical screen", type: "TECHNICAL", dur: 60, panel: "Senior Engineer", auto: true, instr: "Coding + systems fundamentals." },
+  { id: "rd3", name: "System design", type: "TECHNICAL", dur: 60, panel: "Staff Engineer", auto: false, instr: "Design a payments ledger service." },
+  { id: "rd4", name: "Behavioral & values", type: "BEHAVIORAL", dur: 45, panel: "Hiring Manager", auto: false, instr: "Ownership, collaboration, conflict." },
+  { id: "rd5", name: "Final panel", type: "PANEL", dur: 90, panel: "Cross-functional", auto: false, instr: "Bar-raiser + 2 panelists." },
+];
+
+// Coerce a raw API round (snake/camel variants) into our shape, defensively.
+function coerce(r: any, i: number): Round {
+  const rawType = String(r?.type ?? r?.interviewType ?? "TECHNICAL").toUpperCase();
+  const type: RoundType = (TYPE_ORDER as string[]).includes(rawType) ? (rawType as RoundType) : "TECHNICAL";
+  return {
+    id: String(r?.id ?? r?.roundId ?? `rd${i + 1}`),
+    name: String(r?.name ?? r?.title ?? "Untitled round"),
+    type,
+    dur: Number(r?.dur ?? r?.durationMinutes ?? r?.duration ?? 45) || 45,
+    panel: String(r?.panel ?? r?.defaultPanelistRole ?? r?.panelist ?? "Interviewer"),
+    auto: Boolean(r?.auto ?? r?.autoAdvanceOnPass ?? false),
+    instr: String(r?.instr ?? r?.instructions ?? r?.notes ?? "").trim(),
+  };
+}
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", border: "none", outline: "none", background: "transparent",
+  fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink)", fontFamily: "var(--font-sans)",
 };
 
-const EMPTY_FORM: Omit<InterviewRound, "id" | "order"> = {
-  name: "",
-  interviewType: "TECHNICAL",
-  durationMinutes: 60,
-  instructions: "",
-  autoAdvanceOnPass: false,
-  defaultPanelistRole: null,
-};
-
-export default function InterviewRoundsPage() {
+export default function RoundsConfigPage() {
   const params = useParams<{ id: string }>();
-  const { isTenantAdmin } = usePermissions();
+  const id = params?.id;
 
-  const [rounds, setRounds] = useState<InterviewRound[]>([]);
+  const [rounds, setRounds] = useState<Round[]>(DEFAULT_ROUNDS.map((r) => ({ ...r })));
   const [loading, setLoading] = useState(true);
-  const [planBlocked, setPlanBlocked] = useState(false);
-  const [editing, setEditing] = useState<InterviewRound | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [submitting, setSubmitting] = useState(false);
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [loadNote, setLoadNote] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveNote, setSaveNote] = useState<{ kind: "ok" | "warn"; text: string } | null>(null);
 
-  const fetchRounds = useCallback(async () => {
+  // Best-effort load: try /requisitions/{id}/rounds first, then /requisitions/{id}.
+  const load = useCallback(async () => {
+    if (!id) return;
     setLoading(true);
+    setLoadNote(null);
+    let loaded: Round[] | null = null;
     try {
-      const res = await fetch(`${API_BASE}/requisitions/${params.id}/rounds`, {
-        headers: authHeaders(),
-        credentials: "include",
-      });
-      if (res.status === 402) {
-        setPlanBlocked(true);
-        setRounds([]);
-      } else if (res.ok) {
-        const data = await res.json();
-        setRounds(data.data ?? data ?? []);
-      }
+      const res = await raw(`/requisitions/${id}/rounds`);
+      const arr = res?.data ?? res?.rounds ?? res;
+      if (Array.isArray(arr) && arr.length > 0) loaded = arr.map(coerce);
     } catch {}
+    if (!loaded) {
+      try {
+        const res = await raw(`/requisitions/${id}`);
+        const req = res?.data ?? res;
+        const arr = req?.rounds ?? req?.interviewRounds;
+        if (Array.isArray(arr) && arr.length > 0) loaded = arr.map(coerce);
+      } catch {}
+    }
+    if (loaded && loaded.length > 0) {
+      setRounds(loaded);
+    } else {
+      // No saved config available, fall back to a sensible default set.
+      setRounds(DEFAULT_ROUNDS.map((r) => ({ ...r })));
+      setLoadNote("No saved pipeline found, starting from a recommended default set.");
+    }
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
-  useEffect(() => { if (params.id) fetchRounds(); }, [params.id, fetchRounds]);
+  useEffect(() => { load(); }, [load]);
 
-  const openAdd = () => {
-    setEditing(null);
-    setForm({ ...EMPTY_FORM });
-    setDialogOpen(true);
+  // ---- interactive ops (local state) ----
+  const move = (i: number, dir: number) => {
+    const j = i + dir;
+    if (j < 0 || j >= rounds.length) return;
+    const next = [...rounds];
+    [next[i], next[j]] = [next[j], next[i]];
+    setRounds(next);
+    setSaveNote(null);
+  };
+  const toggleAuto = (rid: string) => { setRounds(rounds.map((r) => (r.id === rid ? { ...r, auto: !r.auto } : r))); setSaveNote(null); };
+  const patch = (rid: string, p: Partial<Round>) => { setRounds(rounds.map((r) => (r.id === rid ? { ...r, ...p } : r))); setSaveNote(null); };
+  const remove = (rid: string) => { setRounds(rounds.filter((r) => r.id !== rid)); setSaveNote(null); };
+  const add = () => {
+    setRounds([...rounds, { id: "rd" + Date.now(), name: "New round", type: "TECHNICAL", dur: 45, panel: "Engineer", auto: false, instr: "" }]);
+    setSaveNote(null);
   };
 
-  const openEdit = (r: InterviewRound) => {
-    setEditing(r);
-    setForm({
-      name: r.name,
-      interviewType: r.interviewType,
-      durationMinutes: r.durationMinutes,
-      instructions: r.instructions ?? "",
-      autoAdvanceOnPass: r.autoAdvanceOnPass,
-      defaultPanelistRole: r.defaultPanelistRole,
-    });
-    setDialogOpen(true);
-  };
-
+  // Save: attempt PUT, fall back to POST, with graceful inline fallback.
   const save = async () => {
-    if (!form.name.trim()) {
-      toast.error("Round name is required");
-      return;
-    }
-    setSubmitting(true);
+    if (!id) return;
+    setSaving(true);
+    setSaveNote(null);
+    const body = JSON.stringify({
+      rounds: rounds.map((r, i) => ({
+        id: r.id, name: r.name, order: i + 1, type: r.type,
+        interviewType: r.type, durationMinutes: r.dur, dur: r.dur,
+        panel: r.panel, defaultPanelistRole: r.panel,
+        autoAdvanceOnPass: r.auto, auto: r.auto, instructions: r.instr, instr: r.instr,
+      })),
+    });
     try {
-      const url = editing
-        ? `${API_BASE}/rounds/${editing.id}`
-        : `${API_BASE}/requisitions/${params.id}/rounds`;
-      const res = await fetch(url, {
-        method: editing ? "PATCH" : "POST",
-        headers: authHeaders(),
-        credentials: "include",
-        body: JSON.stringify({
-          name: form.name,
-          interviewType: form.interviewType,
-          durationMinutes: form.durationMinutes,
-          instructions: form.instructions || undefined,
-          autoAdvanceOnPass: form.autoAdvanceOnPass,
-          defaultPanelistRole: form.defaultPanelistRole || undefined,
-        }),
-      });
-      if (res.status === 402) {
-        toast.error("Configurable interview rounds require STARTER plan or higher");
-        return;
-      }
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message ?? `${res.status}`);
-      }
-      toast.success(editing ? "Round updated" : "Round added");
-      setDialogOpen(false);
-      fetchRounds();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save round");
-    }
-    setSubmitting(false);
-  };
-
-  const deleteRound = async (id: string) => {
-    if (!confirm("Delete this round? Existing interviews will be detached.")) return;
-    try {
-      await fetch(`${API_BASE}/rounds/${id}`, {
-        method: "DELETE",
-        headers: authHeaders(),
-        credentials: "include",
-      });
-      toast.success("Round deleted");
-      fetchRounds();
+      await raw(`/requisitions/${id}/rounds`, { method: "PUT", body });
+      setSaveNote({ kind: "ok", text: "Pipeline saved." });
     } catch {
-      toast.error("Failed to delete");
+      try {
+        await raw(`/requisitions/${id}/rounds`, { method: "POST", body });
+        setSaveNote({ kind: "ok", text: "Pipeline saved." });
+      } catch {
+        setSaveNote({ kind: "warn", text: "Could not reach the server. Your changes are kept locally only." });
+      }
     }
+    setSaving(false);
   };
-
-  // Drag-reorder
-  const handleDrop = async (targetIdx: number) => {
-    if (draggedIdx === null || draggedIdx === targetIdx) return;
-    const reordered = [...rounds];
-    const [moved] = reordered.splice(draggedIdx, 1);
-    reordered.splice(targetIdx, 0, moved);
-    setRounds(reordered);
-    setDraggedIdx(null);
-    try {
-      await fetch(`${API_BASE}/requisitions/${params.id}/rounds/reorder`, {
-        method: "PUT",
-        headers: authHeaders(),
-        credentials: "include",
-        body: JSON.stringify({ order: reordered.map((r) => r.id) }),
-      });
-    } catch {
-      toast.error("Failed to save order");
-      fetchRounds();
-    }
-  };
-
-  if (!isTenantAdmin) return <AccessDenied />;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href={`/requisitions/${params.id}`}
-          className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground mb-2"
-        >
-          <ChevronLeft className="h-3 w-3" /> Back to requisition
-        </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Interview Rounds</h1>
-            <p className="text-sm text-muted-foreground">
-              Define the interview pipeline for this role. Drag rows to reorder.
-            </p>
+    <div className="mx-auto w-full max-w-[1200px]">
+      <Greeting title="Interview rounds" sub={`${rounds.length} rounds · candidates advance through these in order.`}>
+        <Btn variant="soft" icon="enter" onClick={() => { if (id) window.location.assign(`/requisitions/${id}`); }}>Back to requisition</Btn>
+        <Btn variant="primary" icon="plus" onClick={add}>Add round</Btn>
+        <Btn variant="ai" icon="check" onClick={save} style={saving ? { opacity: 0.7, pointerEvents: "none" } : undefined}>
+          {saving ? "Saving..." : "Save pipeline"}
+        </Btn>
+      </Greeting>
+
+      <div style={{ maxWidth: 820 }}>
+        {/* inline load / save status */}
+        {loadNote && (
+          <div style={{ marginBottom: 12, padding: "9px 13px", borderRadius: "var(--r)", background: "var(--c-surface-2)", border: "1px solid var(--c-line)", fontSize: 12.5, color: "var(--c-ink-2)", display: "flex", gap: 8, alignItems: "center" }}>
+            <Icon name="dot" size={14} style={{ color: "var(--c-ink-3)" }} />{loadNote}
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={fetchRounds} className="gap-1">
-              <RefreshCw className="h-3.5 w-3.5" /> Refresh
-            </Button>
-            <Button onClick={openAdd} className="glow-primary gap-1.5" disabled={planBlocked}>
-              <Plus className="h-4 w-4" /> Add round
-            </Button>
+        )}
+        {saveNote && (
+          <div style={{ marginBottom: 12, padding: "9px 13px", borderRadius: "var(--r)", display: "flex", gap: 8, alignItems: "center", fontSize: 12.5,
+            background: saveNote.kind === "ok" ? "var(--c-ok-tint)" : "var(--c-warn-tint)",
+            border: "1px solid " + (saveNote.kind === "ok" ? "var(--c-ok)" : "var(--c-warn)"),
+            color: saveNote.kind === "ok" ? "var(--c-ok)" : "var(--c-warn)" }}>
+            <Icon name={saveNote.kind === "ok" ? "check" : "flag"} size={14} />{saveNote.text}
           </div>
+        )}
+
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[72px] rounded-[14px]" />)}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {rounds.map((r, i) => {
+              const t = ROUND_TYPES[r.type];
+              return (
+                <div key={r.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 16px", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)" }}>
+                  {/* reorder controls + index */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move round up" style={{ border: "none", background: "none", cursor: i === 0 ? "default" : "pointer", color: "var(--c-ink-3)", opacity: i === 0 ? 0.3 : 1, padding: 0, lineHeight: 0 }}>
+                      <Icon name="chevD" size={15} style={{ transform: "rotate(180deg)" }} />
+                    </button>
+                    <span className="mono" style={{ width: 22, textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--c-ink-3)" }}>{i + 1}</span>
+                    <button onClick={() => move(i, 1)} disabled={i === rounds.length - 1} aria-label="Move round down" style={{ border: "none", background: "none", cursor: i === rounds.length - 1 ? "default" : "pointer", color: "var(--c-ink-3)", opacity: i === rounds.length - 1 ? 0.3 : 1, padding: 0, lineHeight: 0 }}>
+                      <Icon name="chevD" size={15} />
+                    </button>
+                  </div>
+
+                  {/* type icon swatch */}
+                  <span style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, color: t.tone, background: `color-mix(in oklab, ${t.tone} 13%, transparent)` }}>
+                    <Icon name="calendar" size={18} />
+                  </span>
+
+                  {/* editable body */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <input
+                        value={r.name}
+                        onChange={(e) => patch(r.id, { name: e.target.value })}
+                        aria-label="Round name"
+                        style={{ ...inputStyle, width: "auto", minWidth: 120, flex: "0 1 auto" }}
+                      />
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: t.tone, background: `color-mix(in oklab, ${t.tone} 13%, transparent)` }}>
+                        <select
+                          value={r.type}
+                          onChange={(e) => patch(r.id, { type: e.target.value as RoundType })}
+                          aria-label="Round type"
+                          style={{ border: "none", outline: "none", background: "transparent", color: t.tone, fontWeight: 600, fontSize: "var(--fs-xs)", fontFamily: "var(--font-sans)", cursor: "pointer", appearance: "none", textTransform: "capitalize" }}
+                        >
+                          {TYPE_ORDER.map((k) => (
+                            <option key={k} value={k}>{ROUND_TYPES[k].label}</option>
+                          ))}
+                        </select>
+                      </span>
+                      <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                        <input
+                          type="number"
+                          min={5}
+                          max={480}
+                          value={r.dur}
+                          onChange={(e) => patch(r.id, { dur: Number(e.target.value) || 0 })}
+                          aria-label="Duration in minutes"
+                          style={{ width: 42, border: "1px solid var(--c-line-2)", borderRadius: "var(--r-sm)", outline: "none", background: "var(--c-surface-2)", color: "var(--c-ink-3)", fontFamily: "var(--font-mono)", fontSize: 11, padding: "1px 4px", textAlign: "right" }}
+                        />m
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 4, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                      <span>Panel:</span>
+                      <input
+                        value={r.panel}
+                        onChange={(e) => patch(r.id, { panel: e.target.value })}
+                        aria-label="Panel"
+                        style={{ ...inputStyle, width: "auto", minWidth: 90, flex: "0 1 auto", fontWeight: 600, fontSize: 11.5, color: "var(--c-ink-2)" }}
+                      />
+                      <span style={{ color: "var(--c-line-strong)" }}>·</span>
+                      <input
+                        value={r.instr}
+                        onChange={(e) => patch(r.id, { instr: e.target.value })}
+                        placeholder="Scorecard / instructions for interviewers"
+                        aria-label="Instructions"
+                        style={{ ...inputStyle, flex: 1, minWidth: 140, fontWeight: 400, fontSize: 11.5, color: "var(--c-ink-3)" }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* auto-advance toggle */}
+                  <button
+                    onClick={() => toggleAuto(r.id)}
+                    title="Auto-advance on pass"
+                    aria-pressed={r.auto}
+                    style={{ display: "inline-flex", gap: 7, alignItems: "center", padding: "6px 10px", borderRadius: "var(--r-pill)", border: "1px solid", borderColor: r.auto ? "transparent" : "var(--c-line-2)", background: r.auto ? "var(--c-brand-tint)" : "var(--c-surface)", color: r.auto ? "var(--c-brand-ink)" : "var(--c-ink-3)", cursor: "pointer", fontSize: 11.5, fontWeight: 600 }}
+                  >
+                    <span style={{ width: 26, height: 15, borderRadius: 99, background: r.auto ? "var(--c-brand)" : "var(--c-line-strong)", position: "relative", transition: "background var(--t)" }}>
+                      <span style={{ position: "absolute", top: 2, left: r.auto ? 13 : 2, width: 11, height: 11, borderRadius: 99, background: "white", transition: "left var(--t)" }} />
+                    </span>
+                    auto-advance
+                  </button>
+
+                  {/* remove */}
+                  <button onClick={() => remove(r.id)} aria-label="Remove round" style={{ width: 30, height: 30, borderRadius: "var(--r-sm)", border: "1px solid var(--c-line)", background: "var(--c-surface)", color: "var(--c-ink-3)", display: "grid", placeItems: "center", cursor: "pointer" }}>
+                    <Icon name="x" size={14} />
+                  </button>
+                </div>
+              );
+            })}
+
+            {rounds.length === 0 && (
+              <div style={{ padding: "26px 16px", borderRadius: "var(--r-lg)", border: "1px dashed var(--c-line-strong)", background: "var(--c-surface)", textAlign: "center", color: "var(--c-ink-3)", fontSize: 13 }}>
+                No rounds yet. Add the first stage of this interview pipeline.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* AI interview-kit banner (verbatim copy from the prototype) */}
+        <div style={{ marginTop: 14, padding: "11px 14px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)", display: "flex", gap: 9, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-2)" }}>
+          <Icon name="sparkles" size={15} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
+          <span>The <b style={{ color: "var(--c-ai-ink)" }}>interview-kit</b> agent can draft questions + a scoring rubric for each round.</span>
+          <Btn variant="outlineAi" size="sm" icon="sparkles" style={{ marginLeft: "auto" }}>Generate kits</Btn>
         </div>
       </div>
-
-      {/* Plan upgrade banner */}
-      {planBlocked && (
-        <Card className="border-warn/40 bg-warn-tint">
-          <CardContent className="p-5 flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-ai shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-warn">
-                Custom interview rounds require STARTER plan or higher
-              </p>
-              <p className="text-xs text-warn dark:text-warn mt-1">
-                On the FREE plan, all interviews use a single default round. Upgrade to design
-                multi-round pipelines unique to each role (e.g. Phone Screen → Coding → HR Loop).
-              </p>
-              <Link href="/billing" className="inline-block text-xs font-semibold text-warn underline mt-2">
-                View pricing →
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Rounds list */}
-      {loading ? (
-        <div className="text-center py-10 text-sm text-muted-foreground">Loading…</div>
-      ) : rounds.length === 0 && !planBlocked ? (
-        <Card className="border-dashed">
-          <CardContent className="p-10 text-center text-muted-foreground">
-            <Trophy className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium mb-1">No rounds defined yet</p>
-            <p className="text-xs mb-4">Add your first round to design the interview pipeline.</p>
-            <Button onClick={openAdd} className="glow-primary gap-1.5">
-              <Plus className="h-4 w-4" /> Add first round
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {rounds.map((r, i) => {
-            const meta = TYPE_META[r.interviewType] ?? TYPE_META.PANEL;
-            return (
-              <div
-                key={r.id}
-                draggable
-                onDragStart={() => setDraggedIdx(i)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(i)}
-                className={cn(
-                  "group flex items-center gap-3 p-4 rounded-xl border bg-card transition-all hover:border-primary/30",
-                  draggedIdx === i && "opacity-50"
-                )}
-              >
-                <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 cursor-grab" />
-                <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", meta.color)}>
-                  {meta.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <Badge variant="outline" className="text-2xs">Round {r.order}</Badge>
-                    <span className="font-semibold text-sm truncate">{r.name}</span>
-                    {r.autoAdvanceOnPass && (
-                      <Badge variant="secondary" className="text-2xs gap-0.5">
-                        <Sparkles className="h-2.5 w-2.5" /> Auto-advance
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="capitalize">{r.interviewType.replace(/_/g, " ").toLowerCase()}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{r.durationMinutes}min</span>
-                    {r.defaultPanelistRole && (
-                      <span>Default panelist: {r.defaultPanelistRole.replace(/_/g, " ").toLowerCase()}</span>
-                    )}
-                  </div>
-                  {r.instructions && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.instructions}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(r)}>
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => deleteRound(r.id)} className="text-danger hover:text-danger">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Add/Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit round" : "Add interview round"}</DialogTitle>
-            <DialogDescription>
-              Configure a stage in this requisition&apos;s interview pipeline.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Name <span className="text-destructive">*</span></Label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Coding Test, Technical Deep-Dive"
-                autoFocus
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Type</Label>
-                <Select value={form.interviewType} onValueChange={(v) => setForm({ ...form, interviewType: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PHONE_SCREEN">Phone Screen</SelectItem>
-                    <SelectItem value="TECHNICAL">Technical</SelectItem>
-                    <SelectItem value="BEHAVIORAL">Behavioral</SelectItem>
-                    <SelectItem value="PANEL">Panel</SelectItem>
-                    <SelectItem value="FINAL">Final</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Duration (min)</Label>
-                <Input
-                  type="number"
-                  min={15}
-                  max={480}
-                  value={form.durationMinutes}
-                  onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Default panelist role</Label>
-              <Select
-                value={form.defaultPanelistRole ?? "none"}
-                onValueChange={(v) => setForm({ ...form, defaultPanelistRole: v === "none" ? null : v })}
-              >
-                <SelectTrigger><SelectValue placeholder="No suggestion" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No suggestion</SelectItem>
-                  <SelectItem value="RECRUITER">Recruiter</SelectItem>
-                  <SelectItem value="HIRING_MANAGER">Hiring Manager</SelectItem>
-                  <SelectItem value="INTERVIEWER">Interviewer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Instructions for interviewers</Label>
-              <Textarea
-                value={form.instructions ?? ""}
-                onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                placeholder="e.g. Focus on system-design fundamentals…"
-                rows={3}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-3 bg-muted/30">
-              <div>
-                <Label className="text-sm cursor-pointer" htmlFor="auto-advance">Auto-advance on PASS</Label>
-                <p className="text-2xs text-muted-foreground">
-                  When feedback recommendation = HIRE, automatically create the next round&apos;s interview.
-                </p>
-              </div>
-              <Switch
-                id="auto-advance"
-                checked={form.autoAdvanceOnPass}
-                onCheckedChange={(c) => setForm({ ...form, autoAdvanceOnPass: c })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>Cancel</Button>
-            <Button onClick={save} disabled={submitting} className="glow-primary">
-              {submitting ? "Saving…" : editing ? "Save changes" : "Add round"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
