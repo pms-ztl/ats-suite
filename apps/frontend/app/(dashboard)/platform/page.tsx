@@ -3,9 +3,10 @@
 // operator console (TenantsScreen). Cross-tenant overview with plan pills,
 // usage, MRR, cost, runs, and health. Ported from
 // claude-design/screen-platform.jsx (TenantsScreen) and wired to the real
-// gateway via GET /platform/tenants. KPI cards are derived from the live tenant
-// rows (count, MRR, cost) so nothing is fabricated; on error or an empty/404
-// response the exact layout still renders with EmptyState.
+// gateway via GET /platform/tenants. The local raw() helper unwraps res?.data
+// ?? res (matching the sibling platform ports). KPI cards are derived from the
+// live tenant rows (count, MRR, cost) so nothing is fabricated; on error or an
+// empty/404 response the exact layout still renders with EmptyState.
 import { useState } from "react";
 import { Btn, Pill, KPICard, type Kpi } from "@/components/aurora-kit";
 import { Skeleton, EmptyState } from "@/components/aurora";
@@ -22,7 +23,8 @@ async function raw(path: string, init?: RequestInit) {
     ...init,
   });
   if (!res.ok) throw new Error(`${path} -> ${res.status}`);
-  return res.json();
+  const json: any = await res.json();
+  return json?.data ?? json;
 }
 
 // Plan -> accent color (full-color --c-* tokens; bare channels are Tailwind-only).
@@ -58,7 +60,11 @@ type Tenant = {
 // Defensive mapping: the real payload may be {data:[...]} or [...] and each row
 // may use a variety of field names. Coerce to the shape the table renders.
 function mapTenants(res: any): Tenant[] {
-  const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+  const arr = Array.isArray(res) ? res
+    : Array.isArray(res?.data) ? res.data
+    : Array.isArray(res?.tenants) ? res.tenants
+    : Array.isArray(res?.items) ? res.items
+    : [];
   return arr.map((t: any, i: number) => {
     const name = String(t?.name ?? t?.tenantName ?? t?.companyName ?? t?.title ?? `Tenant ${i + 1}`);
     const slug = String(t?.slug ?? t?.subdomain ?? t?.key ?? name.toLowerCase().replace(/\s+/g, "-"));
@@ -126,7 +132,7 @@ export default function PlatformPage() {
     : "Cross-tenant cost, usage, and health.";
 
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
+    <div className="mx-auto w-full max-w-[1280px]">
       <OpHead
         title="Tenants"
         sub={subCopy}
