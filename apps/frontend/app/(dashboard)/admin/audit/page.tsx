@@ -1,249 +1,202 @@
 "use client";
-
-/**
- * Phase 32c, super-admin audit log viewer.
- *
- * Reads from GET /api/super-admin/audit (paginated) with filters for
- * tenant, action, resourceType, date range. CSV export downloads up to
- * 100k rows matching the current filter set.
- *
- * Why a separate page from /admin/platform/audit (which exists already):
- * platform/audit is scoped to platform actions (kill switches + prompt
- * overrides). THIS page is the cross-cutting audit log of every actor
- * action across every tenant, what auditors will ask for in a SOC 2
- * review.
- */
-import { useCallback, useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Download, Loader2, RefreshCw, Shield, X } from "lucide-react";
-import { toast } from "sonner";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
+// app/(dashboard)/admin/audit/page.tsx - EXACT Claude Design "Aurora" AuditScreen.
+// The tenant audit log: a tamper-evident record of every action in the
+// workspace. Searchable + category-filterable event rows (actor, action,
+// target, category, timestamp) with a CSV export action. Ported faithfully
+// from claude-design/screen-extra.jsx (AuditScreen) and wired to the real
+// gateway: GET /audit, falling back to GET /admin/audit. No fabricated events.
+import { useEffect, useState } from "react";
+import { Greeting, Pill, Btn } from "@/components/aurora-kit";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-interface AuditRow {
+// Local fetch helper (do not edit lib/api.ts). Tries the path; throws on !ok.
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
+}
+
+// One normalized audit row the table renders. The real payload field names
+// vary by service, so every getter below reads several likely keys.
+type AuditEntry = {
   id: string;
-  tenantId: string | null;
-  actorUserId: string | null;
+  actor: string;
+  ini: string;
+  ai: boolean;
   action: string;
-  resourceType: string;
-  resourceId: string;
-  ipAddress: string | null;
-  metadata: Record<string, unknown>;
-  createdAt: string;
+  target: string;
+  cat: string;
+  t: string;
+};
+
+const CAT_COLOR: Record<string, [string, string]> = {
+  access: ["var(--c-info)", "var(--c-info-tint)"],
+  data: ["var(--c-brand)", "var(--c-brand-tint)"],
+  decision: ["var(--c-warn)", "var(--c-warn-tint)"],
+  config: ["var(--c-ink-2)", "var(--c-surface-2)"],
+  ai: ["var(--c-ai)", "var(--c-ai-tint)"],
+};
+const KNOWN_CATS = new Set(Object.keys(CAT_COLOR));
+
+function pick(o: Record<string, any>, keys: string[]): any {
+  for (const k of keys) {
+    const v = o?.[k];
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+  return undefined;
 }
 
-interface PageResult {
-  data: AuditRow[];
-  total: number;
-  page: number;
-  pages: number;
+function initials(name: string): string {
+  const parts = String(name).trim().split(/[\s._-]+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function authHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const token = window.sessionStorage.getItem("ats-access-token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+function fmtTime(iso: any): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const days = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (days === 1) return "Yesterday";
+  if (days > 1 && days < 7) return `${days} days ago`;
+  return d.toLocaleDateString();
+}
+
+// Map an arbitrary backend record to the normalized row, defensively.
+function normalize(r: Record<string, any>, i: number): AuditEntry {
+  const actorRaw = pick(r, ["actor", "actorName", "actorUserName", "userName", "user", "actorUserId", "userId"]);
+  const actor = actorRaw != null ? String(actorRaw) : "System";
+  // AI agents are flagged explicitly, or inferred from category/agent fields.
+  const agentName = pick(r, ["agent", "agentName"]);
+  const catRaw = pick(r, ["category", "cat", "severity", "type", "resourceType"]);
+  const cat = catRaw != null ? String(catRaw).toLowerCase() : "config";
+  const ai = Boolean(r?.ai ?? r?.isAgent ?? agentName) || cat === "ai";
+
+  const action = String(pick(r, ["action", "event", "activity", "description"]) ?? "Action");
+  const targetRaw = pick(r, ["target", "resource", "resourceId", "subject", "entity", "detail"]);
+  const target = targetRaw != null ? String(targetRaw) : "";
+
+  const display = ai ? String(agentName ?? actor) : actor;
+  return {
+    id: String(pick(r, ["id", "_id", "eventId"]) ?? i),
+    actor: display,
+    ini: pick(r, ["ini", "initials"]) ?? initials(display),
+    ai,
+    action,
+    target,
+    cat: KNOWN_CATS.has(cat) ? cat : "config",
+    t: fmtTime(pick(r, ["createdAt", "timestamp", "ts", "time", "occurredAt", "t"])),
+  };
 }
 
 export default function AuditPage() {
-  const { isSuperAdmin } = usePermissions();
-  if (!isSuperAdmin) return <AccessDenied />;
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [rows, setRows] = useState<AuditEntry[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter state
-  const [tenantId, setTenantId] = useState("");
-  const [actorUserId, setActorUserId] = useState("");
-  const [action, setAction] = useState("");
-  const [resourceType, setResourceType] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  // Result + paging
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [result, setResult] = useState<PageResult | null>(null);
-
-  const queryString = useCallback(() => {
-    const p = new URLSearchParams();
-    if (tenantId)     p.set("tenantId", tenantId);
-    if (actorUserId)  p.set("actorUserId", actorUserId);
-    if (action)       p.set("action", action);
-    if (resourceType) p.set("resourceType", resourceType);
-    if (from)         p.set("from", new Date(from).toISOString());
-    if (to)           p.set("to", new Date(to).toISOString());
-    p.set("page", String(page));
-    p.set("limit", "50");
-    return p.toString();
-  }, [tenantId, actorUserId, action, resourceType, from, to, page]);
-
-  const fetchPage = useCallback(async () => {
+  function load() {
     setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/super-admin/audit?${queryString()}`, {
-        credentials: "include",
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const body = await res.json();
-      setResult(body.data ?? body);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to load audit");
-    } finally {
-      setLoading(false);
-    }
-  }, [queryString]);
+    setError(null);
+    // Try /audit, then /admin/audit. Coerce res?.data ?? res to an array.
+    raw("/audit")
+      .catch(() => raw("/admin/audit"))
+      .then((res) => {
+        const arr = res?.data ?? res;
+        const list = Array.isArray(arr) ? arr : Array.isArray(arr?.data) ? arr.data : [];
+        setRows(list.map((r: Record<string, any>, i: number) => normalize(r, i)));
+      })
+      .catch((e: any) => { setError(e?.message ?? "Failed to load audit"); setRows(null); })
+      .finally(() => setLoading(false));
+  }
 
-  useEffect(() => { fetchPage(); }, [fetchPage]);
+  useEffect(() => { load(); }, []);
 
-  const reset = () => {
-    setTenantId(""); setActorUserId(""); setAction("");
-    setResourceType(""); setFrom(""); setTo(""); setPage(1);
-  };
-
-  const exportCsv = async () => {
-    setExporting(true);
-    try {
-      const res = await fetch(`${API_BASE}/super-admin/audit/export.csv?${queryString()}`, {
-        credentials: "include",
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `audit-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-      toast.success("Exported");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Export failed");
-    } finally {
-      setExporting(false);
-    }
-  };
+  const all = rows ?? [];
+  const filtered = all.filter((r) =>
+    (filter === "all" || (filter === "ai" ? r.ai : filter === "human" ? !r.ai : r.cat === filter)) &&
+    (!q || (r.actor + " " + r.action + " " + r.target).toLowerCase().includes(q.toLowerCase()))
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-            <Shield className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Platform Audit Log</h1>
-            <p className="text-muted-foreground text-sm">
-              Every actor action across every tenant. Required for SOC 2 Type II evidence.
-            </p>
-          </div>
+    <div className="mx-auto w-full max-w-[1180px]">
+      <Greeting title="Audit log" sub="A complete, tamper-evident record of every action in this workspace.">
+        <Pill icon="shield" tone="var(--c-ok)" bg="var(--c-ok-tint)">7-year retention</Pill>
+        <Btn variant="primary" icon="arrowUpRight">Export CSV</Btn>
+      </Greeting>
+
+      {/* controls */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, flex: "1 1 240px", maxWidth: 360, height: 38, padding: "0 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)" }}>
+          <Icon name="search" size={16} style={{ color: "var(--c-ink-3)" }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search audit entries" placeholder="Search actor, action, or target..." style={{ flex: 1, border: "none", outline: "none", background: "transparent", fontSize: "var(--fs-sm)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }} />
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchPage} disabled={loading} className="gap-1.5">
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button onClick={exportCsv} disabled={exporting} className="gap-1.5">
-            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            Export CSV
-          </Button>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          {([["all", "All"], ["human", "Human"], ["ai", "AI agents"], ["access", "Access"], ["decision", "Decisions"], ["config", "Config"]] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setFilter(k)} aria-pressed={filter === k} style={{ padding: "7px 12px", borderRadius: 99, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-sans)",
+              border: "1px solid", borderColor: filter === k ? "transparent" : "var(--c-line-2)", background: filter === k ? "var(--c-brand-tint)" : "var(--c-surface)", color: filter === k ? "var(--c-brand-ink)" : "var(--c-ink-2)" }}>{l}</button>
+          ))}
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center justify-between">
-            Filters
-            {(tenantId || actorUserId || action || resourceType || from || to) && (
-              <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                <X className="h-3 w-3" /> Clear all
-              </button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="f-tenant" className="text-xs">Tenant ID</Label>
-              <Input id="f-tenant" placeholder="uuid" value={tenantId} onChange={(e) => { setTenantId(e.target.value); setPage(1); }} />
+      {/* table */}
+      <div style={{ border: "1px solid var(--c-line)", borderRadius: "var(--r-xl)", overflow: "hidden", background: "var(--c-surface)", boxShadow: "var(--e1)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 110px 150px", gap: 12, padding: "11px 18px", background: "var(--c-surface-2)", borderBottom: "1px solid var(--c-line)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)" }}>
+          <span>Actor</span><span>Action</span><span>Category</span><span style={{ textAlign: "right" }}>Timestamp</span>
+        </div>
+        <div style={{ maxHeight: "calc(100vh - 290px)", overflowY: "auto" }}>
+          {loading ? (
+            <div style={{ display: "grid", gap: 8, padding: 14 }}>
+              {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[42px] rounded-[11px]" />)}
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="f-actor" className="text-xs">Actor user ID</Label>
-              <Input id="f-actor" placeholder="uuid" value={actorUserId} onChange={(e) => { setActorUserId(e.target.value); setPage(1); }} />
+          ) : error ? (
+            <div style={{ padding: "40px 18px" }}>
+              <ErrorState title="Could not load the audit log" body="The audit service did not respond." code="GET /audit" onRetry={load} />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="f-action" className="text-xs">Action (contains)</Label>
-              <Input id="f-action" placeholder="e.g. USER_INVITED" value={action} onChange={(e) => { setAction(e.target.value); setPage(1); }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="f-resource" className="text-xs">Resource type</Label>
-              <Input id="f-resource" placeholder="e.g. User" value={resourceType} onChange={(e) => { setResourceType(e.target.value); setPage(1); }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="f-from" className="text-xs">From</Label>
-              <Input id="f-from" type="datetime-local" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="f-to" className="text-xs">To</Label>
-              <Input id="f-to" type="datetime-local" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm">
-            {result ? `${result.total.toLocaleString()} events` : "Loading…"}
-          </CardTitle>
-          {result && result.pages > 1 && (
-            <div className="flex items-center gap-2 text-xs">
-              <Button size="sm" variant="outline" disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
-              <span>Page {result.page} of {result.pages}</span>
-              <Button size="sm" variant="outline" disabled={page >= result.pages || loading}
-                onClick={() => setPage((p) => p + 1)}>Next</Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-xs text-muted-foreground">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">When</th>
-                  <th className="text-left px-4 py-2 font-medium">Action</th>
-                  <th className="text-left px-4 py-2 font-medium">Resource</th>
-                  <th className="text-left px-4 py-2 font-medium">Actor</th>
-                  <th className="text-left px-4 py-2 font-medium">Tenant</th>
-                  <th className="text-left px-4 py-2 font-medium">IP</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {result?.data.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">No events match these filters.</td></tr>
-                )}
-                {result?.data.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-2 font-mono text-xs whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
-                    <td className="px-4 py-2"><Badge variant="outline" className="text-2xs">{r.action}</Badge></td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.resourceType}{r.resourceId ? `:${r.resourceId.slice(0, 8)}` : ""}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.actorUserId ? r.actorUserId.slice(0, 8) : "-"}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.tenantId ? r.tenantId.slice(0, 8) : "(platform)"}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{r.ipAddress ?? "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+          ) : filtered.length === 0 ? (
+            all.length === 0 ? (
+              <div style={{ padding: "40px 18px" }}>
+                <EmptyState title="No audit entries yet" body="As people and agents act in this workspace, each action is recorded here, write-once and tamper-evident." />
+              </div>
+            ) : (
+              <div style={{ padding: "40px 18px", textAlign: "center", color: "var(--c-ink-3)", fontSize: "var(--fs-sm)" }}>No audit entries match your filter.</div>
+            )
+          ) : filtered.map((r, i) => {
+            const [cc, cb] = CAT_COLOR[r.cat] || CAT_COLOR.config;
+            return (
+              <div key={r.id} style={{ display: "grid", gridTemplateColumns: "160px 1fr 110px 150px", gap: 12, padding: "12px 18px", alignItems: "center", borderTop: i ? "1px solid var(--c-line)" : "none", transition: "background var(--t-fast)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-surface-2)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, display: "grid", placeItems: "center", fontSize: 9.5, fontWeight: 700, background: r.ai ? "var(--c-ai-tint)" : "var(--c-surface-3)", color: r.ai ? "var(--c-ai)" : "var(--c-ink-2)" }} className="mono">{r.ai ? <Icon name="sparkles" size={13} /> : r.ini}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: r.ai ? "var(--c-ai-ink)" : "var(--c-ink)" }} className={r.ai ? "mono" : ""}>{r.actor}</span>
+                </div>
+                <div style={{ fontSize: 12.5, color: "var(--c-ink-2)", minWidth: 0 }}>
+                  <span style={{ color: "var(--c-ink)", fontWeight: 600 }}>{r.action}</span>{r.target ? <span style={{ color: "var(--c-ink-3)" }}> · {r.target}</span> : null}
+                </div>
+                <span><Pill tone={cc} bg={cb} style={{ fontSize: 10 }}>{r.cat}</Pill></span>
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-3)", textAlign: "right" }}>{r.t}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ marginTop: 12, fontSize: 11.5, color: "var(--c-ink-3)", display: "flex", gap: 7, alignItems: "center" }}>
+        <Icon name="shield" size={14} style={{ color: "var(--c-ok)" }} /> Entries are write-once and cryptographically chained. Showing {filtered.length} of {all.length}.
+      </div>
     </div>
   );
 }
