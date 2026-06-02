@@ -83,6 +83,12 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
 
   const tenantName = branding?.name ?? "CDC ATS";
 
+  // Full-bleed routes ship their OWN complete chrome (exact Claude Design ports,
+  // e.g. the /jobs job board renders its own nav + footer). Render them bare so
+  // the portal shell does not double-wrap (two navs/footers, width clamp).
+  const FULL_BLEED = ["/jobs"];
+  if (FULL_BLEED.includes(pathname)) return <>{children}</>;
+
   // Glassmorphism: chrome surfaces composite over the global aurora backdrop
   // applied in globals.css (body::before). All shades use semantic tokens so
   // both light and dark mode look right.
