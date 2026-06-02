@@ -38,6 +38,7 @@ const NAV: Group[] = [
   ] },
   { section: "Intelligence", items: [
     { label: "Copilot", icon: "sparkles", href: "/copilot", roles: ["admin", "recruiter", "hiring_manager"], ai: true },
+    { label: "Team Chat", icon: "inbox", href: "/chat", roles: ["admin", "recruiter", "hiring_manager", "interviewer"] },
     { label: "Review Queue", icon: "listChecks", href: "/hitl", roles: ["admin", "hiring_manager", "compliance_officer"], ai: true, countKey: "hitl" },
     { label: "AI Operations", icon: "cpu", href: "/ai", roles: ["admin", "compliance_officer", "super_admin"], ai: true },
     { label: "Analytics", icon: "chart", href: "/analytics", roles: ["admin", "recruiter", "hiring_manager", "compliance_officer"] },
@@ -48,6 +49,7 @@ const NAV: Group[] = [
     { label: "Audit Log", icon: "scroll", href: "/admin/audit", roles: ["admin", "compliance_officer"] },
   ] },
   { section: "Workspace", items: [
+    { label: "Workspace admin", icon: "building", href: "/workspace", roles: ["admin"] },
     { label: "Team", icon: "userCog", href: "/settings/team", roles: ["admin"] },
     { label: "Internal Mobility", icon: "mobility", href: "/mobility", roles: ["admin", "hiring_manager"] },
     { label: "Integrations", icon: "plug", href: "/integrations", roles: ["admin", "recruiter"] },

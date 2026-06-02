@@ -87,7 +87,9 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
   // e.g. the job board renders its own nav + footer). Render them bare so the
   // portal shell does not double-wrap (two navs/footers, width clamp). Matches
   // the global board (/jobs) and the tenant-scoped board (/c/{slug}/jobs).
-  const fullBleed = pathname === "/jobs" || /^\/c\/[^/]+\/jobs$/.test(pathname);
+  // /profile is the exact Candidate Profile design, it ships its own full-page
+  // chrome (cinematic hero + nav), so render it bare like the job boards.
+  const fullBleed = pathname === "/jobs" || /^\/c\/[^/]+\/jobs$/.test(pathname) || pathname === "/profile";
   if (fullBleed) return <>{children}</>;
 
   // Glassmorphism: chrome surfaces composite over the global aurora backdrop
