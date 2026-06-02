@@ -1,518 +1,239 @@
 "use client";
 // app/(dashboard)/analytics/page.tsx
-// EXACT port of claude-design/Analytics Detail.html, the hiring-analytics
-// drill-down. The prototype is a full shell (aurora, glass topbar with brand +
-// breadcrumb + Export + theme toggle, a hash-routed tab strip) wrapping a #view
-// region that swaps between three scenes: Time-to-hire, Source effectiveness,
-// and Diversity. Because this route lives inside the (dashboard) shell (sidebar
-// + topbar + <main className="p-6">), the prototype's aurora, its own glass
-// topbar, the theme toggle, the brand-logo swap, and the route-prefetch script
-// are DROPPED, the dashboard layout supplies that frame. The tab strip, the
-// toolbar selects, and every scene (pagehead chip + h1 + lede, the KPI cards,
-// the animated column / horizontal-bar charts, the CSS donut + legend, the
-// adverse-impact four-fifths pass/fail rows, the insight callouts, and the
-// source breakdown table) are reproduced element-for-element with the exact
-// CSS. Scoped CSS lives under .anx (the prototype's :root tokens moved onto
-// .anx, both light and dark variable blocks kept); @keyframes rise/growx/growy
-// renamed anx-rise/anx-growx/anx-growy. The hash router becomes useState (with a
-// hashchange listener so deep links like #diversity still land on the right
-// tab), defaulting to "time-to-hire". The chart bar/column grow animations are
-// kept as the prototype does them (pure CSS).
+// EXACT port of claude-design/screen-analytics.jsx (AnalyticsScreen), the
+// analytics LANDING: a header row (h1 + lede + range pill + Export), a 4-up KPI
+// row, an AI-insights card (severity-ranked findings from the analytics agent),
+// a pipeline funnel + diversity donut, a time-to-hire trend + by-department
+// bars, and a source-effectiveness table. Because this route lives inside the
+// (dashboard) shell (sidebar + topbar + <main className="p-6">), the prototype's
+// scroll wrapper and outer max-width frame are replaced by the standard
+// mx-auto/max-w-[1200px] content div, the dashboard layout supplies that frame.
+// Every section is reproduced element-for-element with the prototype's exact
+// inline styles and structure; kit refs (Reveal, KPICard, SectionCard, Funnel,
+// Donut, TrendArea, Pill, Btn, Icon) map to @/components/aurora-kit /
+// aurora-icon. Every palette var(--x) is converted to var(--c-x); effect/size
+// tokens (--r*, --fs-*, --ease-*) stay bare. The local SevDot helper is kept,
+// with its colors converted to --c-* too.
 //
-// WIRING (rule 4): the column chart's per-stage days in the Time-to-hire scene
-// are driven by getFunnel() (the gateway's stage counts mapped onto the
-// prototype's five funnel stages, with the exact colors / labels preserved);
-// the Diversity scene's four-fifths ratio rows are driven by getAdverseImpact().
-// Each wired surface renders Skeleton / ErrorState INSIDE the prototype's card
-// body, and falls back to the design's exact static numbers when the gateway
-// returns nothing, so the scene is never empty. Series the endpoints do not
-// provide (per-department medians, source channels + cost-per-hire, donut
-// representation, all KPI tiles) keep the prototype's literal numbers as
-// decorative content.
-import { useEffect, useState } from "react";
-import { Skeleton, ErrorState } from "@/components/aurora";
+// WIRING (rule 4): the KPI row is driven by getDashboardKpis() (its DashKpi
+// shape matches the kit Kpi the prototype's KPICard consumes), and the pipeline
+// funnel is driven by getFunnel() (gateway stage counts mapped onto the
+// prototype's five funnel stages, labels + colors preserved). Each wired surface
+// renders Skeleton / ErrorState / EmptyState INSIDE the prototype's container
+// and falls back to the design's literal numbers when the gateway returns
+// nothing, so the layout is never empty. The drill-down actions navigate to
+// /analytics/time-to-hire, /analytics/source-effectiveness, /analytics/diversity
+// (the SectionCard "Details" / "EEOC report" / trend "Open" actions). The
+// date-range pill + Export interactions are useState. Series the endpoints do
+// not provide (diversity donut, the time-to-hire trend, per-department medians,
+// source channels, and the AI insight copy) keep the prototype's example
+// content verbatim, it is part of the design.
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  Reveal, KPICard, SectionCard, Funnel, Donut, TrendArea, Pill, Btn,
+  type Kpi,
+} from "@/components/aurora-kit";
+import { Icon } from "@/components/aurora-icon";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
-import { getFunnel, getAdverseImpact } from "@/lib/api";
-import type { ApplicationStage, FairnessMetric } from "@/lib/aurora-types";
+import { getDashboardKpis, getFunnel, type DashKpi } from "@/lib/api";
+import type { ApplicationStage } from "@/lib/types";
 
-const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
-.anx{--font-sans:"Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;--font-mono:"Geist Mono", ui-monospace, monospace;--ease-out:cubic-bezier(.22, 1, .36, 1);--r-sm:8px;--r:11px;--r-lg:14px;--r-xl:18px;--r-2xl:24px;--r-pill:999px;}
-.anx, [data-theme="light"] .anx{color-scheme:light;--bg:oklch(0.984 0.006 165);--bg-deep:oklch(0.972 0.008 165);--surface:oklch(0.997 0.003 165);--surface-2:oklch(0.978 0.006 165);--surface-3:oklch(0.962 0.008 165);--ink:oklch(0.245 0.013 175);--ink-2:oklch(0.47 0.013 175);--ink-3:oklch(0.605 0.012 175);--line:oklch(0.905 0.008 175);--line-2:oklch(0.86 0.01 175);--line-strong:oklch(0.80 0.012 175);--brand:oklch(0.585 0.122 162);--brand-2:oklch(0.515 0.118 162);--brand-ink:oklch(0.40 0.10 162);--brand-tint:oklch(0.955 0.028 162);--brand-tint-2:oklch(0.925 0.045 162);--on-brand:oklch(0.99 0.01 162);--ai:oklch(0.555 0.185 292);--ai-ink:oklch(0.44 0.16 292);--ai-tint:oklch(0.955 0.03 292);--ai-tint-2:oklch(0.925 0.05 292);--ok:oklch(0.60 0.13 152);--ok-tint:oklch(0.95 0.04 152);--warn:oklch(0.69 0.135 73);--warn-tint:oklch(0.955 0.05 80);--danger:oklch(0.565 0.185 25);--danger-tint:oklch(0.955 0.035 25);--info:oklch(0.585 0.13 245);--info-tint:oklch(0.95 0.04 245);--glass:oklch(0.99 0.004 165/0.78);--glass-edge:oklch(0.80 0.012 175/0.5);--glass-blur:18px;--e1:0 1px 2px oklch(0.4 0.03 165/.05);--e2:0 6px 16px -6px oklch(0.35 0.04 165/.12), 0 2px 6px -3px oklch(0.35 0.04 165/.08);--e3:0 22px 48px -16px oklch(0.30 0.05 165/.22);--aurora-op:.6;}
-[data-theme="dark"] .anx{color-scheme:dark;--bg:oklch(0.168 0.012 178);--bg-deep:oklch(0.13 0.012 178);--surface:oklch(0.206 0.014 178);--surface-2:oklch(0.238 0.015 178);--surface-3:oklch(0.272 0.016 178);--ink:oklch(0.955 0.005 175);--ink-2:oklch(0.74 0.012 175);--ink-3:oklch(0.595 0.014 175);--line:oklch(0.305 0.014 178);--line-2:oklch(0.36 0.016 178);--line-strong:oklch(0.44 0.018 178);--brand:oklch(0.755 0.13 162);--brand-2:oklch(0.82 0.13 162);--brand-ink:oklch(0.86 0.10 162);--brand-tint:oklch(0.30 0.05 162);--brand-tint-2:oklch(0.36 0.07 162);--on-brand:oklch(0.17 0.04 162);--ai:oklch(0.715 0.155 292);--ai-ink:oklch(0.82 0.12 292);--ai-tint:oklch(0.31 0.07 292);--ai-tint-2:oklch(0.37 0.09 292);--ok:oklch(0.74 0.14 152);--ok-tint:oklch(0.31 0.06 152);--warn:oklch(0.80 0.135 80);--warn-tint:oklch(0.33 0.06 80);--danger:oklch(0.685 0.16 25);--danger-tint:oklch(0.33 0.07 25);--info:oklch(0.71 0.12 245);--info-tint:oklch(0.31 0.06 245);--glass:oklch(0.225 0.014 178/0.7);--glass-edge:oklch(0.55 0.02 178/0.3);--glass-blur:20px;--e1:0 1px 2px oklch(0 0 0/.35);--e2:0 8px 22px -8px oklch(0 0 0/.55);--e3:0 28px 56px -18px oklch(0 0 0/.68);--aurora-op:.7;}
-.anx{box-sizing:border-box;}.anx *{box-sizing:border-box;}
-.anx{font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--ink);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01" 1;}
-.anx .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}.anx a{color:inherit;text-decoration:none;}.anx h1, .anx h2, .anx h3, .anx p{margin:0;}
-.anx .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:var(--r);font-weight:600;font-size:13.5px;font-family:var(--font-sans);cursor:pointer;border:1px solid transparent;transition:all .18s var(--ease-out);}
-.anx .btn-primary{background:var(--brand);color:var(--on-brand);box-shadow:var(--e1);}.anx .btn-soft{background:var(--surface-2);color:var(--ink);border-color:var(--line-2);}.anx .btn-sm{padding:6px 12px;font-size:12.5px;}
-.anx .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto;margin-bottom:6px;}
-.anx .tabs a{padding:13px 15px;font-size:13.5px;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap;cursor:pointer;}
-.anx .tabs a:hover{color:var(--ink-2);}.anx .tabs a.on{color:var(--ink);border-bottom-color:var(--brand);}
-.anx .wrap{max-width:1060px;margin:0 auto;padding-top:20px;}
-.anx .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--r-pill);font-size:11px;font-weight:700;}
-.anx .chip-brand{background:var(--brand-tint);color:var(--brand-ink);}.anx .chip-ai{background:var(--ai-tint);color:var(--ai-ink);}.anx .chip-ok{background:var(--ok-tint);color:var(--ok);}.anx .chip-warn{background:var(--warn-tint);color:var(--warn);}
-.anx .pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
-.anx .pagehead h1{font-size:25px;font-weight:800;letter-spacing:-0.03em;}.anx .pagehead p{font-size:14px;color:var(--ink-2);margin-top:5px;max-width:60ch;}
-.anx .toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
-.anx .fsel{height:34px;padding:0 10px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600;font-family:var(--font-sans);cursor:pointer;}
-.anx .scene{animation:anx-rise .4s var(--ease-out) both;}@keyframes anx-rise{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}@keyframes anx-growx{from{width:0!important;}}@keyframes anx-growy{from{height:0!important;}}
-.anx .kpis{display:grid;grid-template-columns:repeat(4, 1fr);gap:14px;margin-bottom:18px;}
-.anx .kpi{border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface);padding:15px 16px;box-shadow:var(--e1);}
-.anx .kpi .l{font-size:12px;color:var(--ink-2);font-weight:600;}.anx .kpi .v{font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-top:9px;}.anx .kpi .d{font-size:11.5px;font-weight:700;margin-top:6px;}
-@media(max-width:820px){.anx .kpis{grid-template-columns:repeat(2, 1fr);}}
-.anx .card{border-radius:var(--r-xl);border:1px solid var(--line);background:var(--surface);box-shadow:var(--e1);overflow:hidden;margin-bottom:16px;}
-.anx .card-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);}
-.anx .card-h .t{font-weight:700;font-size:14.5px;display:inline-flex;gap:8px;align-items:center;}
-.anx .card-b{padding:18px;}
-.anx .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}@media(max-width:820px){.anx .grid2{grid-template-columns:1fr;}}
-/* horizontal bars */
-.anx .hbar{display:grid;grid-template-columns:130px 1fr 60px;gap:12px;align-items:center;margin-bottom:12px;}
-.anx .hbar .nm{font-size:12.5px;font-weight:600;color:var(--ink-2);}
-.anx .hbar .track{height:20px;border-radius:6px;background:var(--surface-2);overflow:hidden;}
-.anx .hbar .fill{height:100%;border-radius:6px;animation:anx-growx 1s var(--ease-out) both;}
-.anx .hbar .val{font-size:12.5px;font-weight:700;text-align:right;}
-/* column chart */
-.anx .cols{display:flex;align-items:flex-end;gap:10px;height:200px;padding-top:10px;}
-.anx .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;}
-.anx .col .bar{width:100%;max-width:48px;border-radius:8px 8px 0 0;background:linear-gradient(180deg, var(--brand-2), var(--brand));animation:anx-growy 1s var(--ease-out) both;position:relative;}
-.anx .col .cv{font-size:12px;font-weight:700;}.anx .col .cl{font-size:11px;color:var(--ink-3);}
-/* table */
-.anx table{width:100%;border-collapse:collapse;}.anx th, .anx td{padding:11px 14px;text-align:right;font-size:13px;border-bottom:1px solid var(--line);}
-.anx th{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2);}
-.anx th:first-child, .anx td:first-child{text-align:left;}.anx tbody tr:hover td{background:var(--surface-2);}
-.anx td .src{display:inline-flex;gap:8px;align-items:center;font-weight:600;}.anx td .dot{width:9px;height:9px;border-radius:3px;}
-/* donut */
-.anx .donut-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap;}
-.anx .donut{position:relative;width:160px;height:160px;flex-shrink:0;}.anx .donut svg{transform:rotate(-90deg);}
-.anx .legend{display:flex;flex-direction:column;gap:9px;flex:1;min-width:160px;}
-.anx .legend .lr{display:flex;align-items:center;gap:9px;font-size:13px;}.anx .legend .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
-.anx .bignum{font-size:21px;font-weight:800;letter-spacing:-0.03em;}
-.anx .insight{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;border-radius:var(--r-lg);background:var(--ai-tint);border:1px solid color-mix(in oklab, var(--ai) 20%, transparent);margin-top:4px;}
-.anx .insight .x{color:var(--ai);flex-shrink:0;margin-top:1px;}.anx .insight p{font-size:12.5px;color:var(--ink-2);line-height:1.5;}.anx .insight b{color:var(--ai-ink);}
-.anx .fourfifths{padding:13px 15px;border-radius:var(--r-lg);display:flex;gap:12px;align-items:center;}
-@media(prefers-reduced-motion:reduce){.anx .scene, .anx .fill, .anx .bar{animation:none!important;}}
+/* ----------------------------- static data ----------------------------- */
+// The prototype reads window.ANALYTICS (claude-design/an-data.jsx). The KPI row
+// and the funnel are wired to the gateway below; the rest of these series have
+// no gateway endpoint, so they stay verbatim as the design's example content.
+const RANGE = "Last 90 days";
 
-/* responsive overflow guard (added globally) */
-.anx, .anx *, .anx *::before, .anx *::after{min-width:0;}
-.anx img, .anx svg, .anx video, .anx canvas{max-width:100%;}
-`;
-
-/* ------------------------------ inline icon ----------------------------- */
-// Mirrors the prototype's I(p,s) helper: a 24x24 stroked SVG with the given
-// inner path markup and pixel size.
-function I({ d, s = 18 }: { d: React.ReactNode; s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {d}
-    </svg>
-  );
-}
-
-/* ------------------------ Time-to-hire data wiring ----------------------- */
-// The prototype's five funnel stages, with their median-days + colors. getFunnel
-// returns gateway stage counts; we map those counts onto these five funnel
-// stages (so the column chart reflects real pipeline shape) while preserving the
-// exact stage labels and colors. When the gateway returns nothing usable we fall
-// back to the design's literal median-day values so the chart is never empty.
-type StageBar = { label: string; value: number; color: string };
-const TTH_STAGES_STATIC: StageBar[] = [
-  { label: "Application review", value: 3.2, color: "var(--ink-3)" },
-  { label: "Screening", value: 4.8, color: "var(--info)" },
-  { label: "Interview loop", value: 8.4, color: "var(--ai)" },
-  { label: "Decision", value: 2.6, color: "var(--brand)" },
-  { label: "Offer → accept", value: 2.0, color: "var(--ok)" },
+const KPIS_STATIC: Kpi[] = [
+  { id: "ttf", label: "Time-to-fill", value: 32, suffix: "d", delta: -4, good: true, spark: [40, 38, 37, 35, 34, 33, 33, 32], icon: "clock" },
+  { id: "tth", label: "Time-to-hire", value: 21, suffix: "d", delta: -3, good: true, spark: [28, 27, 25, 24, 23, 22, 22, 21], icon: "calendar" },
+  { id: "conv", label: "Applied to hire", value: 1.0, suffix: "%", delta: 0.1, good: true, spark: [0.7, 0.8, 0.8, 0.9, 0.9, 1.0, 1.0, 1.0], icon: "radar" },
+  { id: "cph", label: "Cost per hire", value: 4120, prefix: "$", delta: -180, good: true, spark: [4600, 4500, 4420, 4360, 4280, 4220, 4180, 4120], icon: "card" },
 ];
-// Map a gateway funnel stage onto one of the five prototype funnel buckets.
+
+const FUNNEL_STATIC = [
+  { stage: "Applied", n: 4036, color: "var(--c-ink-3)" },
+  { stage: "Screened", n: 902, color: "var(--c-info)" },
+  { stage: "Interview", n: 318, color: "var(--c-ai)" },
+  { stage: "Offer", n: 64, color: "var(--c-brand)" },
+  { stage: "Hired", n: 41, color: "var(--c-ok)" },
+];
+
+const TTH_BY_DEPT = [
+  { dept: "Engineering", days: 24, n: 18 },
+  { dept: "Design", days: 19, n: 6 },
+  { dept: "Marketing", days: 17, n: 5 },
+  { dept: "Data", days: 26, n: 7 },
+  { dept: "Security", days: 31, n: 5 },
+];
+
+const TTH_TREND = [30, 29, 31, 28, 26, 27, 24, 23, 25, 22, 21, 21];
+const TTH_LABELS = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
+
+const SOURCES = [
+  { src: "Referral", hires: 16, apps: 640, quality: 82, cost: 1200, color: "var(--c-brand)" },
+  { src: "LinkedIn", hires: 11, apps: 1120, quality: 71, cost: 4800, color: "var(--c-info)" },
+  { src: "Inbound", hires: 8, apps: 980, quality: 64, cost: 900, color: "var(--c-ai)" },
+  { src: "Job board", hires: 6, apps: 1296, quality: 52, cost: 3200, color: "var(--c-warn)" },
+];
+
+const DIVERSITY = [
+  { g: "Women", v: 44, color: "var(--c-brand)" },
+  { g: "Men", v: 49, color: "var(--c-info)" },
+  { g: "Non-binary", v: 4, color: "var(--c-ai)" },
+  { g: "Undisclosed", v: 3, color: "var(--c-ink-3)" },
+];
+
+const INSIGHTS: { sev: "critical" | "warning" | "info"; finding: string; evidence: string; rec: string; ai: boolean }[] = [
+  { sev: "critical", finding: "Job-board conversion is collapsing", evidence: "Job board: 1,296 applicants to 6 hires (0.46%), well below referral (2.5%) at 2.7x the cost.", rec: "Shift spend from job boards to referral incentives, projected -$2,000 cost-per-hire.", ai: true },
+  { sev: "warning", finding: "Security roles are bottlenecked at screening", evidence: "Security time-to-hire is 31d vs 22d org-wide; 9-day gap concentrated in the screening stage.", rec: "Add a second technical screener or relax the must-have on niche tooling.", ai: true },
+  { sev: "info", finding: "Offer-accept rate is trending up", evidence: "86% this quarter (+2pts), driven by faster scheduling (median 1.2 days to first interview).", rec: "Maintain the fast-scheduling SLA, it correlates with accept rate.", ai: true },
+];
+
+// Map a gateway funnel stage onto one of the prototype's five funnel buckets,
+// keeping the exact stage labels + colors. Positive funnel only (no rejects).
+const FUNNEL_BUCKETS = ["Applied", "Screened", "Interview", "Offer", "Hired"];
 function bucketOf(stage: ApplicationStage): number {
   switch (stage) {
-    case "APPLIED": case "SCREENED": return 0; // Application review
-    case "PHONE_SCREEN": case "ASSESSMENT": return 1; // Screening
-    case "INTERVIEW": return 2; // Interview loop
-    case "FINAL_REVIEW": return 3; // Decision
-    case "OFFER": case "HIRED": return 4; // Offer -> accept
-    default: return -1; // REJECTED / WITHDRAWN: not a positive funnel stage
+    case "APPLIED": return 0;
+    case "SCREENED": case "PHONE_SCREEN": case "ASSESSMENT": return 1;
+    case "INTERVIEW": case "FINAL_REVIEW": return 2;
+    case "OFFER": return 3;
+    case "HIRED": return 4;
+    default: return -1;
   }
 }
 
-/* -------------------------- static scene datasets ------------------------ */
-// Per-department medians (no gateway series) - kept verbatim from the prototype.
-const TTH_DEPTS = [
-  { n: "Engineering", d: 24, w: 88 },
-  { n: "Design", d: 19, w: 70 },
-  { n: "Marketing", d: 17, w: 63 },
-  { n: "Data", d: 26, w: 96 },
-  { n: "Security", d: 31, w: 100 },
-];
-// Source-effectiveness channels (no gateway series) - kept verbatim. Tuple order
-// from the prototype: [name, color, hires, applicants, quality, cost, conversion].
-const SRC_ROWS: [string, string, number, number, number, number, number][] = [
-  ["Referral", "var(--brand)", 16, 640, 82, 1200, 2.5],
-  ["LinkedIn", "var(--info)", 11, 1120, 71, 4800, 1.0],
-  ["Inbound", "var(--ai)", 8, 980, 64, 900, 0.8],
-  ["Job board", "var(--warn)", 6, 1296, 52, 3200, 0.5],
-];
-// Representation donut (no gateway series) - kept verbatim.
-const DIV_DONUT: [string, number, string][] = [
-  ["Women", 44, "var(--brand)"],
-  ["Men", 49, "var(--info)"],
-  ["Non-binary", 4, "var(--ai)"],
-  ["Undisclosed", 3, "var(--ink-3)"],
-];
-// Adverse-impact static fallback (the four-fifths rows). Tuple: [attribute,
-// group, ratio, pass]. Used when getAdverseImpact returns nothing usable.
-const DIV_RATIOS_STATIC: [string, string, number, boolean][] = [
-  ["Race / ethnicity", "Black / African American", 0.69, false],
-  ["Gender", "Women", 0.86, true],
-  ["Age", "40 and over", 0.79, false],
-];
-
-type Tab = "time-to-hire" | "source-effectiveness" | "diversity";
+/* ------------------------------- SevDot -------------------------------- */
+// Ported verbatim from the prototype's SevDot, palette tokens -> --c-*.
+function SevDot({ sev }: { sev: "critical" | "warning" | "info" }) {
+  const c = sev === "critical" ? "var(--c-danger)" : sev === "warning" ? "var(--c-warn)" : "var(--c-info)";
+  return <span style={{ width: 8, height: 8, borderRadius: 99, background: c, flexShrink: 0 }} />;
+}
 
 export default function AnalyticsPage() {
-  const [tab, setTab] = useState<Tab>("time-to-hire");
+  const router = useRouter();
+  // Date-range picker + export interactions (prototype had inert controls).
+  const [range, setRange] = useState(RANGE);
+  const [exporting, setExporting] = useState(false);
+  const onExport = () => { setExporting(true); setTimeout(() => setExporting(false), 1200); };
 
-  // Keep deep links / hashchange working like the prototype's hash router.
-  useEffect(() => {
-    const apply = () => {
-      const h = (window.location.hash || "").replace(/^#\/?/, "");
-      if (h === "source-effectiveness") setTab("source-effectiveness");
-      else if (h === "diversity") setTab("diversity");
-      else if (h === "time-to-hire") setTab("time-to-hire");
-    };
-    apply();
-    window.addEventListener("hashchange", apply);
-    return () => window.removeEventListener("hashchange", apply);
-  }, []);
-
-  const go = (t: Tab) => {
-    setTab(t);
-    try { window.location.hash = t; } catch {}
-  };
-
-  return (
-    <div className="anx mx-auto w-full max-w-[1200px]">
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
-
-      <nav className="tabs">
-        <a className={tab === "time-to-hire" ? "on" : ""} onClick={() => go("time-to-hire")}>
-          <I s={15} d={<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5V12l3 2" />} /> Time-to-hire
-        </a>
-        <a className={tab === "source-effectiveness" ? "on" : ""} onClick={() => go("source-effectiveness")}>
-          <I s={15} d={<path d="M12 12 16 8M12 3a9 9 0 1 0 9 9M12 7.5a4.5 4.5 0 1 0 4.5 4.5" />} /> Source effectiveness
-        </a>
-        <a className={tab === "diversity" ? "on" : ""} onClick={() => go("diversity")}>
-          <I s={15} d={<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />} /> Diversity
-        </a>
-      </nav>
-
-      <div className="wrap">
-        {tab === "time-to-hire" && <TimeToHireScene />}
-        {tab === "source-effectiveness" && <SourceScene />}
-        {tab === "diversity" && <DiversityScene />}
-      </div>
-    </div>
-  );
-}
-
-/* =============================== Scene: TTH ============================== */
-function TimeToHireScene() {
-  // Wire the column chart's per-stage days to the gateway funnel. We keep the
-  // prototype's five stages/labels/colors and let real stage counts modulate the
-  // bar heights; on no-data we use the design's literal median days.
-  const { data, error, loading } = useData<StageBar[]>(async () => {
-    const funnel = await getFunnel(); // { stage, count }[]
+  // KPI row -> getDashboardKpis (DashKpi matches the kit Kpi the prototype uses).
+  const kpis = useData<DashKpi[]>(getDashboardKpis);
+  // Pipeline funnel -> getFunnel, mapped onto the prototype's five funnel stages.
+  const funnel = useData<{ stage: string; n: number; color: string }[]>(async () => {
+    const rows = await getFunnel(); // { stage, count }[]
     const counts = [0, 0, 0, 0, 0];
-    funnel.forEach((f) => {
-      const b = bucketOf(f.stage);
-      if (b >= 0) counts[b] += Number(f.count) || 0;
+    rows.forEach((r) => {
+      const b = bucketOf(r.stage);
+      if (b >= 0) counts[b] += Number(r.count) || 0;
     });
-    const total = counts.reduce((a, b) => a + b, 0);
-    if (!total) return TTH_STAGES_STATIC; // graceful fallback to static days
-    // Scale: share-of-pipeline mapped to a 2..9 "median days" band so the bars
-    // keep the prototype's visual proportions while reflecting real shape.
-    return TTH_STAGES_STATIC.map((s, i) => {
-      const share = counts[i] / total;
-      const days = Math.round((2 + share * 7) * 10) / 10;
-      return { ...s, value: days };
-    });
+    if (!counts.some((c) => c > 0)) return FUNNEL_STATIC; // graceful fallback
+    return FUNNEL_STATIC.map((s, i) => ({ ...s, n: counts[i] }));
   });
 
-  const stages = data && data.length ? data : TTH_STAGES_STATIC;
-  const maxS = Math.max(...stages.map((s) => s.value), 1);
+  const kpiRow = kpis.data && kpis.data.length ? kpis.data.slice(0, 4) : KPIS_STATIC;
+  const funnelStages = funnel.data && funnel.data.length ? funnel.data : FUNNEL_STATIC;
+  const maxDept = Math.max(...TTH_BY_DEPT.map((d) => d.days));
+  const maxHires = Math.max(...SOURCES.map((s) => s.hires));
 
   return (
-    <div className="scene">
-      <div className="pagehead">
-        <div>
-          <span className="chip chip-brand">Drill-down</span>
-          <h1 style={{ marginTop: 10 }}>Time-to-hire</h1>
-          <p>Median days from application to accepted offer, and where the time goes. Identify bottlenecks by stage and department.</p>
-        </div>
-        <div className="toolbar">
-          <select className="fsel"><option>All departments</option><option>Engineering</option></select>
-          <select className="fsel"><option>Last 90 days</option></select>
+    <div className="mx-auto w-full max-w-[1200px]">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+        <div><h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Analytics</h1>
+          <p style={{ margin: "5px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Hiring performance across Northwind Talent · {range}.</p></div>
+        <div style={{ display: "flex", gap: 9 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink-2)", background: "var(--c-surface-2)", whiteSpace: "nowrap", cursor: "pointer" }}>
+            <Icon name="clock" size={12} />
+            <select value={range} onChange={(e) => setRange(e.target.value)} style={{ border: "none", background: "transparent", color: "inherit", font: "inherit", fontWeight: 600, cursor: "pointer", outline: "none", appearance: "none" }}>
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>Last 90 days</option>
+              <option>Last 12 months</option>
+            </select>
+          </label>
+          <Btn variant="primary" icon="arrowUpRight" onClick={onExport} disabled={exporting}>{exporting ? "Exporting..." : "Export"}</Btn>
         </div>
       </div>
 
-      <div className="kpis">
-        <div className="kpi"><div className="l">Median time-to-hire</div><div className="v">21<span style={{ fontSize: 16, color: "var(--ink-3)" }}>d</span></div><div className="d" style={{ color: "var(--ok)" }}>{"−3d vs last quarter"}</div></div>
-        <div className="kpi"><div className="l">Time-to-fill</div><div className="v">32<span style={{ fontSize: 16, color: "var(--ink-3)" }}>d</span></div><div className="d" style={{ color: "var(--ok)" }}>{"−4d"}</div></div>
-        <div className="kpi"><div className="l">Slowest stage</div><div className="v" style={{ fontSize: 22 }}>Interview</div><div className="d" style={{ color: "var(--warn)" }}>8.4d median</div></div>
-        <div className="kpi"><div className="l">Fastest dept</div><div className="v" style={{ fontSize: 22 }}>Marketing</div><div className="d" style={{ color: "var(--ok)" }}>17d</div></div>
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
+        {kpis.loading && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[130px] rounded-[14px]" />)}
+        {kpis.error && <div style={{ gridColumn: "1 / -1" }}><ErrorState title="Could not load metrics" body="The overview service did not respond." code="GET /api/platform/unified-overview" onRetry={kpis.reload} /></div>}
+        {!kpis.loading && !kpis.error && kpiRow.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}
       </div>
 
-      <div className="grid2">
-        <div className="card">
-          <div className="card-h">
-            <span className="t"><I s={16} d={<path d="M4 20V4M4 20h16M8 16v-4M12.5 16V8M17 16v-7" />} /> Days by stage</span>
-            <span className="chip chip-warn">Interview is the bottleneck</span>
+      {/* AI insights */}
+      <Reveal i={4}>
+        <div style={{ borderRadius: "var(--r-xl)", border: "1px solid color-mix(in oklab, var(--c-ai) 22%, var(--c-line))", background: "var(--c-surface)", boxShadow: "var(--e1)", overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "linear-gradient(110deg, var(--c-ai-tint), transparent 65%)", borderBottom: "1px solid var(--c-line)" }}>
+            <div style={{ display: "flex", gap: 9, alignItems: "center" }}><Icon name="sparkles" size={16} style={{ color: "var(--c-ai)" }} /><span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Insights</span><Pill mono tone="var(--c-ai-ink)" bg="var(--c-ai-tint-2)">analytics agent</Pill></div>
+            <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>ranked by severity · grounded in your data</span>
           </div>
-          <div className="card-b">
-            {loading ? (
-              <div className="cols">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div className="col" key={i}>
-                    <Skeleton className="h-4 w-8" />
-                    <div style={{ height: `${30 + i * 12}%`, width: "100%", maxWidth: 48, borderRadius: "8px 8px 0 0", overflow: "hidden" }}>
-                      <Skeleton className="h-full w-full" />
-                    </div>
-                    <Skeleton className="h-3 w-10" />
-                  </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="py-2"><ErrorState title="Could not load funnel" body="We hit a snag reaching the analytics funnel. Showing typical stage timings." code={error.message} /></div>
-            ) : (
-              <div className="cols">
-                {stages.map((s, i) => (
-                  <div className="col" key={s.label}>
-                    <div className="cv">{s.value}d</div>
-                    <div className="bar" style={{ height: `${(s.value / maxS) * 100}%`, background: `linear-gradient(180deg, color-mix(in oklab, ${s.color} 70%, transparent), ${s.color})`, animationDelay: `${i * 80}ms` }} />
-                    <div className="cl" style={{ textAlign: "center" }}>{s.label.split(" ")[0]}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-h">
-            <span className="t"><I s={16} d={<path d="M4 8h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1ZM9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />} /> By department</span>
-          </div>
-          <div className="card-b">
-            {TTH_DEPTS.map((d, i) => (
-              <div className="hbar" key={d.n}>
-                <span className="nm">{d.n}</span>
-                <div className="track"><div className="fill" style={{ width: `${d.w}%`, background: d.d > 28 ? "var(--warn)" : "var(--brand)", animationDelay: `${i * 70}ms` }} /></div>
-                <span className="val mono">{d.d}d</span>
-              </div>
-            ))}
-            <div className="insight" style={{ marginTop: 14 }}>
-              <span className="x"><I s={16} d={<path d="M12 4.5l1.4 3.6L17 9.5l-3.6 1.4L12 14.5l-1.4-3.6L7 9.5z" />} /></span>
-              <p><b>Bottleneck found:</b> Security roles take 31d, 9 days above org median, concentrated in the interview loop. Adding a second technical screener could recover ~5 days.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================= Scene: Source ============================= */
-function SourceScene() {
-  const rows = SRC_ROWS;
-  const maxH = 16;
-  return (
-    <div className="scene">
-      <div className="pagehead">
-        <div>
-          <span className="chip chip-brand">Drill-down</span>
-          <h1 style={{ marginTop: 10 }}>Source effectiveness</h1>
-          <p>Where your best hires come from, quality, volume, conversion, and cost per hire by channel.</p>
-        </div>
-        <div className="toolbar">
-          <select className="fsel"><option>All requisitions</option></select>
-        </div>
-      </div>
-
-      <div className="kpis">
-        <div className="kpi"><div className="l">Best quality source</div><div className="v" style={{ fontSize: 22 }}>Referral</div><div className="d" style={{ color: "var(--ok)" }}>82 quality score</div></div>
-        <div className="kpi"><div className="l">Lowest cost/hire</div><div className="v" style={{ fontSize: 22 }}>Inbound</div><div className="d" style={{ color: "var(--ok)" }}>$900</div></div>
-        <div className="kpi"><div className="l">Highest volume</div><div className="v" style={{ fontSize: 22 }}>Job board</div><div className="d" style={{ color: "var(--ink-3)" }}>1, 296 apps</div></div>
-        <div className="kpi"><div className="l">Avg cost/hire</div><div className="v">$2.5<span style={{ fontSize: 16, color: "var(--ink-3)" }}>k</span></div><div className="d" style={{ color: "var(--ok)" }}>{"−$180 vs last mo"}</div></div>
-      </div>
-
-      <div className="grid2">
-        <div className="card">
-          <div className="card-h"><span className="t">Hires by source</span></div>
-          <div className="card-b">
-            {rows.map((r, i) => (
-              <div className="hbar" key={r[0]}>
-                <span className="nm" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><span className="dot" style={{ background: r[1] }} />{r[0]}</span>
-                <div className="track"><div className="fill" style={{ width: `${(r[2] / maxH) * 100}%`, background: r[1], animationDelay: `${i * 70}ms` }} /></div>
-                <span className="val mono">{r[2]}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 0 }}>
+            {INSIGHTS.map((ins, i) => (
+              <div key={i} style={{ padding: "16px 18px", borderLeft: i ? "1px solid var(--c-line)" : "none" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}><SevDot sev={ins.sev} /><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: ins.sev === "critical" ? "var(--c-danger)" : ins.sev === "warning" ? "var(--c-warn)" : "var(--c-info)" }}>{ins.sev}</span></div>
+                <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", marginBottom: 6 }}>{ins.finding}</div>
+                <p style={{ margin: "0 0 9px", fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.5 }}>{ins.evidence}</p>
+                <div style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, color: "var(--c-ai-ink)", fontWeight: 600, lineHeight: 1.45 }}><Icon name="bolt" size={13} style={{ flexShrink: 0, marginTop: 2 }} />{ins.rec}</div>
               </div>
             ))}
           </div>
         </div>
+      </Reveal>
 
-        <div className="card">
-          <div className="card-h"><span className="t">Cost per hire</span></div>
-          <div className="card-b">
-            {rows.map((r, i) => (
-              <div className="hbar" key={r[0]}>
-                <span className="nm" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><span className="dot" style={{ background: r[1] }} />{r[0]}</span>
-                <div className="track"><div className="fill" style={{ width: `${(r[5] / 4800) * 100}%`, background: r[5] > 4000 ? "var(--danger)" : "var(--brand)", animationDelay: `${i * 70}ms` }} /></div>
-                <span className="val mono">${r[5] / 1000}k</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* funnel + diversity */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
+        <Reveal i={5}><SectionCard title="Pipeline funnel" icon="radar" headRight={<Pill mono tone="var(--c-ok)" bg="var(--c-ok-tint)">1.0% applied to hired</Pill>}>
+          {funnel.loading && <Skeleton className="h-48 rounded-lg" />}
+          {funnel.error && <ErrorState title="Funnel unavailable" body="Could not load the pipeline funnel." code="GET /api/analytics/funnel" onRetry={funnel.reload} />}
+          {!funnel.loading && !funnel.error && funnelStages.length === 0 && <EmptyState title="No funnel data yet" body="When candidates apply and move through stages, the funnel fills in here." />}
+          {!funnel.loading && !funnel.error && funnelStages.length > 0 && <Funnel stages={funnelStages} />}
+        </SectionCard></Reveal>
+        <Reveal i={6}><SectionCard title="Diversity (hires)" icon="grid" action="EEOC report" onAction={() => router.push("/analytics/diversity")}><Donut data={DIVERSITY} /></SectionCard></Reveal>
       </div>
 
-      <div className="card">
-        <div className="card-h"><span className="t">Full breakdown</span></div>
-        <div className="card-b" style={{ padding: 0 }}>
-          <table>
-            <thead><tr><th>Source</th><th>Hires</th><th>Applicants</th><th>Conversion</th><th>Quality</th><th>Cost / hire</th></tr></thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r[0]}>
-                  <td><span className="src"><span className="dot" style={{ background: r[1] }} />{r[0]}</span></td>
-                  <td className="mono">{r[2]}</td>
-                  <td className="mono">{r[3].toLocaleString()}</td>
-                  <td className="mono" style={{ color: r[6] >= 2 ? "var(--ok)" : r[6] >= 1 ? "var(--ink)" : "var(--danger)" }}>{r[6].toFixed(1)}%</td>
-                  <td className="mono" style={{ color: r[4] >= 75 ? "var(--ok)" : r[4] >= 60 ? "var(--warn)" : "var(--danger)" }}>{r[4]}</td>
-                  <td className="mono" style={{ fontWeight: 700, color: r[5] > 4000 ? "var(--danger)" : "var(--ink)" }}>${r[5].toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="insight">
-        <span className="x"><I s={16} d={<path d="M12 4.5l1.4 3.6L17 9.5l-3.6 1.4L12 14.5l-1.4-3.6L7 9.5z" />} /></span>
-        <p><b>Recommendation:</b> Job board converts at 0.5% for 2.7&times; the cost of referrals. Shifting spend toward a referral incentive program is projected to lower blended cost-per-hire by ~$2, 000.</p>
-      </div>
-    </div>
-  );
-}
-
-/* ============================ Scene: Diversity =========================== */
-function DiversityScene() {
-  const data = DIV_DONUT;
-  const c = 2 * Math.PI * 54;
-  let acc = 0;
-  const arcs = data.map((d, idx) => {
-    const len = (d[1] / 100) * c;
-    const off = acc;
-    acc += len;
-    return <circle key={idx} cx="80" cy="80" r="54" fill="none" stroke={d[2]} strokeWidth="16" strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-off} />;
-  });
-
-  // Wire the four-fifths rows to getAdverseImpact; fall back to the design's
-  // static rows when the gateway returns nothing usable.
-  const { data: fair, error, loading } = useData<FairnessMetric[]>(() => getAdverseImpact());
-  const ratios: [string, string, number, boolean][] =
-    fair && fair.length
-      ? fair.map((m) => [attrLabel(m.group), m.group, m.impactRatio, !m.flagged] as [string, string, number, boolean])
-      : DIV_RATIOS_STATIC;
-
-  return (
-    <div className="scene">
-      <div className="pagehead">
-        <div>
-          <span className="chip chip-brand">Drill-down</span>
-          <h1 style={{ marginTop: 10 }}>Diversity</h1>
-          <p>Representation across hires and adverse-impact analysis against the EEOC four-fifths rule. Privacy-preserving, group counts only.</p>
-        </div>
-        <div className="toolbar">
-          <select className="fsel"><option>All departments</option></select>
-          <button className="btn btn-soft btn-sm"><I s={14} d={<path d="M7 17 17 7M8 7h9v9" />} /> EEOC report</button>
-        </div>
-      </div>
-
-      <div className="grid2">
-        <div className="card">
-          <div className="card-h">
-            <span className="t"><I s={16} d={<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />} /> Representation (hires)</span>
-            <span className="chip chip-ok">+4 index YoY</span>
-          </div>
-          <div className="card-b">
-            <div className="donut-wrap">
-              <div className="donut">
-                <svg width="160" height="160">{arcs}</svg>
-                <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div className="bignum">0.78</div>
-                    <div style={{ fontSize: 9.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>index</div>
-                  </div>
+      {/* time-to-hire trend + by dept */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
+        <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={<Pill mono tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="arrowUpRight">-9 days YoY</Pill>}><TrendArea data={TTH_TREND} labels={TTH_LABELS} /></SectionCard></Reveal>
+        <Reveal i={8}><SectionCard title="By department" icon="briefcase">
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            {TTH_BY_DEPT.map((d, i) => (
+              <div key={d.dept} style={{ display: "grid", gridTemplateColumns: "92px 1fr 56px", gap: 10, alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "var(--c-ink-2)", fontWeight: 500 }}>{d.dept}</span>
+                <div style={{ height: 16, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: ((d.days / maxDept) * 100) + "%", borderRadius: 6, background: d.days > 28 ? "var(--c-warn)" : "var(--c-brand)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
                 </div>
+                <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right" }}>{d.days}d</span>
               </div>
-              <div className="legend">
-                {data.map((d) => (
-                  <div className="lr" key={d[0]}>
-                    <span className="sw" style={{ background: d[2] }} />
-                    <span style={{ flex: 1, color: "var(--ink-2)" }}>{d[0]}</span>
-                    <span className="mono" style={{ fontWeight: 700 }}>{d[1]}%</span>
-                  </div>
-                ))}
+            ))}
+          </div>
+        </SectionCard></Reveal>
+      </div>
+
+      {/* source effectiveness */}
+      <Reveal i={9}><SectionCard title="Source effectiveness" icon="radar" action="Details" onAction={() => router.push("/analytics/source-effectiveness")}>
+        <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 90px 90px 90px", gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)", borderBottom: "1px solid var(--c-line)" }}>
+          <span>Source</span><span>Hires</span><span style={{ textAlign: "right" }}>Quality</span><span style={{ textAlign: "right" }}>Apps</span><span style={{ textAlign: "right" }}>Cost/hire</span>
+        </div>
+        {SOURCES.map((s, i) => (
+          <div key={s.src} style={{ display: "grid", gridTemplateColumns: "120px 1fr 90px 90px 90px", gap: 12, alignItems: "center", padding: "11px 4px", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
+            <span style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 12.5, fontWeight: 600 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: s.color }} />{s.src}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <div style={{ flex: 1, maxWidth: 200, height: 18, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: ((s.hires / maxHires) * 100) + "%", borderRadius: 6, background: s.color, animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
               </div>
+              <span className="mono tnum" style={{ fontSize: 13, fontWeight: 700 }}>{s.hires}</span>
             </div>
+            <span style={{ textAlign: "right", display: "inline-flex", justifyContent: "flex-end", alignItems: "center", gap: 5 }}><span className="mono" style={{ fontSize: 12, fontWeight: 600, color: s.quality >= 75 ? "var(--c-ok)" : s.quality >= 60 ? "var(--c-warn)" : "var(--c-danger)" }}>{s.quality}</span></span>
+            <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--c-ink-3)" }}>{s.apps.toLocaleString()}</span>
+            <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", fontWeight: 600, color: s.cost > 4000 ? "var(--c-danger)" : "var(--c-ink)" }}>${s.cost.toLocaleString()}</span>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="card-h">
-            <span className="t"><I s={16} d={<path d="M12 3l7 2.5V11c0 4.5-3 8-7 9.5C8 19 5 15.5 5 11V5.5z" />} /> Adverse-impact (four-fifths)</span>
-            <span className="chip chip-ai">bias-auditor</span>
-          </div>
-          <div className="card-b">
-            {loading ? (
-              <div className="flex flex-col gap-[9px]">
-                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[52px] w-full rounded-[14px]" />)}
-              </div>
-            ) : error ? (
-              <div className="py-2"><ErrorState title="Could not load adverse-impact" body="We hit a snag reaching the bias-auditor. Showing the latest cached ratios." code={error.message} /></div>
-            ) : (
-              ratios.map((r, i) => (
-                <div className="fourfifths" key={`${r[0]}-${i}`} style={{ background: r[3] ? "var(--ok-tint)" : "var(--danger-tint)", marginBottom: 9 }}>
-                  <span style={{ color: r[3] ? "var(--ok)" : "var(--danger)", flexShrink: 0 }}>
-                    {r[3]
-                      ? <I s={18} d={<path d="M5 12.5l4.5 4.5L19 7.5" />} />
-                      : <I s={18} d={<path d="M12 9v4M12 17h.01M10.3 4.3 2.6 18a1.5 1.5 0 0 0 1.3 2.3h16.2a1.5 1.5 0 0 0 1.3-2.3L13.7 4.3a1.5 1.5 0 0 0-2.6 0z" />} />}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{r[0]}</div>
-                    <div style={{ fontSize: 11.5, color: "var(--ink-3)" }}>{r[1]} · ratio vs reference</div>
-                  </div>
-                  <span className="mono" style={{ fontSize: 19, fontWeight: 700, color: r[3] ? "var(--ok)" : "var(--danger)" }}>{r[2].toFixed(2)}</span>
-                </div>
-              ))
-            )}
-            <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 6, textAlign: "center" }}>Ratios below <b style={{ color: "var(--ink-2)" }}>0.80</b> warrant review of the selection procedure.</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="insight">
-        <span className="x"><I s={16} d={<path d="M12 9v4M12 17h.01M10.3 4.3 2.6 18a1.5 1.5 0 0 0 1.3 2.3h16.2a1.5 1.5 0 0 0 1.3-2.3z" />} /></span>
-        <p><b>2 attributes need review.</b> Black/African American applicants select at 0.69 and applicants 40+ at 0.79 of the reference group at the phone-screen stage. Open the Compliance hub to investigate the screening criteria.</p>
-      </div>
+        ))}
+      </SectionCard></Reveal>
     </div>
   );
-}
-
-// Best-effort attribute family label for a fairness group name (so wired rows
-// read like the prototype's "Race / ethnicity", "Gender", "Age" left column).
-function attrLabel(group: string): string {
-  const g = group.toLowerCase();
-  if (/wom|men|female|male|gender|non-?binary/.test(g)) return "Gender";
-  if (/age|40|older|young/.test(g)) return "Age";
-  if (/race|ethnic|black|asian|hispanic|latin|white|african|native|pacific/.test(g)) return "Race / ethnicity";
-  if (/disab/.test(g)) return "Disability";
-  if (/veteran/.test(g)) return "Veteran status";
-  return "Attribute";
 }

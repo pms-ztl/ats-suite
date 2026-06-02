@@ -1,176 +1,234 @@
 "use client";
-// app/(dashboard)/analytics/diversity/page.tsx - EXACT Claude Design "Aurora"
-// diversity / representation detail (the diversity slice of
-// claude-design/screen-analytics.jsx, expanded into a full detail screen):
-// breadcrumb back to /analytics, an advisory band that frames diversity as a
-// fairness signal (never a quota), a KPI strip, representation-by-group donut,
-// and a selection-rate-by-group bar list against the 0.80 four-fifths line.
+// app/(dashboard)/analytics/diversity/page.tsx - VERBATIM port of
+// claude-design/screen-fairness.jsx (the adverse-impact / four-fifths fairness
+// drilldown). The prototype's exact markup is reproduced element-for-element:
+// the header (EEOC + bias-auditor pills, h1, sub), the overall pass/fail banner
+// (icon tile + finding + stat trio), the grid of attribute cards (per-group
+// selection-rate Bars, impact ratio, StatusBadge, finding callout), and the
+// intersectional heatmap with the privacy-preserving note. Kit refs (Pill, Btn,
+// Icon, StatusBadge) map to @/components/aurora-kit + aurora-icon, and every
+// palette var(--x) is converted to its --c-x full-color companion.
 //
-// HONEST WIRING: every group, selection rate, and impact ratio comes from the
-// real getAdverseImpact endpoint (FairnessMetric[]). Nothing is fabricated -
-// flagged groups render in the warn color, the donut is normalised to a share
-// of selections, and loading/error/empty all surface honest states.
-import { KpiRow, SectionCard, Donut, Reveal, Pill, Btn, type Kpi } from "@/components/aurora-kit";
+// HONEST WIRING: the cards are driven by the real getAdverseImpact endpoint
+// (FairnessMetric[]). The flat group series is folded into attribute families
+// (Gender, Race / ethnicity, Age, ...) so it lands in the prototype's attribute
+// shape; impact ratios, flagged groups, and the overall verdict are all real.
+// loading / error / empty render INSIDE the prototype's container. The
+// intersectional heatmap keeps the prototype's literal illustration (the
+// endpoint exposes no gender x ethnicity cross series), matching how the parent
+// analytics page treats series the gateway does not provide. Clicking an
+// attribute card focuses it (useState drill). Numeric fields are guarded with
+// (x ?? 0).toFixed(...) before formatting.
+import { Fragment, useState } from "react";
+import { Pill, Btn, StatusBadge } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { getAdverseImpact } from "@/lib/api";
 import type { FairnessMetric } from "@/lib/types";
 
-// Stable palette for unflagged groups; flagged groups always override to warn.
-const GROUP_COLORS = ["var(--c-brand)", "var(--c-ai)", "var(--c-info)", "var(--c-ok)", "var(--c-ink-3)", "var(--c-brand-2)"];
 const FOUR_FIFTHS = 0.8;
+
+// View-model that mirrors the prototype's window.FAIRNESS.attributes[] shape.
+type FGroup = { g: string; sel: number; app: number; rate: number; ref?: boolean };
+type FAttr = { name: string; ratio: number; pass: boolean; finding: string; groups: FGroup[] };
+
+// Best-effort attribute family for a fairness group name, so the flat real
+// series reads like the prototype's "Gender", "Race / ethnicity", "Age" cards.
+function attrLabel(group: string): string {
+  const g = (group || "").toLowerCase();
+  if (/wom|men|female|male|gender|non-?binary/.test(g)) return "Gender";
+  if (/age|40|older|young/.test(g)) return "Age";
+  if (/race|ethnic|black|asian|hispanic|latin|white|african|native|pacific/.test(g)) return "Race / ethnicity";
+  if (/disab/.test(g)) return "Disability";
+  if (/veteran/.test(g)) return "Veteran status";
+  return "Representation";
+}
+
+// Fold a flat FairnessMetric[] into the prototype's attribute-card shape.
+function toAttributes(rows: FairnessMetric[]): FAttr[] {
+  const byFamily = new Map<string, FairnessMetric[]>();
+  rows.forEach((m) => {
+    const key = attrLabel(m.group);
+    (byFamily.get(key) ?? byFamily.set(key, []).get(key)!).push(m);
+  });
+  return Array.from(byFamily.entries()).map(([name, members]) => {
+    const maxRate = members.reduce((mx, x) => Math.max(mx, x.selectionRate || 0), 0) || 1;
+    const ratio = members.reduce((mn, x) => Math.min(mn, x.impactRatio ?? 1), 1);
+    const pass = !members.some((x) => x.flagged);
+    const flaggedNames = members.filter((x) => x.flagged).map((x) => x.group);
+    const finding = pass
+      ? `All groups in this attribute clear the four-fifths rule. Lowest impact ratio ${ratio.toFixed(2)}; keep this as a routine check on the process.`
+      : `${flaggedNames.join(", ")} select below 0.80 of the reference group. Review the selection procedure at this stage, never correct outcomes by group.`;
+    const groups: FGroup[] = members.map((x) => ({
+      g: x.group,
+      sel: 0,
+      app: 0,
+      rate: x.selectionRate || 0,
+      ref: (x.selectionRate || 0) >= maxRate,
+    }));
+    return { name, ratio, pass, finding, groups };
+  });
+}
+
+function Bar({ rate, max, isRef, pass }: { rate: number; max: number; isRef?: boolean; pass: boolean }) {
+  const w = (rate / max) * 100;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ flex: 1, height: 22, borderRadius: 6, background: "var(--c-surface-3)", overflow: "hidden", position: "relative" }}>
+        <div style={{ height: "100%", width: w + "%", borderRadius: 6, transition: "width 1s var(--ease-out)",
+          background: isRef ? "var(--c-brand)" : pass ? "var(--c-ok)" : "var(--c-danger)" }} />
+      </div>
+      <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, width: 52, textAlign: "right", color: "var(--c-ink)" }}>{((rate ?? 0) * 100).toFixed(1)}%</span>
+    </div>
+  );
+}
+
+function AttrCard({ a, focused, onFocus }: { a: FAttr; focused: boolean; onFocus: () => void }) {
+  const max = Math.max(...a.groups.map((g) => g.rate), 0.0001);
+  return (
+    <div onClick={onFocus} style={{ borderRadius: "var(--r-xl)", border: "1px solid " + (focused ? "color-mix(in oklab, var(--c-brand) 45%, var(--c-line))" : "var(--c-line)"), background: "var(--c-surface)", overflow: "hidden", boxShadow: focused ? "var(--e2)" : "var(--e1)", cursor: "pointer", transition: "border-color var(--t), box-shadow var(--t)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid var(--c-line)",
+        background: a.pass ? "transparent" : "var(--c-danger-tint)" }}>
+        <div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>{a.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, color: "var(--c-ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>Impact ratio</div>
+            <div className="mono" style={{ fontSize: 18, fontWeight: 600, color: a.pass ? "var(--c-ok)" : "var(--c-danger)" }}>{(a.ratio ?? 0).toFixed(2)}</div>
+          </div>
+          <StatusBadge kind={a.pass ? "pass" : "fail"} />
+        </div>
+      </div>
+      <div style={{ padding: "14px 18px" }}>
+        {a.groups.map((g) => (
+          <div key={g.g} style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, display: "inline-flex", gap: 6, alignItems: "center" }}>{g.g}
+                {g.ref && <Pill tone="var(--c-brand)" bg="var(--c-brand-tint)" style={{ fontSize: 9.5, padding: "0 6px" }}>reference</Pill>}</span>
+              <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{((g.rate ?? 0) * 100).toFixed(1)}% selected</span>
+            </div>
+            <Bar rate={g.rate} max={max} isRef={g.ref} pass={a.pass} />
+          </div>
+        ))}
+        <div style={{ marginTop: 4, padding: "11px 13px", borderRadius: "var(--r)", background: a.pass ? "var(--c-ok-tint)" : "var(--c-danger-tint)", display: "flex", gap: 9, alignItems: "flex-start" }}>
+          <Icon name={a.pass ? "check" : "flag"} size={15} style={{ color: a.pass ? "var(--c-ok)" : "var(--c-danger)", flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.5 }}>{a.finding}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DiversityPage() {
   const fairness = useData<FairnessMetric[]>(getAdverseImpact);
   const rows = fairness.data ?? [];
+  const attributes = toAttributes(rows);
+  const failing = attributes.filter((a) => !a.pass).length;
+  const stage = "Phone screen";
+  const range = "Last 90 days";
 
-  // The reference group is the one with the highest selection rate; every other
-  // group's impact ratio is measured against it under the four-fifths rule.
-  const maxRate = rows.reduce((m, x) => Math.max(m, x.selectionRate || 0), 0) || 1;
-  const totalRate = rows.reduce((acc, m) => acc + (m.selectionRate || 0), 0) || 1;
+  // Drill interaction: clicking an attribute card focuses it.
+  const [focusedAttr, setFocusedAttr] = useState<string | null>(null);
 
-  // Donut: each group's share of total selection rate across all groups.
-  const donutData = rows.map((m, i) => ({
-    g: m.group,
-    v: Math.round((m.selectionRate / totalRate) * 100),
-    color: m.flagged ? "var(--c-warn)" : GROUP_COLORS[i % GROUP_COLORS.length],
-  }));
-
-  const flaggedGroups = rows.filter((m) => m.flagged);
-  const minRatio = rows.length ? rows.reduce((m, x) => Math.min(m, x.impactRatio), 1) : 1;
-  const groupsPassing = rows.filter((m) => m.impactRatio >= FOUR_FIFTHS).length;
-
-  // ----- KPIs (all derived from the one real series, never invented) -----
-  const kpis: Kpi[] = [
-    { id: "groups", label: "Groups tracked", value: rows.length, icon: "users", spark: [rows.length], delta: 0, good: true },
-    { id: "minratio", label: "Lowest impact ratio", value: +minRatio.toFixed(2), icon: "shield", spark: [minRatio], delta: 0, good: minRatio >= FOUR_FIFTHS },
-    { id: "flagged", label: "Flagged groups", value: flaggedGroups.length, icon: "flag", spark: [flaggedGroups.length], delta: 0, good: flaggedGroups.length === 0 ? true : false },
-    { id: "pass", label: "Within four-fifths", value: groupsPassing, icon: "check", spark: [groupsPassing], delta: 0, good: true, ai: true },
+  // Banner stat trio (the prototype shows Applicants / Selected / Stages; the
+  // FairnessMetric series exposes no raw counts, so we surface the honest
+  // derived signals that drive this screen).
+  const minRatio = rows.length ? rows.reduce((m, x) => Math.min(m, x.impactRatio ?? 1), 1) : 1;
+  const flaggedCount = rows.filter((m) => m.flagged).length;
+  const bannerStats: [string, string][] = [
+    ["Groups tracked", String(rows.length)],
+    ["Flagged groups", String(flaggedCount)],
+    ["Lowest ratio", (minRatio ?? 0).toFixed(2)],
   ];
 
-  const hasFlag = flaggedGroups.length > 0;
-
   return (
-    <div className="mx-auto w-full max-w-[1280px]">
-      {/* breadcrumb / back to analytics */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, fontSize: "var(--fs-sm)" }}>
-        <a href="/analytics" style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--c-ink-2)", fontWeight: 600, textDecoration: "none" }}>
-          <Icon name="chevsL" size={15} />Analytics
-        </a>
-        <Icon name="chevR" size={13} style={{ color: "var(--c-ink-3)" }} />
-        <span style={{ color: "var(--c-ink-3)" }}>Diversity and representation</span>
-      </div>
-
+    <div className="mx-auto w-full max-w-[1200px]">
       {/* header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Diversity and representation</h1>
-          <p style={{ margin: "5px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-md)", maxWidth: "62ch" }}>
-            A fairness signal across selection rates by group, measured against the 0.80 four-fifths rule. This is an advisory check on process, not a quota or a target.
-          </p>
+          <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 6 }}>
+            <Pill icon="shield" tone="var(--c-brand)" bg="var(--c-brand-tint)">EEOC · Uniform Guidelines</Pill>
+            <Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">computed by bias-auditor</Pill>
+          </div>
+          <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Adverse-impact analysis</h1>
+          <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 6 }}>{stage} · {range} · four-fifths (0.80) rule</div>
         </div>
         <div style={{ display: "flex", gap: 9 }}>
-          <Pill icon="clock" tone="var(--c-ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 90 days</Pill>
-          <Btn variant="primary" icon="arrowUpRight">EEOC report</Btn>
+          <Btn variant="soft" icon="scroll">View methodology</Btn>
+          <Btn variant="primary" icon="arrowUpRight">Publish audit summary</Btn>
         </div>
       </div>
 
-      {/* advisory / ethical framing band */}
-      <Reveal i={1}>
-        <div style={{ borderRadius: "var(--r-xl)", border: `1px solid color-mix(in oklab, ${hasFlag ? "var(--c-warn)" : "var(--c-ai)"} 22%, var(--c-line))`, background: "var(--c-surface)", boxShadow: "var(--e1)", overflow: "hidden", marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: `linear-gradient(110deg, ${hasFlag ? "var(--c-warn-tint)" : "var(--c-ai-tint)"}, transparent 65%)`, borderBottom: "1px solid var(--c-line)" }}>
-            <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
-              <Icon name={hasFlag ? "flag" : "shield"} size={16} style={{ color: hasFlag ? "var(--c-warn)" : "var(--c-ai)" }} />
-              <span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Fairness signal</span>
-              <Pill mono tone="var(--c-ai-ink)" bg="var(--c-ai-tint-2)">bias auditor</Pill>
-            </div>
-            <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>advisory only · review process, never set quotas</span>
-          </div>
-          <div style={{ padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-            <Icon name={hasFlag ? "flag" : "check"} size={16} style={{ color: hasFlag ? "var(--c-warn)" : "var(--c-ok)", flexShrink: 0, marginTop: 2 }} />
-            <div>
-              {fairness.loading && <Skeleton className="h-5 w-[60%] rounded" />}
-              {!fairness.loading && rows.length === 0 && (
-                <p style={{ margin: 0, fontSize: 13, color: "var(--c-ink-2)", lineHeight: 1.55 }}>
-                  Selection rates by group appear here once enough candidates have moved through the funnel. Representation is read as a signal about your process, not a hiring target.
-                </p>
-              )}
-              {!fairness.loading && rows.length > 0 && hasFlag && (
-                <p style={{ margin: 0, fontSize: 13, color: "var(--c-ink-2)", lineHeight: 1.55 }}>
-                  <b style={{ color: "var(--c-ink)" }}>Adverse-impact flag on {flaggedGroups.length} group{flaggedGroups.length > 1 ? "s" : ""}.</b>{" "}
-                  The lowest impact ratio is <span className="mono" style={{ color: "var(--c-warn)", fontWeight: 600 }}>{minRatio.toFixed(2)}</span>, below the {FOUR_FIFTHS.toFixed(2)} four-fifths threshold ({flaggedGroups.map((g) => g.group).join(", ")}). A flag is a prompt to audit the screening criteria and outreach behind the gap, not a reason to adjust outcomes by group.
-                </p>
-              )}
-              {!fairness.loading && rows.length > 0 && !hasFlag && (
-                <p style={{ margin: 0, fontSize: 13, color: "var(--c-ink-2)", lineHeight: 1.55 }}>
-                  <b style={{ color: "var(--c-ink)" }}>All groups clear the four-fifths rule.</b>{" "}
-                  The lowest impact ratio is <span className="mono" style={{ color: "var(--c-ok)", fontWeight: 600 }}>{minRatio.toFixed(2)}</span>, at or above the {FOUR_FIFTHS.toFixed(2)} threshold. Keep this as a routine check on the fairness of the process as new cohorts move through the funnel.
-                </p>
-              )}
-            </div>
+      {/* loading / error / empty for the wired fairness series, in-place */}
+      {fairness.loading && (
+        <div style={{ display: "grid", gap: 16 }}>
+          <Skeleton className="h-[92px] rounded-[18px]" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[260px] rounded-[18px]" />)}
           </div>
         </div>
-      </Reveal>
+      )}
+      {fairness.error && (
+        <ErrorState title="Could not load adverse-impact analysis" body="The bias-auditor service did not respond." code="GET /api/bias/four-fifths" onRetry={fairness.reload} />
+      )}
+      {fairness.data && rows.length === 0 && (
+        <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)", padding: "40px 18px" }}>
+          <EmptyState title="No adverse-impact data yet" body="Selection rates and four-fifths impact ratios by group appear here once enough candidates have moved through the funnel. Representation is read as a signal about your process, never a quota." />
+        </div>
+      )}
 
-      {/* KPIs (derived from the real fairness series) */}
-      {fairness.loading && <div className="mb-[18px] grid grid-cols-2 gap-[14px] lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[130px] rounded-[14px]" />)}</div>}
-      {fairness.error && <div className="mb-[18px]"><ErrorState title="Could not load fairness metrics" body="The adverse-impact service did not respond." code="GET /api/bias/four-fifths" onRetry={fairness.reload} /></div>}
-      {fairness.data && rows.length > 0 && <KpiRow kpis={kpis} cols={4} />}
-
-      {/* representation donut + selection-rate bars */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
-        <Reveal i={2}>
-          <SectionCard title="Representation by group" icon="grid" headRight={<Pill mono tone={hasFlag ? "var(--c-warn)" : "var(--c-ok)"} bg={hasFlag ? "var(--c-warn-tint)" : "var(--c-ok-tint)"}>min ratio {minRatio.toFixed(2)}</Pill>}>
-            {fairness.loading && <Skeleton className="h-40 rounded-lg" />}
-            {fairness.error && <ErrorState title="Representation unavailable" body="Could not load selection rates by group." code="GET /api/bias/four-fifths" onRetry={fairness.reload} />}
-            {fairness.data && donutData.length === 0 && <EmptyState title="No representation data yet" body="Share of selections by group appears once enough candidates have been screened." />}
-            {fairness.data && donutData.length > 0 && <Donut data={donutData} center={{ value: minRatio.toFixed(2), label: "min ratio" }} />}
-          </SectionCard>
-        </Reveal>
-
-        <Reveal i={3}>
-          <SectionCard title="Selection rate by group" icon="chart" action="EEOC report" onAction={() => { window.location.href = "/analytics/diversity"; }}>
-            {fairness.loading && <Skeleton className="h-48 rounded-lg" />}
-            {fairness.error && <ErrorState title="Selection rates unavailable" body="Could not load adverse-impact metrics." code="GET /api/bias/four-fifths" onRetry={fairness.reload} />}
-            {fairness.data && rows.length === 0 && <EmptyState title="No selection rates yet" body="Selection rate and impact ratio by group fill in here as cohorts move through the funnel." />}
-            {fairness.data && rows.length > 0 && (
-              <>
-                <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 78px 64px", gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)", borderBottom: "1px solid var(--c-line)" }}>
-                  <span>Group</span><span>Selection rate</span><span style={{ textAlign: "right" }}>Ratio</span><span style={{ textAlign: "right" }}>Status</span>
+      {fairness.data && rows.length > 0 && (
+        <>
+          {/* overall banner */}
+          <div style={{ borderRadius: "var(--r-xl)", padding: "18px 22px", marginBottom: 22, display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap",
+            background: failing ? "linear-gradient(110deg, var(--c-danger-tint), transparent 70%)" : "linear-gradient(110deg, var(--c-ok-tint), transparent 70%)",
+            border: "1px solid " + (failing ? "color-mix(in oklab, var(--c-danger) 30%, transparent)" : "color-mix(in oklab, var(--c-ok) 30%, transparent)") }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: failing ? "var(--c-danger)" : "var(--c-ok)", color: "white", flexShrink: 0 }}>
+              <Icon name={failing ? "flag" : "check"} size={26} />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>{failing ? `${failing} of ${attributes.length} attributes show potential adverse impact` : "No adverse impact detected"}</div>
+              <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 2 }}>Any impact ratio below 0.80 warrants review of the selection procedure at this stage. The 0.80 threshold and groupings are legal facts, not thresholds we chose.</div>
+            </div>
+            <div style={{ display: "flex", gap: 18 }}>
+              {bannerStats.map(([k, v]) => (
+                <div key={k} style={{ textAlign: "center" }}>
+                  <div className="mono tnum" style={{ fontSize: 22, fontWeight: 600 }}>{v}</div>
+                  <div style={{ fontSize: 10.5, color: "var(--c-ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>{k}</div>
                 </div>
-                {rows.map((m, i) => {
-                  const pct = (m.selectionRate / maxRate) * 100;
-                  const bar = m.flagged ? "var(--c-warn)" : GROUP_COLORS[i % GROUP_COLORS.length];
-                  return (
-                    <div key={m.group} style={{ display: "grid", gridTemplateColumns: "120px 1fr 78px 64px", gap: 12, alignItems: "center", padding: "11px 4px", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
-                      <span style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 12.5, fontWeight: 600 }}>
-                        <span style={{ width: 9, height: 9, borderRadius: 3, background: bar, flexShrink: 0 }} />{m.group}
-                      </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                        <div style={{ flex: 1, maxWidth: 220, height: 18, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: pct + "%", borderRadius: 6, background: bar, animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
-                        </div>
-                        <span className="mono tnum" style={{ fontSize: 12.5, fontWeight: 700 }}>{Math.round(m.selectionRate * 100)}%</span>
-                      </div>
-                      <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", fontWeight: 600, color: m.impactRatio < FOUR_FIFTHS ? "var(--c-warn)" : "var(--c-ok)" }}>{m.impactRatio.toFixed(2)}</span>
-                      <span style={{ display: "inline-flex", justifyContent: "flex-end" }}>
-                        {m.flagged
-                          ? <Pill tone="var(--c-warn)" bg="var(--c-warn-tint)" icon="flag" style={{ fontSize: 10, padding: "2px 7px" }}>Flag</Pill>
-                          : <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="check" style={{ fontSize: 10, padding: "2px 7px" }}>Pass</Pill>}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--c-line)", display: "flex", gap: 7, alignItems: "flex-start", fontSize: 11.5, color: "var(--c-ink-3)", lineHeight: 1.5 }}>
-                  <Icon name="shield" size={13} style={{ flexShrink: 0, marginTop: 1, color: "var(--c-ink-3)" }} />
-                  The impact ratio compares each group's selection rate to the highest-selected group. A ratio below {FOUR_FIFTHS.toFixed(2)} (the four-fifths rule) is flagged for review of the criteria, never corrected by changing outcomes per group.
-                </div>
-              </>
-            )}
-          </SectionCard>
-        </Reveal>
-      </div>
+              ))}
+            </div>
+          </div>
+
+          {/* attribute cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {attributes.map((a) => <AttrCard key={a.name} a={a} focused={focusedAttr === a.name} onFocus={() => setFocusedAttr((cur) => (cur === a.name ? null : a.name))} />)}
+            {/* intersection heatmap */}
+            <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 18, boxShadow: "var(--e1)" }}>
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Intersectional view</div>
+              <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginBottom: 14 }}>Selection rate · gender × ethnicity</div>
+              <div style={{ display: "grid", gridTemplateColumns: "84px repeat(3, 1fr)", gap: 4, fontSize: 11 }}>
+                <div></div>
+                {["White", "Asian", "Black"].map((c) => <div key={c} style={{ textAlign: "center", fontWeight: 600, color: "var(--c-ink-3)", paddingBottom: 4 }}>{c}</div>)}
+                {([["Men", [0.24, 0.25, 0.17]], ["Women", [0.22, 0.23, 0.15]], ["Non-binary", [0.21, 0.20, 0.14]]] as [string, number[]][]).map(([row, vals]) => (
+                  <Fragment key={row}>
+                    <div style={{ fontWeight: 600, color: "var(--c-ink-3)", display: "flex", alignItems: "center" }}>{row}</div>
+                    {vals.map((v, i) => {
+                      const ok = v >= 0.18;
+                      return <div key={i} className="mono" style={{ height: 38, borderRadius: 7, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600,
+                        color: ok ? "var(--c-ink)" : "white", background: ok ? `color-mix(in oklab, var(--c-ok) ${v*180}%, var(--c-surface-2))` : `color-mix(in oklab, var(--c-danger) ${(0.25-v)*420}%, var(--c-surface-2))` }}>{(v*100).toFixed(0)}%</div>;
+                    })}
+                  </Fragment>
+                ))}
+              </div>
+              <div style={{ marginTop: 14, fontSize: 11.5, color: "var(--c-ink-2)", lineHeight: 1.5, display: "flex", gap: 7, alignItems: "flex-start" }}>
+                <Icon name="shield" size={14} style={{ flexShrink: 0, marginTop: 1, color: "var(--c-ai)" }} />
+                Privacy-preserving: the auditor sees only group counts, never individual identities.
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
