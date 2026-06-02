@@ -1,282 +1,270 @@
 "use client";
-
-/**
- * Per-requisition form builder page (Batch 4).
- * Three tabs: Build | Preview | Share
- */
+// app/(dashboard)/requisitions/[id]/form-builder/page.tsx
+// EXACT Claude Design "Aurora" application form-builder, ported from
+// claude-design/req-builder.jsx (the FormBuilder component) and wired to the
+// real gateway. Three-column working surface: field palette, the form canvas
+// (orderable/editable fields), and a live candidate preview. Interactive in
+// session via local useState; loads any existing schema best-effort and saves
+// it via PUT, falling back to an inline notice when the gateway declines.
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import {
-  ChevronLeft, Save, Eye, Share2, Copy, ExternalLink, RefreshCw, FileText,
-  AlertCircle,
-} from "lucide-react";
-import { FormBuilder } from "@/components/forms/form-builder";
-import { FormRenderer } from "@/components/forms/form-renderer";
-import type { FormField } from "@/components/forms/form-types";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
+import { useParams } from "next/navigation";
+import { Btn, Pill, Greeting } from "@/components/aurora-kit";
+import { Skeleton } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+
+type CSS = React.CSSProperties;
+
+const LABEL: CSS = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--c-ink-3)" };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function authHeaders(): Record<string, string> {
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  try {
-    const t = window.sessionStorage.getItem("ats-access-token");
-    if (t) h["Authorization"] = `Bearer ${t}`;
-  } catch {}
-  return h;
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface Requisition {
-  id: string;
-  title: string;
-  department: string | null;
-  jobPosting?: { slug: string };
-  // job postings come via a relation; we'll fetch separately
-}
+type FieldType = "text" | "textarea" | "select" | "checkbox" | "file" | "email" | "phone" | "url" | string;
+type Field = { id: string; type: FieldType; label: string; required?: boolean; locked?: boolean; options?: string[] };
 
-interface FormResponse {
-  requisitionId: string;
-  name: string;
-  fields: FormField[];
-  isDefault: boolean;
-}
+// Empty default set, no fake "saved" data. Used only when nothing loads.
+const DEFAULT_FIELDS: Field[] = [
+  { id: "f1", type: "text", label: "Full name", required: true, locked: true },
+  { id: "f2", type: "email", label: "Email address", required: true, locked: true },
+  { id: "f3", type: "file", label: "Resume / CV", required: true, locked: true },
+];
+
+const FIELD_PALETTE: { type: FieldType; label: string; icon: string }[] = [
+  { type: "text", label: "Short text", icon: "type" },
+  { type: "textarea", label: "Long text", icon: "fileText" },
+  { type: "select", label: "Dropdown", icon: "chevD" },
+  { type: "checkbox", label: "Yes / No", icon: "check" },
+  { type: "file", label: "File upload", icon: "fileText" },
+  { type: "email", label: "Email", icon: "dot" },
+];
+
+const TYPE_ICON: Record<string, string> = {
+  text: "type", textarea: "fileText", select: "chevD", checkbox: "check",
+  file: "fileText", email: "dot", phone: "dot", url: "dot",
+};
+
+type Notice = { tone: "ok" | "warn"; text: string } | null;
 
 export default function FormBuilderPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const { isTenantAdmin } = usePermissions();
+  const reqId = params.id;
 
-  const [requisition, setRequisition] = useState<Requisition | null>(null);
-  const [fields, setFields] = useState<FormField[]>([]);
-  const [formName, setFormName] = useState("Default");
-  const [isDefault, setIsDefault] = useState(true);
+  const [fields, setFields] = useState<Field[]>(DEFAULT_FIELDS);
+  const [sel, setSel] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>("this role");
+  const [subtitle, setSubtitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [slug, setSlug] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
 
-  const fetchAll = useCallback(async () => {
+  // Best-effort load: try the form schema first, then fall back to the
+  // requisition record (for title/department). Never block on either.
+  const load = useCallback(async () => {
     setLoading(true);
+    setNotice(null);
+    let gotForm = false;
     try {
-      const [reqRes, formRes] = await Promise.all([
-        fetch(`${API_BASE}/requisitions/${params.id}`, { headers: authHeaders(), credentials: "include" }),
-        fetch(`${API_BASE}/requisitions/${params.id}/form`, { headers: authHeaders(), credentials: "include" }),
-      ]);
-
-      if (reqRes.ok) {
-        const r = await reqRes.json();
-        setRequisition(r.data ?? r);
+      const f = await raw(`/requisitions/${reqId}/form`);
+      const data = f?.data ?? f;
+      if (Array.isArray(data?.fields) && data.fields.length > 0) {
+        setFields(data.fields.map((x: Field) => ({ ...x })));
+        gotForm = true;
       }
-      if (formRes.ok) {
-        const f: { data?: FormResponse } & FormResponse = await formRes.json();
-        const data = f.data ?? f;
-        setFields(data.fields);
-        setFormName(data.name);
-        setIsDefault(data.isDefault);
-      }
-
-      // Try to fetch a public job posting slug (best-effort)
-      try {
-        const postingRes = await fetch(`${API_BASE}/requisitions/${params.id}/postings`, {
-          headers: authHeaders(),
-          credentials: "include",
-        });
-        if (postingRes.ok) {
-          const pdata = await postingRes.json();
-          const postings = pdata.data ?? pdata ?? [];
-          if (postings.length > 0) setSlug(postings[0].slug);
-        }
-      } catch { /* postings endpoint optional */ }
     } catch {
-      toast.error("Failed to load form");
+      // no custom form yet, start from the default set
+    }
+    try {
+      const r = await raw(`/requisitions/${reqId}`);
+      const req = r?.data ?? r;
+      if (req?.title) setTitle(req.title);
+      const parts = [req?.department, req?.location].filter(Boolean);
+      if (parts.length) setSubtitle(parts.join(" · "));
+    } catch {
+      // requisition lookup is decorative for this surface
+    }
+    if (!gotForm) {
+      // leave the default field set in place; do not invent saved data
     }
     setLoading(false);
-  }, [params.id]);
+  }, [reqId]);
 
-  useEffect(() => { if (params.id) fetchAll(); }, [params.id, fetchAll]);
+  useEffect(() => { if (reqId) load(); }, [reqId, load]);
+
+  const add = (type: FieldType, label: string) =>
+    setFields((cur) => [...cur, { id: "f" + Date.now(), type, label: label + " field", required: false }]);
+  const upd = (id: string, patch: Partial<Field>) =>
+    setFields((cur) => cur.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  const remove = (id: string) =>
+    setFields((cur) => cur.filter((f) => f.id !== id || f.locked));
+  const move = (i: number, dir: number) =>
+    setFields((cur) => {
+      const j = i + dir; if (j < 0 || j >= cur.length) return cur;
+      const n = [...cur]; [n[i], n[j]] = [n[j], n[i]]; return n;
+    });
 
   const save = async () => {
     setSaving(true);
+    setNotice(null);
+    const payload = {
+      name: "Default",
+      fields: fields.map((f, i) => ({
+        id: f.id, type: f.type, label: f.label, required: !!f.required, order: i,
+        ...(f.options ? { options: f.options } : {}),
+      })),
+    };
     try {
-      const res = await fetch(`${API_BASE}/requisitions/${params.id}/form`, {
-        method: "PUT",
-        headers: authHeaders(),
-        credentials: "include",
-        body: JSON.stringify({ name: formName, fields }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message ?? `${res.status}`);
-      }
-      toast.success("Form saved ✓");
-      setIsDefault(false);
-      setDirty(false);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save form");
-    }
-    setSaving(false);
-  };
-
-  const resetToDefault = async () => {
-    if (!confirm("Reset to default form? This deletes your custom schema.")) return;
-    setSaving(true);
-    try {
-      await fetch(`${API_BASE}/requisitions/${params.id}/form`, {
-        method: "DELETE",
-        headers: authHeaders(),
-        credentials: "include",
-      });
-      await fetchAll();
-      toast.success("Form reset to default");
+      await raw(`/requisitions/${reqId}/form`, { method: "PUT", body: JSON.stringify(payload) });
+      setNotice({ tone: "ok", text: "Form saved. Candidates will see these fields when they apply." });
     } catch {
-      toast.error("Failed to reset");
+      // Gateway declined (permissions, plan, or endpoint unavailable). Keep the
+      // in-session edits and surface an honest notice instead of faking success.
+      try {
+        await raw(`/requisitions/${reqId}/form`, { method: "POST", body: JSON.stringify(payload) });
+        setNotice({ tone: "ok", text: "Form saved. Candidates will see these fields when they apply." });
+      } catch {
+        setNotice({ tone: "warn", text: "Could not save to the server. Your changes are kept in this session only." });
+      }
     }
     setSaving(false);
   };
-
-  if (!isTenantAdmin) return <AccessDenied />;
-  if (loading) return <div className="p-10 text-center text-muted-foreground">Loading form…</div>;
-
-  const publicUrl = slug
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/jobs/${slug}/apply`
-    : null;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <Link href={`/requisitions/${params.id}`} className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground mb-2">
-          <ChevronLeft className="h-3 w-3" /> Back to requisition
-        </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight truncate">{requisition?.title ?? "Form builder"}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-sm text-muted-foreground">Customize the application form for this job</p>
-              {isDefault && <Badge variant="outline" className="text-2xs">Using default form</Badge>}
-              {dirty && <Badge variant="outline" className="text-2xs text-warn">Unsaved changes</Badge>}
+    <div className="mx-auto w-full max-w-[1200px]">
+      <Greeting title="Application form" sub={`Design the fields candidates fill in when they apply to ${title}.`}>
+        <Btn variant="primary" icon="check" onClick={save}>{saving ? "Saving..." : "Save form"}</Btn>
+      </Greeting>
+
+      {notice && (
+        <div
+          role="status"
+          style={{
+            marginBottom: 16, padding: "11px 14px", borderRadius: "var(--r)",
+            display: "flex", gap: 9, alignItems: "center", fontSize: 12.5, fontWeight: 500,
+            color: notice.tone === "ok" ? "var(--c-ok)" : "var(--c-warn)",
+            background: notice.tone === "ok" ? "var(--c-ok-tint)" : "var(--c-warn-tint)",
+            border: "1px solid " + (notice.tone === "ok" ? "color-mix(in oklab, var(--c-ok) 22%, transparent)" : "color-mix(in oklab, var(--c-warn) 24%, transparent)"),
+          }}
+        >
+          <Icon name={notice.tone === "ok" ? "check" : "flag"} size={15} style={{ flexShrink: 0 }} />
+          <span>{notice.text}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr", gap: 16, alignItems: "start" }}>
+          <Skeleton className="h-[220px] rounded-[14px]" />
+          <Skeleton className="h-[300px] rounded-[14px]" />
+          <Skeleton className="h-[360px] rounded-[14px]" />
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr", gap: 16, alignItems: "start" }}>
+          {/* palette */}
+          <div>
+            <div style={{ ...LABEL, marginBottom: 10 }}>Add a field</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              {FIELD_PALETTE.map((p) => (
+                <button
+                  key={p.type}
+                  onClick={() => add(p.type, p.label)}
+                  style={{ display: "flex", gap: 9, alignItems: "center", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", background: "var(--c-surface)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--c-ink)", textAlign: "left", transition: "all var(--t-fast)", fontFamily: "var(--font-sans)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--c-brand)"; e.currentTarget.style.background = "var(--c-brand-tint)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--c-line)"; e.currentTarget.style.background = "var(--c-surface)"; }}
+                >
+                  <Icon name={p.icon} size={15} style={{ color: "var(--c-ink-3)" }} />{p.label}
+                  <Icon name="plus" size={13} style={{ marginLeft: "auto", color: "var(--c-ink-3)" }} />
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {!isDefault && (
-              <Button variant="outline" size="sm" onClick={resetToDefault} disabled={saving} className="gap-1">
-                <RefreshCw className="h-3.5 w-3.5" /> Reset
-              </Button>
-            )}
-            <Button onClick={save} disabled={saving || !dirty} className="glow-primary gap-2">
-              <Save className="h-4 w-4" />
-              {saving ? "Saving…" : "Save form"}
-            </Button>
+
+          {/* canvas */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={LABEL}>Form structure &middot; {fields.length} fields</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {fields.map((f, i) => (
+                <div
+                  key={f.id}
+                  onClick={() => setSel(f.id)}
+                  style={{ display: "flex", gap: 11, alignItems: "center", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid", borderColor: sel === f.id ? "var(--c-brand)" : "var(--c-line)", background: "var(--c-surface)", cursor: "pointer", boxShadow: sel === f.id ? "var(--ring)" : "var(--e1)" }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <button aria-label="Move field up" onClick={(e) => { e.stopPropagation(); move(i, -1); }} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--c-ink-3)", padding: 0, lineHeight: 0 }}><Icon name="chevD" size={13} style={{ transform: "rotate(180deg)" }} /></button>
+                    <button aria-label="Move field down" onClick={(e) => { e.stopPropagation(); move(i, 1); }} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--c-ink-3)", padding: 0, lineHeight: 0 }}><Icon name="chevD" size={13} /></button>
+                  </div>
+                  <span style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center", flexShrink: 0, background: "var(--c-surface-2)", color: "var(--c-ink-2)" }}><Icon name={TYPE_ICON[f.type] ?? "type"} size={15} /></span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input
+                      value={f.label}
+                      aria-label="Field label"
+                      onChange={(e) => upd(f.id, { label: e.target.value })}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ width: "100%", border: "none", outline: "none", background: "transparent", fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}
+                    />
+                    <span style={{ fontSize: 10.5, color: "var(--c-ink-3)", textTransform: "capitalize" }}>{f.type}{f.locked ? " · default" : ""}</span>
+                  </div>
+                  <button
+                    aria-label={f.required ? "Mark optional" : "Mark required"}
+                    onClick={(e) => { e.stopPropagation(); upd(f.id, { required: !f.required }); }}
+                    style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 8px", borderRadius: 99, border: "none", cursor: "pointer", color: f.required ? "var(--c-danger)" : "var(--c-ink-3)", background: f.required ? "var(--c-danger-tint)" : "var(--c-surface-2)" }}
+                  >{f.required ? "Required" : "Optional"}</button>
+                  {!f.locked ? (
+                    <button aria-label="Remove field" onClick={(e) => { e.stopPropagation(); remove(f.id); }} style={{ width: 26, height: 26, borderRadius: "var(--r-sm)", border: "none", background: "transparent", color: "var(--c-ink-3)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="x" size={14} /></button>
+                  ) : (
+                    <span title="Locked default field" style={{ display: "grid", placeItems: "center", width: 26, height: 26 }}><Icon name="shield" size={14} style={{ color: "var(--c-ink-3)" }} /></span>
+                  )}
+                </div>
+              ))}
+              {fields.length === 0 && (
+                <div style={{ padding: "22px 16px", borderRadius: "var(--r)", border: "1px dashed var(--c-line-strong)", background: "var(--c-surface-2)", textAlign: "center", fontSize: 12.5, color: "var(--c-ink-3)" }}>
+                  No fields yet. Add one from the palette on the left.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* live preview */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ ...LABEL, display: "inline-flex", gap: 6, alignItems: "center" }}><Icon name="eye" size={13} /> Candidate preview</span>
+              <Btn variant="primary" size="sm" icon="arrowUpRight" onClick={save}>Publish</Btn>
+            </div>
+            <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 18, boxShadow: "var(--e1)" }}>
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Apply: {title}</div>
+              <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginBottom: 16 }}>{subtitle || "Application form"}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                {fields.map((f) => (
+                  <div key={f.id}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--c-ink-2)", display: "block", marginBottom: 5 }}>{f.label}{f.required && <span style={{ color: "var(--c-danger)" }}> *</span>}</label>
+                    {f.type === "textarea" ? <div style={{ height: 56, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface-2)" }} />
+                      : f.type === "select" ? <div style={{ height: 38, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface-2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", fontSize: 12.5, color: "var(--c-ink-3)" }}>Select...<Icon name="chevD" size={14} /></div>
+                      : f.type === "checkbox" ? <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ width: 18, height: 18, borderRadius: 5, border: "1.5px solid var(--c-line-strong)" }} /><span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>Yes</span></div>
+                      : f.type === "file" ? <div style={{ height: 46, borderRadius: "var(--r)", border: "1.5px dashed var(--c-line-strong)", background: "var(--c-surface-2)", display: "grid", placeItems: "center", fontSize: 12, color: "var(--c-ink-3)" }}>Drop file or browse</div>
+                      : <div style={{ height: 38, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface-2)" }} />}
+                  </div>
+                ))}
+                <button style={{ marginTop: 4, padding: "10px", borderRadius: "var(--r)", border: "none", background: "var(--c-brand)", color: "var(--c-on-brand)", fontWeight: 700, fontSize: "var(--fs-sm)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>Submit application</button>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+              <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" icon="layers">{fields.length} fields</Pill>
+              <Pill tone="var(--c-danger)" bg="var(--c-danger-tint)" icon="flag">{fields.filter((f) => f.required).length} required</Pill>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Form name */}
-      <div className="flex items-center gap-3 max-w-md">
-        <FileText className="h-4 w-4 text-muted-foreground" />
-        <Input
-          value={formName}
-          onChange={(e) => { setFormName(e.target.value); setDirty(true); }}
-          placeholder="Form name (e.g. Senior Engineer application)"
-        />
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="build">
-        <TabsList>
-          <TabsTrigger value="build" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Build</TabsTrigger>
-          <TabsTrigger value="preview" className="gap-1.5"><Eye className="h-3.5 w-3.5" /> Preview</TabsTrigger>
-          <TabsTrigger value="share" className="gap-1.5"><Share2 className="h-3.5 w-3.5" /> Share</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="build" className="mt-4">
-          <FormBuilder
-            initialFields={fields}
-            onChange={(next) => { setFields(next); setDirty(true); }}
-          />
-        </TabsContent>
-
-        <TabsContent value="preview" className="mt-4">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-lg font-bold mb-1">Apply for {requisition?.title ?? "this role"}</h2>
-                <p className="text-xs text-muted-foreground mb-6">This is how candidates will see the form.</p>
-                <FormRenderer
-                  fields={fields}
-                  submitLabel="Submit (preview only, no data saved)"
-                  onSubmit={() => {
-                    toast.info("Preview mode, submission is not actually saved");
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="share" className="mt-4 max-w-2xl mx-auto">
-          {publicUrl ? (
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <p className="text-sm font-semibold mb-1">Shareable public link</p>
-                  <p className="text-xs text-muted-foreground">Anyone with this link can apply.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input value={publicUrl} readOnly className="font-mono text-xs" />
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(publicUrl);
-                      toast.success("Copied!");
-                    }}
-                    className="gap-1.5"
-                  >
-                    <Copy className="h-3.5 w-3.5" /> Copy
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="gap-1.5">
-                    <a href={publicUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="h-3.5 w-3.5" /> Open
-                    </a>
-                  </Button>
-                </div>
-                {/* QR code via image API (no extra deps) */}
-                <div className="flex flex-col items-center pt-2">
-                  <p className="text-xs text-muted-foreground mb-2">Or scan with phone:</p>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(publicUrl)}`}
-                    alt="QR code"
-                    className="rounded-lg border border-border"
-                    width={180}
-                    height={180}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-6 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold mb-1">No published job posting yet</p>
-                  <p className="text-xs text-muted-foreground">
-                    Create a public job posting for this requisition first, then come back here to share the link.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+      )}
     </div>
   );
 }

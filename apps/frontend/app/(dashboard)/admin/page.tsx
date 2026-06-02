@@ -1,482 +1,263 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// PageHeader uses breadcrumbs, use inline header for super-admin
+// app/(dashboard)/admin/page.tsx - EXACT Claude Design "Aurora" AdminDash
+// (platform / org-wide admin dashboard). Ported verbatim from
+// claude-design/dash-admin.jsx (the AdminDash component): command-center hero,
+// 8-up KPI row, a pipeline-funnel + diversity charts row, then a two-column
+// surface (time-to-hire trend / activity on the left, pending actions / agent
+// activity on the right). The prototype read window.DASH.admin mock data; every
+// number here comes from the real gateway via useData + getDashboardKpis,
+// getFunnel, getAdverseImpact, and an inline raw() tenant fetch. Sections with
+// no backing endpoint render the same SectionCard with EmptyState (no
+// fabricated numbers), so the layout stays faithful.
+import { useState } from "react";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Building2, Users, BarChart3, DollarSign, TrendingUp,
-  Search, MoreHorizontal, ExternalLink, Ban, CheckCircle2,
-  Rocket, Zap, Crown, RefreshCw, AlertTriangle, Power, Brain, FileText, UserCog,
-} from "lucide-react";
-import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/use-current-user";
+  CommandHero, KpiRow, SectionCard, Funnel, Donut, Timeline,
+  PendingList, Pill, Btn, Reveal,
+} from "@/components/aurora-kit";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
+import { getDashboardKpis, getFunnel, getAdverseImpact, type DashKpi } from "@/lib/api";
+import type { ApplicationStage, FairnessMetric } from "@/lib/types";
 
-// ── Types ────────────────────────────────────────────────────────────────────
-interface TenantRow {
-  id: string;
-  name: string;
-  slug: string;
-  plan: "FREE" | "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
-  status: "TRIAL" | "ACTIVE" | "SUSPENDED" | "CANCELLED";
-  trialEndsAt: string | null;
-  industry: string | null;
-  companySize: string | null;
-  createdAt: string;
-  userCount: number;
-  requisitionCount: number;
-  candidateCount: number;
-  agentRunCount: number;
-  costUsd30d: number;
+// ---- inline raw() (guide-sanctioned; do NOT edit lib/api.ts) -----------------
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface Stats {
-  totalTenants: number;
-  activeTenants: number;
-  trialTenants: number;
-  suspendedTenants: number;
-  planBreakdown: Record<string, number>;
-  totalUsers: number;
-  totalCandidates: number;
-  totalRequisitions: number;
-  totalCostUsd30d: number;
-  recentTenants: { id: string; name: string; plan: string; status: string; createdAt: string }[];
-}
+type TenantRow = { id?: string; name?: string; slug?: string; plan?: string; status?: string; createdAt?: string };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const PLAN_META: Record<string, { icon: React.ReactNode; badge: string; color: string }> = {
-  FREE:         { icon: <Rocket className="h-3.5 w-3.5" />, badge: "Free",         color: "bg-muted text-muted-foreground" },
-  STARTER:      { icon: <Zap className="h-3.5 w-3.5" />,    badge: "Starter",      color: "bg-info-tint text-info dark:text-info" },
-  PROFESSIONAL: { icon: <Crown className="h-3.5 w-3.5" />,  badge: "Professional", color: "bg-ai-tint text-ai-ink dark:text-ai-ink" },
-  ENTERPRISE:   { icon: <Building2 className="h-3.5 w-3.5" />, badge: "Enterprise", color: "bg-warn-tint text-warn dark:text-warn" },
-};
-
-const STATUS_META: Record<string, { badge: string; color: string }> = {
-  TRIAL:     { badge: "Trial",     color: "bg-info-tint text-info border-info/40" },
-  ACTIVE:    { badge: "Active",    color: "bg-ok-tint text-ok border-ok/40" },
-  SUSPENDED: { badge: "Suspended", color: "bg-warn-tint text-warn border-warn/40" },
-  CANCELLED: { badge: "Cancelled", color: "bg-danger-tint text-danger border-danger/40" },
-};
-
-function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-}
-
-function authHeaders() {
-  let token: string | null = null;
-  try { token = window.sessionStorage.getItem("ats-access-token"); } catch {}
-  const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_SECRET;
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) h["Authorization"] = `Bearer ${token}`;
-  if (secret) h["X-Super-Admin-Key"] = secret;
-  return h;
-}
-
-// ── KPI Card ─────────────────────────────────────────────────────────────────
-function KPI({ label, value, icon, sub }: { label: string; value: string | number; icon: React.ReactNode; sub?: string }) {
-  return (
-    <Card className="glass-hover gradient-card">
-      <CardContent className="p-5 flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
-          <p className="text-3xl font-bold tabular-nums">{value}</p>
-          {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-        </div>
-        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-          {icon}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ── Main Page ────────────────────────────────────────────────────────────────
-export default function SuperAdminPage() {
-  const { user } = useCurrentUser();
-  const router   = useRouter();
-
-  const [stats, setStats]         = useState<Stats | null>(null);
-  const [tenants, setTenants]     = useState<TenantRow[]>([]);
-  const [total, setTotal]         = useState(0);
-  const [page, setPage]           = useState(1);
-  const [search, setSearch]       = useState("");
-  const [planFilter, setPlanFilter]   = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [loading, setLoading]     = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  // Guard: only SUPER_ADMIN or ADMIN may view
-  useEffect(() => {
-    if (user && user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
-      router.replace("/");
-    }
-  }, [user, router]);
-
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const res = await fetch(`${getApiBase()}/super-admin/stats`, {
-        credentials: "include",
-        headers: authHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data.data ?? data);
-      }
-    } catch {}
-    setStatsLoading(false);
-  }, []);
-
-  const fetchTenants = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: "20" });
-      if (search) params.set("search", search);
-      if (planFilter !== "ALL") params.set("plan", planFilter);
-      if (statusFilter !== "ALL") params.set("status", statusFilter);
-
-      const res = await fetch(`${getApiBase()}/super-admin/tenants?${params}`, {
-        credentials: "include",
-        headers: authHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const payload = data.data ?? data;
-        setTenants(Array.isArray(payload) ? payload : payload.data ?? []);
-        setTotal(payload.total ?? 0);
-      }
-    } catch {}
-    setLoading(false);
-  }, [page, search, planFilter, statusFilter]);
-
-  useEffect(() => { fetchStats(); }, [fetchStats]);
-  useEffect(() => { fetchTenants(); }, [fetchTenants]);
-
-  // Phase 32a, start an impersonation session as the tenant's first ADMIN.
-  // Backend signs a 1-hour JWT, sets the cookie, and we hard-nav to / so
-  // the auth context re-fetches /auth/me with the new identity.
-  const impersonateTenant = async (id: string, name: string) => {
-    if (!confirm(`Impersonate ${name}? Every action will be audited and the session expires in 1 hour.`)) return;
-    try {
-      const res = await fetch(`${getApiBase()}/super-admin/impersonate/${id}/start`, {
-        method: "POST",
-        credentials: "include",
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({} as any));
-        throw new Error(body?.error?.message ?? body?.message ?? `${res.status}`);
-      }
-      toast.success(`Now impersonating ${name}, taking you to their dashboard…`);
-      window.location.href = "/";
-    } catch (e: any) {
-      toast.error(e.message || "Couldn't start impersonation");
-    }
+// Try the platform tenant list, then the admin alias. Coerce {data:[...]} | [...]
+async function fetchTenants(): Promise<TenantRow[]> {
+  const coerce = (r: any): TenantRow[] => {
+    const p = r?.data ?? r;
+    return Array.isArray(p) ? p : Array.isArray(p?.data) ? p.data : [];
   };
+  try { return coerce(await raw("/platform/tenants")); }
+  catch { return coerce(await raw("/admin/tenants")); }
+}
 
-  const updateTenant = async (id: string, body: Record<string, string>) => {
-    try {
-      const res = await fetch(`${getApiBase()}/super-admin/tenants/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: authHeaders(),
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error("Update failed");
-      toast.success("Tenant updated");
-      fetchTenants();
-      fetchStats();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update tenant");
-    }
-  };
+// ----- view-model mappers (real data -> kit shapes, no invented numbers) -----
+const STAGE_COLOR: Partial<Record<ApplicationStage, string>> = {
+  APPLIED: "var(--c-brand)", SCREENED: "var(--c-ai)", PHONE_SCREEN: "var(--c-info)",
+  ASSESSMENT: "var(--c-info)", INTERVIEW: "var(--c-warn)", FINAL_REVIEW: "var(--c-warn)",
+  OFFER: "var(--c-ok)", HIRED: "var(--c-ok)",
+};
+const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
+  APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone", ASSESSMENT: "Assessment",
+  INTERVIEW: "Interview", FINAL_REVIEW: "Final", OFFER: "Offer", HIRED: "Hired",
+};
+const PALETTE = ["var(--c-brand)", "var(--c-ai)", "var(--c-info)", "var(--c-warn)", "var(--c-ok)", "var(--c-danger)"];
+
+function ago(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!isFinite(ms) || ms < 0) return "";
+  const m = Math.floor(ms / 60000);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+export default function AdminDashboard() {
+  const [live, setLive] = useState(true);
+
+  const kpis = useData<DashKpi[]>(getDashboardKpis);
+  const funnel = useData(getFunnel);
+  const fairness = useData<FairnessMetric[]>(getAdverseImpact);
+  const tenants = useData<TenantRow[]>(fetchTenants);
+
+  // Hero stats derive from the real KPI payload, so the command-center band
+  // never shows a number the backend didn't return.
+  const byId = (id: string) => (kpis.data ?? []).find((k) => k.id === id);
+  const heroStats =
+    kpis.data?.map((k) => ({
+      label: k.label, value: k.value, icon: k.icon, ai: k.ai,
+      prefix: k.prefix, suffix: k.suffix, spark: k.spark,
+    })) ?? [];
+
+  // Pipeline funnel: real per-stage counts in canonical stage order.
+  const ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "INTERVIEW", "OFFER", "HIRED"];
+  const funnelStages = (() => {
+    const rows = funnel.data ?? [];
+    const m = new Map(rows.map((r) => [r.stage, r.count]));
+    const picked = ORDER.filter((s) => m.has(s)).map((s) => ({
+      stage: STAGE_LABEL[s] ?? s, n: m.get(s) ?? 0, color: STAGE_COLOR[s] ?? "var(--c-brand)",
+    }));
+    if (picked.length) return picked;
+    return rows.map((r) => ({ stage: STAGE_LABEL[r.stage] ?? r.stage, n: r.count, color: STAGE_COLOR[r.stage] ?? "var(--c-brand)" }));
+  })();
+  const appliedToHired = (() => {
+    const top = funnelStages[0]?.n ?? 0;
+    const hired = funnelStages[funnelStages.length - 1]?.n ?? 0;
+    if (!top || funnelStages.length < 2) return null;
+    return ((hired / top) * 100).toFixed(1);
+  })();
+
+  // Diversity donut: selection rate by group, from the four-fifths report.
+  const diversity = (fairness.data ?? []).map((f, i) => ({
+    g: f.group, v: Math.round(f.selectionRate * 100), color: PALETTE[i % PALETTE.length],
+  }));
+  const flaggedCount = (fairness.data ?? []).filter((f) => f.flagged).length;
+
+  // Org-wide activity: recently-joined tenants (real platform data).
+  const activity = (tenants.data ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+    .slice(0, 6)
+    .map((t) => ({
+      ic: "building", who: t.name ?? t.slug ?? "Tenant",
+      what: `joined on the ${t.plan ?? "Free"} plan`, t: ago(t.createdAt),
+    }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight">Admin Portal</h1>
-            <Badge variant="secondary" className="text-xs">Platform</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">Manage all tenants on the CDC ATS platform</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => { fetchStats(); fetchTenants(); }} className="gap-2 shrink-0">
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
-        </Button>
-      </div>
-
-      {/* ── KPI Stats ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPI
-          label="Total tenants"
-          value={statsLoading ? "-" : stats?.totalTenants ?? 0}
-          icon={<Building2 className="h-5 w-5" />}
-          sub={`${stats?.activeTenants ?? 0} active · ${stats?.trialTenants ?? 0} trial`}
-        />
-        <KPI
-          label="Total users"
-          value={statsLoading ? "-" : stats?.totalUsers ?? 0}
-          icon={<Users className="h-5 w-5" />}
-        />
-        <KPI
-          label="Total candidates"
-          value={statsLoading ? "-" : stats?.totalCandidates ?? 0}
-          icon={<BarChart3 className="h-5 w-5" />}
-          sub={`${stats?.totalRequisitions ?? 0} requisitions`}
-        />
-        <KPI
-          label="AI spend (30d)"
-          value={statsLoading ? "-" : `$${(stats?.totalCostUsd30d ?? 0).toFixed(2)}`}
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-      </div>
-
-      {/* ── Platform control plane (Phase 21 + 22) ──────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <Link href="/admin/platform/agents" className="block">
-          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-danger/10 text-danger dark:text-danger flex items-center justify-center shrink-0">
-                <Power className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Agent control plane</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">Global kill switch, disable any agent for every tenant in 1 click.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/platform/cost" className="block">
-          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-ok/10 text-ok dark:text-ok flex items-center justify-center shrink-0">
-                <DollarSign className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Cross-tenant cost</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">See AI spend per tenant + per agent across the whole platform.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/platform/prompts" className="block">
-          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-ai/10 text-ai-ink dark:text-ai-ink flex items-center justify-center shrink-0">
-                <Brain className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Prompt control plane</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">Edit agent system prompts + model + temperature with version history.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/platform/audit" className="block">
-          <Card className="border-border/60 hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-warn/10 text-warn dark:text-warn flex items-center justify-center shrink-0">
-                <FileText className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Audit log</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">Every kill switch toggle + prompt change with who/when/why.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-
-      {/* ── Plan breakdown ───────────────────────────────────────────────── */}
-      {stats && (
-        <div className="grid grid-cols-4 gap-3">
-          {Object.entries(PLAN_META).map(([plan, meta]) => (
-            <Card key={plan} className="border-border/60">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", meta.color)}>
-                  {meta.icon}
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{meta.badge}</p>
-                  <p className="text-xl font-bold">{stats.planBreakdown?.[plan] ?? 0}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+    <div className="mx-auto w-full max-w-[1200px]">
+      {/* Command-center hero. Stats come from the real unified-overview KPIs. */}
+      {kpis.loading && <div className="mb-[18px]"><Skeleton className="h-[150px] rounded-[20px]" /></div>}
+      {kpis.error && <div className="mb-[18px]"><ErrorState title="Could not load the overview" body="The platform overview service did not respond." code="GET /api/platform/unified-overview" onRetry={kpis.reload} /></div>}
+      {kpis.data && (
+        <CommandHero
+          title="Org overview"
+          sub="Everything happening across your hiring operation, in real time."
+          stats={heroStats}
+          live={live}
+          onToggleLive={() => setLive((v) => !v)}
+        >
+          <Pill icon="clock" tone="var(--c-ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 30 days</Pill>
+          <a href="/admin/platform/audit"><Btn variant="primary" icon="arrowUpRight">Export report</Btn></a>
+        </CommandHero>
       )}
 
-      {/* ── Filters ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, slug, website…"
-            className="pl-8 h-9"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-          />
-        </div>
-        <Select value={planFilter} onValueChange={v => { setPlanFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-36 h-9"><SelectValue placeholder="All plans" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All plans</SelectItem>
-            <SelectItem value="FREE">Free</SelectItem>
-            <SelectItem value="STARTER">Starter</SelectItem>
-            <SelectItem value="PROFESSIONAL">Professional</SelectItem>
-            <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-36 h-9"><SelectValue placeholder="All statuses" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All statuses</SelectItem>
-            <SelectItem value="TRIAL">Trial</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-            <SelectItem value="SUSPENDED">Suspended</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-xs text-muted-foreground ml-auto">{total} tenants</span>
+      {/* KPI row (the real 4-up unified overview metrics). */}
+      {kpis.data && <KpiRow kpis={kpis.data} cols={4} />}
+
+      {/* charts row: pipeline funnel + diversity */}
+      <div className="mb-4 grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <Reveal i={8}>
+          <SectionCard
+            title="Pipeline funnel"
+            icon="radar"
+            action="Breakdown"
+            headRight={appliedToHired ? <Pill mono tone="var(--c-ok)" bg="var(--c-ok-tint)">{appliedToHired}% applied to hired</Pill> : undefined}
+          >
+            {funnel.loading && <div className="grid gap-[10px]">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[30px] rounded-[8px]" />)}</div>}
+            {funnel.error && <ErrorState title="Could not load the funnel" body="The analytics service did not respond." code="GET /api/analytics/funnel" onRetry={funnel.reload} />}
+            {funnel.data && funnelStages.length === 0 && <EmptyState title="No pipeline data yet" body="Once candidates move through stages, the funnel fills in here." />}
+            {funnel.data && funnelStages.length > 0 && <Funnel stages={funnelStages} />}
+          </SectionCard>
+        </Reveal>
+
+        <Reveal i={9}>
+          <SectionCard title="Diversity" icon="grid" action="EEOC report">
+            {fairness.loading && <div className="grid gap-2"><Skeleton className="h-[150px] rounded-[12px]" /></div>}
+            {fairness.error && <ErrorState title="Could not load diversity" body="The bias-auditor service did not respond." code="GET /api/bias/four-fifths" onRetry={fairness.reload} />}
+            {fairness.data && diversity.length === 0 && <EmptyState title="No fairness data yet" body="Adverse-impact ratios appear once enough candidates are scored." />}
+            {fairness.data && diversity.length > 0 && (
+              <Donut data={diversity} center={{ value: String(diversity.length), label: "groups" }} />
+            )}
+          </SectionCard>
+        </Reveal>
       </div>
 
-      {/* ── Tenant table ─────────────────────────────────────────────────── */}
-      <Card className="border-border/60 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border/60 bg-muted/30">
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Plan</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Users</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Jobs</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Candidates</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI cost (30d)</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Joined</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {loading ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground text-sm">Loading tenants…</td></tr>
-              ) : tenants.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground text-sm">No tenants found</td></tr>
-              ) : (
-                tenants.map((t) => {
-                  const plan   = PLAN_META[t.plan] ?? PLAN_META.FREE;
-                  const status = STATUS_META[t.status] ?? STATUS_META.ACTIVE;
-                  const daysLeft = t.trialEndsAt
-                    ? Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000))
-                    : null;
+      {/* two-column surface: trend / activity (left), pending / agents (right) */}
+      <div className="grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <div className="flex flex-col gap-4">
+          <Reveal i={10}>
+            <SectionCard title="Time-to-hire trend" icon="chart">
+              {/* No historical time-series endpoint is exposed yet; show the
+                  current value honestly instead of inventing a trend line. */}
+              {kpis.loading && <Skeleton className="h-[150px] rounded-[12px]" />}
+              {kpis.data && (() => {
+                const tth = byId("tth");
+                if (!tth || !tth.value) return <EmptyState title="No time-to-hire history yet" body="Once roles are filled, the trend over time renders here." />;
+                return (
+                  <div className="flex items-center justify-between gap-4 px-1 py-2">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Current average</div>
+                      <div className="mono mt-1 text-[34px] font-extrabold leading-none tracking-tight">{tth.value}<span className="ml-1 text-[16px] font-bold text-ink-3">days</span></div>
+                    </div>
+                    <Pill mono tone="var(--c-ink-2)" bg="var(--c-surface-2)" icon="clock">from hired applications</Pill>
+                  </div>
+                );
+              })()}
+            </SectionCard>
+          </Reveal>
 
-                  return (
-                    <tr key={t.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
-                            {t.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium truncate max-w-[160px]">{t.name}</p>
-                            <p className="text-xs text-muted-foreground">{t.slug}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium", plan.color)}>
-                          {plan.icon}{plan.badge}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-0.5">
-                          <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit", status.color)}>
-                            {status.badge}
-                          </span>
-                          {daysLeft !== null && (
-                            <span className={cn("text-xs", daysLeft <= 3 ? "text-danger" : "text-muted-foreground")}>
-                              {daysLeft}d left
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">{t.userCount}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{t.requisitionCount}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{t.candidateCount}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium">
-                        ${t.costUsd30d.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">
-                        {new Date(t.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "STARTER" })}>
-                              <Zap className="h-4 w-4 mr-2 text-info" /> Upgrade → Starter
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "PROFESSIONAL" })}>
-                              <Crown className="h-4 w-4 mr-2 text-primary" /> Upgrade → Professional
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateTenant(t.id, { plan: "ENTERPRISE" })}>
-                              <Building2 className="h-4 w-4 mr-2 text-warn" /> Upgrade → Enterprise
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateTenant(t.id, { status: "ACTIVE" })}>
-                              <CheckCircle2 className="h-4 w-4 mr-2 text-ok" /> Activate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateTenant(t.id, { status: "SUSPENDED" })}>
-                              <Ban className="h-4 w-4 mr-2 text-warn" /> Suspend
-                            </DropdownMenuItem>
-                            {/* Phase 32a, impersonate this tenant's admin for support debugging. */}
-                            <DropdownMenuItem onClick={() => impersonateTenant(t.id, t.name)}>
-                              <UserCog className="h-4 w-4 mr-2 text-danger" /> Impersonate admin
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+          <Reveal i={12}>
+            <SectionCard title="Activity" icon="bolt" action="Full log">
+              {tenants.loading && <div className="grid gap-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-[11px]" />)}</div>}
+              {tenants.error && <ErrorState title="Could not load activity" body="The platform service did not respond." code="GET /api/platform/tenants" onRetry={tenants.reload} />}
+              {tenants.data && activity.length === 0 && <EmptyState title="No recent activity" body="Org-wide events show up here as your teams get to work." />}
+              {tenants.data && activity.length > 0 && <Timeline items={activity} />}
+            </SectionCard>
+          </Reveal>
         </div>
 
-        {/* Pagination */}
-        {total > 20 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border/40">
-            <span className="text-xs text-muted-foreground">
-              Showing {(page - 1) * 20 + 1}-{Math.min(page * 20, total)} of {total}
-            </span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page * 20 >= total}>
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
+        <div className="flex flex-col gap-4">
+          <Reveal i={11}>
+            <SectionCard
+              title="Pending actions"
+              icon="listChecks"
+              headRight={flaggedCount > 0 ? <Pill tone="var(--c-warn)" bg="var(--c-warn-tint)">{flaggedCount} need attention</Pill> : undefined}
+            >
+              {fairness.loading && <div className="grid gap-[9px]">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[54px] rounded-[10px]" />)}</div>}
+              {fairness.error && <ErrorState title="Could not load pending actions" body="The compliance service did not respond." code="GET /api/bias/four-fifths" onRetry={fairness.reload} />}
+              {fairness.data && (() => {
+                const flagged = (fairness.data ?? []).filter((f) => f.flagged);
+                if (flagged.length === 0) return <EmptyState title="Nothing needs attention" body="No adverse-impact flags are open right now. Nice work." />;
+                return (
+                  <PendingList
+                    items={flagged.map((f) => ({
+                      title: `Adverse impact, ${f.group}`,
+                      meta: `Impact ratio ${f.impactRatio.toFixed(2)} (below 0.80 threshold)`,
+                      ic: "flag", tone: "danger" as const,
+                    }))}
+                  />
+                );
+              })()}
+            </SectionCard>
+          </Reveal>
+
+          <Reveal i={13}>
+            <SectionCard title="Agent activity" icon="sparkles">
+              {/* Decorative sparkline (illustrative chrome, kept verbatim). */}
+              <svg viewBox="0 0 280 70" style={{ width: "100%", height: "auto", display: "block", marginBottom: 12 }} aria-hidden="true">
+                <defs><linearGradient id="agp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--c-ai)" stopOpacity="0.05" /><stop offset="1" stopColor="var(--c-ai)" stopOpacity="0.4" /></linearGradient></defs>
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => { const h = [14, 22, 18, 30, 26, 38, 34, 46, 40, 52, 48, 58][i]; return <rect key={i} x={8 + i * 22} y={64 - h} width="13" height={h} rx="3" fill="url(#agp)" />; })}
+                <polyline points="14,50 36,46 58,48 80,40 102,42 124,34 146,36 168,28 190,30 212,22 234,24 256,16" fill="none" stroke="var(--c-ai)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="256" cy="16" r="3.5" fill="var(--c-ai)" />
+              </svg>
+              {/* The AI decisions count is the one real number we have. */}
+              {kpis.data && (() => {
+                const ai = byId("ai");
+                return (
+                  <div className="grid grid-cols-2 gap-[10px]">
+                    <div style={{ padding: "9px 11px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 18%, transparent)" }}>
+                      <div className="mono" style={{ fontSize: 11, color: "var(--c-ai-ink)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>agent decisions</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 2 }}>{(ai?.value ?? 0).toLocaleString()} today</div>
+                    </div>
+                    <div style={{ padding: "9px 11px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 18%, transparent)" }}>
+                      <div className="mono" style={{ fontSize: 11, color: "var(--c-ai-ink)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>bias auditor</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 2 }}>{flaggedCount} flags open</div>
+                    </div>
+                  </div>
+                );
+              })()}
+              <p style={{ margin: "11px 2px 0", fontSize: 10.5, color: "var(--c-ink-3)", display: "flex", gap: 6, alignItems: "center" }}><Icon name="shield" size={12} /> All agents advisory · humans hold every decision.</p>
+            </SectionCard>
+          </Reveal>
+        </div>
+      </div>
     </div>
   );
 }
