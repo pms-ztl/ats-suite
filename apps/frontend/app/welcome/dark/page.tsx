@@ -356,8 +356,6 @@ export default function LandingDarkPage() {
         <video autoPlay loop muted playsInline preload="auto" src={VIDEO_HERO} />
         <div className="grad" />
       </div>
-      <div className="guide l" />
-      <div className="guide r" />
 
       <div className="shell">
         <div className="wrap">
