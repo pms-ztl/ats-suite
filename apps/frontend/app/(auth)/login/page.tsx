@@ -62,6 +62,7 @@ const CSS = `
 .authx .ctrl svg{color:rgba(255,255,255,.45);flex-shrink:0;}
 .authx .ctrl input{flex:1;border:none;outline:none;background:transparent;color:#fff;font-size:14.5px;}
 .authx .ctrl input::placeholder{color:rgba(255,255,255,.34);}
+.authx .ctrl input:-webkit-autofill,.authx .ctrl input:-webkit-autofill:hover,.authx .ctrl input:-webkit-autofill:focus,.authx .ctrl input:-webkit-autofill:active{-webkit-text-fill-color:#fff;caret-color:#fff;-webkit-background-clip:text;transition:background-color 600000s 0s,color 600000s 0s;}
 .authx .ctrl .toggle{background:none;border:none;color:rgba(255,255,255,.45);display:flex;padding:4px;}
 .authx .rowbtw{display:flex;justify-content:space-between;align-items:center;margin:2px 0 18px;}
 .authx .rowbtw label{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.62);cursor:pointer;}
