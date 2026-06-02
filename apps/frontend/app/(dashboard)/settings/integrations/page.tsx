@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Bell, Mail, Slack, CheckCircle2, AlertCircle, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, Mail, MessageSquare as Slack, CheckCircle2, AlertCircle, Send, Loader2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 

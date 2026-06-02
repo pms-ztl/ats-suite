@@ -70,8 +70,8 @@ export default function SecuritySettingsPage() {
   }
 
   async function changePassword() {
-    if (newPw.length < 12) return toast.error("New password must be 12+ characters");
-    if (newPw !== confirmPw) return toast.error("New password and confirmation don't match");
+    if (newPw.length < 12) return void toast.error("New password must be 12+ characters");
+    if (newPw !== confirmPw) return void toast.error("New password and confirmation don't match");
     setPwSaving(true);
     try {
       const res = await fetch(`${API_BASE}/auth/change-password`, {
@@ -112,7 +112,7 @@ export default function SecuritySettingsPage() {
   }
 
   async function verifyMfa() {
-    if (!/^\d{6}$/.test(verifyCode)) return toast.error("Code must be 6 digits");
+    if (!/^\d{6}$/.test(verifyCode)) return void toast.error("Code must be 6 digits");
     setEnrolState("verifying");
     try {
       const res = await fetch(`${API_BASE}/auth/mfa/verify`, {
@@ -136,7 +136,7 @@ export default function SecuritySettingsPage() {
   }
 
   async function disableMfa() {
-    if (!disablePw) return toast.error("Enter your current password to disable MFA");
+    if (!disablePw) return void toast.error("Enter your current password to disable MFA");
     try {
       const res = await fetch(`${API_BASE}/auth/mfa/disable`, {
         method: "POST",
