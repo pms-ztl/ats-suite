@@ -1,553 +1,379 @@
 "use client";
-
+// app/(dashboard)/hitl/[id]/page.tsx - EXACT Claude Design "Aurora" layout.
+// Single-candidate human-in-the-loop review: the expanded detail / decision
+// panel for one queue item. Reproduces claude-design/screen-hitl.jsx (the
+// right-hand evidence + resolution pane) and wires it to the real gateway:
+// getVerdict(id) for the AI verdict, recordDecision (+ a best-effort resolve
+// POST) for the human decision. The list itself lives at /hitl.
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { HITLPayloadRenderer } from "@/components/shared/hitl-payload-renderer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import {
-  Bot, Timer, Clock, CheckCircle2, XCircle, User,
-  ChevronLeft, Loader2, Cpu, Wrench, DollarSign,
-  AlertTriangle,
-} from "lucide-react";
-import { cn, formatDateRelative, formatDate } from "@/lib/utils";
-import { toast } from "sonner";
+import { useParams } from "next/navigation";
+import { Btn, Pill, ScoreRing, Confidence, StatusBadge } from "@/components/aurora-kit";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
+import { getVerdict, recordDecision } from "@/lib/api";
+import type { ScreeningVerdict, ScreeningResult, RequirementMatch, DecisionType } from "@/lib/types";
 
-// --- Types ---
+const KIND: Record<ScreeningResult, "pass" | "review" | "fail"> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
+const BAND: Record<ScreeningResult, string> = { PASS: "var(--c-ok)", REVIEW: "var(--c-warn)", FAIL: "var(--c-danger)" };
 
-interface HITLCheckpoint {
-  id: string;
-  tenantId: string;
-  agentRunId: string;
-  type: string;
-  action: string;
-  payload: Record<string, unknown>;
-  assignedTo: string | null;
-  assignedToName?: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
-  slaMinutes: number;
-  resolution: Record<string, unknown> | null;
-  resolvedBy: string | null;
-  resolvedByName?: string;
-  createdAt: string;
-  resolvedAt: string | null;
-  escalatedAt: string | null;
-  agentType?: string;
+// Structured, audit-logged reason codes (the prototype's REASON_CODES).
+const REASON_CODES = [
+  "Strong evidence",
+  "Edge case, judgement call",
+  "Insufficient evidence",
+  "Policy exception",
+  "Bias / fairness concern",
+];
+
+type Verb = "Approved" | "Overridden" | "Rejected";
+
+// Best-effort gateway POST for the human resolution. Mirrors lib/api's raw()
+// but stays inline here so we do not touch shared files. Never throws to the UI.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+async function resolveOnGateway(id: string, status: "APPROVED" | "REJECTED", reason?: string): Promise<void> {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
+  await fetch(`${API_BASE}/agents/hitl/${id}/resolve`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify({ status, ...(reason ? { resolution: { reason } } : {}) }),
+  });
 }
 
-interface AgentTrace {
-  id: string;
-  agentRunId: string;
-  stepNumber: number;
-  type: "llm_call" | "tool_call" | "reasoning" | "error";
-  input?: Record<string, unknown>;
-  output?: Record<string, unknown>;
-  model?: string;
-  tokensUsed?: number;
-  cost?: number;
-  latencyMs?: number;
-  createdAt: string;
-}
+export default function HitlDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? "";
 
-interface AgentRun {
-  id: string;
-  agentType: string;
-  status: string;
-  input: Record<string, unknown>;
-  output: Record<string, unknown> | null;
-  totalCost?: number;
-  totalTokens?: number;
-  durationMs?: number;
-  traces?: AgentTrace[];
-  createdAt: string;
-  completedAt?: string;
-}
+  const fetcher = useCallback(() => getVerdict(id), [id]);
+  const { data, loading, error, reload } = useData<ScreeningVerdict>(fetcher, [id]);
+  // toVerdict never returns null; treat a verdict with no real identity as empty.
+  const v = data && (data.id || data.requisitionId || data.requirements.length > 0 || data.summary !== "No summary provided.") ? data : null;
 
-// --- Helpers ---
+  const [code, setCode] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const [done, setDone] = useState<Verb | null>(null);
+  const [submitting, setSubmitting] = useState<Verb | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
 
-function getSlaRemaining(createdAt: string, slaMinutes: number): { label: string; overdue: boolean; minutesLeft: number } {
-  const deadline = new Date(new Date(createdAt).getTime() + slaMinutes * 60_000);
-  const now = new Date();
-  const diffMs = deadline.getTime() - now.getTime();
-  if (diffMs <= 0) return { label: "EXPIRED", overdue: true, minutesLeft: 0 };
-  const mins = Math.floor(diffMs / 60_000);
-  const hrs = Math.floor(mins / 60);
-  if (hrs > 0) return { label: `${hrs}h ${mins % 60}m remaining`, overdue: false, minutesLeft: mins };
-  return { label: `${mins}m remaining`, overdue: false, minutesLeft: mins };
-}
+  // Reset transient decision state whenever the reviewed item changes.
+  useEffect(() => { setCode(null); setConfirm(false); setDone(null); setSubmitting(null); setFailed(null); }, [id]);
 
-const AGENT_LABELS: Record<string, string> = {
-  "candidate-screener": "Candidate Screener",
-  "interview-scheduler": "Interview Scheduler",
-  "offer-generator": "Offer Generator",
-  "sourcing-agent": "Sourcing Agent",
-  "compliance-checker": "Compliance Checker",
-};
+  const isDecline = v ? v.result === "FAIL" : false;
+  const lowConf = v ? v.confidence < 0.7 : false;
 
-function getTraceIcon(type: string) {
-  switch (type) {
-    case "llm_call": return <Cpu className="h-4 w-4 text-info" />;
-    case "tool_call": return <Wrench className="h-4 w-4 text-ok" />;
-    case "reasoning": return <Bot className="h-4 w-4 text-info" />;
-    case "error": return <AlertTriangle className="h-4 w-4 text-danger" />;
-    default: return <Bot className="h-4 w-4 text-muted-foreground" />;
-  }
-}
-
-// --- Page ---
-
-export default function HITLCheckpointDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const checkpointId = params.id as string;
-
-  const [checkpoint, setCheckpoint] = useState<HITLCheckpoint | null>(null);
-  const [agentRun, setAgentRun] = useState<AgentRun | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [resolving, setResolving] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-
-  // Fetch checkpoint data
-  const fetchData = useCallback(() => {
-    setLoading(true);
-
-    // Fetch all HITL checkpoints and find this one
-    const checkpointPromise = fetch("/api/agents/hitl", {
-      headers: { "x-tenant-id": "default" },
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((res) => {
-        const data = Array.isArray(res) ? res : res.data ?? [];
-        const found = data.find((c: HITLCheckpoint) => c.id === checkpointId);
-        if (found) setCheckpoint(found);
-        return found;
-      });
-
-    checkpointPromise
-      .then((cp) => {
-        if (!cp?.agentRunId) return;
-        // Fetch agent run with traces
-        return fetch(`/api/agents/runs/${cp.agentRunId}`, {
-          headers: { "x-tenant-id": "default" },
-        })
-          .then((r) => {
-            if (!r.ok) return null;
-            return r.json();
-          })
-          .then((res) => {
-            if (res) setAgentRun(res.data ?? res);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to load checkpoint data:", err);
-        toast.error("Failed to load checkpoint details");
-      })
-      .finally(() => setLoading(false));
-  }, [checkpointId]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Resolve checkpoint
-  const resolveCheckpoint = useCallback(
-    (status: "APPROVED" | "REJECTED", reason?: string) => {
-      setResolving(true);
-      fetch(`/api/agents/hitl/${checkpointId}/resolve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant-id": "default",
-        },
-        body: JSON.stringify({
-          status,
-          ...(reason ? { resolution: { reason } } : {}),
-        }),
-      })
-        .then((r) => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then(() => {
-          toast.success(
-            status === "APPROVED"
-              ? "Checkpoint approved successfully"
-              : "Checkpoint rejected"
-          );
-          router.push("/hitl");
-        })
-        .catch((err) => {
-          console.error("Failed to resolve checkpoint:", err);
-          toast.error("Failed to resolve checkpoint");
-        })
-        .finally(() => setResolving(false));
+  // Record the human decision: typed recordDecision + a best-effort resolve POST.
+  const resolve = useCallback(
+    async (verb: Verb, decision: DecisionType, gatewayStatus: "APPROVED" | "REJECTED") => {
+      if (!id) return;
+      setSubmitting(verb);
+      setFailed(null);
+      try {
+        await recordDecision({ id, type: decision });
+        try { await resolveOnGateway(id, gatewayStatus, code ?? undefined); } catch { /* resolve is best-effort */ }
+        setDone(verb);
+        setConfirm(false);
+      } catch {
+        setFailed("Could not record the decision. The decisions service did not respond. Please try again.");
+      } finally {
+        setSubmitting(null);
+      }
     },
-    [checkpointId, router]
+    [id, code]
   );
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-6 w-96" />
-        <div className="grid grid-cols-2 gap-4">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
-        </div>
-        <Skeleton className="h-64" />
-      </div>
-    );
-  }
-
-  // Not found
-  if (!checkpoint) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Checkpoint Not Found"
-          description="The requested HITL checkpoint could not be found."
-          breadcrumbs={[
-            { label: "Dashboard", href: "/" },
-            { label: "Review Queue", href: "/hitl" },
-            { label: "Not Found" },
-          ]}
-        />
-        <Button variant="outline" onClick={() => router.push("/hitl")}>
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back to Queue
-        </Button>
-      </div>
-    );
-  }
-
-  const sla = checkpoint.status === "PENDING"
-    ? getSlaRemaining(checkpoint.createdAt, checkpoint.slaMinutes)
-    : null;
-  const isPending = checkpoint.status === "PENDING";
-  const agentLabel = AGENT_LABELS[checkpoint.agentType ?? ""] ?? checkpoint.agentType ?? "Unknown Agent";
-  const traces = agentRun?.traces ?? [];
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <PageHeader
-        title="Review Checkpoint"
-        description={`${agentLabel} requested a ${checkpoint.type.replace(/_/g, " ")}`}
-        breadcrumbs={[
-          { label: "Dashboard", href: "/" },
-          { label: "Review Queue", href: "/hitl" },
-          { label: `Checkpoint ${checkpoint.id.slice(0, 8)}` },
-        ]}
-        actions={
-          <Button variant="outline" size="sm" onClick={() => router.push("/hitl")}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-        }
-      />
+    <div className="mx-auto w-full max-w-[1100px]">
+      {/* back link */}
+      <a
+        href="/hitl"
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink-2)", marginBottom: 16 }}
+      >
+        <Icon name="chevR" size={15} style={{ transform: "rotate(180deg)" }} /> Back to review queue
+      </a>
 
-      {/* Status Banner */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <StatusBadge status={checkpoint.status.toLowerCase()} />
-            <Badge variant="outline" className="gap-1.5">
-              <Bot className="h-3.5 w-3.5" />
-              {agentLabel}
-            </Badge>
-            <span className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-semibold",
-              checkpoint.type === "rejection_review" ? "bg-danger-tint text-danger" :
-              checkpoint.type === "offer_approval" ? "bg-ai-tint text-ai-ink" :
-              checkpoint.type === "scheduling_review" ? "bg-info-tint text-info" :
-              "bg-muted text-muted-foreground"
-            )}>
-              {checkpoint.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-            </span>
-            {sla && (
-              <div className="flex items-center gap-1.5">
-                <Timer className={cn("h-4 w-4", sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : "text-muted-foreground")} />
-                <span className={cn(
-                  "text-sm font-medium",
-                  sla.overdue ? "text-danger" : sla.minutesLeft < 60 ? "text-warn" : "text-muted-foreground"
-                )}>
-                  {sla.label}
+      {loading && (
+        <div className="grid gap-4" aria-busy="true">
+          <Skeleton className="h-9 w-72 rounded-[10px]" />
+          <Skeleton className="h-16 rounded-[14px]" />
+          <Skeleton className="h-56 rounded-[16px]" />
+          <Skeleton className="h-40 rounded-[16px]" />
+        </div>
+      )}
+
+      {error && (
+        <ErrorState
+          title="Could not load this review"
+          body="The screening service did not return this verdict."
+          code={`GET /api/screening/${id}`}
+          onRetry={reload}
+        />
+      )}
+
+      {v === null && !loading && !error && (
+        <EmptyState
+          title="Nothing to review here"
+          body="This checkpoint has no verdict attached, or it has already been resolved."
+          actions={<a href="/hitl"><Btn variant="primary" icon="enter">Back to queue</Btn></a>}
+        />
+      )}
+
+      {v && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* candidate header */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+              {id && <Pill mono>{id.slice(0, 8)}</Pill>}
+              <h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{v.candidateId}</h1>
+              <StatusBadge kind={KIND[v.result]} />
+            </div>
+            <div style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">{v.agent}</Pill>
+              <span>flagged this verdict for a human.</span>
+            </div>
+          </div>
+
+          {/* why this is a checkpoint */}
+          <div
+            style={{
+              padding: "12px 16px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)",
+              border: "1px solid color-mix(in oklab, var(--c-ai) 24%, transparent)", display: "flex", gap: 11, alignItems: "center",
+            }}
+          >
+            <Icon name="shield" size={18} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", color: "var(--c-ai-ink)" }}>
+                {lowConf ? "Low model confidence, human verification required" : "Exception routed for human verification"}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--c-ink-2)", marginTop: 1 }}>
+                This checkpoint exists because a human, not the model, must make this call.
+              </div>
+            </div>
+          </div>
+
+          {/* AI verdict: score + confidence */}
+          <div
+            style={{
+              borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)",
+              boxShadow: "var(--e1)", overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "12px 18px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-sm)", display: "flex", gap: 8, alignItems: "center" }}>
+              <Icon name="sparkles" size={15} style={{ color: "var(--c-ai)" }} /> AI verdict
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 22, alignItems: "center", padding: "18px" }}>
+              <ScoreRing value={v.score} size={92} band={BAND[v.result]} label="match" />
+              <Confidence value={v.confidence} />
+            </div>
+          </div>
+
+          {/* requirement findings, AI-cited evidence */}
+          <div
+            style={{
+              borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)",
+              boxShadow: "var(--e1)", overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "12px 18px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-sm)", display: "flex", gap: 8, alignItems: "center" }}>
+              <Icon name="listChecks" size={15} /> Requirement findings
+            </div>
+            {v.requirements.length === 0 ? (
+              <div style={{ padding: "16px 18px", fontSize: "var(--fs-sm)", color: "var(--c-ink-3)" }}>
+                No structured requirement findings were attached to this verdict.
+              </div>
+            ) : (
+              <div>
+                {v.requirements.map((r: RequirementMatch, i) => {
+                  const tone = r.met === true ? ["var(--c-ok)", "var(--c-ok-tint)", "check"]
+                    : r.met === "partial" ? ["var(--c-warn)", "var(--c-warn-tint)", "eye"]
+                    : ["var(--c-danger)", "var(--c-danger-tint)", "x"];
+                  const [tc, tb, ic] = tone;
+                  return (
+                    <div
+                      key={`${r.requirement}-${i}`}
+                      style={{ display: "grid", gridTemplateColumns: "26px 1fr", gap: 12, padding: "13px 18px", borderTop: i ? "1px solid var(--c-line)" : "none" }}
+                    >
+                      <span style={{ width: 26, height: 26, borderRadius: "var(--r-sm)", display: "grid", placeItems: "center", flexShrink: 0, color: tc, background: tb }}>
+                        <Icon name={ic} size={15} stroke={2.2} />
+                      </span>
+                      <div>
+                        <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink)" }}>{r.requirement}</div>
+                        {r.evidence && (
+                          <div style={{ fontSize: 12, color: "var(--c-ink-2)", marginTop: 3, lineHeight: 1.5 }}>
+                            <span style={{ color: "var(--c-ink-3)", fontWeight: 600 }}>Evidence: </span>{r.evidence}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* reasoning / why panel */}
+          <div
+            style={{
+              borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)",
+              boxShadow: "var(--e1)", overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "12px 18px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-sm)", display: "flex", gap: 8, alignItems: "center" }}>
+              <Icon name="cpu" size={15} /> Why the agent decided this
+            </div>
+            <div style={{ padding: "14px 18px" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--c-ink-3)", marginBottom: 6 }}>
+                Agent reasoning
+              </div>
+              <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink)", lineHeight: 1.55 }}>{v.summary}</div>
+            </div>
+            {v.reasoningTrace && v.reasoningTrace.length > 0 && (
+              <div style={{ padding: "8px 18px 16px", borderTop: "1px solid var(--c-line)", background: "var(--c-ai-tint)" }}>
+                {v.reasoningTrace.map((st, i) => (
+                  <div
+                    key={i}
+                    style={{ display: "flex", gap: 10, alignItems: "center", padding: "7px 0", borderTop: i ? "1px solid color-mix(in oklab, var(--c-ai) 12%, transparent)" : "none" }}
+                  >
+                    <Icon name="check" size={13} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{st.step}</span>
+                    <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>· {st.detail}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* human decision */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Your decision</span>
+              <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>Pick a structured reason, it is logged to the audit trail</span>
+            </div>
+
+            {/* reason codes */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 14 }}>
+              {REASON_CODES.map((rc) => (
+                <button
+                  key={rc}
+                  type="button"
+                  onClick={() => setCode(rc)}
+                  disabled={!!done}
+                  style={{
+                    fontSize: 12, fontWeight: 600, padding: "6px 11px", borderRadius: "var(--r-pill)", cursor: done ? "default" : "pointer",
+                    border: "1px solid", borderColor: code === rc ? "transparent" : "var(--c-line-2)",
+                    background: code === rc ? "var(--c-brand-tint)" : "var(--c-surface)",
+                    color: code === rc ? "var(--c-brand-ink)" : "var(--c-ink-2)", transition: "all var(--t-fast)",
+                    opacity: done && code !== rc ? 0.55 : 1,
+                  }}
+                >
+                  {rc}
+                </button>
+              ))}
+            </div>
+
+            {done ? (
+              <div
+                style={{
+                  padding: "14px 18px", borderRadius: "var(--r-lg)", background: "var(--c-ok-tint)",
+                  border: "1px solid color-mix(in oklab, var(--c-ok) 30%, transparent)", display: "flex", gap: 10, alignItems: "center",
+                }}
+              >
+                <Icon name="check" size={18} style={{ color: "var(--c-ok)" }} />
+                <span style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>
+                  Resolved, <b>{done}</b>{code ? " · " + code : ""}. Logged to the audit trail.
                 </span>
               </div>
-            )}
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              {formatDateRelative(checkpoint.createdAt)}
-            </div>
-            {checkpoint.assignedTo && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
-                {checkpoint.assignedToName ?? checkpoint.assignedTo}
+            ) : confirm ? (
+              <div
+                style={{
+                  padding: "14px 18px", borderRadius: "var(--r-lg)", background: "var(--c-danger-tint)",
+                  border: "1px solid color-mix(in oklab, var(--c-danger) 28%, transparent)",
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", marginBottom: 4, display: "flex", gap: 7, alignItems: "center" }}>
+                  <Icon name="flag" size={15} style={{ color: "var(--c-danger)" }} /> Uphold the AI&apos;s call for {v.candidateId}?
+                </div>
+                <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.45 }}>
+                  You are recording a human decision that ends this candidate&apos;s path. Confirm you reviewed the evidence and reasoning, not just the AI summary.
+                </p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Btn variant="ghost" onClick={() => setConfirm(false)}>Go back</Btn>
+                  <Btn variant="danger" icon="check" onClick={() => resolve("Rejected", "REJECT", "REJECTED")}>
+                    {submitting === "Rejected" ? "Recording..." : "I reviewed, confirm reject"}
+                  </Btn>
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Payload + Trace (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Agent Decision Summary */}
-          <div>
-            <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Bot className="h-4 w-4" /> Agent Decision
-            </h2>
-            <div className="space-y-3">
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Proposed action:</span>{" "}
-                    <span className="font-medium">{checkpoint.action}</span>
-                  </p>
-                </CardContent>
-              </Card>
-              <HITLPayloadRenderer type={checkpoint.type} payload={checkpoint.payload} />
-            </div>
-          </div>
-
-          {/* Agent Trace */}
-          {traces.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Cpu className="h-4 w-4" /> Agent Reasoning Trace
-              </h2>
-              <Card>
-                <CardContent className="p-0">
-                  <Accordion type="single" collapsible>
-                    {traces
-                      .sort((a, b) => a.stepNumber - b.stepNumber)
-                      .map((trace, i) => (
-                        <AccordionItem key={trace.id ?? i} value={`step-${i}`}>
-                          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                            <div className="flex items-center gap-3 text-sm">
-                              {getTraceIcon(trace.type)}
-                              <span className="font-medium">
-                                Step {trace.stepNumber}: {trace.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                              </span>
-                              {trace.model && (
-                                <Badge variant="secondary" className="text-2xs">{trace.model}</Badge>
-                              )}
-                              {trace.latencyMs !== undefined && (
-                                <span className="text-xs text-muted-foreground">{trace.latencyMs}ms</span>
-                              )}
-                              {trace.cost !== undefined && trace.cost > 0 && (
-                                <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                                  <DollarSign className="h-3 w-3" />{trace.cost.toFixed(4)}
-                                </span>
-                              )}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="px-4 pb-4">
-                            <div className="space-y-3">
-                              {trace.input && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">Input</p>
-                                  <pre className="text-xs bg-muted/50 rounded-md p-3 overflow-auto max-h-48 whitespace-pre-wrap">
-                                    {JSON.stringify(trace.input, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                              {trace.output && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">Output</p>
-                                  <pre className="text-xs bg-muted/50 rounded-md p-3 overflow-auto max-h-48 whitespace-pre-wrap">
-                                    {JSON.stringify(trace.output, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                              {trace.tokensUsed !== undefined && (
-                                <p className="text-xs text-muted-foreground">
-                                  Tokens: {trace.tokensUsed.toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
-              {/* Agent run summary */}
-              {agentRun && (
-                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                  {agentRun.totalCost !== undefined && (
-                    <span>Total cost: ${agentRun.totalCost.toFixed(4)}</span>
-                  )}
-                  {agentRun.totalTokens !== undefined && (
-                    <span>Total tokens: {agentRun.totalTokens.toLocaleString()}</span>
-                  )}
-                  {agentRun.durationMs !== undefined && (
-                    <span>Duration: {(agentRun.durationMs / 1000).toFixed(1)}s</span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Right: Actions sidebar (1/3 width) */}
-        <div className="space-y-6">
-          {/* Action Buttons */}
-          {isPending && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Review Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  className="w-full"
-                  variant="default"
-                  onClick={() => resolveCheckpoint("APPROVED")}
-                  disabled={resolving}
-                >
-                  {resolving ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                  )}
-                  Approve
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="destructive"
-                  onClick={() => setRejectDialogOpen(true)}
-                  disabled={resolving}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Reject
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Resolution History */}
-          {!isPending && checkpoint.resolvedAt && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Resolution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={checkpoint.status.toLowerCase()} />
-                </div>
-                <div className="text-sm space-y-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Resolved by</p>
-                    <p className="font-medium">{checkpoint.resolvedByName ?? checkpoint.resolvedBy ?? "System"}</p>
+            ) : (
+              <div>
+                {isDecline && (
+                  <div
+                    style={{
+                      marginBottom: 11, padding: "10px 13px", borderRadius: "var(--r)",
+                      background: code ? "var(--c-ok-tint)" : "var(--c-warn-tint)",
+                      border: "1px solid color-mix(in oklab, " + (code ? "var(--c-ok)" : "var(--c-warn)") + " 26%, transparent)",
+                      fontSize: 12, color: "var(--c-ink-2)", display: "flex", gap: 8, alignItems: "center",
+                    }}
+                  >
+                    <Icon name={code ? "check" : "flag"} size={14} style={{ color: code ? "var(--c-ok)" : "var(--c-warn)", flexShrink: 0 }} />
+                    {code
+                      ? "A reason is set, you can resolve this AI-driven decline."
+                      : "Anti-rubber-stamp: pick a reason before resolving an AI-driven decline."}
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Resolved at</p>
-                    <p className="font-medium">{formatDate(checkpoint.resolvedAt, "MMM d, yyyy h:mm a")}</p>
+                )}
+
+                {failed && (
+                  <div
+                    style={{
+                      marginBottom: 11, padding: "10px 13px", borderRadius: "var(--r)", background: "var(--c-danger-tint)",
+                      border: "1px solid color-mix(in oklab, var(--c-danger) 26%, transparent)", fontSize: 12,
+                      color: "var(--c-danger)", display: "flex", gap: 8, alignItems: "center",
+                    }}
+                  >
+                    <Icon name="flag" size={14} style={{ flexShrink: 0 }} /> {failed}
                   </div>
-                  {checkpoint.resolution && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Comments</p>
-                      <p className="text-sm bg-muted/50 rounded-md p-2 mt-1">
-                        {(checkpoint.resolution as Record<string, unknown>).reason
-                          ? String((checkpoint.resolution as Record<string, unknown>).reason)
-                          : JSON.stringify(checkpoint.resolution)}
-                      </p>
+                )}
+
+                {(() => {
+                  const gated = isDecline && !code;
+                  const busy = submitting !== null;
+                  return (
+                    <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+                      <Btn
+                        variant="primary"
+                        icon="check"
+                        onClick={() => (gated || busy ? null : resolve("Approved", "HIRE", "APPROVED"))}
+                        style={{ opacity: gated || busy ? 0.45 : 1, pointerEvents: gated || busy ? "none" : "auto" }}
+                      >
+                        {submitting === "Approved" ? "Recording..." : "Approve"}
+                        <kbd className="mono" style={{ fontSize: 10, opacity: 0.7, marginLeft: 4 }}>A</kbd>
+                      </Btn>
+                      <Btn
+                        variant="soft"
+                        icon="copy"
+                        onClick={() => (busy ? null : resolve("Overridden", "HOLD", "APPROVED"))}
+                        style={{ opacity: busy ? 0.45 : 1, pointerEvents: busy ? "none" : "auto" }}
+                      >
+                        {submitting === "Overridden" ? "Recording..." : "Override"}
+                        <kbd className="mono" style={{ fontSize: 10, opacity: 0.6, marginLeft: 4 }}>O</kbd>
+                      </Btn>
+                      <Btn
+                        variant="danger"
+                        icon="x"
+                        onClick={() => (busy ? null : isDecline ? setConfirm(true) : resolve("Rejected", "REJECT", "REJECTED"))}
+                        style={{ opacity: busy ? 0.45 : 1, pointerEvents: busy ? "none" : "auto" }}
+                      >
+                        {submitting === "Rejected" ? "Recording..." : "Reject"}
+                        <kbd className="mono" style={{ fontSize: 10, opacity: 0.6, marginLeft: 4 }}>R</kbd>
+                      </Btn>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Metadata */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Checkpoint ID</span>
-                <span className="font-mono text-xs">{checkpoint.id.slice(0, 12)}...</span>
+                  );
+                })()}
               </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Agent Run</span>
-                <span className="font-mono text-xs">{checkpoint.agentRunId.slice(0, 12)}...</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">SLA</span>
-                <span>{checkpoint.slaMinutes} minutes</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span>{formatDate(checkpoint.createdAt, "MMM d, h:mm a")}</span>
-              </div>
-              {checkpoint.escalatedAt && (
-                <>
-                  <Separator />
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Escalated</span>
-                    <span>{formatDate(checkpoint.escalatedAt, "MMM d, h:mm a")}</span>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Checkpoint</DialogTitle>
-            <DialogDescription>
-              Provide a reason for rejecting this agent decision. The agent will be notified and may retry with different parameters.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            placeholder="Reason for rejection..."
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            className="min-h-[100px]"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setRejectDialogOpen(false);
-                resolveCheckpoint("REJECTED", rejectReason);
-              }}
-              disabled={!rejectReason.trim()}
-            >
-              <XCircle className="h-4 w-4 mr-1" />
-              Reject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      )}
     </div>
   );
 }

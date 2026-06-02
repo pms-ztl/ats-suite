@@ -1,568 +1,961 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Briefcase,
-  MapPin,
-  Building2,
-  Upload,
-  Loader2,
-  CheckCircle2,
-  ArrowLeft,
-} from "lucide-react";
-import Link from "next/link";
-import { FormRenderer } from "@/components/forms/form-renderer";
-import type { FormField } from "@/components/forms/form-types";
+/* Candidate-portal apply page, ported from claude-design/portal.jsx (Apply +
+   Confirm). CandidateLayout already provides the nav/header/footer chrome, so
+   this file renders content only. Mock data is replaced with a best-effort
+   live job summary and a real FormData submit to the gateway. */
 
-interface JobDetail {
-  id: string;
-  slug: string;
-  title: string;
-  department: string;
-  location: string;
-  description?: string;
-  requirements?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  currency?: string;
-}
+import { useState, useEffect, FormEvent, CSSProperties } from "react";
+import { useParams } from "next/navigation";
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  linkedinUrl: string;
-  coverLetter: string;
-}
-
-interface FormErrors {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  resume?: string;
-}
-
+/* ---- inline fetch helper (do not edit lib/api.ts) ---- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try {
+    t =
+      typeof window !== "undefined"
+        ? window.sessionStorage.getItem("ats-access-token")
+        : null;
+  } catch {}
+  const isForm =
+    typeof FormData !== "undefined" && init?.body instanceof FormData;
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
+    headers: {
+      ...(isForm ? {} : { "Content-Type": "application/json" }),
+      ...(t ? { Authorization: `Bearer ${t}` } : {}),
+      ...(init?.headers ?? {}),
+    },
+    ...init,
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-export default function ApplyPage() {
-  const params = useParams();
-  const router = useRouter();
-  const jobId = params.id as string;
-
-  const [job, setJob] = useState<JobDetail | null>(null);
-  const [jobLoading, setJobLoading] = useState(true);
-
-  const [form, setForm] = useState<FormData>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    linkedinUrl: "",
-    coverLetter: "",
-  });
-  const [resume, setResume] = useState<File | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  // Batch 4: custom form schema (null = use legacy hardcoded form)
-  const [customFields, setCustomFields] = useState<FormField[] | null>(null);
-  const [customServerErrors, setCustomServerErrors] = useState<Record<string, string>>({});
-
-  // Fetch custom form schema for this job (Batch 4)
-  useEffect(() => {
-    if (!job?.slug) return;
-    fetch(`${API_BASE}/public/jobs/${job.slug}/form`, { headers: { "Content-Type": "application/json" } })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((res) => {
-        if (!res) return;
-        const data = res.data ?? res;
-        // Only switch to dynamic renderer when tenant has actually customized the form
-        if (!data.isDefault && Array.isArray(data.fields)) {
-          setCustomFields(data.fields);
-        }
-      })
-      .catch(() => {});
-  }, [job?.slug]);
-
-  // Handler for custom form submission (Batch 4)
-  const handleCustomSubmit = async (values: Record<string, any>, files: Map<string, File>) => {
-    if (!job?.slug) return;
-    setSubmitting(true);
-    setCustomServerErrors({});
-    try {
-      const fd = new FormData();
-      for (const [k, v] of Object.entries(values)) {
-        if (v !== undefined && v !== null && !(v instanceof File)) {
-          fd.append(k, Array.isArray(v) ? JSON.stringify(v) : String(v));
-        }
-      }
-      files.forEach((f, k) => {
-        fd.append(k, f, f.name);
-      });
-      const res = await fetch(`${API_BASE}/public/jobs/${job.slug}/apply-custom`, {
-        method: "POST",
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data?.error?.fields) {
-          setCustomServerErrors(data.error.fields);
-          toast.error("Please fix the highlighted fields");
-        } else {
-          throw new Error(data?.error?.message ?? data?.message ?? "Submission failed");
-        }
-        setSubmitting(false);
-        return;
-      }
-      setSubmitted(true);
-      toast.success("Application submitted!");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Submission failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Fetch job details via public API (slug-based lookup)
-  useEffect(() => {
-    async function fetchJob() {
-      // Skip fetching for featured/placeholder IDs
-      if (jobId.startsWith("featured")) {
-        setJob({
-          id: jobId,
-          slug: jobId,
-          title:
-            jobId === "featured-senior-software-engineer"
-              ? "Senior Software Engineer"
-              : jobId === "featured-product-designer"
-                ? "Product Designer"
-                : "Data Scientist",
-          department:
-            jobId === "featured-senior-software-engineer"
-              ? "Engineering"
-              : jobId === "featured-product-designer"
-                ? "Design"
-                : "AI & Machine Learning",
-          location:
-            jobId === "featured-senior-software-engineer"
-              ? "San Francisco, CA"
-              : jobId === "featured-product-designer"
-                ? "Remote"
-                : "New York, NY",
-          description:
-            "We are looking for talented individuals to join our growing team. You will work on cutting-edge technology, collaborating with a diverse group of professionals dedicated to building the future of AI-powered recruitment.",
-        });
-        setJobLoading(false);
-        return;
-      }
-
-      try {
-        // Use public API, look up by slug (no auth required)
-        const res = await fetch(`${API_BASE}/public/jobs/${jobId}`, {
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) throw new Error("Not found");
-        const json = await res.json();
-        const posting = json.data ?? json;
-        setJob({
-          id: posting.id,
-          slug: posting.slug,
-          title: posting.title,
-          department: posting.requisition?.department ?? "",
-          location: posting.requisition?.location ?? "",
-          description: posting.description ?? posting.requisition?.description,
-          salaryMin: posting.requisition?.salaryMin,
-          salaryMax: posting.requisition?.salaryMax,
-          currency: posting.requisition?.salaryCurrency,
-        });
-      } catch {
-        setJob(null);
-      } finally {
-        setJobLoading(false);
-      }
-    }
-
-    fetchJob();
-  }, [jobId]);
-
-  function validate(): FormErrors {
-    const errs: FormErrors = {};
-    if (!form.firstName.trim()) errs.firstName = "First name is required";
-    if (!form.lastName.trim()) errs.lastName = "Last name is required";
-    if (!form.email.trim()) errs.email = "Email is required";
-    else if (!validateEmail(form.email)) errs.email = "Invalid email format";
-    if (!form.phone.trim()) errs.phone = "Phone number is required";
-    if (!resume) errs.resume = "Resume is required";
-    return errs;
-  }
-
-  function updateField(field: keyof FormData, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-
-    const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
-
-    if (!job?.slug) { toast.error("Job not loaded yet, try again."); return; }
-    setSubmitting(true);
-
-    try {
-      // One multipart call to the real public endpoint: creates candidate +
-      // application AND forwards the resume for parsing. No auth required.
-      const fd = new FormData();
-      fd.append("firstName", form.firstName.trim());
-      fd.append("lastName", form.lastName.trim());
-      fd.append("email", form.email.trim());
-      if (form.phone.trim()) fd.append("phone", form.phone.trim());
-      if (form.linkedinUrl.trim()) fd.append("linkedinUrl", form.linkedinUrl.trim());
-      if (form.coverLetter.trim()) fd.append("coverLetter", form.coverLetter.trim());
-      if (resume) fd.append("resume", resume, resume.name);
-
-      const res = await fetch(`${API_BASE}/public/jobs/${job.slug}/apply-custom`, {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `Application failed (${res.status})`);
-      }
-
-      setSubmitted(true);
-      toast.success("Application submitted successfully!");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      toast.error(message);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // Success state
-  if (submitted) {
-    return (
-      <div className="max-w-xl mx-auto space-y-6">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <CheckCircle2 className="h-12 w-12 text-ok mx-auto mb-4" />
-            <h2 className="text-xl font-semibold">
-              Application Submitted!
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              Thank you for applying
-              {job ? ` for ${job.title}` : ""}. We will
-              review your application and get back to you soon.
-            </p>
-            <div className="flex items-center justify-center gap-3 mt-6">
-              <Button variant="outline" asChild>
-                <Link href="/jobs">Browse more jobs</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/status">Track your application</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (jobLoading) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-6">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-4 w-1/3" />
-        <Card>
-          <CardContent className="space-y-4 py-6">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Job not found
-  if (!job) {
-    return (
-      <div className="max-w-xl mx-auto">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Briefcase className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold">Position not found</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              This job posting may have been removed or is no longer available.
-            </p>
-            <Button variant="outline" className="mt-4" asChild>
-              <Link href="/jobs">Back to job board</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+/* ---- icons (subset, mirrors portal.jsx) ---- */
+const PI: Record<string, string> = {
+  pin: "M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+  card: "M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5zM3 10h18",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  arrow: "M5 12h14M13 6l6 6-6 6",
+  chevL: "M15 6l-6 6 6 6",
+  sparkles: "M12 4.5l1.4 3.6L17 9.5l-3.6 1.4L12 14.5l-1.4-3.6L7 9.5l3.6-1.4z",
+  shield: "M12 3l7 2.5V11c0 4.5-3 8-7 9.5C8 19 5 15.5 5 11V5.5zM9 12l2 2 4-4",
+  eye: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  upload: "M12 16V4M8 8l4-4 4 4M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3",
+  briefcase:
+    "M4 8h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1ZM9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2",
+  users:
+    "M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11.5A3.25 3.25 0 1 0 10 5a3.25 3.25 0 0 0 0 6.5",
+};
+function I({
+  n,
+  s = 20,
+  sw = 1.7,
+  c,
+  style,
+}: {
+  n: string;
+  s?: number;
+  sw?: number;
+  c?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Back link */}
-      <Link
-        href="/jobs"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to jobs
-      </Link>
+    <svg
+      width={s}
+      height={s}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={c || "currentColor"}
+      strokeWidth={sw}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+      aria-hidden="true"
+    >
+      <path d={PI[n]} />
+    </svg>
+  );
+}
 
-      {/* Job header */}
+/* ---- shared bits (from portal.jsx, --c- color tokens) ---- */
+function Btn({
+  kind = "primary",
+  icon,
+  trail,
+  children,
+  onClick,
+  big,
+  full,
+  type = "button",
+  disabled,
+  style = {},
+}: {
+  kind?: "primary" | "soft" | "ghost" | "ai";
+  icon?: string;
+  trail?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  big?: boolean;
+  full?: boolean;
+  type?: "button" | "submit";
+  disabled?: boolean;
+  style?: CSSProperties;
+}) {
+  const V = {
+    primary: {
+      background: "var(--c-brand)",
+      color: "var(--c-on-brand)",
+      boxShadow: "var(--e1)",
+    },
+    soft: {
+      background: "var(--c-surface)",
+      color: "var(--c-ink)",
+      border: "1px solid var(--c-line-2)",
+    },
+    ghost: { background: "transparent", color: "var(--c-ink-2)" },
+    ai: { background: "var(--c-ai)", color: "var(--c-on-brand)" },
+  }[kind];
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 9,
+        padding: big ? "13px 22px" : "10px 18px",
+        fontSize: big ? "var(--fs-md)" : "var(--fs-sm)",
+        fontWeight: 700,
+        borderRadius: "var(--r)",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        border: "1px solid transparent",
+        width: full ? "100%" : "auto",
+        transition: "transform var(--t) var(--ease-out), box-shadow var(--t)",
+        ...V,
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+      }}
+    >
+      {icon && <I n={icon} s={big ? 19 : 17} />}
+      {children}
+      {trail && <I n={trail} s={big ? 19 : 17} />}
+    </button>
+  );
+}
+
+function Chip({
+  icon,
+  children,
+  tone = "var(--c-ink-2)",
+  bg = "var(--c-surface-2)",
+}: {
+  icon?: string;
+  children: React.ReactNode;
+  tone?: string;
+  bg?: string;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 11px",
+        borderRadius: "var(--r-pill)",
+        fontSize: "var(--fs-xs)",
+        fontWeight: 600,
+        color: tone,
+        background: bg,
+      }}
+    >
+      {icon && <I n={icon} s={13} />}
+      {children}
+    </span>
+  );
+}
+
+/* AI-assistive banner, appears wherever AI touches the candidate */
+function AINotice({ compact }: { compact?: boolean }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: compact ? "center" : "flex-start",
+        padding: compact ? "11px 14px" : "16px 18px",
+        borderRadius: "var(--r-lg)",
+        background: "var(--c-ai-tint)",
+        border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)",
+      }}
+    >
+      <span
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 10,
+          background: "var(--c-ai)",
+          color: "var(--c-on-brand)",
+          display: "grid",
+          placeItems: "center",
+          flexShrink: 0,
+        }}
+      >
+        <I n="sparkles" s={17} />
+      </span>
       <div>
-        <h1 className="text-2xl font-bold">{job.title}</h1>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
-          <span className="flex items-center gap-1">
-            <Building2 className="h-3.5 w-3.5" />
-            {job.department}
-          </span>
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {job.location}
-          </span>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: "var(--fs-sm)",
+            color: "var(--c-ai-ink)",
+          }}
+        >
+          AI is assistive, a human decides.
         </div>
-        {job.description && (
-          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-            {job.description}
+        {!compact && (
+          <p
+            style={{
+              margin: "3px 0 0",
+              fontSize: "var(--fs-sm)",
+              color: "var(--c-ink-2)",
+              lineHeight: 1.5,
+            }}
+          >
+            We use AI to help our team review applications fairly. It produces a
+            recommendation only, a person always makes the final call, and you
+            can ask for a human review at any time.
           </p>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Batch 4: dynamic custom form (when tenant has customized the schema) */}
-      {customFields && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Apply for this position</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormRenderer
-              fields={customFields}
-              onSubmit={handleCustomSubmit}
-              submitting={submitting}
-              serverErrors={customServerErrors}
-            />
-          </CardContent>
-        </Card>
+/* ---- job summary shape (best-effort from gateway) ---- */
+interface JobSummary {
+  id: string;
+  slug?: string;
+  title: string;
+  dept: string;
+  loc: string;
+  blurb: string;
+  min?: number;
+  max?: number;
+  required: string[];
+  custom: { label: string; help: string }[];
+}
+
+/* Defensive mapping over the assorted payload shapes the gateway may return
+   (GET /jobs/:id, /public/jobs/:id, /requisitions/:id). */
+function mapJob(id: string, res: any): JobSummary {
+  const p = res?.data ?? res ?? {};
+  const req = p.requisition ?? p;
+  const splitLines = (v: unknown): string[] =>
+    typeof v === "string"
+      ? v
+          .split(/\r?\n|·|;/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : Array.isArray(v)
+        ? (v as unknown[]).map((x) => String(x)).filter(Boolean)
+        : [];
+  const required =
+    splitLines(req.requirements ?? p.requirements ?? req.mustHave).slice(0, 6);
+  const custom = Array.isArray(p.customQuestions ?? p.questions)
+    ? (p.customQuestions ?? p.questions)
+        .map((q: any) => ({
+          label: String(q?.label ?? q?.question ?? q?.prompt ?? "Question"),
+          help: String(q?.help ?? q?.placeholder ?? q?.description ?? ""),
+        }))
+        .slice(0, 6)
+    : [];
+  const loc = [req.location, req.remote ? "Remote" : null]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    id: p.id ?? id,
+    slug: p.slug ?? req.slug,
+    title: p.title ?? req.title ?? "This role",
+    dept: req.department ?? p.department ?? "Team",
+    loc: loc || req.location || "Location shared on request",
+    blurb:
+      p.description ?? req.description ?? p.summary ?? req.summary ?? "",
+    min: req.salaryMin ?? p.salaryMin,
+    max: req.salaryMax ?? p.salaryMax,
+    required,
+    custom,
+  };
+}
+
+/* ---- shared input styling (from portal.jsx) ---- */
+const inp: CSSProperties = {
+  width: "100%",
+  padding: "11px 14px",
+  borderRadius: "var(--r)",
+  border: "1px solid var(--c-line-2)",
+  background: "var(--c-surface)",
+  color: "var(--c-ink)",
+  fontSize: "var(--fs-md)",
+  outline: "none",
+  fontFamily: "var(--font-sans)",
+};
+
+function FieldLabel({
+  children,
+  req,
+}: {
+  children: React.ReactNode;
+  req?: boolean;
+}) {
+  return (
+    <label
+      style={{
+        display: "block",
+        fontSize: "var(--fs-sm)",
+        fontWeight: 600,
+        color: "var(--c-ink-2)",
+        marginBottom: 7,
+      }}
+    >
+      {children}
+      {req && <span style={{ color: "var(--c-brand)" }}> *</span>}
+    </label>
+  );
+}
+
+/* ---- success state (Confirm from portal.jsx) ---- */
+function Confirm({
+  jobTitle,
+  reference,
+}: {
+  jobTitle: string;
+  reference: string | null;
+}) {
+  return (
+    <div
+      style={{
+        maxWidth: 560,
+        margin: "0 auto",
+        padding: "40px 0",
+        textAlign: "center",
+        animation: "pop .4s var(--ease-spring)",
+      }}
+    >
+      <div
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: "var(--r-2xl)",
+          background: "var(--c-brand-tint)",
+          color: "var(--c-brand)",
+          display: "grid",
+          placeItems: "center",
+          margin: "0 auto 22px",
+        }}
+      >
+        <I n="check" s={42} sw={2.2} />
+      </div>
+      <h1
+        style={{
+          fontSize: "var(--fs-3xl)",
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+          margin: "0 0 12px",
+        }}
+      >
+        Application received
+      </h1>
+      <p
+        style={{
+          fontSize: "var(--fs-md)",
+          color: "var(--c-ink-2)",
+          lineHeight: 1.6,
+          margin: "0 0 8px",
+        }}
+      >
+        Thanks for applying to{" "}
+        <b style={{ color: "var(--c-ink)" }}>{jobTitle}</b>. We have emailed you
+        a confirmation, you can check your status anytime.
+      </p>
+      {reference && (
+        <p
+          style={{
+            fontSize: "var(--fs-sm)",
+            color: "var(--c-ink-3)",
+            margin: "0 0 4px",
+          }}
+        >
+          Your reference:{" "}
+          <span
+            style={{ fontFamily: "var(--font-mono)", color: "var(--c-ink-2)" }}
+          >
+            {reference}
+          </span>
+        </p>
       )}
-
-      {/* Legacy hardcoded form (when no custom schema set) */}
-      {!customFields && (
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Apply for this position</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="firstName">
-                  First Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="firstName"
-                  placeholder="Jane"
-                  value={form.firstName}
-                  onChange={(e) => updateField("firstName", e.target.value)}
-                  className={errors.firstName ? "border-destructive" : ""}
-                />
-                {errors.firstName && (
-                  <p className="text-xs text-destructive">{errors.firstName}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="lastName">
-                  Last Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  value={form.lastName}
-                  onChange={(e) => updateField("lastName", e.target.value)}
-                  className={errors.lastName ? "border-destructive" : ""}
-                />
-                {errors.lastName && (
-                  <p className="text-xs text-destructive">{errors.lastName}</p>
-                )}
-              </div>
+      {/* next steps */}
+      <div
+        style={{
+          margin: "20px auto 0",
+          maxWidth: 440,
+          textAlign: "left",
+          padding: "16px 18px",
+          borderRadius: "var(--r-lg)",
+          background: "var(--c-surface)",
+          border: "1px solid var(--c-line)",
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: "var(--fs-sm)",
+            marginBottom: 8,
+          }}
+        >
+          What happens next
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            "A recruiter reviews your application alongside an AI-assisted summary.",
+            "You can track every step from the My Applications page.",
+            "A human makes the final call, and you can request a human review anytime.",
+          ].map((step) => (
+            <div
+              key={step}
+              style={{
+                display: "flex",
+                gap: 9,
+                fontSize: "var(--fs-sm)",
+                color: "var(--c-ink-2)",
+                lineHeight: 1.45,
+              }}
+            >
+              <I
+                n="check"
+                s={16}
+                c="var(--c-brand)"
+                style={{ flexShrink: 0, marginTop: 1 }}
+              />
+              {step}
             </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ margin: "22px auto 0", maxWidth: 440 }}>
+        <AINotice compact />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          justifyContent: "center",
+          marginTop: 24,
+          flexWrap: "wrap",
+        }}
+      >
+        <a href="/status" style={{ textDecoration: "none" }}>
+          <Btn kind="primary" icon="eye">
+            Track my status
+          </Btn>
+        </a>
+        <a href="/jobs" style={{ textDecoration: "none" }}>
+          <Btn kind="soft">Browse more roles</Btn>
+        </a>
+      </div>
+    </div>
+  );
+}
 
-            {/* Contact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">
-                  Email <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="jane@example.com"
-                  value={form.email}
-                  onChange={(e) => updateField("email", e.target.value)}
-                  className={errors.email ? "border-destructive" : ""}
-                />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">
-                  Phone <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={form.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
-                  className={errors.phone ? "border-destructive" : ""}
-                />
-                {errors.phone && (
-                  <p className="text-xs text-destructive">{errors.phone}</p>
-                )}
-              </div>
-            </div>
+/* ---- page (Apply from portal.jsx) ---- */
+export default function ApplyPage() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? "";
 
-            {/* Resume */}
-            <div className="space-y-1.5">
-              <Label htmlFor="resume">
-                Resume <span className="text-destructive">*</span>
-              </Label>
+  const [job, setJob] = useState<JobSummary | null>(null);
+
+  // controlled form state
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [resume, setResume] = useState<File | null>(null);
+  const [coverNote, setCoverNote] = useState("");
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [consent, setConsent] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [reference, setReference] = useState<string | null>(null);
+
+  // Best-effort load of the job summary. Tries the public endpoint first, then
+  // the authenticated job, then the requisition. Any failure leaves a graceful
+  // fallback so the form still works.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      const paths = [
+        `/public/jobs/${id}`,
+        `/jobs/${id}`,
+        `/requisitions/${id}`,
+      ];
+      for (const path of paths) {
+        try {
+          const res = await raw(path);
+          if (!cancelled) setJob(mapJob(id, res));
+          return;
+        } catch {
+          /* try the next shape */
+        }
+      }
+      if (!cancelled)
+        setJob({
+          id,
+          title: "This role",
+          dept: "Team",
+          loc: "Location shared on request",
+          blurb: "",
+          required: [],
+          custom: [],
+        });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!consent) {
+      setError("Please confirm you understand how AI is used before submitting.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append("fullName", fullName.trim());
+      const [firstName, ...rest] = fullName.trim().split(/\s+/);
+      fd.append("firstName", firstName ?? "");
+      fd.append("lastName", rest.join(" "));
+      fd.append("email", email.trim());
+      if (phone.trim()) fd.append("phone", phone.trim());
+      if (linkedin.trim()) fd.append("linkedinUrl", linkedin.trim());
+      if (coverNote.trim()) fd.append("coverLetter", coverNote.trim());
+      if (resume) fd.append("resume", resume, resume.name);
+      if (job?.custom.length) {
+        const responses = job.custom.map((c, i) => ({
+          label: c.label,
+          answer: answers[i] ?? "",
+        }));
+        fd.append("customAnswers", JSON.stringify(responses));
+      }
+
+      // Try the slug/id-scoped apply endpoint, then the generic collection.
+      let res: any = null;
+      const slug = job?.slug ?? id;
+      const tries: { path: string }[] = [
+        { path: `/public/jobs/${slug}/apply` },
+        { path: `/jobs/${id}/apply` },
+        { path: `/applications` },
+      ];
+      let lastErr: unknown = null;
+      for (const t of tries) {
+        try {
+          res = await raw(t.path, { method: "POST", body: fd });
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      if (lastErr) throw lastErr;
+
+      const body = res?.data ?? res ?? {};
+      setReference(
+        body.reference ?? body.applicationId ?? body.id ?? null,
+      );
+      setDone(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setError(
+        "We could not submit your application just now. Please check your details and try again, or reach out and a human can help.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (done)
+    return <Confirm jobTitle={job?.title ?? "this role"} reference={reference} />;
+
+  const showSalary =
+    typeof job?.min === "number" && typeof job?.max === "number";
+
+  return (
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        animation: "rise .4s var(--ease-out)",
+      }}
+    >
+      <a
+        href="/jobs"
+        style={{
+          display: "inline-flex",
+          gap: 6,
+          alignItems: "center",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--c-ink-2)",
+          fontWeight: 600,
+          fontSize: "var(--fs-sm)",
+          marginBottom: 16,
+          textDecoration: "none",
+        }}
+      >
+        <I n="chevL" s={16} /> All roles
+      </a>
+
+      {/* job header */}
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <Chip icon="briefcase">{job?.dept ?? "Team"}</Chip>
+        <Chip icon="pin">{job?.loc ?? "Location shared on request"}</Chip>
+        {showSalary && (
+          <Chip icon="card" tone="var(--c-brand)" bg="var(--c-brand-tint)">
+            ${Math.round((job!.min as number) / 1000)}k to $
+            {Math.round((job!.max as number) / 1000)}k
+          </Chip>
+        )}
+      </div>
+      <h1
+        style={{
+          fontSize: "var(--fs-3xl)",
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+          margin: "0 0 14px",
+        }}
+      >
+        {job?.title ?? "This role"}
+      </h1>
+      {job?.blurb && (
+        <p
+          style={{
+            fontSize: "var(--fs-md)",
+            color: "var(--c-ink-2)",
+            lineHeight: 1.6,
+            margin: "0 0 18px",
+          }}
+        >
+          {job.blurb}
+        </p>
+      )}
+      {job && job.required.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontWeight: 700, marginBottom: 9 }}>
+            What you will need
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {job.required.map((r, i) => (
               <div
-                className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  errors.resume
-                    ? "border-destructive/50 bg-destructive/5"
-                    : resume
-                      ? "border-ok/40 bg-ok-tint/50"
-                      : "border-border hover:border-primary/50"
-                }`}
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: 9,
+                  fontSize: "var(--fs-sm)",
+                  color: "var(--c-ink-2)",
+                }}
               >
-                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                {resume ? (
-                  <div>
-                    <p className="text-sm font-medium text-ok">
-                      {resume.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {(resume.size / 1024).toFixed(0)} KB
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 text-xs"
-                      onClick={() => {
-                        setResume(null);
-                        setErrors((prev) => ({ ...prev, resume: undefined }));
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Drop your resume here or click to browse
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PDF, DOC, or DOCX (max 10MB)
-                    </p>
-                  </div>
-                )}
-                <input
-                  id="resume"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-                    setResume(file);
-                    if (file)
-                      setErrors((prev) => ({ ...prev, resume: undefined }));
-                  }}
+                <I
+                  n="check"
+                  s={17}
+                  c="var(--c-brand)"
+                  style={{ flexShrink: 0, marginTop: 1 }}
                 />
+                {r}
               </div>
-              {errors.resume && (
-                <p className="text-xs text-destructive">{errors.resume}</p>
-              )}
-            </div>
-
-            {/* LinkedIn */}
-            <div className="space-y-1.5">
-              <Label htmlFor="linkedin">LinkedIn URL (optional)</Label>
-              <Input
-                id="linkedin"
-                type="url"
-                placeholder="https://linkedin.com/in/janedoe"
-                value={form.linkedinUrl}
-                onChange={(e) => updateField("linkedinUrl", e.target.value)}
-              />
-            </div>
-
-            {/* Cover letter */}
-            <div className="space-y-1.5">
-              <Label htmlFor="coverLetter">Cover Letter (optional)</Label>
-              <Textarea
-                id="coverLetter"
-                placeholder="Tell us why you're interested in this role and what makes you a great fit..."
-                className="min-h-[120px]"
-                value={form.coverLetter}
-                onChange={(e) => updateField("coverLetter", e.target.value)}
-              />
-            </div>
-
-            {/* Submit */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <p className="text-xs text-muted-foreground">
-                <span className="text-destructive">*</span> Required fields
-              </p>
-              <Button type="submit" disabled={submitting} className="min-w-[140px]">
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Application"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </form>
+            ))}
+          </div>
+        </div>
       )}
+
+      <AINotice />
+
+      {/* form */}
+      <form onSubmit={handleSubmit} style={{ marginTop: 20 }}>
+        <div className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 26 }}>
+          <h2
+            style={{
+              fontSize: "var(--fs-xl)",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              margin: "0 0 18px",
+            }}
+          >
+            Apply for this role
+          </h2>
+
+          <div style={{ display: "flex", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <FieldLabel req>Full name</FieldLabel>
+              <input
+                required
+                style={inp}
+                placeholder="Your name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <FieldLabel req>Email</FieldLabel>
+              <input
+                required
+                type="email"
+                style={inp}
+                placeholder="you@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <FieldLabel>Phone</FieldLabel>
+              <input
+                type="tel"
+                style={inp}
+                placeholder="+1 (555) 000-0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <FieldLabel>LinkedIn or portfolio</FieldLabel>
+              <input
+                type="url"
+                style={inp}
+                placeholder="https://"
+                value={linkedin}
+                onChange={(e) => setLinkedin(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* resume upload, real file input */}
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel req>Resume / CV</FieldLabel>
+            <label
+              style={{
+                display: "block",
+                border: "1.5px dashed var(--c-line-strong)",
+                borderRadius: "var(--r-lg)",
+                padding: "22px",
+                textAlign: "center",
+                background: "var(--c-surface-2)",
+                cursor: "pointer",
+              }}
+            >
+              <span
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 11,
+                  background: "var(--c-brand-tint)",
+                  color: "var(--c-brand)",
+                  display: "grid",
+                  placeItems: "center",
+                  margin: "0 auto 10px",
+                }}
+              >
+                <I n="upload" s={20} />
+              </span>
+              {resume ? (
+                <>
+                  <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>
+                    {resume.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "var(--fs-xs)",
+                      color: "var(--c-ink-3)",
+                      marginTop: 3,
+                    }}
+                  >
+                    {(resume.size / 1024).toFixed(0)} KB, click to replace
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>
+                    Drop your resume or{" "}
+                    <span style={{ color: "var(--c-brand)" }}>browse</span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "var(--fs-xs)",
+                      color: "var(--c-ink-3)",
+                      marginTop: 3,
+                    }}
+                  >
+                    PDF, DOCX, up to 10 MB
+                  </div>
+                </>
+              )}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                style={{ display: "none" }}
+                onChange={(e) => setResume(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          </div>
+
+          {/* custom fields from the requisition */}
+          {job && job.custom.length > 0 && (
+            <div
+              style={{
+                padding: "16px 18px",
+                borderRadius: "var(--r-lg)",
+                background: "var(--c-brand-tint)",
+                marginBottom: 18,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "var(--fs-xs)",
+                  fontWeight: 700,
+                  letterSpacing: ".05em",
+                  textTransform: "uppercase",
+                  color: "var(--c-brand-ink)",
+                  marginBottom: 12,
+                }}
+              >
+                A few role-specific questions
+              </div>
+              {job.custom.map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    marginBottom: i < job.custom.length - 1 ? 14 : 0,
+                  }}
+                >
+                  <FieldLabel req>{c.label}</FieldLabel>
+                  <textarea
+                    rows={2}
+                    required
+                    style={{ ...inp, resize: "vertical", lineHeight: 1.5 }}
+                    placeholder={c.help}
+                    value={answers[i] ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({ ...prev, [i]: e.target.value }))
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <FieldLabel>Why are you interested in this role?</FieldLabel>
+          <textarea
+            rows={3}
+            style={{
+              ...inp,
+              resize: "vertical",
+              lineHeight: 1.5,
+              marginBottom: 18,
+            }}
+            placeholder="Optional, tell us what draws you here."
+            value={coverNote}
+            onChange={(e) => setCoverNote(e.target.value)}
+          />
+
+          <label
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "flex-start",
+              fontSize: "var(--fs-sm)",
+              color: "var(--c-ink-2)",
+              marginBottom: 18,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              style={{
+                marginTop: 3,
+                width: 17,
+                height: 17,
+                accentColor: "var(--c-brand)",
+              }}
+            />
+            <span>
+              I understand my application may be reviewed with the help of AI,
+              that a human makes the final decision, and that I can{" "}
+              <b style={{ color: "var(--c-ink)" }}>request a human review</b> at
+              any time.
+            </span>
+          </label>
+
+          {error && (
+            <div
+              role="alert"
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                padding: "12px 14px",
+                borderRadius: "var(--r-lg)",
+                background: "var(--c-danger-tint)",
+                color: "var(--c-danger)",
+                fontSize: "var(--fs-sm)",
+                fontWeight: 600,
+                lineHeight: 1.5,
+                marginBottom: 14,
+              }}
+            >
+              <I n="shield" s={17} style={{ flexShrink: 0 }} />
+              {error}
+            </div>
+          )}
+
+          <Btn
+            kind="primary"
+            big
+            full
+            trail="arrow"
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting ? "Submitting..." : "Submit application"}
+          </Btn>
+        </div>
+      </form>
     </div>
   );
 }
