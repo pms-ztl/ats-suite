@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Hanken_Grotesk } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
 import { ClientProviders } from "@/components/shared/client-providers";
 import { AuthProvider } from "@/lib/auth-context";
 
+// Sans = Hanken Grotesk, Mono = Geist Mono (exact Aurora type per the design).
 const sans = Hanken_Grotesk({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700", "800"],
-});
-
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -64,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
+      <body className={`${sans.variable} ${GeistMono.variable} font-sans antialiased`}>
         <a
           href="#main"
           className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-3 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-sm focus-visible:bg-surface focus-visible:px-3 focus-visible:py-2 focus-visible:shadow-ring"

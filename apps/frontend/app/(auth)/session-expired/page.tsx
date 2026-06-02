@@ -4,10 +4,11 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function SessionExpiredPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <AuthShell>
       <Card className="w-full max-w-md shadow-lg">
         <CardContent className="pt-10 pb-10 flex flex-col items-center text-center gap-6">
           <div className="flex items-center gap-3 self-start">
@@ -31,6 +32,6 @@ export default function SessionExpiredPage() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }

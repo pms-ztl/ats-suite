@@ -10,6 +10,7 @@
  * to /.
  */
 import { useEffect, useState } from "react";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -33,7 +34,7 @@ export default function SsoCallbackPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <AuthShell>
       <div className="text-center space-y-3">
         {error ? (
           <>
@@ -47,6 +48,6 @@ export default function SsoCallbackPage() {
           </>
         )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

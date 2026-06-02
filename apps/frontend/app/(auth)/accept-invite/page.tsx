@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Circle, Eye, EyeOff, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -113,7 +114,7 @@ function AcceptInviteInner() {
   // ── Render: error state ──────────────────────────────────────────────
   if (infoError) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <AuthShell>
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Invite link not valid</CardTitle>
@@ -125,16 +126,16 @@ function AcceptInviteInner() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+      </AuthShell>
     );
   }
 
   // ── Render: loading state ────────────────────────────────────────────
   if (!info) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <AuthShell>
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
+      </AuthShell>
     );
   }
 
@@ -146,7 +147,7 @@ function AcceptInviteInner() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <AuthShell>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
@@ -219,7 +220,7 @@ function AcceptInviteInner() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
 

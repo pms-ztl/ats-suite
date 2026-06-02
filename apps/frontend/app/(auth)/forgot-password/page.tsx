@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
@@ -80,7 +81,7 @@ function ResetPasswordForm({ token }: { token: string }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <AuthShell>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 pb-4">
           <div className="flex items-center gap-3 mb-6">
@@ -187,7 +188,7 @@ function ResetPasswordForm({ token }: { token: string }) {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
 
@@ -252,7 +253,7 @@ function ForgotPasswordForm() {
   // ── "Sent" step ──────────────────────────────────────────────────────────────
   if (step === "sent") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+      <AuthShell>
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-1 pb-4">
             <div className="flex items-center gap-3 mb-6">
@@ -296,13 +297,13 @@ function ForgotPasswordForm() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AuthShell>
     );
   }
 
   // ── "Email" step ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <AuthShell>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 pb-4">
           <div className="flex items-center gap-3 mb-6">
@@ -354,7 +355,7 @@ function ForgotPasswordForm() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
 

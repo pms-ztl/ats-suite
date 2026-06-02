@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { cn } from "@/lib/utils";
 import {
   Building2, User, CheckCircle2, Rocket, Zap, Crown, ChevronRight,
@@ -372,7 +373,7 @@ function GetStartedForm() {
 
 export default function GetStartedPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+    <AuthShell>
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-6">
@@ -400,6 +401,6 @@ export default function GetStartedPage() {
           &copy; {new Date().getFullYear()} CDC ATS · Enterprise AI Hiring Platform
         </p>
       </div>
-    </div>
+    </AuthShell>
   );
 }

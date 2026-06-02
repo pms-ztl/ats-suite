@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -52,7 +53,7 @@ function VerifyEmailInner() {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <AuthShell>
       <Card className="w-full max-w-md text-center">
         <CardHeader className="pt-8">
           {state === "verifying" && (
@@ -98,16 +99,16 @@ function VerifyEmailInner() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
+      <AuthShell>
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
+      </AuthShell>
     }>
       <VerifyEmailInner />
     </Suspense>
