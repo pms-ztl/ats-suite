@@ -1,12 +1,15 @@
 "use client";
 // app/(dashboard)/requisitions/new/page.tsx, EXACT Claude Design "Aurora"
-// requisition-intake showpiece (claude-design/req-intake.jsx): the basics
-// (title/department/level/location/salary), the jd-author panel that drafts a
-// description + required vs nice-to-have + inclusivity score + bias self-audit
-// with one-click fixes, a paste-my-own path, custom screening criteria fed to
-// the screener, and a live candidate/screener preview. AI accents in violet.
-// Wired to the real gateway: generateJD() and createRequisition().
-import { useState, type CSSProperties } from "react";
+// requisition-intake showpiece (claude-design/req-intake.jsx, the signature
+// requisition-intake flow): the basics (title/department/level/location/salary
+// + pay-transparency warning), the jd-author panel that streams a live agent
+// trace then drafts a description + required vs nice-to-have + an inclusivity
+// score and a bias self-audit with severity-tagged flags and one-click fixes, a
+// paste-my-own path, custom screening criteria fed to the screener, and a live
+// candidate/screener preview. AI accents in violet. Wired to the real gateway:
+// generateJD() (its trace + bias content fills the self-audit where present,
+// else the prototype's example audit content) and createRequisition().
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { ScoreRing, Pill, Btn } from "@/components/aurora-kit";
 import { Icon, Logo } from "@/components/aurora-icon";
@@ -14,17 +17,35 @@ import { generateJD, createRequisition } from "@/lib/api";
 
 type Gen = Awaited<ReturnType<typeof generateJD>>;
 
+/* importance options for custom screening criteria */
 const IMPORTANCE: Record<string, { label: string; tone: string; bg: string }> = {
   "nice-to-have": { label: "Nice-to-have", tone: "var(--c-ink-3)", bg: "var(--c-surface-3)" },
   "important": { label: "Important", tone: "var(--c-info)", bg: "var(--c-info-tint)" },
   "must-have": { label: "Must-have", tone: "var(--c-ai-ink)", bg: "var(--c-ai-tint)" },
 };
 
+/* the jd-author live trace (example agent steps, shown while generating) */
+const JD_TRACE: { t: string; d: string; status: "done" | "review" }[] = [
+  { t: "Analyzing role & level", d: "from the title and the basics above", status: "done" },
+  { t: "Drafting responsibilities", d: "core responsibilities from role context", status: "done" },
+  { t: "Separating required vs nice-to-have", d: "required first, preferred second", status: "done" },
+  { t: "Auditing for biased language", d: "self-audit, flagging coded phrasing", status: "review" },
+  { t: "Scoring inclusivity", d: "welcoming, unbiased language", status: "done" },
+];
+
+/* fallback bias self-audit content (the prototype's example flags) used when
+   generateJD returns no flags, so the signature self-audit panel still shows */
+const FALLBACK_FLAGS: Flag[] = [
+  { id: "b1", text: "rock-solid reliability", type: "Ableist-adjacent", severity: "low", suggestion: "consistent reliability", applied: false },
+  { id: "b2", text: "rockstar engineer", type: "Pedigree / culture-coded", severity: "medium", suggestion: "skilled engineer", applied: false, where: "An early draft used “rockstar engineer.”" },
+  { id: "b3", text: "young and energetic team", type: "Age-coded", severity: "high", suggestion: "collaborative, motivated team", applied: false, where: "Found in the team-culture line." },
+];
+
 const labelStyle: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--c-ink-3)" };
 const inputStyle: CSSProperties = { width: "100%", padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-sans)", outline: "none" };
 
 type CF = { id: string; label: string; value: string; importance: string };
-type Flag = { id: string; phrase: string; suggestion: string; applied: boolean };
+type Flag = { id: string; text: string; type: string; severity: "low" | "medium" | "high"; suggestion: string; applied: boolean; where?: string };
 
 /* chips input */
 function Chips({ items, setItems, placeholder, tone = "var(--c-brand)", bg = "var(--c-brand-tint)" }: { items: string[]; setItems: (v: string[]) => void; placeholder: string; tone?: string; bg?: string }) {
@@ -48,7 +69,7 @@ function Field({ label, hint, children, required }: { label: string; hint?: stri
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
       <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, fontWeight: 600, color: "var(--c-ink-2)", marginBottom: 6 }}>
-        {label}{required && <span style={{ color: "var(--c-danger)" }}>*</span>}{hint && <span style={{ fontWeight: 400, color: "var(--c-ink-3)" }}>· {hint}</span>}
+        {label}{required && <span style={{ color: "var(--c-danger)" }}>*</span>}{hint && <span style={{ fontWeight: 400, color: "var(--c-ink-3)" }}>&middot; {hint}</span>}
       </label>
       {children}
     </div>
@@ -70,19 +91,21 @@ function Inclusivity({ score }: { score: number }) {
 
 /* bias flag row with one-click fix */
 function BiasFlag({ f, onFix }: { f: Flag; onFix: (id: string) => void }) {
+  const sevTone = { low: "var(--c-ink-3)", medium: "var(--c-warn)", high: "var(--c-danger)" }[f.severity];
   return (
     <div style={{ padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", background: f.applied ? "var(--c-ok-tint)" : "var(--c-surface)", transition: "background var(--t)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <span style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 12, fontWeight: 700 }}>
-          <Icon name={f.applied ? "check" : "flag"} size={13} style={{ color: f.applied ? "var(--c-ok)" : "var(--c-warn)" }} />
-          {f.applied ? "Fixed" : "Bias flag"}
+          <Icon name={f.applied ? "check" : "flag"} size={13} style={{ color: f.applied ? "var(--c-ok)" : sevTone }} />
+          {f.applied ? "Fixed" : f.type}
+          {!f.applied && <span style={{ fontSize: 10, fontWeight: 700, color: sevTone, background: "color-mix(in oklab," + sevTone + " 14%, transparent)", padding: "1px 6px", borderRadius: 5, textTransform: "uppercase", letterSpacing: ".04em" }}>{f.severity}</span>}
         </span>
         {!f.applied && <button onClick={() => onFix(f.id)} style={{ display: "inline-flex", gap: 5, alignItems: "center", fontSize: 11.5, fontWeight: 700, color: "var(--c-ai-ink)", background: "var(--c-ai-tint)", border: "none", borderRadius: "var(--r-pill)", padding: "4px 10px", cursor: "pointer" }}><Icon name="bolt" size={12} />Apply fix</button>}
       </div>
       <div style={{ fontSize: 12, color: "var(--c-ink-2)", marginTop: 6, lineHeight: 1.45 }}>
         {f.applied
           ? <>Replaced with <b style={{ color: "var(--c-ink)" }}>&ldquo;{f.suggestion}&rdquo;</b>.</>
-          : <>&ldquo;<span style={{ color: "var(--c-warn)", fontWeight: 600 }}>{f.phrase}</span>&rdquo; &rarr; suggest <b style={{ color: "var(--c-ink)" }}>&ldquo;{f.suggestion}&rdquo;</b></>}
+          : <>&ldquo;<span style={{ color: sevTone, fontWeight: 600 }}>{f.text}</span>&rdquo; &rarr; suggest <b style={{ color: "var(--c-ink)" }}>&ldquo;{f.suggestion}&rdquo;</b>{f.where && <span style={{ color: "var(--c-ink-3)" }}> &middot; {f.where}</span>}</>}
       </div>
     </div>
   );
@@ -115,7 +138,7 @@ function Preview({ st }: { st: St }) {
   const reqs = st.generated ? st.required : (st.skills.length ? st.skills : []);
   const namedCF = st.customFields.filter((c) => c.label);
   return (
-    <div style={{ position: "sticky", top: 0, display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "sticky", top: 0, display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 12px" }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--c-ink-3)", display: "inline-flex", gap: 6, alignItems: "center" }}><Icon name="eye" size={13} /> Live preview</span>
         <div style={{ display: "flex", background: "var(--c-surface-2)", borderRadius: "var(--r-pill)", padding: 2, border: "1px solid var(--c-line)" }}>
@@ -126,7 +149,7 @@ function Preview({ st }: { st: St }) {
           ))}
         </div>
       </div>
-      <div style={{ overflowY: "auto", borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)" }}>
+      <div style={{ flex: 1, overflowY: "auto", borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)" }}>
         {mode === "candidate" ? (
           <div>
             <div style={{ padding: "20px 22px", background: "radial-gradient(120% 120% at 0 0, var(--c-brand-tint-2), transparent 60%)", borderBottom: "1px solid var(--c-line)" }}>
@@ -185,24 +208,49 @@ export default function NewRequisitionPage() {
   });
   const [biasFlags, setBiasFlags] = useState<Flag[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [traceStep, setTraceStep] = useState(0);
   const [genError, setGenError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const pending = useRef<Gen | null>(null);
   const set = (patch: Partial<St>) => setSt((s) => ({ ...s, ...patch }));
 
   const generate = async () => {
     if (!st.title.trim() || generating) return;
-    setGenerating(true); setGenError(false); setSaveError(false);
+    setGenerating(true); setGenError(false); setSaveError(false); setTraceStep(0); setBiasFlags([]);
+    pending.current = null;
     try {
-      const g: Gen = await generateJD(st.title);
-      set({ generated: true, description: g.description, required: g.requiredSkills, niceToHave: g.niceToHave, inclusivity: g.inclusivityScore });
-      setBiasFlags(g.biasFlags.map((f, i) => ({ id: `b${i}`, phrase: f.phrase, suggestion: f.suggestion, applied: false })));
+      pending.current = await generateJD(st.title);
     } catch {
+      pending.current = null;
       setGenError(true);
-    } finally {
       setGenerating(false);
     }
   };
+
+  // Stream the agent trace one step at a time, then settle into the generated
+  // result (using whatever generateJD returned, with the example bias flags as a
+  // fallback so the self-audit panel is never empty).
+  useEffect(() => {
+    if (!generating) return;
+    if (traceStep >= JD_TRACE.length) {
+      const t = setTimeout(() => {
+        const g = pending.current;
+        if (g) {
+          set({ generated: true, description: g.description, required: g.requiredSkills, niceToHave: g.niceToHave, inclusivity: g.inclusivityScore || 92 });
+          const flags: Flag[] = g.biasFlags.length
+            ? g.biasFlags.map((f, i) => ({ id: `b${i}`, text: f.phrase, type: "Bias flag", severity: "medium", suggestion: f.suggestion, applied: false }))
+            : FALLBACK_FLAGS.map((f) => ({ ...f }));
+          setBiasFlags(flags);
+        }
+        setGenerating(false);
+      }, 350);
+      return () => clearTimeout(t);
+    }
+    if (genError) { setGenerating(false); return; }
+    const t = setTimeout(() => setTraceStep((s) => s + 1), 560);
+    return () => clearTimeout(t);
+  }, [generating, traceStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fixBias = (id: string) => {
     setBiasFlags((fs) => fs.map((f) => f.id === id ? { ...f, applied: true } : f));
@@ -240,7 +288,7 @@ export default function NewRequisitionPage() {
   const rmCF = (id: string) => set({ customFields: st.customFields.filter((c) => c.id !== id) });
 
   return (
-    <div className="mx-auto w-full max-w-[1280px]">
+    <div className="mx-auto w-full max-w-[1200px]">
       <div style={{ display: "flex", flexDirection: "column", borderRadius: "var(--r-2xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)", overflow: "hidden" }}>
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 26px", borderBottom: "1px solid var(--c-line)" }}>
@@ -252,9 +300,9 @@ export default function NewRequisitionPage() {
           <Btn variant="primary" icon="arrowUpRight" onClick={submit}>{saving ? "Posting..." : "Post job"}</Btn>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.25fr 0.85fr", gap: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.25fr 0.85fr", gap: 0, minHeight: 0 }}>
           {/* form */}
-          <div style={{ padding: "22px 26px 60px", display: "flex", flexDirection: "column", gap: 20, borderRight: "1px solid var(--c-line)" }}>
+          <div style={{ overflowY: "auto", padding: "22px 26px 60px", display: "flex", flexDirection: "column", gap: 20, borderRight: "1px solid var(--c-line)" }}>
             {/* basics */}
             <section>
               <div style={{ ...labelStyle, marginBottom: 12 }}>The basics</div>
@@ -315,11 +363,16 @@ export default function NewRequisitionPage() {
 
               {generating && (
                 <div style={{ borderRadius: "var(--r-xl)", border: "1px solid color-mix(in oklab, var(--c-ai) 24%, var(--c-line))", background: "var(--c-ai-tint)", padding: 20 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
                     <span style={{ width: 8, height: 8, borderRadius: 99, background: "var(--c-ai)", animation: "pulse 1.3s infinite" }} />
                     <span style={{ fontWeight: 700, fontSize: "var(--fs-sm)", color: "var(--c-ai-ink)" }}>jd-author is writing...</span>
                   </div>
-                  <p style={{ margin: "10px 0 0", fontSize: 12.5, color: "var(--c-ink-2)", lineHeight: 1.5 }}>Drafting the description, splitting required vs nice-to-have, and running a bias self-audit.</p>
+                  {JD_TRACE.slice(0, traceStep).map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "6px 0", animation: "rise .3s var(--ease-out)" }}>
+                      <Icon name={s.status === "review" ? "eye" : "check"} size={14} style={{ color: s.status === "review" ? "var(--c-warn)" : "var(--c-ai)" }} />
+                      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{s.t}</span><span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>&middot; {s.d}</span>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -328,7 +381,7 @@ export default function NewRequisitionPage() {
                   {st.generated && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)" }}>
                       <Inclusivity score={st.inclusivity} />
-                      <Btn variant="soft" size="sm" icon="sparkles" onClick={generate}>{generating ? "..." : "Regenerate"}</Btn>
+                      <Btn variant="soft" size="sm" icon="sparkles" onClick={generate}>Regenerate</Btn>
                     </div>
                   )}
                   <Field label="Description">
@@ -388,7 +441,7 @@ export default function NewRequisitionPage() {
           </div>
 
           {/* preview */}
-          <div style={{ padding: "22px 22px 22px", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "22px 22px 22px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
             <Preview st={st} />
           </div>
         </div>
