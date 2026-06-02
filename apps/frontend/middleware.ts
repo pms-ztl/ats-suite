@@ -24,6 +24,8 @@ const PUBLIC_PATHS = [
   "/agents",                   // public AI agents product page
   "/system-status",            // public system status (cinematic hero)
   "/status-board",             // public system status board
+  "/system-shell",             // literal "System & Shell.html" design reference (iframe)
+  "/design-system",            // the static design files (system-shell.html + .jsx) it loads
   // Candidate portal (no auth required)
   "/jobs",
   "/status",
