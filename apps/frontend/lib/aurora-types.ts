@@ -37,6 +37,7 @@ export interface Requisition {
   location: string;
   status: RequisitionStatus;
   employmentType?: string;
+  description?: string;
   requirements?: string[];          // backend stores as JSON
   customFields?: CustomField[];     // admin-defined label + value + importance
   niceToHave?: string[];
