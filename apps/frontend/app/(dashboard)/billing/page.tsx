@@ -1,776 +1,259 @@
 "use client";
-
-import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
-import { DollarSign, Zap, Activity, AlertTriangle, Bot, Crown, Sparkles, Rocket, Building2, ArrowUpRight, X, CreditCard, ExternalLink, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+// app/(dashboard)/billing/page.tsx - EXACT Claude Design "Aurora" billing &
+// plan screen. Ported from claude-design/screen-billing.jsx: plan card, usage
+// meters, payment method, invoices, and the "Choose your plan" upgrade modal.
+//
+// Real data: the gateway exposes GET /billing/usage (AI agent run/token/cost
+// rollup, the only billing numbers that are genuinely measured). We wire the
+// usage meters to it and fall back to EmptyState if it 404s/errors. The plan
+// tiers, prices, payment card chrome and invoice scaffold are static
+// marketing chrome in the prototype, so we keep the layout but render
+// honest empty/placeholder states instead of fabricating dollar amounts.
+import { useState } from "react";
+import { Btn, Pill, Reveal } from "@/components/aurora-kit";
+import { Skeleton, EmptyState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
 
-const PLAN_META: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
-  FREE:         { icon: <Rocket className="h-4 w-4" />,   label: "Free",         color: "bg-muted text-muted-foreground" },
-  STARTER:      { icon: <Zap className="h-4 w-4" />,      label: "Starter",      color: "bg-info/15 text-info dark:text-info" },
-  PROFESSIONAL: { icon: <Crown className="h-4 w-4" />,    label: "Professional", color: "bg-ai/15 text-ai-ink dark:text-ai-ink" },
-  ENTERPRISE:   { icon: <Building2 className="h-4 w-4" />, label: "Enterprise",  color: "bg-warn/15 text-warn dark:text-warn" },
-};
-
-interface PCR {
-  id: string;
-  fromPlan: string;
-  toPlan: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-  reason: string | null;
-  requestedAt: string;
-  decisionNote: string | null;
-  // Phase 33a, set on APPROVED requests for STARTER/PROFESSIONAL.
-  // null = activated (already paid) or non-Stripe path. STRIPE = needs Checkout.
-  paymentMethod?: string | null;
-  activatedAt?: string | null;
-}
-
-interface StripeSubscriptionDto {
-  plan: string;
-  status: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-}
-
-// Phase 30, self-serve pricing. Display-only; the actual price lives in
-// Stripe and is what the customer pays. Keep these in sync with the
-// STRIPE_PRICE_* env vars billing-service uses.
-const SELF_SERVE_TIERS = [
-  {
-    plan: "STARTER" as const,
-    price: "$299",
-    period: "/mo",
-    headline: "For small teams hiring 5-20 people/year",
-    bullets: ["5 seats", "20 active jobs", "500 resumes/mo", "Core AI agents", "14-day free trial"],
-  },
-  {
-    plan: "PROFESSIONAL" as const,
-    price: "$999",
-    period: "/mo",
-    headline: "For growth-stage teams scaling hiring",
-    bullets: ["15 seats", "Unlimited jobs", "5,000 resumes/mo", "All 12 AI agents", "14-day free trial"],
-  },
-];
-
+/* ----------------------------- inline raw() ----------------------------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-
-function getToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)ats-token=([^;]*)/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = getToken();
+async function raw(path: string, init?: RequestInit) {
+  let t: string | null = null;
+  try { t = typeof window !== "undefined" ? window.sessionStorage.getItem("ats-access-token") : null; } catch {}
   const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    ...init,
   });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const json = await res.json();
-  return json.data ?? json;
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
 }
 
-interface AgentCost {
-  agentType: string;
-  runs: number;
-  tokensIn: number;
-  tokensOut: number;
-  costUsd: number;
-}
-
-interface UsageSummary {
+/* ------------------------------ real types ------------------------------ */
+type Plan = "FREE" | "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
+type UsageAgent = { agentType: string; runs: number; tokensIn: number; tokensOut: number; costUsd: number };
+type UsageSummary = {
+  days: number;
   totalRuns: number;
   totalTokensIn: number;
   totalTokensOut: number;
   totalCostUsd: number;
-  byAgent: AgentCost[];
-  dailyCeiling: number;
-  ceilingUtilization: number;
-  isOverBudget: boolean;
-}
+  byAgent: UsageAgent[];
+};
 
-interface BudgetInfo {
-  allowed: boolean;
-  currentCostUsd: number;
-  ceilingUsd: number;
-}
+/* ------------------- static chrome: plan + tier catalog ------------------ */
+// Display-only marketing copy (the customer-facing price lives in Stripe).
+// Kept verbatim as the prototype's static chrome; these are NOT live figures.
+const PLAN_META: Record<Plan, { label: string; price: number | null; cycle: string }> = {
+  FREE:         { label: "FREE",         price: 0,    cycle: "month" },
+  STARTER:      { label: "STARTER",      price: 299,  cycle: "month" },
+  PROFESSIONAL: { label: "PROFESSIONAL", price: 999,  cycle: "month" },
+  ENTERPRISE:   { label: "ENTERPRISE",   price: null, cycle: "month" },
+};
 
-interface AgentStatus {
-  agentType: string;
-  enabled: boolean;
-}
+const TIERS: { n: Plan; price: number | null; feats: string[] }[] = [
+  { n: "STARTER",      price: 299, feats: ["5 seats", "20 active jobs", "500 resumes / mo", "Core AI agents"] },
+  { n: "PROFESSIONAL", price: 999, feats: ["15 seats", "Unlimited jobs", "5,000 resumes / mo", "All 12 AI agents"] },
+  { n: "ENTERPRISE",   price: null, feats: ["Unlimited seats", "SSO & SAML", "Dedicated support", "Custom SLAs"] },
+];
 
-interface DailyPoint {
-  date: string;
-  cost: number;
-}
+const m$ = (n: number) => "$" + n.toLocaleString();
 
-function formatUsd(value: number): string {
-  return `$${value.toFixed(2)}`;
-}
+const fStylesLabel: React.CSSProperties = {
+  fontSize: 11, fontWeight: 700, color: "var(--c-ink-3)", textTransform: "uppercase", letterSpacing: ".06em",
+};
 
-function formatTokens(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return String(value);
-}
-
-export default function BillingPage() {
-  const { isAdmin } = usePermissions();
-  if (!isAdmin) return <AccessDenied />;
-
-  const [monthly, setMonthly] = useState<UsageSummary | null>(null);
-  const [today, setToday] = useState<UsageSummary | null>(null);
-  const [budget, setBudget] = useState<BudgetInfo | null>(null);
-  const [agents, setAgents] = useState<AgentStatus[]>([]);
-  const [dailyTrend, setDailyTrend] = useState<DailyPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-  // Batch 3: plan upgrade workflow
-  const { user } = useCurrentUser();
-  const [planRequests, setPlanRequests] = useState<PCR[]>([]);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [requestedPlan, setRequestedPlan] = useState<string>("PROFESSIONAL");
-  const [reason, setReason] = useState("");
-  const [submittingUpgrade, setSubmittingUpgrade] = useState(false);
-
-  // Phase 30, Stripe self-serve subscription state.
-  const [stripeSub, setStripeSub] = useState<StripeSubscriptionDto | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [portalLoading, setPortalLoading] = useState(false);
-
-  const fetchStripeSub = useCallback(async () => {
-    try {
-      const sub = await apiFetch<StripeSubscriptionDto | null>("/billing/stripe/subscription");
-      setStripeSub(sub);
-    } catch { /* ignore, 404 means no Stripe sub yet */ }
-  }, []);
-
-  // Phase 33a, Stripe Checkout is no longer self-serve. Tenants must:
-  //   1. Submit a PlanChangeRequest (the "Request plan change" dialog above)
-  //   2. Wait for super-admin approval
-  //   3. THEN call /stripe/checkout-for-request/:id, which validates the
-  //      approval before creating the Checkout session
-  //
-  // This function is now invoked only against an APPROVED PCR.
-  const payForApprovedRequest = async (requestId: string) => {
-    setCheckoutLoading(requestId);
-    try {
-      const data = await apiFetch<{ url: string }>(`/billing/stripe/checkout-for-request/${requestId}`, {
-        method: "POST",
-      });
-      window.location.href = data.url;
-    } catch (err: any) {
-      const msg = err?.message ?? "Failed to start checkout";
-      toast.error(msg.includes("not configured")
-        ? "Stripe is not configured on this instance, contact your platform admin."
-        : msg);
-      setCheckoutLoading(null);
-    }
-  };
-
-  const openPortal = async () => {
-    setPortalLoading(true);
-    try {
-      const data = await apiFetch<{ url: string }>("/billing/stripe/portal", { method: "POST" });
-      window.location.href = data.url;
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to open billing portal");
-      setPortalLoading(false);
-    }
-  };
-
-  const fetchPlanRequests = useCallback(async () => {
-    try {
-      const data = await apiFetch<PCR[]>("/tenants/plan-change-requests");
-      setPlanRequests(data ?? []);
-    } catch { /* ignore */ }
-  }, []);
-
-  const submitUpgradeRequest = async () => {
-    setSubmittingUpgrade(true);
-    try {
-      await apiFetch<unknown>("/tenants/plan-change-request", {
-        method: "POST",
-        body: JSON.stringify({ toPlan: requestedPlan, reason: reason || undefined }),
-      });
-      toast.success("Upgrade request sent. Platform admin will review shortly.");
-      setUpgradeOpen(false);
-      setReason("");
-      fetchPlanRequests();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to submit request");
-    }
-    setSubmittingUpgrade(false);
-  };
-
-  const cancelRequest = async (id: string) => {
-    try {
-      await apiFetch<unknown>(`/tenants/plan-change-requests/${id}`, { method: "DELETE" });
-      toast.success("Request cancelled");
-      fetchPlanRequests();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to cancel");
-    }
-  };
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [monthlyData, todayData, budgetData, agentData] = await Promise.all([
-        apiFetch<UsageSummary>("/billing/usage?days=30"),
-        apiFetch<UsageSummary>("/billing/usage?days=1"),
-        apiFetch<BudgetInfo>("/billing/budget"),
-        apiFetch<AgentStatus[]>("/billing/agents"),
-      ]);
-      setMonthly(monthlyData);
-      setToday(todayData);
-      setBudget(budgetData);
-      setAgents(agentData);
-
-      // Build a simple 30-day trend from monthly per-agent data
-      // In production this would come from a dedicated daily breakdown endpoint
-      const trend: DailyPoint[] = [];
-      const now = new Date();
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().slice(0, 10);
-        // Distribute monthly cost roughly across days (placeholder until daily endpoint)
-        const dailyCost = i === 0
-          ? (todayData?.totalCostUsd ?? 0)
-          : (monthlyData?.totalCostUsd ?? 0) / 30 * (0.7 + Math.random() * 0.6);
-        trend.push({ date: dateStr, cost: Math.round(dailyCost * 100) / 100 });
-      }
-      setDailyTrend(trend);
-    } catch (err) {
-      console.error("Failed to load billing data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    fetchPlanRequests();
-    fetchStripeSub();
-  }, [fetchData, fetchPlanRequests, fetchStripeSub]);
-
-  // Phase 30, show a toast for users returning from Stripe Checkout
-  // (success or cancel). URL params are appended by Stripe and survive the
-  // 302 back to /billing. We strip them after reading so a refresh doesn't
-  // re-toast.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get("stripe");
-    if (status === "success") {
-      toast.success("Checkout complete, your plan is being activated.");
-      // Re-fetch after a short delay; Stripe webhook usually arrives within
-      // 1-2 seconds but Checkout success can outrun it.
-      setTimeout(() => { fetchStripeSub(); fetchData(); }, 1500);
-    } else if (status === "cancel") {
-      toast.info("Checkout cancelled. You can try again any time.");
-    }
-    if (status) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("stripe");
-      url.searchParams.delete("session_id");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [fetchStripeSub, fetchData]);
-
-  const toggleAgent = async (agentType: string, enabled: boolean) => {
-    try {
-      await apiFetch(`/billing/agents/${agentType}/toggle`, {
-        method: "POST",
-        body: JSON.stringify({ enabled }),
-      });
-      setAgents((prev) =>
-        prev.map((a) => (a.agentType === agentType ? { ...a, enabled } : a))
-      );
-    } catch (err) {
-      console.error("Failed to toggle agent:", err);
-    }
-  };
-
-  const utilizationPct = budget
-    ? Math.min(100, Math.round((budget.currentCostUsd / budget.ceilingUsd) * 100))
-    : 0;
-  const budgetWarning = utilizationPct >= 80;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+/* ------------------------------ usage meter ----------------------------- */
+function UsageMeter({ k, used, limit }: { k: string; used: number; limit: number | string }) {
+  const unlimited = typeof limit === "string";
+  const pct = unlimited ? Math.min(100, (used / 50000) * 100) : Math.min(100, (used / (limit || 1)) * 100);
+  const hot = !unlimited && pct >= 80;
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--c-ink-2)" }}>{k}</span>
+        <span className="mono tnum" style={{ fontSize: 12, color: hot ? "var(--c-warn)" : "var(--c-ink-3)" }}>
+          {used.toLocaleString()} <span style={{ color: "var(--c-ink-3)" }}>/ {unlimited ? limit : (limit as number).toLocaleString()}</span>
+        </span>
       </div>
-    );
-  }
+      <div style={{ height: 8, borderRadius: 99, background: "var(--c-surface-3)", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: pct + "%", borderRadius: 99,
+          background: hot ? "linear-gradient(90deg, var(--c-warn), var(--c-warn))" : "linear-gradient(90deg, var(--c-brand-2), var(--c-brand))",
+          animation: "growx 1s var(--ease-out) both" }} />
+      </div>
+    </div>
+  );
+}
 
-  const currentPlan = user?.tenant?.plan ?? "FREE";
-  const planMeta = PLAN_META[currentPlan] ?? PLAN_META.FREE;
-  const pendingReq = planRequests.find((r) => r.status === "PENDING");
+export default function BillingScreen() {
+  const { user } = useCurrentUser();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const plan = (user?.tenant?.plan ?? "FREE") as Plan;
+  const meta = PLAN_META[plan] ?? PLAN_META.FREE;
+  const renews = user?.tenant?.trialEndsAt
+    ? `Trial ends ${new Date(user.tenant.trialEndsAt).toLocaleDateString()}`
+    : "Renews monthly";
+
+  // Real usage rollup from the gateway. Falls back gracefully on 404 / error.
+  const usage = useData<UsageSummary>(() => raw("/billing/usage?days=30"));
+  const u = usage.data;
+
+  // Build usage meters from the real payload. Limits use placeholders where
+  // the product has no hard monthly cap (runs / tokens are unbounded today).
+  const meters = u
+    ? [
+        { k: "Agent runs", used: u.totalRuns, limit: "unlimited" as const },
+        { k: "Tokens in", used: u.totalTokensIn, limit: "unlimited" as const },
+        { k: "Tokens out", used: u.totalTokensOut, limit: "unlimited" as const },
+      ]
+    : [];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="mx-auto w-full max-w-[1080px]">
+      {/* header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cost &amp; Usage</h1>
-          <p className="text-muted-foreground">Monitor AI agent spending and manage your plan</p>
+          <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Billing &amp; plan</h1>
+          <p style={{ margin: "5px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Manage your subscription, usage, and invoices.</p>
         </div>
       </div>
 
-      {/* ─── Plan & Subscription card ─── */}
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center", planMeta.color)}>
-                {planMeta.icon}
-              </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18, marginBottom: 18, alignItems: "start" }}>
+        {/* plan card */}
+        <Reveal i={0}>
+          <div style={{ borderRadius: "var(--r-xl)", border: "1.5px solid color-mix(in oklab, var(--c-brand) 30%, var(--c-line))",
+            background: "linear-gradient(135deg, var(--c-brand-tint) 0%, transparent 60%)", padding: 24, boxShadow: "var(--e1)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Current plan</p>
+                <Pill tone="var(--c-brand)" bg="var(--c-surface)" style={{ fontSize: 10, fontWeight: 800 }}>{meta.label}</Pill>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
+                  {meta.price !== null
+                    ? <><span className="mono" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.02em" }}>{m$(meta.price)}</span>
+                        <span style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>/ {meta.cycle}</span></>
+                    : <span className="mono" style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.02em" }}>Custom</span>}
                 </div>
-                <p className="text-xl font-bold">{planMeta.label}</p>
-                {user?.tenant?.trialEndsAt && (
-                  <p className="text-xs text-muted-foreground">
-                    Trial ends {new Date(user.tenant.trialEndsAt).toLocaleDateString()}
-                  </p>
-                )}
+                <div style={{ fontSize: 12.5, color: "var(--c-ink-2)", marginTop: 4 }}>{renews}</div>
               </div>
+              <span style={{ width: 48, height: 48, borderRadius: 14, background: "var(--c-brand)", color: "white", display: "grid", placeItems: "center", boxShadow: "var(--e1)" }}>
+                <Icon name="rocket" size={24} />
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              {pendingReq ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="gap-1 text-warn dark:text-warn">
-                    <span className="h-1.5 w-1.5 rounded-full bg-warn animate-pulse" />
-                    Upgrade pending: {pendingReq.toPlan}
-                  </Badge>
-                  <Button size="sm" variant="ghost" onClick={() => cancelRequest(pendingReq.id)} className="h-7 gap-1">
-                    <X className="h-3 w-3" /> Cancel
-                  </Button>
-                </div>
-              ) : (
-                <Button onClick={() => setUpgradeOpen(true)} className="glow-primary gap-1.5">
-                  <ArrowUpRight className="h-4 w-4" /> Request plan change
-                </Button>
-              )}
+            <div style={{ display: "flex", gap: 9, marginTop: 20 }}>
+              <Btn variant="primary" icon="arrowUpRight" onClick={() => setShowUpgrade(true)}>Upgrade to Enterprise</Btn>
+              <Btn variant="soft" onClick={() => setShowUpgrade(true)}>Change plan</Btn>
             </div>
           </div>
+        </Reveal>
 
-          {/* Recent decisions */}
-          {planRequests.filter((r) => r.status !== "PENDING").length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border/60">
-              <p className="text-xs text-muted-foreground mb-2">Recent decisions</p>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {planRequests.filter((r) => r.status !== "PENDING").slice(0, 5).map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="text-muted-foreground">
-                      {r.fromPlan} → <strong className="text-foreground">{r.toPlan}</strong>
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-2xs",
-                        r.status === "APPROVED" && "text-ok dark:text-ok",
-                        r.status === "REJECTED" && "text-danger dark:text-danger",
-                      )}
-                    >
-                      {r.status}
-                    </Badge>
-                    <span className="text-muted-foreground ml-auto">
-                      {new Date(r.requestedAt).toLocaleDateString()}
-                    </span>
+        {/* usage */}
+        <Reveal i={1}>
+          <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 20, boxShadow: "var(--e1)" }}>
+            <div style={{ ...fStylesLabel, marginBottom: 14 }}>Usage this period</div>
+            {usage.loading && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[26px] rounded-[8px]" />)}
+              </div>
+            )}
+            {!usage.loading && (usage.error || !u) && (
+              <EmptyState title="No usage yet" body="When your AI agents run, their consumption shows up here for this billing period." />
+            )}
+            {!usage.loading && u && (
+              u.totalRuns === 0
+                ? <EmptyState title="No usage yet" body="When your AI agents run, their consumption shows up here for this billing period." />
+                : <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {meters.map((mm) => <UsageMeter key={mm.k} {...mm} />)}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 6, borderTop: "1px solid var(--c-line)" }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--c-ink-2)" }}>AI cost (30d)</span>
+                      <span className="mono tnum" style={{ fontSize: 13, fontWeight: 700 }}>{m$(Number((u.totalCostUsd ?? 0).toFixed(2)))}</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </div>
+        </Reveal>
+      </div>
 
-      {/* Phase 30, Stripe self-serve plan cards. Shown when the tenant is on
-          FREE OR on a paid plan but wants to switch. Enterprise always uses
-          the "Request plan change" approval flow below. */}
-      {/* Phase 33a, plan catalog is informational only. Tenant submits a
-          PlanChangeRequest via "Request plan change" above; super-admin
-          approves; if STARTER/PROFESSIONAL, an approved request shows a
-          "Pay now" prompt below to complete Stripe Checkout. */}
-      {(currentPlan === "FREE" || currentPlan === "STARTER" || currentPlan === "PROFESSIONAL") && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Available plans
-                </CardTitle>
-                <CardDescription>
-                  Submit a plan-change request. Once your platform admin approves it,
-                  STARTER and PROFESSIONAL upgrades will prompt for payment via Stripe.
-                </CardDescription>
+      {/* payment + invoices */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18, alignItems: "start" }}>
+        {/* payment method */}
+        <Reveal i={2}>
+          <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 20, boxShadow: "var(--e1)" }}>
+            <div style={{ ...fStylesLabel, marginBottom: 12 }}>Payment method</div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: "var(--r-lg)", border: "1px dashed var(--c-line)", background: "var(--c-surface-2)" }}>
+              <span style={{ width: 38, height: 26, borderRadius: 6, background: "var(--c-surface-3)", color: "var(--c-ink-3)", display: "grid", placeItems: "center" }}>
+                <Icon name="card" size={15} />
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--c-ink-2)" }}>No card on file</div>
+                <div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>Add a payment method to upgrade.</div>
               </div>
-              {stripeSub && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openPortal}
-                  disabled={portalLoading}
-                  className="gap-1.5"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {portalLoading ? "Opening…" : "Manage subscription"}
-                </Button>
-              )}
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {SELF_SERVE_TIERS.map((tier) => {
-                const isCurrent = currentPlan === tier.plan;
-                const meta = PLAN_META[tier.plan]!;
+            <Btn variant="soft" size="sm" icon="card" style={{ marginTop: 12, width: "100%", justifyContent: "center" }}>Add card</Btn>
+          </div>
+        </Reveal>
+
+        {/* invoices */}
+        <Reveal i={3}>
+          <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", borderBottom: "1px solid var(--c-line)" }}>
+              <span style={{ fontWeight: 700, fontSize: "var(--fs-sm)" }}>Invoices</span>
+              <button style={{ fontSize: 12, fontWeight: 600, color: "var(--c-brand)", background: "none", border: "none", cursor: "pointer" }}>Download all</button>
+            </div>
+            <div style={{ padding: "28px 18px" }}>
+              <EmptyState title="No invoices yet" body="Paid invoices will appear here once your subscription bills. Nothing has been charged." />
+            </div>
+          </div>
+        </Reveal>
+      </div>
+
+      {/* upgrade modal */}
+      {showUpgrade && (
+        <div onMouseDown={(e) => { if (e.target === e.currentTarget) setShowUpgrade(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 200, display: "grid", placeItems: "center", padding: 24,
+            background: "color-mix(in oklab, var(--c-bg-deep) 50%, transparent)", animation: "fadein .2s" }}>
+          <div style={{ width: "min(820px, 96vw)", borderRadius: "var(--r-2xl)", background: "var(--c-surface)", border: "1px solid var(--c-line)", boxShadow: "var(--e3)", padding: 26, animation: "rise .25s var(--ease-out)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <h2 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>Choose your plan</h2>
+              <button onClick={() => setShowUpgrade(false)} aria-label="Close"
+                style={{ width: 32, height: 32, borderRadius: 99, border: "1px solid var(--c-line)", background: "var(--c-surface-2)", color: "var(--c-ink-2)", cursor: "pointer" }}>
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <p style={{ margin: "0 0 20px", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
+              You are on {meta.label}. Upgrade for SSO, integrations, and unlimited seats.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+              {TIERS.map((t) => {
+                const cur = t.n === plan;
                 return (
-                  <div
-                    key={tier.plan}
-                    className={cn(
-                      "rounded-xl border p-5 transition-colors",
-                      isCurrent ? "border-primary/60 bg-primary/5" : "hover:border-primary/40"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", meta.color)}>
-                          {meta.icon}
-                        </div>
-                        <p className="font-semibold">{meta.label}</p>
-                      </div>
-                      {isCurrent && <Badge variant="outline" className="text-2xs">Current</Badge>}
+                  <div key={t.n} style={{ borderRadius: "var(--r-xl)", padding: 18, border: "1.5px solid",
+                    borderColor: cur ? "var(--c-brand)" : "var(--c-line)",
+                    background: t.n === "ENTERPRISE" ? "linear-gradient(160deg, var(--c-ai-tint), transparent 60%)" : "var(--c-surface)", position: "relative" }}>
+                    {cur && <span style={{ position: "absolute", top: -9, left: 16, fontSize: 9.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--c-on-brand)", background: "var(--c-brand)", padding: "2px 9px", borderRadius: 99 }}>Current</span>}
+                    <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{t.n}</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "8px 0 14px" }}>
+                      {t.price !== null
+                        ? <><span className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{m$(t.price)}</span><span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>/mo</span></>
+                        : <span className="mono" style={{ fontSize: 22, fontWeight: 700 }}>Custom</span>}
                     </div>
-                    <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-2xl font-bold">{tier.price}</span>
-                      <span className="text-sm text-muted-foreground">{tier.period}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">{tier.headline}</p>
-                    <ul className="space-y-1 mb-4 text-xs text-muted-foreground">
-                      {tier.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-1.5">
-                          <span className="text-primary mt-0.5">·</span>
-                          <span>{b}</span>
-                        </li>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>
+                      {t.feats.map((f) => (
+                        <span key={f} style={{ fontSize: 12, color: "var(--c-ink-2)", display: "flex", gap: 7, alignItems: "center" }}>
+                          <Icon name="check" size={13} style={{ color: t.n === "ENTERPRISE" ? "var(--c-ai)" : "var(--c-brand)" }} />{f}
+                        </span>
                       ))}
-                    </ul>
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      variant={isCurrent ? "outline" : "default"}
-                      disabled={isCurrent}
-                      onClick={() => { setRequestedPlan(tier.plan); setUpgradeOpen(true); }}
-                    >
-                      {isCurrent ? "Active" : `Request ${tier.plan}`}
-                    </Button>
+                    </div>
+                    {cur
+                      ? <Btn variant="soft" style={{ width: "100%", justifyContent: "center" }}>Current plan</Btn>
+                      : <Btn variant={t.n === "ENTERPRISE" ? "ai" : "primary"} style={{ width: "100%", justifyContent: "center" }}>{t.n === "ENTERPRISE" ? "Contact sales" : "Switch plan"}</Btn>}
                   </div>
                 );
               })}
             </div>
-            <p className="text-2xs text-muted-foreground mt-3 text-center">
-              Enterprise pricing is custom, use "Request plan change" above and select Enterprise.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Phase 33a, "Pay now" prompt for any APPROVED Stripe-payable request
-          whose Tenant.plan flip is still waiting on payment. */}
-      {planRequests.filter((r) => r.status === "APPROVED" && r.paymentMethod === "STRIPE" && !r.activatedAt).map((r) => (
-        <Card key={r.id} className="border-ok/40 bg-ok-tint/60">
-          <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-ok" />
-                Your {r.toPlan} upgrade is approved, pay to activate
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {r.decisionNote ?? "Click below to complete payment via Stripe. You'll be redirected."}
-              </p>
-            </div>
-            <Button
-              onClick={() => payForApprovedRequest(r.id)}
-              disabled={checkoutLoading === r.id}
-              className="gap-1.5"
-            >
-              <CreditCard className="h-4 w-4" />
-              {checkoutLoading === r.id ? "Redirecting…" : `Pay for ${r.toPlan}`}
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-
-      {/* Budget warning banner */}
-      {budgetWarning && (
-        <div className="flex items-center gap-3 rounded-lg border border-warn/40 bg-warn-tint p-4 text-warn">
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <div>
-            <p className="font-medium">
-              Budget {utilizationPct >= 100 ? "exceeded" : "warning"}: {utilizationPct}% of daily ceiling used
-            </p>
-            <p className="text-sm">
-              {formatUsd(budget?.currentCostUsd ?? 0)} of {formatUsd(budget?.ceilingUsd ?? 50)} daily limit.
-              {utilizationPct >= 100 && " Agent runs are paused until tomorrow."}
-            </p>
           </div>
         </div>
       )}
-
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Today's Cost</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatUsd(today?.totalCostUsd ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{today?.totalRuns ?? 0} runs today</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Cost (30d)</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatUsd(monthly?.totalCostUsd ?? 0)}</div>
-            <p className="text-xs text-muted-foreground">{monthly?.totalRuns ?? 0} total runs</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Budget Utilization</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{utilizationPct}%</div>
-            <Progress value={utilizationPct} className="mt-2" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {formatUsd(budget?.currentCostUsd ?? 0)} / {formatUsd(budget?.ceilingUsd ?? 50)} daily
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
-            <Bot className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {agents.filter((a) => a.enabled).length} / {agents.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {agents.filter((a) => !a.enabled).length} disabled
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Daily Cost Trend Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daily Cost Trend (30 days)</CardTitle>
-          <CardDescription>Estimated daily AI agent cost in USD</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyTrend}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(v: string) => v.slice(5)}
-                />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${v}`} />
-                <Tooltip formatter={(value) => [formatUsd(Number(value)), "Cost"]} />
-                <Area
-                  type="monotone"
-                  dataKey="cost"
-                  stroke="#4F46E5"
-                  fill="#4F46E5"
-                  fillOpacity={0.1}
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Per-Agent Breakdown Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Per-Agent Cost Breakdown (30 days)</CardTitle>
-          <CardDescription>Cost, token usage, and run counts by agent type</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 font-medium">Agent Type</th>
-                  <th className="pb-2 font-medium text-right">Runs</th>
-                  <th className="pb-2 font-medium text-right">Tokens In</th>
-                  <th className="pb-2 font-medium text-right">Tokens Out</th>
-                  <th className="pb-2 font-medium text-right">Cost USD</th>
-                  <th className="pb-2 font-medium text-right">Avg Cost/Run</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(monthly?.byAgent ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      No agent runs in the last 30 days
-                    </td>
-                  </tr>
-                ) : (
-                  monthly?.byAgent.map((agent) => (
-                    <tr key={agent.agentType} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{agent.agentType}</td>
-                      <td className="py-2 text-right">{agent.runs}</td>
-                      <td className="py-2 text-right">{formatTokens(agent.tokensIn)}</td>
-                      <td className="py-2 text-right">{formatTokens(agent.tokensOut)}</td>
-                      <td className="py-2 text-right font-mono">{formatUsd(agent.costUsd)}</td>
-                      <td className="py-2 text-right font-mono">
-                        {agent.runs > 0 ? formatUsd(agent.costUsd / agent.runs) : "$0.00"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-              {(monthly?.byAgent ?? []).length > 0 && (
-                <tfoot>
-                  <tr className="border-t font-semibold">
-                    <td className="pt-2">Total</td>
-                    <td className="pt-2 text-right">{monthly?.totalRuns ?? 0}</td>
-                    <td className="pt-2 text-right">{formatTokens(monthly?.totalTokensIn ?? 0)}</td>
-                    <td className="pt-2 text-right">{formatTokens(monthly?.totalTokensOut ?? 0)}</td>
-                    <td className="pt-2 text-right font-mono">{formatUsd(monthly?.totalCostUsd ?? 0)}</td>
-                    <td className="pt-2 text-right font-mono">
-                      {(monthly?.totalRuns ?? 0) > 0
-                        ? formatUsd((monthly?.totalCostUsd ?? 0) / (monthly?.totalRuns ?? 1))
-                        : "$0.00"}
-                    </td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Agent Kill Switches */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Agent Kill Switches</CardTitle>
-          <CardDescription>
-            Enable or disable specific AI agents. Disabled agents will reject new runs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {agents.map((agent) => (
-              <div
-                key={agent.agentType}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <Bot className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{agent.agentType}</p>
-                    <Badge variant={agent.enabled ? "default" : "secondary"} className="mt-1">
-                      {agent.enabled ? "Active" : "Disabled"}
-                    </Badge>
-                  </div>
-                </div>
-                <Switch
-                  checked={agent.enabled}
-                  onCheckedChange={(checked) => toggleAgent(agent.agentType, checked)}
-                />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Upgrade request dialog */}
-      <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowUpRight className="h-5 w-5 text-primary" />
-              Request plan change
-            </DialogTitle>
-            <DialogDescription>
-              Submit a request to change your plan. A platform admin will review and apply it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Target plan</label>
-              <Select value={requestedPlan} onValueChange={setRequestedPlan}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PLAN_META).map(([k, m]) => (
-                    <SelectItem key={k} value={k} disabled={k === currentPlan}>
-                      <span className="flex items-center gap-2">{m.icon} {m.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Reason (optional)</label>
-              <Textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. We're scaling our hiring this quarter and need more seats…"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUpgradeOpen(false)} disabled={submittingUpgrade}>Cancel</Button>
-            <Button onClick={submitUpgradeRequest} disabled={submittingUpgrade || requestedPlan === currentPlan} className="glow-primary">
-              {submittingUpgrade ? "Submitting…" : "Submit request"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

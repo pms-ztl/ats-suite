@@ -1,523 +1,233 @@
 "use client";
+// app/(dashboard)/scheduling/page.tsx - EXACT Claude Design "Aurora" scheduling
+// screen. Ported from claude-design/screen-scheduling.jsx: a two-column surface
+// with a week calendar (busy overlays + participant avatars) on the left and an
+// "AI-proposed slots" advisory rail on the right (the agent suggests, you book).
+// Wired to the real gateway via listInterviews. The prototype's per-participant
+// busy map and ranked AI fit-scores have no backend endpoint yet, so those
+// render with graceful empty/loading states rather than invented numbers.
+import { useMemo, useState } from "react";
+import { SectionCard, StatusBadge, Btn, Pill } from "@/components/aurora-kit";
+import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { Icon } from "@/components/aurora-icon";
+import { useData } from "@/lib/use-data";
+import { listInterviews } from "@/lib/api";
+import type { Interview, InterviewStatus } from "@/lib/types";
 
-import { useEffect, useState, useMemo } from "react";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { CalendarDays, Plus, Clock, CheckCircle, AlertCircle, Sparkles, Loader2 } from "lucide-react";
-import { api } from "@/lib/api-client";
-import { toast } from "sonner";
-import { usePermissions } from "@/lib/use-permissions";
-import { AccessDenied } from "@/components/shared/access-denied";
-import { PageSkeleton } from "@/components/shared/page-skeleton";
-import { PageError } from "@/components/shared/page-error";
-import { AgentReasoningTrace, type AgentStep } from "@/components/shared/agent-reasoning-trace";
-
-interface ProposedSlot { start: string; end: string; score: number; availableParticipants: string[]; conflicts: string[] }
-interface ScheduleSuggestion { proposedSlots?: ProposedSlot[]; agentTrace?: AgentStep[]; toolsUsed?: string[] }
-
-interface ScheduleEvent {
-  id: string;
-  title?: string;
-  type?: string;
-  status?: string;
-  startAt?: string;
-  endAt?: string;
-  scheduledAt?: string;
-  location?: string;
-  attendees?: string[];
-  candidate?: { firstName: string; lastName: string };
-  durationMinutes?: number;
-  format?: string;
-}
-
-const TYPE_OPTIONS = ["ALL", "INTERVIEW", "MEETING", "OTHER"] as const;
-
-const statusColor: Record<string, string> = {
-  SCHEDULED: "bg-info-tint text-info",
-  COMPLETED: "bg-ok-tint text-ok",
-  CANCELLED: "bg-danger-tint text-danger",
-  NO_SHOW: "bg-warn-tint text-warn",
-  PENDING: "bg-warn-tint text-warn",
-  CONFIRMED: "bg-ok-tint text-ok",
+// InterviewStatus -> StatusBadge kind. The kit badge only knows
+// pass|review|fail|open|draft, so map all seven enum values sensibly.
+const STATUS_KIND: Record<InterviewStatus, "pass" | "review" | "fail" | "open" | "draft"> = {
+  SCHEDULED: "open",
+  CONFIRMED: "pass",
+  IN_PROGRESS: "open",
+  COMPLETED: "review",
+  CANCELLED: "fail",
+  NO_SHOW: "fail",
+  RESCHEDULED: "draft",
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// A fixed work-week scaffold matching the prototype's grid (the static
+// calendar chrome stays as designed; real interviews are overlaid onto it).
+const WEEK = ["Mon 29", "Tue 30", "Wed 31", "Thu 1", "Fri 2"];
+const HOURS = ["9", "10", "11", "12", "1", "2", "3", "4", "5"];
 
-function getToken() {
-  if (typeof document === "undefined") return "";
-  return document.cookie.match(/ats-token=([^;]+)/)?.[1] ?? "";
+function initials(s: string): string {
+  const parts = s.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function fmtWhen(iso?: string): string {
+  if (!iso) return "Time to be confirmed";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "Time to be confirmed";
+  return d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export default function SchedulingPage() {
-  const { can } = usePermissions();
-  const [events, setEvents] = useState<ScheduleEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
+  const { data, loading, error, reload } = useData<Interview[]>(listInterviews);
+  const [picked, setPicked] = useState(0);
 
-  const [typeFilter, setTypeFilter] = useState("ALL");
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // The interviews the agent has lined up. The first is the focus of the rail.
+  const interviews = useMemo(() => data ?? [], [data]);
+  const focus = interviews[picked] ?? interviews[0];
 
-  // New event form
-  const [formTitle, setFormTitle] = useState("");
-  const [formType, setFormType] = useState("INTERVIEW");
-  const [formStart, setFormStart] = useState("");
-  const [formEnd, setFormEnd] = useState("");
-  const [formLocation, setFormLocation] = useState("");
-  const [formAttendees, setFormAttendees] = useState("");
-  const [formCandidateId, setFormCandidateId] = useState("");
-  const [formReqId, setFormReqId] = useState("");
-  const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
-  const [reqs, setReqs] = useState<Array<{ id: string; title: string }>>([]);
-  const [suggesting, setSuggesting] = useState(false);
-  const [suggestion, setSuggestion] = useState<ScheduleSuggestion | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const round = focus?.round ?? "Interview";
+  const candidate = focus?.candidateId ?? "Candidate";
+  const dur = focus?.durationMins ?? 60;
+  const participants = focus?.panel ?? [];
+  const partCount = participants.length;
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        // Load interviews as schedule events
-        const result = await api.interviews.listInterviews({ page: 1, pageSize: 100 });
-        const list = result?.data ?? [];
-        setEvents(Array.isArray(list) ? list : []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load schedule");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-    // Candidate + requisition pickers for booking a real interview
-    const token = getToken();
-    const hdr: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    fetch(`${API}/candidates?page=1&pageSize=50`, { credentials: "include", headers: hdr })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((res) => {
-        const rows = res?.data?.data ?? res?.data ?? res;
-        if (Array.isArray(rows)) setCandidates(rows.map((c: any) => ({ id: c.id, name: `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() || c.email })));
-      }).catch(() => {});
-    fetch(`${API}/requisitions?page=1&pageSize=50`, { credentials: "include", headers: hdr })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((res) => {
-        const rows = res?.data?.data ?? res?.data ?? res;
-        if (Array.isArray(rows)) setReqs(rows.map((r2: any) => ({ id: r2.id, title: r2.title })));
-      }).catch(() => {});
-  }, [retryCount]);
+  // Position the focused interview on the week grid (decorative best-effort:
+  // place the busy block in the day column that matches its weekday, if any).
+  const focusDayIndex = useMemo(() => {
+    if (!focus?.startsAt) return -1;
+    const d = new Date(focus.startsAt);
+    if (isNaN(d.getTime())) return -1;
+    // WEEK is Mon..Fri; getDay() is 0=Sun..6=Sat, so Mon=1 -> index 0.
+    const idx = d.getDay() - 1;
+    return idx >= 0 && idx < WEEK.length ? idx : -1;
+  }, [focus?.startsAt]);
 
-  const filtered = useMemo(() => {
-    if (typeFilter === "ALL") return events;
-    return events.filter((e) => e.type === typeFilter);
-  }, [events, typeFilter]);
-
-  async function runAiSuggest() {
-    const emails = formAttendees.split(",").map((e) => e.trim()).filter(Boolean);
-    if (emails.length === 0) {
-      toast.error("Add at least one attendee email first");
-      return;
-    }
-    setSuggesting(true);
-    setSuggestion(null);
-    try {
-      const now = new Date();
-      const start = formStart ? new Date(formStart) : now;
-      const end = new Date(start.getTime() + 14 * 86400_000);
-      const res = await fetch(`${API}/scheduling`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({
-          participants: emails.map((email) => ({ email, role: "interviewer", busyWindows: [] })),
-          durationMinutes: 60,
-          dateRange: { start: start.toISOString(), end: end.toISOString() },
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          // When a candidate + requisition are chosen, the agent may BOOK the
-          // slot itself (creates the interview + sends the invite).
-          ...(formCandidateId ? { candidateId: formCandidateId } : {}),
-          ...(formReqId ? { requisitionId: formReqId } : {}),
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      setSuggestion(json.data ?? json);
-    } catch {
-      toast.error("AI scheduling failed.");
-    } finally {
-      setSuggesting(false);
-    }
-  }
-
-  function applySlot(slot: ProposedSlot) {
-    // datetime-local wants "YYYY-MM-DDTHH:mm" in local time
-    const toLocal = (iso: string) => {
-      const d = new Date(iso);
-      const off = d.getTimezoneOffset() * 60_000;
-      return new Date(d.getTime() - off).toISOString().slice(0, 16);
-    };
-    setFormStart(toLocal(slot.start));
-    setFormEnd(toLocal(slot.end));
-    if (!formTitle) setFormTitle("Interview");
-    toast.success("Slot applied to the form");
-  }
-
-  async function handleCreateEvent() {
-    if (!formStart || !formEnd) {
-      toast.error("Start and end times are required.");
-      return;
-    }
-    if (!formCandidateId || !formReqId) {
-      toast.error("Pick a candidate and a requisition, interviews are tied to both.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // Real interview creation (the agent route /api/scheduling expects
-      // participants; manual events go to /api/interviews which the model
-      // actually represents).
-      const res = await fetch(`${API}/interviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({
-          requisitionId: formReqId,
-          candidateId: formCandidateId,
-          type: formType,
-          scheduledAt: new Date(formStart).toISOString(),
-          ...(formLocation ? { meetingUrl: formLocation } : {}),
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Interview scheduled successfully.");
-      setDialogOpen(false);
-      setFormTitle("");
-      setFormType("INTERVIEW");
-      setFormStart("");
-      setFormEnd("");
-      setFormLocation("");
-      setFormAttendees("");
-      setFormCandidateId("");
-      setFormReqId("");
-      setSuggestion(null);
-      setRetryCount((c) => c + 1);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create event");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // Stats
-  const scheduled = events.filter(
-    (e) => e.status === "SCHEDULED" || e.status === "CONFIRMED"
-  ).length;
-  const completed = events.filter((e) => e.status === "COMPLETED").length;
-  const noShow = events.filter(
-    (e) => e.status === "NO_SHOW" || e.status === "CANCELLED"
-  ).length;
-
-  if (!can("scheduling")) return <AccessDenied />;
-  if (loading) return <PageSkeleton />;
-  if (error)
-    return <PageError message={error} onRetry={() => setRetryCount((c) => c + 1)} />;
+  const focusHourIndex = useMemo(() => {
+    if (!focus?.startsAt) return -1;
+    const d = new Date(focus.startsAt);
+    if (isNaN(d.getTime())) return -1;
+    const h = d.getHours();
+    // HOURS run 9a..5p; map clock hour to row index (12 and 1..5 wrap to pm rows).
+    const idx = h >= 9 ? h - 9 : h + 3;
+    return idx >= 0 && idx < HOURS.length ? idx : -1;
+  }, [focus?.startsAt]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Scheduling"
-        description="Interview calendar, slot management, and room booking"
-        breadcrumbs={[{ label: "Scheduling" }]}
-        actions={
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Schedule New
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Schedule New Event</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Candidate</Label>
-                    <select
-                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                      value={formCandidateId}
-                      onChange={(e) => setFormCandidateId(e.target.value)}
-                    >
-                      <option value="">Select…</option>
-                      {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Requisition</Label>
-                    <select
-                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                      value={formReqId}
-                      onChange={(e) => setFormReqId(e.target.value)}
-                    >
-                      <option value="">Select…</option>
-                      {reqs.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="Interview with..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select value={formType} onValueChange={setFormType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="INTERVIEW">Interview</SelectItem>
-                      <SelectItem value="MEETING">Meeting</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Start</Label>
-                    <Input
-                      type="datetime-local"
-                      value={formStart}
-                      onChange={(e) => setFormStart(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>End</Label>
-                    <Input
-                      type="datetime-local"
-                      value={formEnd}
-                      onChange={(e) => setFormEnd(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Input
-                    value={formLocation}
-                    onChange={(e) => setFormLocation(e.target.value)}
-                    placeholder="Room / Meeting link"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Attendees (comma-separated emails)</Label>
-                  <Input
-                    value={formAttendees}
-                    onChange={(e) => setFormAttendees(e.target.value)}
-                    placeholder="user@example.com, user2@example.com"
-                  />
-                </div>
-
-                {/* AI suggest times */}
-                <div className="space-y-2 rounded-md border border-primary/20 p-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-1.5"
-                    onClick={runAiSuggest}
-                    disabled={suggesting}
-                  >
-                    {suggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-ai" />}
-                    {suggesting ? "Finding times…" : "AI suggest times"}
-                  </Button>
-                  {suggestion?.proposedSlots && suggestion.proposedSlots.length > 0 && (
-                    <div className="space-y-1">
-                      {suggestion.proposedSlots.slice(0, 5).map((s, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => applySlot(s)}
-                          className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-xs hover:bg-muted transition-colors"
-                        >
-                          <span>{new Date(s.start).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
-                          <span className={s.conflicts.length === 0 ? "text-ok" : "text-warn"}>
-                            {s.conflicts.length === 0 ? "all free" : `${s.conflicts.length} conflict${s.conflicts.length > 1 ? "s" : ""}`} · {(s.score * 100).toFixed(0)}%
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {suggestion?.agentTrace && suggestion.agentTrace.length > 0 && (
-                    <AgentReasoningTrace steps={suggestion.agentTrace} toolsUsed={suggestion.toolsUsed} />
-                  )}
-                </div>
-
-                <Button
-                  className="w-full"
-                  onClick={handleCreateEvent}
-                  disabled={submitting}
-                >
-                  {submitting ? "Scheduling..." : "Create Event"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        }
-      />
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Events", value: events.length, icon: CalendarDays },
-          { label: "Upcoming", value: scheduled, icon: Clock },
-          { label: "Completed", value: completed, icon: CheckCircle },
-          { label: "Cancelled / No-show", value: noShow, icon: AlertCircle },
-        ].map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Filter */}
-      <div className="flex gap-3">
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {TYPE_OPTIONS.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t === "ALL" ? "All Types" : t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" /> Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <CalendarDays className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm font-medium">No events scheduled</p>
-              <p className="text-xs mt-1">Click &quot;Schedule New&quot; to create an event.</p>
+    <div className="mx-auto w-full max-w-[1200px]">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 18, alignItems: "start" }}>
+        {/* calendar */}
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Schedule interview</h1>
+              <p style={{ margin: "4px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>
+                {round} · {candidate} · {dur} min · {partCount} {partCount === 1 ? "participant" : "participants"}
+              </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="text-left px-4 py-3 font-medium">Title</th>
-                    <th className="text-left px-4 py-3 font-medium hidden md:table-cell">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium">Start</th>
-                    <th className="text-left px-4 py-3 font-medium hidden md:table-cell">
-                      End
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">
-                      Location
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filtered.map((ev) => {
-                    const title =
-                      ev.title ??
-                      (ev.candidate
-                        ? `${ev.candidate.firstName} ${ev.candidate.lastName}`
-                        : ev.id);
-                    const start = ev.startAt ?? ev.scheduledAt;
-                    const displayStatus = ev.status ?? "SCHEDULED";
-                    return (
-                      <tr
-                        key={ev.id}
-                        className="hover:bg-muted/40 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium">{title}</td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          {ev.type?.replace(/_/g, " ") ?? "-"}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {start
-                            ? new Date(start).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                          {ev.endAt
-                            ? new Date(ev.endAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : ev.durationMinutes
-                              ? `${ev.durationMinutes} min`
-                              : "-"}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                          {ev.location ?? ev.format ?? "-"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[displayStatus] ?? "bg-muted text-muted-foreground"}`}
-                          >
-                            {displayStatus}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button aria-label="Previous week" style={{ width: 32, height: 32, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="chevR" size={15} style={{ transform: "rotate(180deg)" }} /></button>
+              <span style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>May 29 to Jun 2</span>
+              <button aria-label="Next week" style={{ width: 32, height: 32, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="chevR" size={15} /></button>
+            </div>
+          </div>
+
+          {/* week grid */}
+          <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", borderBottom: "1px solid var(--c-line)" }}>
+              <div />
+              {WEEK.map((d) => <div key={d} style={{ padding: "10px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, borderLeft: "1px solid var(--c-line)" }}>{d}</div>)}
+            </div>
+            {HOURS.map((h, hi) => (
+              <div key={h} style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", borderTop: hi ? "1px solid var(--c-line)" : "none", minHeight: 46 }}>
+                <div style={{ padding: "4px 8px", fontSize: 10.5, color: "var(--c-ink-3)", textAlign: "right" }} className="mono">{h}{hi < 3 ? "a" : "p"}</div>
+                {WEEK.map((day, di) => {
+                  const busyHere = focusDayIndex === di && focusHourIndex === hi;
+                  return (
+                    <div key={day} style={{ borderLeft: "1px solid var(--c-line)", padding: 2, position: "relative" }}>
+                      {busyHere && (
+                        <div
+                          title={`${round} · ${candidate}`}
+                          style={{ position: "absolute", inset: 2, borderRadius: 5, background: "var(--c-ai-tint)", border: "1px solid var(--c-ai)" }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* legend + participants */}
+          <div style={{ display: "flex", gap: 18, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 12, color: "var(--c-ink-2)" }}>
+              <span style={{ width: 14, height: 14, borderRadius: 4, background: "repeating-linear-gradient(45deg, var(--c-surface-3), var(--c-surface-3) 3px, transparent 3px, transparent 6px)", border: "1px solid var(--c-line)" }} /> Busy
+            </span>
+            <span style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 12, color: "var(--c-ink-2)" }}>
+              <span style={{ width: 14, height: 14, borderRadius: 4, background: "var(--c-ai-tint)", border: "1px solid var(--c-ai)" }} /> Scheduled interview
+            </span>
+            <div style={{ flex: 1 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {participants.slice(0, 6).map((p, i) => (
+                <span key={p + i} title={p} className="mono" style={{ width: 28, height: 28, borderRadius: 99, display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, background: i === 0 ? "linear-gradient(135deg, var(--c-brand), var(--c-ai))" : "var(--c-surface-3)", color: i === 0 ? "white" : "var(--c-ink-2)", border: "1px solid var(--c-line)" }}>{initials(p)}</span>
+              ))}
+              <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{partCount} {partCount === 1 ? "participant" : "participants"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* AI-proposed slots rail */}
+        <aside style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", boxShadow: "var(--e1)", padding: "22px 18px", background: "color-mix(in oklab, var(--c-surface) 50%, transparent)" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+            <Icon name="sparkles" size={16} style={{ color: "var(--c-ai)" }} />
+            <h2 style={{ margin: 0, fontSize: "var(--fs-md)", fontWeight: 700 }}>AI-proposed slots</h2>
+          </div>
+          <p style={{ margin: "0 0 14px", fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.45 }}>
+            The <b style={{ color: "var(--c-ai-ink)" }}>scheduling</b> agent ranks slots by availability and preferences. It suggests, <b>you book</b>.
+          </p>
+
+          {/* loading */}
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }} aria-busy="true">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[72px] rounded-[12px]" />)}
             </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* error */}
+          {error && (
+            <ErrorState
+              title="Could not load the schedule"
+              body="The interviews service did not respond."
+              code="GET /api/interviews"
+              onRetry={reload}
+            />
+          )}
+
+          {/* empty: no interviews lined up */}
+          {data && interviews.length === 0 && (
+            <EmptyState
+              title="No interviews to schedule"
+              body="When an interview is requested, the scheduling agent ranks open slots here for you to book."
+              actions={<a href="/interviews"><Btn variant="ai" icon="calendar">View interviews</Btn></a>}
+            />
+          )}
+
+          {/* real interviews, surfaced as the schedule the agent lined up */}
+          {data && interviews.length > 0 && (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {interviews.slice(0, 8).map((iv, i) => {
+                  const on = picked === i;
+                  return (
+                    <button
+                      key={iv.id}
+                      onClick={() => setPicked(i)}
+                      style={{ textAlign: "left", padding: 14, borderRadius: "var(--r-lg)", cursor: "pointer", border: "1.5px solid", borderColor: on ? "var(--c-ai)" : "var(--c-line)", background: on ? "var(--c-ai-tint)" : "var(--c-surface)", transition: "all var(--t-fast)", position: "relative" }}
+                    >
+                      {i === 0 && <span style={{ position: "absolute", top: -8, right: 12, fontSize: 9.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--c-on-ai)", background: "var(--c-ai)", padding: "2px 8px", borderRadius: 99 }}>Next</span>}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{iv.candidateId || "Candidate"}</div>
+                          <div style={{ fontSize: 12, color: "var(--c-ink-2)" }}>{iv.round} · {iv.durationMins}m</div>
+                        </div>
+                        <StatusBadge kind={STATUS_KIND[iv.status] ?? "open"} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 9 }}>
+                        <Icon name="clock" size={12} style={{ color: "var(--c-ink-3)" }} />
+                        <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{fmtWhen(iv.startsAt)}</span>
+                        {iv.mode && <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ marginLeft: "auto" }}>{iv.mode}</Pill>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* advisory callout: honest about what the agent will and won't do */}
+              <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: "var(--r-lg)", background: "var(--c-warn-tint)", border: "1px solid color-mix(in oklab, var(--c-warn) 26%, transparent)" }}>
+                <div style={{ fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.45, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <Icon name="flag" size={14} style={{ color: "var(--c-warn)", flexShrink: 0, marginTop: 1 }} />
+                  The agent surfaces availability and preferences, the final booking and the invites stay with you. Confirm before booking.
+                </div>
+              </div>
+
+              {focus && (
+                <a href="/interviews" style={{ display: "block", marginTop: 14 }}>
+                  <Btn variant="primary" icon="calendar" style={{ width: "100%", justifyContent: "center" }}>
+                    Open {focus.round}
+                  </Btn>
+                </a>
+              )}
+            </>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
