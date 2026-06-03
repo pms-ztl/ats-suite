@@ -9,7 +9,7 @@ import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { OrgOverview } from "@/components/dashboards/org-overview";
+import { OrgOverviewLive } from "@/components/cd/org-overview-live";
 import {
   getDashboardKpis, listScreening, listRequisitions, listReviewQueue, listInterviews,
   type DashKpi,
@@ -23,7 +23,7 @@ const ORG_ROLES = ["ADMIN", "SUPER_ADMIN", "COMPLIANCE_OFFICER"];
 
 export default function DashboardHome() {
   const { user } = useCurrentUser();
-  if (ORG_ROLES.includes(user?.role ?? "")) return <OrgOverview />;
+  if (ORG_ROLES.includes(user?.role ?? "")) return <OrgOverviewLive />;
   return <RoleHome />;
 }
 

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Hanken_Grotesk } from "next/font/google";
+import "@/components/cd/cd-tokens.css";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { ClientProviders } from "@/components/shared/client-providers";
 import { AuthProvider } from "@/lib/auth-context";
 
-// Sans = Hanken Grotesk, Mono = Geist Mono (exact Aurora type per the design).
-const sans = Hanken_Grotesk({
+// Sans = Plus Jakarta Sans, Mono = Geist Mono. These are the actual Aurora faces
+// from the Claude Design source (CDC ATS - System & Shell.html), so every glyph
+// matches the design exactly.
+const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700", "800"],

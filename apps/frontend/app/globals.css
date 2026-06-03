@@ -11,7 +11,7 @@
    ========================================================================= */
 :root {
   /* ---- Typography ---- */
-  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --fs-2xs: 0.6875rem; --fs-xs: 0.75rem; --fs-sm: 0.8125rem; --fs-base: 0.875rem;
   --fs-md: 0.9375rem; --fs-lg: 1.0625rem; --fs-xl: 1.25rem; --fs-2xl: 1.5625rem;
@@ -160,6 +160,23 @@ body {
 .dark .clay { background: linear-gradient(180deg, oklch(var(--surface-2)), oklch(var(--surface))); box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .06); }
 .flat { background: oklch(var(--surface)); border: 1px solid oklch(var(--line)); box-shadow: var(--e1); }
 
+/* Inside .cd-scope the palette tokens are FULL oklch colors (cd-tokens.css), not
+   bare channels, so the material utilities must use them directly, exactly as the
+   design's stylesheet does. The global oklch(var(--x)) versions would double-wrap. */
+.cd-scope .clay {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, white) 0%, var(--surface) 100%);
+  border: 1px solid var(--line);
+  box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .5), inset 0 -2px 6px oklch(0.4 0.03 165 / .04);
+}
+.dark .cd-scope .clay { background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%); box-shadow: var(--e2), inset 0 1px 0 oklch(1 0 0 / .06); }
+.cd-scope .flat { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--e1); }
+.cd-scope .glass { background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--e2), inset 0 1px 0 var(--glass-line); }
+.cd-scope ::selection { background: var(--brand-tint-2); color: var(--brand-ink); }
+
+/* keyframes the design's components reference that the app was missing */
+@keyframes pulsering { 0% { box-shadow: 0 0 0 0 var(--ai-tint-2); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* skeleton */
 .skeleton { position: relative; overflow: hidden; background: oklch(var(--surface-2)); border-radius: var(--r-sm); }
 .skeleton::after { content:""; position:absolute; inset:0; transform: translateX(-100%);
@@ -177,6 +194,7 @@ body {
 @keyframes growx { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes growy { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes slidein { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes breathe { 0%, 100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.07); opacity: .45; } }
 @keyframes drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(16px, 12px); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }

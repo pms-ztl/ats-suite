@@ -61,6 +61,20 @@ const nextConfig = {
     outputFileTracingRoot: monorepoRoot,
   },
 
+  // Dev-only: this is a large monorepo on Windows running the frontend
+  // alongside ~14 backend services. The unminified dev chunks are big (the
+  // root layout chunk is ~2MB) and, on a CPU-contended machine, the chunk's
+  // script can take long enough to load/execute that it trips webpack's
+  // default chunk-load timeout, surfacing as "ChunkLoadError: Loading chunk
+  // app/layout failed (timeout)" and blocking hydration. Give chunks a
+  // generous timeout in dev. No effect on production builds.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.output.chunkLoadTimeout = 600000;
+    }
+    return config;
+  },
+
   // Caching headers
   async headers() {
     return [
