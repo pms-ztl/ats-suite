@@ -18,3 +18,6 @@ coverage/
 # Phase 31e — local backup directory (never commit dumps)
 /backups/
 *.sql.gz
+
+# Demo launcher runtime output (changes every run)
+CURRENT-DEMO-URL.txt
