@@ -25,11 +25,16 @@ const nextConfig = {
   // API proxy — gateway URL is env-driven so the same image works in
   // dev (localhost:4000), staging, prod.
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    // Server-side proxy target for the same-origin "/api" path. Kept separate
+    // from NEXT_PUBLIC_API_URL (the browser's fetch base) so the client can call
+    // a relative "/api" same-origin while the Next server proxies to the gateway.
+    // This is what lets a single public tunnel (frontend only) serve the whole
+    // app without exposing the gateway or needing cross-origin CORS.
+    const gatewayOrigin = process.env.GATEWAY_ORIGIN || "http://localhost:4000";
     return [
       {
         source: "/api/:path*",
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${gatewayOrigin}/api/:path*`,
       },
     ];
   },

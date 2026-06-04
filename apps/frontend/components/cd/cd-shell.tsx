@@ -231,8 +231,8 @@ export function CdShell({ children }: { children: React.ReactNode }) {
         planUsage={planUsage}
         activeId={activeId}
         hasUnreadNotifs={false}
-        logoLight={branding?.logoUrl ?? undefined}
-        logoDark={branding?.logoUrl ?? undefined}
+        logoLight={branding?.logoUrl ?? "/assets/logo-light.png"}
+        logoDark={branding?.logoUrl ?? "/assets/logo-dark.png"}
         onNavigate={onNavigate}
         onThemeChange={onThemeChange}
         onSignOut={onSignOut}
