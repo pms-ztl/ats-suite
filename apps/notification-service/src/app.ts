@@ -46,12 +46,14 @@ export function createApp(logger: Logger): Express {
   // Phase 34c — email-to-apply. Public webhook endpoints (no auth header;
   // each route validates its own provider-specific signature).
   app.use("/internal/inbound-email", inboundEmailRouter);
-  // Phase 34d — Google Drive + Dropbox OAuth + folder picker.
-  app.use("/internal/cloud-sync", readAuthHeaders({ optional: true }), cloudSyncRouter);
+  // Phase 34d — Google Drive + Dropbox OAuth + folder picker. The OAuth
+  // callbacks are hit by the provider's redirect (no gateway token), so this
+  // mount is a public webhook; the router gates its tenant routes internally.
+  app.use("/internal/cloud-sync", readAuthHeaders({ optional: true, publicWebhook: true }), cloudSyncRouter);
   // Phase 34e — Twilio SMS / WhatsApp apply. Webhooks (/sms, /whatsapp) are
   // public but verify Twilio signature; /config and /conversations are auth-gated.
   // express.urlencoded needed for Twilio's form-encoded webhook payloads.
-  app.use("/internal/twilio", express.urlencoded({ extended: false }), readAuthHeaders({ optional: true }), smsApplyRouter);
+  app.use("/internal/twilio", express.urlencoded({ extended: false }), readAuthHeaders({ optional: true, publicWebhook: true }), smsApplyRouter);
 
   app.use(notFoundHandler());
   app.use(sentryErrorHandler());

@@ -36,15 +36,38 @@ export interface AuthHeadersOptions {
   optional?: boolean;
   /** If set, request must have this header (used internally by gateway proxy). */
   requireServiceTokenHeader?: { name: string; value: string };
+  /**
+   * If true, this route is reachable by external providers (Stripe/Twilio/email
+   * webhooks, OAuth callbacks) whose requests the gateway plain-proxies WITHOUT
+   * the X-Internal-Service token. Such routes authenticate via provider
+   * signatures instead, so the gateway shared-secret check below is skipped.
+   */
+  publicWebhook?: boolean;
 }
+
+// The gateway stamps every proxied/in-process internal call with this shared
+// secret (X-Internal-Service). When it is configured, services REQUIRE it so a
+// request cannot reach an internal port without passing through the gateway.
+// Left unset (local unit tests, ephemeral envs) the network policy is the only
+// guard and we do not block — preserving prior behavior.
+const INTERNAL_SERVICE_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
 
 export function readAuthHeaders(opts: AuthHeadersOptions = {}): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
-    // Optional shared-secret check (defense in depth — beyond network policy)
+    // Optional explicit shared-secret check (caller supplies the expected value).
     if (opts.requireServiceTokenHeader) {
       const sentValue = req.headers[opts.requireServiceTokenHeader.name.toLowerCase()];
       if (sentValue !== opts.requireServiceTokenHeader.value) {
         return next(new AppError("FORBIDDEN", "Invalid service token", 403));
+      }
+    }
+
+    // Gateway shared-secret enforcement (defense in depth beyond network policy).
+    // Every authenticated internal route must carry the gateway's token; public
+    // provider-webhook routes opt out via publicWebhook and verify signatures.
+    if (INTERNAL_SERVICE_TOKEN && !opts.publicWebhook) {
+      if (req.headers["x-internal-service"] !== INTERNAL_SERVICE_TOKEN) {
+        return next(new AppError("FORBIDDEN", "Request did not pass through the gateway", 403));
       }
     }
 

@@ -16,7 +16,8 @@ const router = Router();
 const CreateApplicationSchema = z.object({
   candidateId: z.string().uuid(),
   requisitionId: z.string().uuid(),
-  notes: z.string().optional(),
+  // nullish so callers (e.g. public apply with no cover letter) may send null
+  notes: z.string().nullish(),
   formResponses: z.record(z.string(), z.unknown()).optional(),
   stage: ApplicationStageSchema.optional(),
 });
