@@ -60,8 +60,8 @@ docker compose -f docker-compose.demo.yml up -d     # start again (no rebuild, s
 docker compose -f docker-compose.demo.yml down -v   # stop AND wipe all data
 ```
 
-On Windows you can also just double-click `docker-demo.bat` again to start it and
-get a fresh link.
+On Windows, just double-click **`docker-demo.bat`** to start (and get a fresh
+link), and **`docker-demo-stop.bat`** to stop.
 
 ---
 
