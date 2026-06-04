@@ -164,6 +164,22 @@ export async function createJobPosting(b: { requisitionId: string; title: string
   }
 }
 
+/* ---------- Application form schema (native form builder) ---------- */
+export interface FormFieldDef {
+  id: string; type: string; label: string; required?: boolean; order?: number;
+  placeholder?: string; helpText?: string; options?: string[]; fileTypes?: string[]; maxSizeMb?: number;
+}
+export async function getApplicationForm(requisitionId: string): Promise<{ name: string; fields: FormFieldDef[]; isDefault: boolean }> {
+  try {
+    const res: any = await raw("GET", `/requisitions/${encodeURIComponent(requisitionId)}/form`);
+    const d = res?.data ?? res ?? {};
+    return { name: d.name ?? "Default", fields: Array.isArray(d.fields) ? d.fields : [], isDefault: Boolean(d.isDefault) };
+  } catch { return { name: "Default", fields: [], isDefault: true }; }
+}
+export async function saveApplicationForm(requisitionId: string, name: string, fields: FormFieldDef[]): Promise<void> {
+  await raw("PUT", `/requisitions/${encodeURIComponent(requisitionId)}/form`, { name, fields });
+}
+
 /* ---------- Decisions (human-gated) ---------- */
 function toDecision(d: any): Decision {
   return {

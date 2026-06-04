@@ -86,7 +86,7 @@ const Label = ({ children, req }: { children?: React.ReactNode; req?: boolean })
 );
 const inp: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-md)", outline: "none", fontFamily: "var(--font-sans)" };
 
-interface FormField { id: string; type: string; label: string; required?: boolean; order?: number; options?: string[]; fileTypes?: string[]; maxSizeMb?: number; url?: string; src?: string; help?: string; placeholder?: string }
+interface FormField { id: string; type: string; label: string; required?: boolean; order?: number; options?: string[]; fileTypes?: string[]; maxSizeMb?: number; url?: string; src?: string; helpText?: string; placeholder?: string }
 interface JobSummary { title: string; dept: string; loc: string; min: number | null; max: number | null; blurb: string; required: string[] }
 const DEFAULT_JOB: JobSummary = { title: "This role", dept: "", loc: "", min: null, max: null, blurb: "", required: [] };
 
@@ -157,8 +157,7 @@ export default function ApplyPage() {
     try {
       const fd = new FormData();
       for (const f of fields) {
-        if (f.type === "image") continue;
-        if (f.type === "file") { const file = files[f.id]; if (file) fd.append(f.id, file); }
+        if (f.type === "file" || f.type === "image") { const file = files[f.id]; if (file) fd.append(f.id, file); }
         else { const v = values[f.id]; if (v !== undefined && v !== "") fd.append(f.id, String(v)); }
       }
       const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, { method: "POST", credentials: "include", body: fd });
@@ -209,15 +208,14 @@ export default function ApplyPage() {
             <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-sm)", padding: "12px 0" }}>Loading the application form...</div>
           ) : fields.map((f) => {
             const v = values[f.id];
-            if (f.type === "image") {
-              const src = f.url ?? f.src;
-              return src ? <div key={f.id} style={{ marginBottom: 18 }}><img src={src} alt={f.label} style={{ maxWidth: "100%", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)" }} /></div> : null;
-            }
+            const isUpload = f.type === "file" || f.type === "image";
+            const accept = f.fileTypes && f.fileTypes.length ? f.fileTypes : (f.type === "image" ? [".png", ".jpg", ".jpeg"] : [".pdf", ".doc", ".docx"]);
+            const maxMb = f.maxSizeMb ?? (f.type === "image" ? 5 : 10);
             return (
               <div key={f.id} style={{ marginBottom: 16 }}>
                 {f.type !== "checkbox" && <Label req={f.required}>{f.label}</Label>}
                 {f.type === "textarea" ? (
-                  <textarea rows={3} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} placeholder={f.placeholder ?? f.help} />
+                  <textarea rows={3} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} placeholder={f.placeholder ?? f.helpText} />
                 ) : f.type === "select" ? (
                   <select required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={{ ...inp, cursor: "pointer" }}>
                     <option value="">Select...</option>
@@ -228,17 +226,17 @@ export default function ApplyPage() {
                     <input type="checkbox" required={f.required} checked={Boolean(v)} onChange={(e) => set(f.id, e.target.checked)} style={{ marginTop: 3, width: 17, height: 17, accentColor: "var(--c-brand)" }} />
                     <span>{f.label}{f.required && <span style={{ color: "var(--c-brand)" }}> *</span>}</span>
                   </label>
-                ) : f.type === "file" ? (
+                ) : isUpload ? (
                   <>
                     <button type="button" onClick={() => fileRefs.current[f.id]?.click()} style={{ display: "block", width: "100%", border: "1.5px dashed var(--c-line-strong)", borderRadius: "var(--r-lg)", padding: "22px", textAlign: "center", background: "var(--c-surface-2)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
-                      <span style={{ width: 40, height: 40, borderRadius: 11, background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 10px" }}><I n="upload" s={20} /></span>
-                      <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", color: "var(--c-ink)" }}>{files[f.id] ? files[f.id]!.name : <>Drop your file or <span style={{ color: "var(--c-brand)" }}>browse</span></>}</div>
-                      <div style={{ fontSize: "var(--fs-xs)", color: "var(--c-ink-3)", marginTop: 3 }}>{files[f.id] ? `${(files[f.id]!.size / 1024).toFixed(0)} KB` : `${(f.fileTypes ?? [".pdf", ".docx"]).join(", ")}, up to ${f.maxSizeMb ?? 10} MB`}</div>
+                      <span style={{ width: 40, height: 40, borderRadius: 11, background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 10px" }}><I n={f.type === "image" ? "sparkles" : "upload"} s={20} /></span>
+                      <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", color: "var(--c-ink)" }}>{files[f.id] ? files[f.id]!.name : <>Drop {f.type === "image" ? "an image" : "your file"} or <span style={{ color: "var(--c-brand)" }}>browse</span></>}</div>
+                      <div style={{ fontSize: "var(--fs-xs)", color: "var(--c-ink-3)", marginTop: 3 }}>{files[f.id] ? `${(files[f.id]!.size / 1024).toFixed(0)} KB` : `${accept.join(", ")}, up to ${maxMb} MB`}</div>
                     </button>
-                    <input ref={(el) => { fileRefs.current[f.id] = el; }} type="file" required={f.required} accept={(f.fileTypes ?? [".pdf", ".doc", ".docx"]).join(",")} onChange={(e) => setFiles((s) => ({ ...s, [f.id]: e.target.files?.[0] ?? null }))} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }} />
+                    <input ref={(el) => { fileRefs.current[f.id] = el; }} type="file" required={f.required} accept={accept.join(",")} onChange={(e) => setFiles((s) => ({ ...s, [f.id]: e.target.files?.[0] ?? null }))} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }} />
                   </>
                 ) : (
-                  <input type={f.type === "email" ? "email" : f.type === "url" ? "url" : f.type === "phone" ? "tel" : "text"} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={inp} placeholder={f.placeholder ?? f.help ?? ""} />
+                  <input type={f.type === "email" ? "email" : f.type === "url" ? "url" : f.type === "phone" ? "tel" : "text"} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={inp} placeholder={f.placeholder ?? f.helpText ?? ""} />
                 )}
               </div>
             );

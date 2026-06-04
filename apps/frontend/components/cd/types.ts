@@ -552,9 +552,15 @@ export interface RoundsData {
 
 /* ----- Application form builder (fills the detail "form" tab) ----- */
 export interface FormField {
-  id: string; type: string;      // text | textarea | select | checkbox | file | email
+  id: string; type: string;      // text | textarea | select | checkbox | file | email | image | url | phone ...
   label: string; required?: boolean;
   locked?: boolean;              // default field that cannot be removed
+  order?: number;                // persisted display order
+  placeholder?: string;
+  helpText?: string;
+  options?: string[];            // select / multiselect / radio choices
+  fileTypes?: string[];          // file / image accepted extensions (e.g. .pdf, .png)
+  maxSizeMb?: number;            // file / image max upload size
 }
 export interface FormPaletteItem { type: string; label: string; icon: IconName; }
 export interface FormBuilderData {

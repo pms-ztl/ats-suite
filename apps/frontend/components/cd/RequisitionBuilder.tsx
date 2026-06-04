@@ -67,15 +67,26 @@ export function RoundsConfig({ data, jobTitle, onGenerateKits }: { data: RoundsD
 }
 
 /* ---------------- Application form builder ---------------- */
-const typeIcon: Record<string, IconName> = { text: "type", textarea: "fileText", select: "chevD", checkbox: "check", file: "fileText", email: "dot" };
+const typeIcon: Record<string, IconName> = { text: "type", textarea: "fileText", select: "chevD", multiselect: "listChecks", radio: "check", checkbox: "check", file: "fileText", image: "swatch", email: "dot", url: "arrowUpRight", phone: "card", number: "type", date: "calendar" };
+const cfgLabel: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 600, color: "var(--ink-3)", margin: "10px 0 5px" };
+const cfgInput: React.CSSProperties = { width: "100%", padding: "8px 10px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface-2)", color: "var(--ink)", fontSize: 12.5, outline: "none", fontFamily: "var(--font-sans)" };
 
-export function FormBuilder({ data, jobTitle = "Senior Backend Engineer", orgLine = "Northwind Talent · Payments", onPublish }: { data: FormBuilderData; jobTitle?: string; orgLine?: string; onPublish?: (fields: FormField[]) => void }) {
+export function FormBuilder({ data, jobTitle = "Senior Backend Engineer", orgLine = "Northwind Talent · Payments", onPublish, publishState }: { data: FormBuilderData; jobTitle?: string; orgLine?: string; onPublish?: (fields: FormField[]) => void; publishState?: "idle" | "saving" | "saved" | "error" }) {
   const [fields, setFields] = useState<FormField[]>(data.fields.map(f => ({ ...f })));
   const [sel, setSel] = useState<string | null>(null);
-  const add = (type: string, label: string) => setFields([...fields, { id: "f" + Date.now(), type, label: label + " field", required: false }]);
+  const add = (type: string, label: string) => {
+    const base: FormField = { id: "f" + Date.now(), type, label: label + " field", required: false, order: fields.length };
+    if (type === "file") { base.fileTypes = [".pdf", ".doc", ".docx"]; base.maxSizeMb = 10; }
+    if (type === "image") { base.fileTypes = [".png", ".jpg", ".jpeg"]; base.maxSizeMb = 5; }
+    if (type === "select" || type === "multiselect" || type === "radio") base.options = ["Option 1", "Option 2"];
+    setFields([...fields, base]); setSel(base.id);
+  };
   const upd = (id: string, patch: Partial<FormField>) => setFields(fields.map(f => f.id === id ? { ...f, ...patch } : f));
-  const remove = (id: string) => setFields(fields.filter(f => f.id !== id || f.locked));
+  const remove = (id: string) => { setFields(fields.filter(f => f.id !== id || f.locked)); setSel(s => (s === id ? null : s)); };
   const move = (i: number, dir: number) => { const j = i + dir; if (j < 0 || j >= fields.length) return; const n = [...fields]; [n[i], n[j]] = [n[j], n[i]]; setFields(n); };
+  const selField = fields.find(f => f.id === sel) || null;
+  const pubLabel = publishState === "saving" ? "Saving..." : publishState === "saved" ? "Saved" : publishState === "error" ? "Retry" : "Publish";
+  const pubIcon: IconName = publishState === "saved" ? "check" : "arrowUpRight";
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr", gap: 16, alignItems: "start" }} className="form-builder-grid">
@@ -116,13 +127,49 @@ export function FormBuilder({ data, jobTitle = "Senior Backend Engineer", orgLin
             </div>
           ))}
         </div>
+
+        {/* per-field settings (options, file/image type config) */}
+        {selField && (
+          <div style={{ marginTop: 14, padding: 14, borderRadius: "var(--r-lg)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)", animation: "rise .25s var(--ease-out)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <span style={{ ...fStyles.label, display: "inline-flex", gap: 6, alignItems: "center" }}><Icon name="settings" size={13} /> Field settings</span>
+              <span style={{ fontSize: 10.5, color: "var(--ink-3)", textTransform: "capitalize" }}>{selField.type}{selField.locked ? " · default" : ""}</span>
+            </div>
+            <label style={cfgLabel}>Help text</label>
+            <input value={selField.helpText ?? ""} onChange={e => upd(selField.id, { helpText: e.target.value })} placeholder="Optional hint shown under the field" style={cfgInput} />
+            {(selField.type === "select" || selField.type === "multiselect" || selField.type === "radio") && (
+              <>
+                <label style={cfgLabel}>Choices (one per line)</label>
+                <textarea rows={3} value={(selField.options ?? []).join("\n")} onChange={e => upd(selField.id, { options: e.target.value.split("\n").map(s => s.trimStart()).filter((s, i, a) => s !== "" || i < a.length - 1) })} onBlur={e => upd(selField.id, { options: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) })} style={{ ...cfgInput, resize: "vertical", lineHeight: 1.5 }} placeholder={"Option 1\nOption 2"} />
+              </>
+            )}
+            {(selField.type === "file" || selField.type === "image") && (
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={cfgLabel}>Accepted types</label>
+                  <input value={(selField.fileTypes ?? []).join(", ")} onChange={e => upd(selField.id, { fileTypes: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} placeholder={selField.type === "image" ? ".png, .jpg" : ".pdf, .docx"} style={cfgInput} />
+                </div>
+                <div style={{ width: 92 }}>
+                  <label style={cfgLabel}>Max MB</label>
+                  <input type="number" min={1} value={selField.maxSizeMb ?? 10} onChange={e => upd(selField.id, { maxSizeMb: Math.max(1, Number(e.target.value) || 10) })} className="mono" style={cfgInput} />
+                </div>
+              </div>
+            )}
+            {selField.type === "image" && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", fontSize: 11.5, color: "var(--ink-2)" }}>
+                <Icon name="swatch" size={14} style={{ color: "var(--ai)", flexShrink: 0 }} />
+                <span>Candidates can upload an image (for example a portfolio screenshot or headshot) on the public form.</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* live preview */}
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ ...fStyles.label, display: "inline-flex", gap: 6, alignItems: "center" }}><Icon name="eye" size={13} /> Candidate preview</span>
-          <Btn variant="primary" size="sm" icon="arrowUpRight" onClick={() => onPublish?.(fields)}>Publish</Btn>
+          <Btn variant="primary" size="sm" icon={pubIcon} onClick={() => { if (publishState !== "saving") onPublish?.(fields); }}>{pubLabel}</Btn>
         </div>
         <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
           <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Apply: {jobTitle}</div>
@@ -134,7 +181,8 @@ export function FormBuilder({ data, jobTitle = "Senior Backend Engineer", orgLin
                 {f.type === "textarea" ? <div style={{ height: 56, borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface-2)" }} />
                   : f.type === "select" ? <div style={{ height: 38, borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", fontSize: 12.5, color: "var(--ink-3)" }}>Select&hellip;<Icon name="chevD" size={14} /></div>
                   : f.type === "checkbox" ? <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ width: 18, height: 18, borderRadius: 5, border: "1.5px solid var(--line-strong)" }} /><span style={{ fontSize: 12, color: "var(--ink-3)" }}>Yes</span></div>
-                  : f.type === "file" ? <div style={{ height: 46, borderRadius: "var(--r)", border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)", display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-3)" }}>Drop file or browse</div>
+                  : f.type === "file" ? <div style={{ height: 46, borderRadius: "var(--r)", border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)", display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-3)" }}>Drop file or browse{f.fileTypes?.length ? ` (${f.fileTypes.join(", ")})` : ""}</div>
+                  : f.type === "image" ? <div style={{ height: 60, borderRadius: "var(--r)", border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)", display: "grid", placeItems: "center", color: "var(--ink-3)" }}><Icon name="swatch" size={20} /></div>
                   : <div style={{ height: 38, borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface-2)" }} />}
               </div>
             ))}

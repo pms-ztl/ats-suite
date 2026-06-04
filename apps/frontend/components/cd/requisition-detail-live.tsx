@@ -10,13 +10,14 @@
 import { useState, type CSSProperties } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { RequisitionDetail } from "./screens/RequisitionDetail";
-import { RoundsConfig, FormBuilder } from "./RequisitionBuilder";
+import { RoundsConfig } from "./RequisitionBuilder";
+import { FormBuilderLive } from "./form-builder-live";
 import { Icon } from "./icon";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getRequisition, getFunnel, createJobPosting, findPostingForRequisition } from "@/lib/api";
 import type { Requisition, ApplicationStage } from "@/lib/types";
-import type { ReqDetailData, ReqStatusMeta, ReqStatusKey, ReqCustomField, RoundsData, FormBuilderData, TimelineItem } from "./types";
+import type { ReqDetailData, ReqStatusMeta, ReqStatusKey, ReqCustomField, RoundsData, TimelineItem } from "./types";
 
 const STATUS_META: Record<string, ReqStatusMeta> = {
   DRAFT: { label: "Draft", tone: "var(--ink-3)", bg: "var(--surface-3)", icon: "dot" },
@@ -63,25 +64,6 @@ const ROUNDS_DATA: RoundsData = {
     PANEL: { label: "Panel", tone: "var(--warn)" },
     FINAL: { label: "Final", tone: "var(--ok)" },
   },
-};
-const FORM_DATA: FormBuilderData = {
-  fields: [
-    { id: "f1", type: "text", label: "Full name", required: true, locked: true },
-    { id: "f2", type: "email", label: "Email address", required: true, locked: true },
-    { id: "f3", type: "file", label: "Resume / CV", required: true, locked: true },
-    { id: "f4", type: "text", label: "LinkedIn or portfolio URL", required: false },
-    { id: "f5", type: "select", label: "Years of backend experience", required: true },
-    { id: "f6", type: "textarea", label: "Why are you interested in this role?", required: false },
-    { id: "f7", type: "checkbox", label: "Are you authorized to work in the US?", required: true },
-  ],
-  palette: [
-    { type: "text", label: "Short text", icon: "type" },
-    { type: "textarea", label: "Long text", icon: "fileText" },
-    { type: "select", label: "Dropdown", icon: "chevD" },
-    { type: "checkbox", label: "Yes / No", icon: "check" },
-    { type: "file", label: "File upload", icon: "fileText" },
-    { type: "email", label: "Email", icon: "dot" },
-  ],
 };
 const EXAMPLE_ACTIVITY: TimelineItem[] = [
   { ic: "sparkles", ai: true, who: "candidate-screener", what: "screened new applicants", t: "12m" },
@@ -182,7 +164,7 @@ export function RequisitionDetailLive() {
         data={data}
         statusMeta={statusMeta}
         roundsSlot={<RoundsConfig data={ROUNDS_DATA} jobTitle={d.title} />}
-        formSlot={<FormBuilder data={FORM_DATA} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
+        formSlot={<FormBuilderLive requisitionId={d.id} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
         onBack={() => router.push("/requisitions")}
         onCandidates={() => router.push("/candidates")}
         onPost={onPost}
