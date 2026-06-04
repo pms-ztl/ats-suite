@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Tools image: runs database migrations and the demo seed.
+# Has the full monorepo + node_modules + prisma CLI + tsx + psql client.
+# Used by the `migrator` and `seeder` one-shot services in docker-compose.demo.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+ARG NODE_VERSION=20-alpine
+FROM node:${NODE_VERSION} AS tools
+WORKDIR /repo
+
+# build toolchain (argon2/prisma engines) + psql client + bash for the scripts
+RUN apk add --no-cache python3 make g++ openssl libc6-compat postgresql-client bash curl
+
+COPY package.json package-lock.json* turbo.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps ./apps
+
+# Installs prisma CLI + tsx + downloads prisma engines (needed for migrate/db push)
+RUN npm install --no-audit --no-fund
+
+COPY infra/migrate.sh infra/seed.sh ./infra/
+RUN chmod +x ./infra/migrate.sh ./infra/seed.sh
+
+CMD ["bash"]

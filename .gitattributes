@@ -1,0 +1,4 @@
+# Shell scripts must keep LF endings so they run inside Linux containers.
+# Without this, Git on Windows can rewrite them to CRLF and bash fails with
+# "bad interpreter: No such file or directory".
+*.sh text eol=lf

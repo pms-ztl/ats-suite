@@ -1,0 +1,310 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CDC ATS — fully self-contained demo stack. Fresh machine needs ONLY Docker.
+#
+#    cp .env.example .env        # put your OPENROUTER_API_KEY in it
+#    docker compose -f docker-compose.demo.yml up -d --build
+#    docker compose -f docker-compose.demo.yml logs -f cloudflared   # see the public URL
+#
+#  Brings up: Postgres + Redis + NATS + MinIO, runs migrations + seed, starts all
+#  14 backend services + the frontend, and opens a free Cloudflare tunnel.
+#  Login: priya@pinnacle.demo / PinnacleDemo123!
+# ═══════════════════════════════════════════════════════════════════════════════
+name: cdc-ats-demo
+
+x-svc-env: &svc-env
+  NODE_ENV: production
+  REDIS_URL: redis://redis:6379
+  NATS_URL: nats://nats:4222
+  JWT_SECRET: ${JWT_SECRET:-demo-jwt-secret-min-32-chars-change-me-0123456789}
+  INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-demo-internal-service-token}
+  OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  CORS_ORIGIN: ${CORS_ORIGIN:-}
+  OTEL_DISABLED: "true"
+  IDENTITY_SERVICE_URL: http://identity-service:4001
+  TENANT_SERVICE_URL: http://tenant-service:4002
+  BILLING_SERVICE_URL: http://billing-service:4003
+  JOB_SERVICE_URL: http://job-service:4004
+  CANDIDATE_SERVICE_URL: http://candidate-service:4005
+  INTERVIEW_SERVICE_URL: http://interview-service:4006
+  RESUME_SERVICE_URL: http://resume-service:4007
+  SCREENING_SERVICE_URL: http://screening-service:4008
+  NOTIFICATION_SERVICE_URL: http://notification-service:4009
+  SEARCH_SERVICE_URL: http://search-service:4010
+  AGENT_SERVICE_URL: http://agent-service:4011
+  ANALYTICS_SERVICE_URL: http://analytics-service:4012
+  COMPLIANCE_SERVICE_URL: http://compliance-service:4013
+
+x-svc-build: &svc-build
+  context: .
+  dockerfile: infra/Dockerfile.service
+
+x-svc-defaults: &svc-defaults
+  restart: unless-stopped
+  networks: [ats_net]
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    nats: { condition: service_started }
+    migrator: { condition: service_completed_successfully }
+
+networks:
+  ats_net: { driver: bridge }
+
+volumes:
+  postgres_data:
+  redis_data:
+  nats_data:
+  minio_data:
+
+services:
+  # ── Infrastructure ─────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/00-create-dbs.sql:ro
+    networks: [ats_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes: [redis_data:/data]
+    networks: [ats_net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  nats:
+    image: nats:2.10-alpine
+    restart: unless-stopped
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    volumes: [nats_data:/data]
+    networks: [ats_net]
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes: [minio_data:/data]
+    networks: [ats_net]
+
+  minio-setup:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio: { condition: service_started }
+    networks: [ats_net]
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do echo waiting-for-minio; sleep 2; done;
+      mc mb --ignore-existing local/resumes;
+      echo minio-bucket-ready;
+      "
+
+  # ── One-shot: create every service's schema ────────────────────────────────
+  migrator:
+    build: { context: ., dockerfile: infra/Dockerfile.tools }
+    restart: "no"
+    command: ["bash", "infra/migrate.sh"]
+    networks: [ats_net]
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      IDENTITY_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/identity_db
+      TENANT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tenant_db
+      BILLING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/billing_db
+      JOB_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db
+      CANDIDATE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/candidate_db
+      INTERVIEW_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/interview_db
+      RESUME_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/resume_db
+      SCREENING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/screening_db
+      NOTIFICATION_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
+      SEARCH_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/search_db
+      AGENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_db
+      ANALYTICS_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
+      COMPLIANCE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
+
+  # ── Backend services (14) ──────────────────────────────────────────────────
+  api-gateway:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: api-gateway } }
+    environment:
+      <<: *svc-env
+      PORT: "4000"
+    ports: ["4000:4000"]
+
+  identity-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: identity-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4001"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/identity_db
+
+  tenant-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: tenant-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4002"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tenant_db
+
+  billing-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: billing-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4003"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/billing_db
+
+  job-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: job-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4004"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db
+
+  candidate-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: candidate-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4005"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/candidate_db
+
+  interview-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: interview-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4006"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/interview_db
+
+  resume-service:
+    build: { <<: *svc-build, args: { SERVICE: resume-service } }
+    restart: unless-stopped
+    networks: [ats_net]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      nats: { condition: service_started }
+      migrator: { condition: service_completed_successfully }
+      minio-setup: { condition: service_completed_successfully }
+    environment:
+      <<: *svc-env
+      PORT: "4007"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/resume_db
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: resumes
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+
+  screening-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: screening-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4008"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/screening_db
+
+  notification-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: notification-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4009"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
+
+  search-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: search-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4010"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/search_db
+
+  agent-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: agent-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4011"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_db
+
+  analytics-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: analytics-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4012"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
+
+  compliance-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: compliance-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4013"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        GATEWAY_ORIGIN: http://api-gateway:4000
+    restart: unless-stopped
+    networks: [ats_net]
+    environment:
+      NODE_ENV: production
+      GATEWAY_ORIGIN: http://api-gateway:4000
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    ports: ["3000:3000"]
+    depends_on:
+      api-gateway: { condition: service_started }
+
+  # ── One-shot: seed demo data + unlock AI ───────────────────────────────────
+  seeder:
+    build: { context: ., dockerfile: infra/Dockerfile.tools }
+    restart: "no"
+    command: ["bash", "infra/seed.sh"]
+    networks: [ats_net]
+    depends_on:
+      api-gateway: { condition: service_started }
+    environment:
+      API_URL: http://api-gateway:4000/api
+      TENANT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tenant_db
+      BILLING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/billing_db
+
+  # ── Public tunnel (prints the URL in its logs) ─────────────────────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    networks: [ats_net]
+    command: tunnel --no-autoupdate --url http://frontend:3000
+    depends_on:
+      frontend: { condition: service_started }

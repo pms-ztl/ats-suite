@@ -36,9 +36,14 @@ COPY --from=deps /repo/turbo.json ./turbo.json
 COPY --from=deps /repo/tsconfig.base.json ./tsconfig.base.json
 COPY packages ./packages
 COPY apps/frontend ./apps/frontend
-# Build-time public env (defaults sensible; override in compose)
+# Build-time public env (defaults sensible; override in compose).
+# NEXT_PUBLIC_API_URL is the browser's fetch base (use "/api" for same-origin
+# behind a tunnel). GATEWAY_ORIGIN is the server-side proxy target the Next
+# rewrite forwards "/api" to (the gateway container on the compose network).
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG GATEWAY_ORIGIN=http://localhost:4000
+ENV GATEWAY_ORIGIN=${GATEWAY_ORIGIN}
 RUN npm run build --workspace=@cdc-ats/frontend
 
 FROM node:${NODE_VERSION} AS runner

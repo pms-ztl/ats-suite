@@ -33,6 +33,11 @@ COPY apps/interview-service/package.json     apps/interview-service/package.json
 COPY apps/resume-service/package.json        apps/resume-service/package.json
 COPY apps/screening-service/package.json     apps/screening-service/package.json
 COPY apps/notification-service/package.json  apps/notification-service/package.json
+COPY apps/search-service/package.json        apps/search-service/package.json
+COPY apps/agent-service/package.json         apps/agent-service/package.json
+COPY apps/analytics-service/package.json     apps/analytics-service/package.json
+COPY apps/compliance-service/package.json    apps/compliance-service/package.json
+COPY apps/seed-data/package.json             apps/seed-data/package.json
 COPY apps/frontend/package.json              apps/frontend/package.json
 COPY packages/common/package.json            packages/common/package.json
 COPY packages/contracts/package.json         packages/contracts/package.json
