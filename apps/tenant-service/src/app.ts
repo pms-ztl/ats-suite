@@ -6,6 +6,7 @@ import {
   notFoundHandler,
   requestId,
   readAuthHeaders,
+  tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -47,6 +48,10 @@ export function createApp(logger: Logger): Express {
   // legitimate admin requests. `optional: true` because /internal/tenants
   // POST (register-company saga) is called before any JWT exists.
   app.use("/internal", readAuthHeaders({ optional: true }));
+  // Bind request tenant so branding/onboarding (RLS client) scope to the
+  // caller's own Tenant row. The register saga has no X-Tenant-Id and uses
+  // the admin client, so it is unaffected.
+  app.use("/internal", tenantContext);
 
   app.use("/internal/tenants", tenantsRouter);
   app.use("/internal/plan-changes", planChangesRouter);
