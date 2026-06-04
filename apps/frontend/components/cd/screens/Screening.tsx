@@ -63,6 +63,13 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
             <div style={{ marginTop: 14 }}><Confidence value={row.conf} /></div>
           </div>
 
+          {row.reasoning && (
+            <div style={{ marginTop: 16, padding: "13px 15px", borderRadius: "var(--r-lg)", background: "var(--ai-tint)", border: "1px solid color-mix(in oklab, var(--ai) 18%, transparent)" }}>
+              <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 7 }}><Icon name="sparkles" size={14} style={{ color: "var(--ai-ink)" }} /><span style={{ fontWeight: 700, fontSize: 12, color: "var(--ai-ink)" }}>Why this verdict (advisory)</span></div>
+              <div style={{ fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.55 }}>{row.reasoning}</div>
+            </div>
+          )}
+
           <div style={{ marginTop: 16 }}>
             <div style={{ ...LABEL, marginBottom: 8 }}>Requirement breakdown</div>
             {reqs.length ? (

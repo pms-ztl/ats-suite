@@ -252,6 +252,7 @@ export interface ScreeningRow {
   conf: number;                  // model confidence 0..1 (0.70 is the threshold)
   band: string;                  // verdict band label, e.g. "Strong match"
   status: "approved" | "pending";// human decision state before any in-session decision
+  reasoning?: string;            // plain-English "why this verdict" summary from the screener
   requirements?: ReqBreakdown[]; // optional per-row breakdown; falls back to data.requirements
   trace?: TraceStep[];           // optional per-row trace; falls back to data.trace
 }

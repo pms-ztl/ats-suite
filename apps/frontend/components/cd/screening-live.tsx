@@ -6,8 +6,8 @@
 // the human's click is recorded as the deciding action (handled in-screen).
 import { Screening } from "./screens/Screening";
 import { useData } from "@/lib/use-data";
-import { listScreening } from "@/lib/api";
-import type { ScreeningVerdict, ScreeningResult, RequirementMatch } from "@/lib/types";
+import { listScreening, listCandidates, listRequisitions } from "@/lib/api";
+import type { ScreeningVerdict, ScreeningResult, RequirementMatch, Candidate, Requisition } from "@/lib/types";
 import type { ScreeningData, ScreeningRow, ReqBreakdown, VerdictKind } from "./types";
 
 const KIND: Record<ScreeningResult, VerdictKind> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
@@ -19,7 +19,7 @@ function initials(name: string): string {
 }
 const reqState = (met: RequirementMatch["met"]): VerdictKind => (met === true ? "pass" : met === "partial" ? "review" : "fail");
 
-function toRow(v: ScreeningVerdict): ScreeningRow {
+function toRow(v: ScreeningVerdict, name: string, roleTitle: string): ScreeningRow {
   const kind = KIND[v.result] ?? "review";
   const reqs = v.requirements ?? [];
   const requirements: ReqBreakdown[] = reqs.map((req, i) => {
@@ -35,23 +35,30 @@ function toRow(v: ScreeningVerdict): ScreeningRow {
   });
   return {
     id: v.id ?? v.candidateId,
-    ini: initials(v.candidateId),
-    name: v.candidateId,
-    role: v.agent,
+    ini: initials(name),
+    name,
+    role: roleTitle || v.agent,
     reqId: v.requisitionId ?? "",
     score: v.score,
     kind,
     conf: v.confidence,
     band: BAND[kind],
     status: "pending",
+    reasoning: v.summary,
     requirements,
   };
 }
 
 export function ScreeningLive() {
   const queue = useData<ScreeningVerdict[]>(listScreening);
+  const cands = useData<Candidate[]>(listCandidates);
+  const reqs = useData<Requisition[]>(listRequisitions);
+  const candById = new Map((cands.data ?? []).map((c) => [c.id, c.name]));
+  const reqById = new Map((reqs.data ?? []).map((r) => [r.id, r.title]));
   const data: ScreeningData = {
-    rows: (queue.data ?? []).map(toRow),
+    rows: (queue.data ?? []).map((v) =>
+      toRow(v, candById.get(v.candidateId) ?? v.candidateId, reqById.get(v.requisitionId ?? "") ?? "")
+    ),
     requirements: [],
     trace: [],
   };

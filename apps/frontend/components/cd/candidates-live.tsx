@@ -7,8 +7,8 @@
 import { useRouter } from "next/navigation";
 import { Candidates } from "./screens/Candidates";
 import { useData } from "@/lib/use-data";
-import { listCandidates, listRequisitions } from "@/lib/api";
-import type { Candidate as GwCandidate, Requisition, ScreeningResult } from "@/lib/types";
+import { listCandidates, listRequisitions, listScreening } from "@/lib/api";
+import type { Candidate as GwCandidate, Requisition, ScreeningResult, ScreeningVerdict } from "@/lib/types";
 import type { Candidate, CandStage, SavedView } from "./types";
 import { initials, reqTitleMap } from "./wire-helpers";
 
@@ -30,14 +30,21 @@ export function CandidatesLive() {
   const router = useRouter();
   const cands = useData<GwCandidate[]>(listCandidates);
   const reqs = useData<Requisition[]>(listRequisitions);
+  const screen = useData<ScreeningVerdict[]>(listScreening);
   const titles = reqTitleMap(reqs.data);
 
   // The CD Candidates board snapshots `candidates` into useState on mount, so it
-  // would freeze on the empty loading array. Render only once both fetches settle
+  // would freeze on the empty loading array. Render only once all fetches settle
   // (then it mounts with the full data).
-  if (cands.loading || reqs.loading) return null;
+  if (cands.loading || reqs.loading || screen.loading) return null;
 
-  const candidates: Candidate[] = (cands.data ?? []).map((c) => ({
+  // The AI screening verdict + score live in screening-service, not on the
+  // candidate row — join them so the board shows the role-match at a glance.
+  const verdictByCand = new Map((screen.data ?? []).map((v) => [v.candidateId, v]));
+
+  const candidates: Candidate[] = (cands.data ?? []).map((c) => {
+    const sv = verdictByCand.get(c.id);
+    return {
     id: c.id,
     ini: initials(c.name),
     name: c.name,
@@ -45,12 +52,13 @@ export function CandidatesLive() {
     loc: c.location,
     reqId: c.requisitionId ?? "",
     stage: c.stage,
-    st: c.result ? KIND[c.result] : "pending",
-    score: c.aiScore ?? 0,
+    st: sv ? KIND[sv.result] : c.result ? KIND[c.result] : "pending",
+    score: sv ? sv.score : c.aiScore ?? 0,
     match: ", ",
     source: c.source ?? "Direct",
     days: c.timeInStageDays ?? 0,
-  }));
+    };
+  });
 
   const sources = ["All sources", ...Array.from(new Set(candidates.map((c) => c.source).filter(Boolean)))];
   const savedViews: SavedView[] = [
