@@ -137,6 +137,33 @@ export async function createRequisition(b: Partial<Requisition>): Promise<Requis
   return toRequisition(res?.data ?? res);
 }
 
+/* ---------- Job postings (public link) ---------- */
+export interface JobPostingLite { id: string; slug: string; title: string; isPublished: boolean; requisitionId: string; }
+export function slugify(s: string): string {
+  return (s || "job").toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 100) || "job";
+}
+function toPosting(p: any): JobPostingLite {
+  return { id: p?.id ?? "", slug: p?.slug ?? "", title: p?.title ?? "", isPublished: Boolean(p?.isPublished), requisitionId: p?.requisitionId ?? "" };
+}
+// Returns the existing published posting for a requisition, if any.
+export async function findPostingForRequisition(requisitionId: string): Promise<JobPostingLite | null> {
+  try {
+    const list = arr(await raw("GET", `/job-postings?requisitionId=${encodeURIComponent(requisitionId)}`)).map(toPosting);
+    return list.find((p) => p.requisitionId === requisitionId) ?? list[0] ?? null;
+  } catch { return null; }
+}
+// Creates (publishes) a posting. Retries once with a longer slug on a 409 slug clash.
+export async function createJobPosting(b: { requisitionId: string; title: string; description?: string; requirements?: string[]; slug?: string; }): Promise<JobPostingLite> {
+  const base = b.slug || slugify(b.title);
+  const body = { requisitionId: b.requisitionId, title: b.title, description: b.description ?? "", requirements: b.requirements ?? [], isPublished: true };
+  try {
+    return toPosting((await raw("POST", "/job-postings", { ...body, slug: base }))?.data ?? {});
+  } catch {
+    const alt = `${base}-${Math.random().toString(36).slice(2, 7)}`.slice(0, 120);
+    return toPosting((await raw("POST", "/job-postings", { ...body, slug: alt }))?.data ?? {});
+  }
+}
+
 /* ---------- Decisions (human-gated) ---------- */
 function toDecision(d: any): Decision {
   return {

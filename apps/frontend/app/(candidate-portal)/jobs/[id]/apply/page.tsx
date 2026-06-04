@@ -1,54 +1,25 @@
 "use client";
 // app/(candidate-portal)/jobs/[id]/apply/page.tsx
-// RICH port of claude-design/portal.jsx -> the Apply component (warm,
-// ethical-AI-first candidate application form) plus its Confirm success state.
-//
-// This is a PUBLIC, content-only page: CandidateLayout (the route group's
-// layout) supplies the nav, footer and the max-w main wrapper, so we render
-// the form CONTENT only (no min-h-screen / no chrome of our own).
-//
-// Faithful to the prototype's Apply/Confirm: job summary header + "What you'll
-// need", the AI-advisory "a human decides" notice, the application fields
-// (name / email / linkedin / resume upload / role-specific questions / cover
-// note / consent), submit, and the celebratory Confirm screen.
-//
-// The portal-specific helpers (I / Btn / Chip / AINotice / Label) are
-// reproduced inline. Inline palette colors use the full-color --c-* tokens;
-// effect / size / motion tokens (--r, --e1, --fs-*, --t, --ease-out, ...) stay
-// bare. The prototype's `rise` / `pop` keyframes exist globally.
-//
-// WIRED: a fully controlled form (useState) with a real resume <input
-// type="file">. We best-effort load the job summary via raw() (GET
-// /public/jobs/{id}, falling back to /jobs/{id}) and on submit POST the
-// application as FormData via raw() (/jobs/{id}/apply, falling back to
-// /applications). On success we render Confirm with the server's reference id
-// when present; on failure we show a friendly inline notice. No fabricated
-// confirmation.
+// PUBLIC candidate application page (no auth). The [id] route param is the job
+// posting SLUG. We load the job summary (GET /public/jobs/:slug) AND the tenant's
+// real application form schema (GET /public/jobs/:slug/form), render the schema's
+// fields dynamically (text / email / phone / url / textarea / select / checkbox /
+// file / image), and on submit POST a multipart application to
+// /public/jobs/:slug/apply-custom (field id -> value, the file under its field id),
+// which creates a real Candidate + Application and forwards the resume for parsing.
+// Design ported from claude-design/portal.jsx (Apply + Confirm). Inline palette
+// uses the --c-* full-color tokens; effect/size/motion tokens stay bare.
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Icon } from "@/components/aurora-icon";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-/* ---- raw() local: best-effort fetch against the API, JSON or FormData ---- */
-async function raw(
-  paths: string[],
-  init?: RequestInit,
-): Promise<{ ok: boolean; status: number; data: any } | null> {
-  for (const p of paths) {
-    try {
-      const r = await fetch(`${API_BASE}${p}`, { credentials: "include", ...init });
-      // A 404 on the first candidate path -> try the next fallback path.
-      if (r.status === 404 && p !== paths[paths.length - 1]) continue;
-      let data: any = null;
-      try { data = await r.json(); } catch { /* empty / non-JSON body */ }
-      return { ok: r.ok, status: r.status, data };
-    } catch {
-      // network error -> try the next path, else report failure
-      if (p === paths[paths.length - 1]) return null;
-    }
-  }
-  return null;
+async function getJSON(path: string): Promise<any> {
+  try {
+    const r = await fetch(`${API_BASE}${path}`, { credentials: "include" });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
 }
 
 /* ---- icons (subset, ported verbatim from portal.jsx's PI map) ---- */
@@ -72,12 +43,8 @@ function I({ n, s = 20, sw = 1.7, c, style }: { n: string; s?: number; sw?: numb
   );
 }
 
-/* ---- shared (ported inline) ---- */
-function Btn({
-  kind = "primary", icon, trail, children, onClick, big, full, type, disabled, style = {},
-}: {
-  kind?: "primary" | "soft" | "ghost" | "ai";
-  icon?: string; trail?: string; children?: React.ReactNode;
+function Btn({ kind = "primary", icon, trail, children, onClick, big, full, type, disabled, style = {} }: {
+  kind?: "primary" | "soft" | "ghost" | "ai"; icon?: string; trail?: string; children?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>; big?: boolean; full?: boolean;
   type?: "button" | "submit" | "reset"; disabled?: boolean; style?: React.CSSProperties;
 }) {
@@ -88,8 +55,7 @@ function Btn({
     ai: { background: "var(--c-ai)", color: "var(--c-on-brand)" },
   }[kind];
   return (
-    <button
-      onClick={onClick} type={type} disabled={disabled}
+    <button onClick={onClick} type={type} disabled={disabled}
       style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, padding: big ? "13px 22px" : "10px 18px", fontSize: big ? "var(--fs-md)" : "var(--fs-sm)", fontWeight: 700, borderRadius: "var(--r)", cursor: disabled ? "default" : "pointer", border: "1px solid transparent", width: full ? "100%" : "auto", transition: "transform var(--t) var(--ease-out), box-shadow var(--t)", ...V, ...(disabled ? { opacity: 0.6, pointerEvents: "none" } : {}), ...style }}
       onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.transform = "translateY(-2px)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}>
@@ -97,7 +63,6 @@ function Btn({
     </button>
   );
 }
-
 function Chip({ icon, children, tone = "var(--c-ink-2)", bg = "var(--c-surface-2)" }: { icon?: string; children?: React.ReactNode; tone?: string; bg?: string }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: tone, background: bg }}>
@@ -105,8 +70,6 @@ function Chip({ icon, children, tone = "var(--c-ink-2)", bg = "var(--c-surface-2
     </span>
   );
 }
-
-/* AI-assistive banner, appears wherever AI touches the candidate */
 function AINotice({ compact }: { compact?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 12, alignItems: compact ? "center" : "flex-start", padding: compact ? "11px 14px" : "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)" }}>
@@ -118,90 +81,37 @@ function AINotice({ compact }: { compact?: boolean }) {
     </div>
   );
 }
-
 const Label = ({ children, req }: { children?: React.ReactNode; req?: boolean }) => (
   <label style={{ display: "block", fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink-2)", marginBottom: 7 }}>{children}{req && <span style={{ color: "var(--c-brand)" }}> *</span>}</label>
 );
+const inp: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-md)", outline: "none", fontFamily: "var(--font-sans)" };
 
-/* ---- job summary (best-effort, with the prototype's defaults as fallback) ---- */
-interface JobSummary {
-  title: string;
-  dept: string;
-  loc: string;
-  min: number | null;
-  max: number | null;
-  blurb: string;
-  required: string[];
-  custom: { label: string; help: string }[];
-}
-const DEFAULT_JOB: JobSummary = {
-  title: "Senior Backend Engineer",
-  dept: "Payments",
-  loc: "Austin, TX · Remote (US)",
-  min: 160,
-  max: 200,
-  blurb: "Design and scale the core services behind a platform that moves billions of dollars a year.",
-  required: [
-    "5+ years building backend services in production",
-    "Strong in Go, Rust, or a comparable systems language",
-    "Experience with distributed systems and event-driven architectures",
-    "Track record owning services from design through on-call",
-  ],
-  custom: [
-    { label: "Must have fintech domain experience", help: "Tell us about regulated money movement, payments, or banking work." },
-    { label: "Time-zone overlap", help: "Do you have at least 4 hours overlap with US Central?" },
-  ],
-};
+interface FormField { id: string; type: string; label: string; required?: boolean; order?: number; options?: string[]; fileTypes?: string[]; maxSizeMb?: number; url?: string; src?: string; help?: string; placeholder?: string }
+interface JobSummary { title: string; dept: string; loc: string; min: number | null; max: number | null; blurb: string; required: string[] }
+const DEFAULT_JOB: JobSummary = { title: "This role", dept: "", loc: "", min: null, max: null, blurb: "", required: [] };
 
-function normalizeJob(d: any): JobSummary {
-  if (!d || typeof d !== "object") return DEFAULT_JOB;
-  const j = d.data ?? d.job ?? d;
-  if (!j || typeof j !== "object") return DEFAULT_JOB;
-  const custom = Array.isArray(j.customQuestions ?? j.custom ?? j.questions)
-    ? (j.customQuestions ?? j.custom ?? j.questions).map((c: any) =>
-        typeof c === "string"
-          ? { label: c, help: "" }
-          : { label: c.label ?? c.question ?? c.prompt ?? "Question", help: c.help ?? c.placeholder ?? c.description ?? "" })
-    : DEFAULT_JOB.custom;
-  const required = Array.isArray(j.requirements ?? j.required ?? j.mustHaves)
-    ? (j.requirements ?? j.required ?? j.mustHaves).map((r: any) => (typeof r === "string" ? r : r.label ?? r.text ?? String(r)))
-    : DEFAULT_JOB.required;
+function normalizeJob(raw: any): JobSummary {
+  const p = raw?.data ?? raw ?? {};
+  const j = p.requisition ?? p.job ?? p;
+  const required = Array.isArray(j?.requirements) ? j.requirements.map((r: any) => (typeof r === "string" ? r : r?.label ?? String(r))) : [];
   return {
-    title: j.title ?? j.name ?? DEFAULT_JOB.title,
-    dept: j.department ?? j.dept ?? DEFAULT_JOB.dept,
-    loc: j.location ?? j.loc ?? DEFAULT_JOB.loc,
-    min: typeof j.salaryMin === "number" ? Math.round(j.salaryMin / 1000) : (typeof j.min === "number" ? j.min : DEFAULT_JOB.min),
-    max: typeof j.salaryMax === "number" ? Math.round(j.salaryMax / 1000) : (typeof j.max === "number" ? j.max : DEFAULT_JOB.max),
-    blurb: j.summary ?? j.blurb ?? j.description ?? DEFAULT_JOB.blurb,
-    required: required.length ? required : DEFAULT_JOB.required,
-    custom: custom.length ? custom : DEFAULT_JOB.custom,
+    title: p.title ?? j?.title ?? DEFAULT_JOB.title,
+    dept: j?.department ?? "", loc: j?.location ?? "",
+    min: typeof j?.salaryMin === "number" ? Math.round(j.salaryMin / 1000) : null,
+    max: typeof j?.salaryMax === "number" ? Math.round(j.salaryMax / 1000) : null,
+    blurb: j?.description ?? p.description ?? "",
+    required,
   };
 }
 
-const inp: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-md)", outline: "none", fontFamily: "var(--font-sans)" };
-
-/* ---- Confirm success state ---- */
-function Confirm({ job, reference }: { job: JobSummary; reference: string | null }) {
+function Confirm({ title, reference }: { title: string; reference: string | null }) {
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "60px 24px", textAlign: "center", animation: "pop .4s var(--ease-spring)" }}>
       <div style={{ width: 80, height: 80, borderRadius: "var(--r-2xl)", background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 22px" }}><I n="check" s={42} sw={2.2} /></div>
       <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px" }}>Application received</h1>
-      <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 8px" }}>Thanks for applying to <b style={{ color: "var(--c-ink)" }}>{job.title}</b>. We have emailed you a confirmation, and you can check your status anytime.</p>
-      {reference && (
-        <p style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-3)", margin: "4px 0 0" }}>
-          Your reference: <span className="mono" style={{ color: "var(--c-ink-2)", fontWeight: 600 }}>{reference}</span>
-        </p>
-      )}
-      {/* honest next steps, no fabricated timeline beyond the standard flow */}
-      <div style={{ margin: "22px auto 0", maxWidth: 420, textAlign: "left", padding: "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-surface)", border: "1px solid var(--c-line)" }}>
-        <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)", marginBottom: 6 }}>What happens next</div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.6 }}>
-          <li>A recruiter reviews your application alongside an AI-assisted summary.</li>
-          <li>A human makes every decision, and you can request a human review at any time.</li>
-          <li>Track progress anytime from your status page.</li>
-        </ul>
-      </div>
-      <div style={{ margin: "16px auto 0", maxWidth: 420 }}><AINotice compact /></div>
+      <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 8px" }}>Thanks for applying to <b style={{ color: "var(--c-ink)" }}>{title}</b>. We have emailed you a confirmation, and you can check your status anytime.</p>
+      {reference && <p style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-3)", margin: "4px 0 0" }}>Your reference: <span className="mono" style={{ color: "var(--c-ink-2)", fontWeight: 600 }}>{reference}</span></p>}
+      <div style={{ margin: "22px auto 0", maxWidth: 420 }}><AINotice compact /></div>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24 }}>
         <a href="/status" style={{ textDecoration: "none" }}><Btn kind="primary" icon="eye">Track my status</Btn></a>
         <a href="/jobs" style={{ textDecoration: "none" }}><Btn kind="soft">Browse more roles</Btn></a>
@@ -211,72 +121,61 @@ function Confirm({ job, reference }: { job: JobSummary; reference: string | null
 }
 
 export default function ApplyPage() {
-  const { id } = useParams<{ id: string }>();
-
+  const { id: slug } = useParams<{ id: string }>();
   const [job, setJob] = useState<JobSummary>(DEFAULT_JOB);
+  const [fields, setFields] = useState<FormField[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [values, setValues] = useState<Record<string, string | boolean>>({});
+  const [files, setFiles] = useState<Record<string, File | null>>({});
+  const [consent, setConsent] = useState(false);
   const [done, setDone] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // controlled form state
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [linkedin, setLinkedin] = useState("");
-  const [resume, setResume] = useState<File | null>(null);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [cover, setCover] = useState("");
-  const [consent, setConsent] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  // best-effort load of the job summary
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     let cancelled = false;
     (async () => {
-      const res = await raw([`/public/jobs/${id}`, `/jobs/${id}`]);
-      if (!cancelled && res?.ok && res.data) setJob(normalizeJob(res.data));
+      const [j, f] = await Promise.all([getJSON(`/public/jobs/${slug}`), getJSON(`/public/jobs/${slug}/form`)]);
+      if (cancelled) return;
+      if (j) setJob(normalizeJob(j));
+      const fl = (f?.data?.fields ?? f?.fields ?? []) as FormField[];
+      setFields([...fl].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+      setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [slug]);
+
+  const set = (id: string, v: string | boolean) => setValues((s) => ({ ...s, [id]: v }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
-    setError(null);
-    setSubmitting(true);
+    setError(null); setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append("name", name);
-      fd.append("email", email);
-      if (linkedin) fd.append("linkedin", linkedin);
-      if (resume) fd.append("resume", resume);
-      job.custom.forEach((c, i) => {
-        if (answers[i]) fd.append(`answer_${i}`, answers[i]);
-      });
-      // structured copy of the custom answers for backends that prefer JSON
-      fd.append("customAnswers", JSON.stringify(job.custom.map((c, i) => ({ label: c.label, answer: answers[i] ?? "" }))));
-      if (cover) fd.append("coverNote", cover);
-      fd.append("consent", String(consent));
-      fd.append("jobId", String(id ?? ""));
-
-      const res = await raw([`/jobs/${id}/apply`, `/applications`], { method: "POST", body: fd });
-      if (res?.ok) {
-        const d = res.data?.data ?? res.data ?? {};
-        setReference(d.reference ?? d.id ?? d.applicationId ?? null);
+      for (const f of fields) {
+        if (f.type === "image") continue;
+        if (f.type === "file") { const file = files[f.id]; if (file) fd.append(f.id, file); }
+        else { const v = values[f.id]; if (v !== undefined && v !== "") fd.append(f.id, String(v)); }
+      }
+      const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, { method: "POST", credentials: "include", body: fd });
+      const d = await r.json().catch(() => null);
+      if (r.ok) {
+        setReference(d?.data?.applicationId ?? null);
         setDone(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setError("We could not submit your application just now. Please check your details and try again, or contact the team if the problem continues.");
+        setError(d?.error?.message ?? "We could not submit your application just now. Please check your details and try again.");
       }
     } catch {
       setError("Something went wrong while submitting. Please try again in a moment.");
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   }
 
-  if (done) return <Confirm job={job} reference={reference} />;
+  if (done) return <Confirm title={job.title} reference={reference} />;
 
   const salary = job.min != null && job.max != null ? `$${job.min}k to $${job.max}k` : null;
 
@@ -284,80 +183,79 @@ export default function ApplyPage() {
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 20px", animation: "rise .4s var(--ease-out)" }}>
       <a href="/jobs" style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
 
-      {/* job header */}
       <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <Chip icon="briefcase">{job.dept}</Chip>
-        <Chip icon="pin">{job.loc}</Chip>
+        {job.dept && <Chip icon="briefcase">{job.dept}</Chip>}
+        {job.loc && <Chip icon="pin">{job.loc}</Chip>}
         {salary && <Chip icon="card" tone="var(--c-brand)" bg="var(--c-brand-tint)">{salary}</Chip>}
       </div>
       <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 14px" }}>{job.title}</h1>
-      <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 18px" }}>{job.blurb} You will own services end to end and grow with a team that values clarity and craft.</p>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontWeight: 700, marginBottom: 9 }}>What you will need</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {job.required.map((r, i) => (
-            <div key={i} style={{ display: "flex", gap: 9, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
-              <I n="check" s={17} c="var(--c-brand)" style={{ flexShrink: 0, marginTop: 1 }} />{r}
-            </div>
-          ))}
+      {job.blurb && <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 18px" }}>{job.blurb}</p>}
+      {job.required.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontWeight: 700, marginBottom: 9 }}>What you will need</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {job.required.map((r, i) => <div key={i} style={{ display: "flex", gap: 9, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}><I n="check" s={17} c="var(--c-brand)" style={{ flexShrink: 0, marginTop: 1 }} />{r}</div>)}
+          </div>
         </div>
-      </div>
+      )}
 
       <AINotice />
 
-      {/* form */}
       <form onSubmit={onSubmit} style={{ marginTop: 20 }}>
         <div className="clay" style={{ borderRadius: "var(--r-2xl)", padding: 26 }}>
           <h2 style={{ fontSize: "var(--fs-xl)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 18px" }}>Apply for this role</h2>
 
-          <div style={{ display: "flex", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 200 }}><Label req>Full name</Label><input required value={name} onChange={(e) => setName(e.target.value)} style={inp} placeholder="Your name" /></div>
-            <div style={{ flex: 1, minWidth: 200 }}><Label req>Email</Label><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={inp} placeholder="you@email.com" /></div>
-          </div>
-          <div style={{ marginBottom: 16 }}><Label>LinkedIn or portfolio</Label><input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} style={inp} placeholder="https://" /></div>
-
-          {/* resume upload (real file input behind the drop zone) */}
-          <div style={{ marginBottom: 20 }}>
-            <Label req>Resume / CV</Label>
-            <button type="button" onClick={() => fileRef.current?.click()} style={{ display: "block", width: "100%", border: "1.5px dashed var(--c-line-strong)", borderRadius: "var(--r-lg)", padding: "22px", textAlign: "center", background: "var(--c-surface-2)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
-              <span style={{ width: 40, height: 40, borderRadius: 11, background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 10px" }}><I n="upload" s={20} /></span>
-              <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", color: "var(--c-ink)" }}>
-                {resume ? resume.name : <>Drop your resume or <span style={{ color: "var(--c-brand)" }}>browse</span></>}
+          {loading ? (
+            <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-sm)", padding: "12px 0" }}>Loading the application form...</div>
+          ) : fields.map((f) => {
+            const v = values[f.id];
+            if (f.type === "image") {
+              const src = f.url ?? f.src;
+              return src ? <div key={f.id} style={{ marginBottom: 18 }}><img src={src} alt={f.label} style={{ maxWidth: "100%", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)" }} /></div> : null;
+            }
+            return (
+              <div key={f.id} style={{ marginBottom: 16 }}>
+                {f.type !== "checkbox" && <Label req={f.required}>{f.label}</Label>}
+                {f.type === "textarea" ? (
+                  <textarea rows={3} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} placeholder={f.placeholder ?? f.help} />
+                ) : f.type === "select" ? (
+                  <select required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+                    <option value="">Select...</option>
+                    {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : f.type === "checkbox" ? (
+                  <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", cursor: "pointer" }}>
+                    <input type="checkbox" required={f.required} checked={Boolean(v)} onChange={(e) => set(f.id, e.target.checked)} style={{ marginTop: 3, width: 17, height: 17, accentColor: "var(--c-brand)" }} />
+                    <span>{f.label}{f.required && <span style={{ color: "var(--c-brand)" }}> *</span>}</span>
+                  </label>
+                ) : f.type === "file" ? (
+                  <>
+                    <button type="button" onClick={() => fileRefs.current[f.id]?.click()} style={{ display: "block", width: "100%", border: "1.5px dashed var(--c-line-strong)", borderRadius: "var(--r-lg)", padding: "22px", textAlign: "center", background: "var(--c-surface-2)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+                      <span style={{ width: 40, height: 40, borderRadius: 11, background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 10px" }}><I n="upload" s={20} /></span>
+                      <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", color: "var(--c-ink)" }}>{files[f.id] ? files[f.id]!.name : <>Drop your file or <span style={{ color: "var(--c-brand)" }}>browse</span></>}</div>
+                      <div style={{ fontSize: "var(--fs-xs)", color: "var(--c-ink-3)", marginTop: 3 }}>{files[f.id] ? `${(files[f.id]!.size / 1024).toFixed(0)} KB` : `${(f.fileTypes ?? [".pdf", ".docx"]).join(", ")}, up to ${f.maxSizeMb ?? 10} MB`}</div>
+                    </button>
+                    <input ref={(el) => { fileRefs.current[f.id] = el; }} type="file" required={f.required} accept={(f.fileTypes ?? [".pdf", ".doc", ".docx"]).join(",")} onChange={(e) => setFiles((s) => ({ ...s, [f.id]: e.target.files?.[0] ?? null }))} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }} />
+                  </>
+                ) : (
+                  <input type={f.type === "email" ? "email" : f.type === "url" ? "url" : f.type === "phone" ? "tel" : "text"} required={f.required} value={(v as string) ?? ""} onChange={(e) => set(f.id, e.target.value)} style={inp} placeholder={f.placeholder ?? f.help ?? ""} />
+                )}
               </div>
-              <div style={{ fontSize: "var(--fs-xs)", color: "var(--c-ink-3)", marginTop: 3 }}>{resume ? `${(resume.size / 1024).toFixed(0)} KB` : "PDF, DOCX, up to 10 MB"}</div>
-            </button>
-            <input ref={fileRef} type="file" required accept=".pdf,.doc,.docx,application/pdf" onChange={(e) => setResume(e.target.files?.[0] ?? null)} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }} />
-          </div>
+            );
+          })}
 
-          {/* custom fields from the requisition */}
-          {job.custom.length > 0 && (
-            <div style={{ padding: "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-brand-tint)", marginBottom: 18 }}>
-              <div style={{ fontSize: "var(--fs-xs)", fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-brand-ink)", marginBottom: 12 }}>A few role-specific questions</div>
-              {job.custom.map((c, i) => (
-                <div key={i} style={{ marginBottom: i < job.custom.length - 1 ? 14 : 0 }}>
-                  <Label req>{c.label}</Label>
-                  <textarea rows={2} value={answers[i] ?? ""} onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} placeholder={c.help} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          <Label>Why are you interested in this role?</Label>
-          <textarea rows={3} value={cover} onChange={(e) => setCover(e.target.value)} style={{ ...inp, resize: "vertical", lineHeight: 1.5, marginBottom: 18 }} placeholder="Optional, tell us what draws you here." />
-
-          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginBottom: 18, cursor: "pointer" }}>
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", margin: "4px 0 18px", cursor: "pointer" }}>
             <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 3, width: 17, height: 17, accentColor: "var(--c-brand)" }} />
             <span>I understand my application may be reviewed with the help of AI, that a human makes the final decision, and that I can <b style={{ color: "var(--c-ink)" }}>request a human review</b> at any time.</span>
           </label>
 
           {error && (
             <div role="alert" style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", borderRadius: "var(--r-lg)", background: "var(--c-danger-tint)", color: "var(--c-danger)", fontSize: "var(--fs-sm)", lineHeight: 1.5, marginBottom: 16 }}>
-              <I n="shield" s={17} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span>{error}</span>
+              <I n="shield" s={17} style={{ flexShrink: 0, marginTop: 1 }} /><span>{error}</span>
             </div>
           )}
 
-          <Btn kind="primary" big full trail="arrow" type="submit" disabled={submitting}>{submitting ? "Submitting..." : "Submit application"}</Btn>
+          <Btn kind="primary" big full trail="arrow" type="submit" disabled={submitting || loading}>{submitting ? "Submitting..." : "Submit application"}</Btn>
         </div>
       </form>
     </div>

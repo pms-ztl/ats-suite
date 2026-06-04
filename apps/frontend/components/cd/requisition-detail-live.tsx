@@ -7,12 +7,14 @@
 // criteria, salary, headcount and the pipeline funnel are live; the sections the
 // gateway does not expose (owners, activity, interview rounds, application form)
 // keep the design's example content. Full-height screen (rendered full-bleed).
+import { useState, type CSSProperties } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { RequisitionDetail } from "./screens/RequisitionDetail";
 import { RoundsConfig, FormBuilder } from "./RequisitionBuilder";
+import { Icon } from "./icon";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getRequisition, getFunnel } from "@/lib/api";
+import { getRequisition, getFunnel, createJobPosting, findPostingForRequisition } from "@/lib/api";
 import type { Requisition, ApplicationStage } from "@/lib/types";
 import type { ReqDetailData, ReqStatusMeta, ReqStatusKey, ReqCustomField, RoundsData, FormBuilderData, TimelineItem } from "./types";
 
@@ -94,6 +96,23 @@ export function RequisitionDetailLive() {
   const { user } = useCurrentUser();
   const req = useData<Requisition>(() => getRequisition(id), [id]);
   const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
+  const [publish, setPublish] = useState<{ open: boolean; busy: boolean; slug: string | null; error: string | null }>({ open: false, busy: false, slug: null, error: null });
+
+  const onPost = async () => {
+    if (publish.busy) return;
+    const d0 = req.data;
+    if (!d0) return;
+    setPublish({ open: true, busy: true, slug: null, error: null });
+    try {
+      const existing = await findPostingForRequisition(d0.id);
+      const posting = existing?.isPublished
+        ? existing
+        : await createJobPosting({ requisitionId: d0.id, title: d0.title, description: d0.description ?? "", requirements: d0.requiredSkills ?? d0.requirements ?? [] });
+      setPublish({ open: true, busy: false, slug: posting.slug, error: posting.slug ? null : "The posting was created but did not return a link." });
+    } catch {
+      setPublish({ open: true, busy: false, slug: null, error: "We could not publish this job right now. Please try again." });
+    }
+  };
 
   // The byte-exact screen has no loading/error state, so gate here.
   if (req.loading || funnel.loading) return null;
@@ -158,13 +177,64 @@ export function RequisitionDetailLive() {
   };
 
   return (
-    <RequisitionDetail
-      data={data}
-      statusMeta={statusMeta}
-      roundsSlot={<RoundsConfig data={ROUNDS_DATA} jobTitle={d.title} />}
-      formSlot={<FormBuilder data={FORM_DATA} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
-      onBack={() => router.push("/requisitions")}
-      onCandidates={() => router.push("/candidates")}
-    />
+    <>
+      <RequisitionDetail
+        data={data}
+        statusMeta={statusMeta}
+        roundsSlot={<RoundsConfig data={ROUNDS_DATA} jobTitle={d.title} />}
+        formSlot={<FormBuilder data={FORM_DATA} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
+        onBack={() => router.push("/requisitions")}
+        onCandidates={() => router.push("/candidates")}
+        onPost={onPost}
+      />
+      {publish.open && (
+        <PublishModal state={publish} onClose={() => setPublish((p) => ({ ...p, open: false }))} />
+      )}
+    </>
+  );
+}
+
+function PublishModal({ state, onClose }: { state: { busy: boolean; slug: string | null; error: string | null }; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const link = state.slug ? `${origin}/jobs/${state.slug}/apply` : "";
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
+  };
+  const inputStyle: CSSProperties = { flex: 1, padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface-2)", color: "var(--ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-mono)", outline: "none", overflow: "hidden", textOverflow: "ellipsis" };
+  return (
+    <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 200, display: "grid", placeItems: "center", padding: 24, background: "color-mix(in oklab, var(--bg-deep) 55%, transparent)", animation: "fadein .2s" }}>
+      <div style={{ width: "min(520px, 96vw)", borderRadius: "var(--r-2xl)", background: "var(--surface)", border: "1px solid var(--line)", boxShadow: "var(--e3)", padding: 26, animation: "rise .25s var(--ease-out)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <h2 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{state.busy ? "Publishing job..." : state.slug ? "Job is live" : "Could not publish"}</h2>
+          <button onClick={onClose} aria-label="Close" style={{ width: 32, height: 32, borderRadius: 99, border: "1px solid var(--line)", background: "var(--surface-2)", color: "var(--ink-2)", cursor: "pointer", display: "grid", placeItems: "center" }}><Icon name="x" size={16} /></button>
+        </div>
+
+        {state.busy ? (
+          <p style={{ margin: "6px 0 0", fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>Creating a public application link and rendering this requisition's form.</p>
+        ) : state.error ? (
+          <div style={{ display: "flex", gap: 9, alignItems: "flex-start", marginTop: 8, padding: "12px 14px", borderRadius: "var(--r-lg)", background: "var(--danger-tint)", color: "var(--danger)", fontSize: "var(--fs-sm)", lineHeight: 1.5 }}>
+            <Icon name="flag" size={16} />{state.error}
+          </div>
+        ) : (
+          <>
+            <p style={{ margin: "6px 0 16px", fontSize: "var(--fs-sm)", color: "var(--ink-2)", lineHeight: 1.5 }}>Anyone with this link can view the role and apply. Their application lands in your pipeline and is screened automatically.</p>
+            <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6, display: "block" }}>Shareable application link</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} style={inputStyle} />
+              <button onClick={copy} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: "var(--r)", border: "1px solid transparent", background: copied ? "var(--ok)" : "var(--brand)", color: "var(--on-brand)", fontWeight: 700, fontSize: "var(--fs-sm)", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "var(--font-sans)" }}>
+                <Icon name={copied ? "check" : "copy"} size={15} />{copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+              <a href={link} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontWeight: 600, fontSize: "var(--fs-sm)", textDecoration: "none" }}>
+                <Icon name="arrowUpRight" size={15} />Open application page
+              </a>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
