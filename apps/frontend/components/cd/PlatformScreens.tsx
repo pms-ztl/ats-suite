@@ -121,7 +121,7 @@ export function PromptsScreen({ data }: { data: PromptsData }) {
   </div>;
 }
 
-export function PlanRequestsScreen({ data }: { data: PlanRequestsData }) {
+export function PlanRequestsScreen({ data, onApprove, onDeny }: { data: PlanRequestsData; onApprove?: (id: string) => void; onDeny?: (id: string) => void }) {
   const [items] = useState(data.requests.map(r => ({ ...r })));
   const [done, setDone] = useState<Record<string, string>>({});
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
@@ -139,7 +139,7 @@ export function PlanRequestsScreen({ data }: { data: PlanRequestsData }) {
                 <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 3 }}>{r.by} · {r.when} ago</div>
               </div>
               {done[r.id] ? <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)">{done[r.id]}</Pill>
-                : <div style={{ display: "flex", gap: 8 }}><Btn variant="soft" size="sm" onClick={() => setDone(d => ({ ...d, [r.id]: "Denied" }))}>Deny</Btn><Btn variant="primary" size="sm" icon="check" onClick={() => setDone(d => ({ ...d, [r.id]: "Approved" }))}>Approve upgrade</Btn></div>}
+                : <div style={{ display: "flex", gap: 8 }}><Btn variant="soft" size="sm" onClick={() => { setDone(d => ({ ...d, [r.id]: "Denied" })); onDeny?.(r.id); }}>Deny</Btn><Btn variant="primary" size="sm" icon="check" onClick={() => { setDone(d => ({ ...d, [r.id]: "Approved" })); onApprove?.(r.id); }}>Approve upgrade</Btn></div>}
             </div>
           </div>
         ))}

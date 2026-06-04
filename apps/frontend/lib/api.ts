@@ -180,6 +180,27 @@ export async function saveApplicationForm(requisitionId: string, name: string, f
   await raw("PUT", `/requisitions/${encodeURIComponent(requisitionId)}/form`, { name, fields });
 }
 
+/* ---------- Super-admin (platform operator) ---------- */
+export interface PlatformTenant {
+  id: string; name: string; slug?: string; plan: string; status?: string; createdAt?: string;
+  userCount?: number; candidateCount?: number; requisitionCount?: number; agentRunCount?: number; costUsd30d?: number;
+}
+export async function getPlatformStats(): Promise<any> {
+  try { return (await raw("GET", "/super-admin/stats"))?.data ?? {}; } catch { return {}; }
+}
+export async function listPlatformTenants(): Promise<PlatformTenant[]> {
+  try { const r: any = await raw("GET", "/super-admin/tenants?pageSize=100"); return (r?.data?.data ?? r?.data ?? []) as PlatformTenant[]; } catch { return []; }
+}
+export async function getTenantDetail(id: string): Promise<any> {
+  try { return (await raw("GET", `/super-admin/tenants/${encodeURIComponent(id)}/detail`))?.data ?? null; } catch { return null; }
+}
+export async function listPlanRequests(): Promise<any[]> {
+  try { return arr(await raw("GET", "/super-admin/plan-change-requests")); } catch { return []; }
+}
+export async function decidePlanRequest(id: string, action: "APPROVE" | "REJECT"): Promise<void> {
+  await raw("PATCH", `/super-admin/plan-change-requests/${encodeURIComponent(id)}`, { action });
+}
+
 /* ---------- Decisions (human-gated) ---------- */
 function toDecision(d: any): Decision {
   return {

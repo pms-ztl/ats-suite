@@ -8,7 +8,24 @@
 // login available to verify visually).
 import { TenantsScreen, PlatformAgentsScreen, PromptsScreen, PlanRequestsScreen, PlatformAuditScreen } from "./PlatformScreens";
 import { PlatformCostScreen } from "./AiSurfaceScreens";
-import type { TenantsData, PlatformAgentsData, PromptsData, PlanRequestsData, PlatformAuditData, PlatformCostData } from "./types";
+import type { TenantsData, PlatformAgentsData, PromptsData, PlanRequestsData, PlatformAuditData, PlatformCostData, Tenant, PlanRequest, KPI } from "./types";
+import { useData } from "@/lib/use-data";
+import { listPlatformTenants, getPlatformStats, listPlanRequests, decidePlanRequest, slugify } from "@/lib/api";
+
+const PLAN_MRR: Record<string, number> = { FREE: 0, STARTER: 299, PROFESSIONAL: 999, ENTERPRISE: 4200 };
+const flat = (v: number): number[] => Array.from({ length: 8 }, () => v);
+function fmtRuns(n: number): string { return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n); }
+function timeAgo(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = Math.round(ms / 60000); if (m < 60) return `${m}m`;
+  const h = Math.round(m / 60); if (h < 24) return `${h}h`;
+  return `${Math.round(h / 24)}d`;
+}
+function mrrDelta(from: string, to: string): string {
+  const d = (PLAN_MRR[to] ?? 0) - (PLAN_MRR[from] ?? 0);
+  return `${d >= 0 ? "+" : "-"}$${Math.abs(d)}`;
+}
 
 const TENANTS_DATA: TenantsData = {
   summary: "9 active workspaces across 4 plans. $52.4k MRR, up 12 percent this month.",
@@ -103,9 +120,46 @@ const COST_DATA: PlatformCostData = {
   overBudgetNote: "Vela Logistics is over its inference budget this period. Consider an Enterprise upgrade or a per-tenant rate cap.",
 };
 
-export function TenantsLive() { return <TenantsScreen data={TENANTS_DATA} />; }
+export function TenantsLive() {
+  const tenants = useData<any[]>(listPlatformTenants);
+  const stats = useData<any>(getPlatformStats);
+  if (tenants.loading || stats.loading) return null;
+  const list = tenants.data ?? [];
+  const rows: Tenant[] = list.map((t: any) => ({
+    id: t.id, name: t.name, slug: t.slug ?? slugify(t.name ?? "tenant"),
+    created: t.createdAt ? new Date(t.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "",
+    plan: t.plan ?? "FREE", users: t.userCount ?? 0, mrr: PLAN_MRR[t.plan] ?? 0,
+    cost: Math.round(t.costUsd30d ?? 0), runs: fmtRuns(t.agentRunCount ?? 0),
+    health: (t.costUsd30d ?? 0) > 3000 ? "watch" : "healthy",
+  }));
+  const s = stats.data ?? {};
+  const data: TenantsData = {
+    summary: `${rows.length} workspaces · ${s.totalUsers ?? 0} users · ${s.totalCandidates ?? 0} candidates · $${Math.round(s.totalCostUsd30d ?? 0)} AI cost (30d).`,
+    kpis: [
+      { label: "Active tenants", value: s.activeTenants ?? rows.length, icon: "building", spark: flat(s.activeTenants ?? rows.length), delta: 0, good: true } as KPI,
+      { label: "Total users", value: s.totalUsers ?? 0, icon: "users", spark: flat(s.totalUsers ?? 0), delta: 0, good: true } as KPI,
+      { label: "AI cost (30d)", value: Math.round(s.totalCostUsd30d ?? 0), prefix: "$", icon: "cpu", ai: true, spark: flat(Math.round(s.totalCostUsd30d ?? 0)), delta: 0, good: false } as KPI,
+      { label: "Candidates", value: s.totalCandidates ?? 0, icon: "users", spark: flat(s.totalCandidates ?? 0), delta: 0, good: true } as KPI,
+    ],
+    tenants: rows,
+  };
+  return <TenantsScreen data={data} />;
+}
 export function PlatformAgentsLive() { return <PlatformAgentsScreen data={AGENTS_DATA} />; }
 export function PromptsLive() { return <PromptsScreen data={PROMPTS_DATA} />; }
-export function PlanRequestsLive() { return <PlanRequestsScreen data={PLAN_REQUESTS_DATA} />; }
+export function PlanRequestsLive() {
+  const reqs = useData<any[]>(listPlanRequests);
+  if (reqs.loading) return null;
+  const pending = (reqs.data ?? []).filter((r: any) => (r.status ?? "PENDING") === "PENDING");
+  const requests: PlanRequest[] = pending.map((r: any) => ({
+    id: r.id, tenant: r.tenantName ?? r.tenant?.name ?? r.tenantId ?? "Tenant",
+    from: r.fromPlan ?? "FREE", to: r.toPlan ?? "STARTER",
+    mrr: mrrDelta(r.fromPlan ?? "FREE", r.toPlan ?? "STARTER"),
+    reason: r.reason ?? "", by: r.requestedByUserId ?? r.requestedBy ?? "", when: timeAgo(r.requestedAt ?? r.createdAt),
+  }));
+  const data: PlanRequestsData = { requests };
+  const decide = (id: string, action: "APPROVE" | "REJECT") => { decidePlanRequest(id, action).catch(() => {}); };
+  return <PlanRequestsScreen data={data} onApprove={(id) => decide(id, "APPROVE")} onDeny={(id) => decide(id, "REJECT")} />;
+}
 export function PlatformAuditLive() { return <PlatformAuditScreen data={AUDIT_DATA} />; }
 export function PlatformCostLive() { return <PlatformCostScreen data={COST_DATA} />; }

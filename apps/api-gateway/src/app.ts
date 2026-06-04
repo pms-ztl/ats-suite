@@ -534,6 +534,47 @@ export function createApp(logger: Logger): Express {
     }
   );
 
+  // GET /api/super-admin/tenants/:id/detail — per-tenant drill-down: the tenant
+  // record + its counts (users/candidates/requisitions), 30-day agent cost, the
+  // plan-change request history, and the user roster. Exact path so it is matched
+  // before the generic /api/super-admin/tenants proxy below.
+  app.get(
+    "/api/super-admin/tenants/:id/detail",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { callService, uh } = await superAdminFanout(req);
+        const tid = req.params["id"] as string;
+        const [tenant, uStats, cStats, rStats, cost, planChanges, users] = await Promise.allSettled([
+          callService<any>("tenant", { path: `/internal/tenants/${tid}`, userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("identity", { path: "/internal/users/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("candidate", { path: "/internal/candidates/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("job", { path: "/internal/requisitions/platform-stats", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("billing", { path: "/internal/platform/cost?days=30", userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("tenant", { path: `/internal/plan-changes/by-tenant/${tid}`, userHeaders: uh, timeoutMs: 4000 }),
+          callService<any>("identity", { path: `/internal/users?tenantId=${encodeURIComponent(tid)}`, userHeaders: uh, timeoutMs: 4000 }),
+        ]);
+        const costRow = ((settledVal(cost) ?? {}).byTenant ?? []).find((r: any) => r.tenantId === tid);
+        res.json({
+          success: true,
+          data: {
+            tenant: settledVal(tenant) ?? null,
+            userCount: ((settledVal(uStats) ?? {}).byTenant ?? {})[tid] ?? 0,
+            candidateCount: ((settledVal(cStats) ?? {}).byTenant ?? {})[tid] ?? 0,
+            requisitionCount: ((settledVal(rStats) ?? {}).byTenant ?? {})[tid] ?? 0,
+            agentRunCount: costRow?.runs ?? 0,
+            costUsd30d: costRow?.costUsd ?? 0,
+            planChangeRequests: settledVal(planChanges) ?? [],
+            users: settledVal(users) ?? [],
+          },
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   app.use("/api/super-admin/tenants", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/tenants"));
   app.use("/api/super-admin/plan-change-requests", gatewayAuth(), requireSuperAdmin, forwardHeaders(tenantUrl, "/internal/plan-changes"));
 
