@@ -133,8 +133,8 @@ export function createApp(logger: Logger): Express {
   // the express mount path stripped by app.use). So mounting at /api/billing
   // with targetPrefix /internal/billing turns GET /api/billing/agents into
   // GET <billingUrl>/internal/billing/agents.
-  const forwardHeaders = (proxyTarget: string, targetPrefix: string) =>
-    createProxyMiddleware({
+  const forwardHeaders = (proxyTarget: string, targetPrefix: string) => {
+    const proxy = createProxyMiddleware({
       target: proxyTarget,
       changeOrigin: true,
       pathRewrite: (path) => `${targetPrefix}${path}`,
@@ -159,6 +159,35 @@ export function createApp(logger: Logger): Express {
         },
       },
     });
+    // http-proxy-middleware v3's `proxyReq` event does NOT reliably fire for
+    // POST/PUT/PATCH requests that carry a body, so the setHeader() calls above
+    // are skipped and downstream services reject the write with "missing auth
+    // headers (request did not pass through gateway)". To make identity
+    // forwarding method-agnostic, we ALSO stamp the verified JWT claims onto
+    // req.headers here, BEFORE proxying — http-proxy-middleware copies the
+    // incoming headers onto the outbound request, so these travel for every
+    // method. Any client-supplied identity/service headers are stripped first:
+    // the gateway, via the verified token, is the only authority for them.
+    return (req: Request, res: Response, next: NextFunction) => {
+      delete req.headers["x-user-id"];
+      delete req.headers["x-tenant-id"];
+      delete req.headers["x-user-role"];
+      delete req.headers["x-user-email"];
+      delete req.headers["x-actor-user-id"];
+      delete req.headers["x-internal-service"];
+      if (req.user) {
+        req.headers["x-user-id"] = req.user.id;
+        req.headers["x-tenant-id"] = req.user.tenantId;
+        req.headers["x-user-role"] = req.user.role;
+        if (req.user.email) req.headers["x-user-email"] = req.user.email;
+        if (req.user.actorUserId) req.headers["x-actor-user-id"] = req.user.actorUserId;
+      }
+      if ((req as any).id) req.headers["x-request-id"] = String((req as any).id);
+      const internalToken = process.env["INTERNAL_SERVICE_TOKEN"];
+      if (internalToken) req.headers["x-internal-service"] = internalToken;
+      return proxy(req, res, next);
+    };
+  };
 
   const identityUrl = process.env["IDENTITY_SERVICE_URL"] ?? "http://localhost:4001";
   const tenantUrl = process.env["TENANT_SERVICE_URL"] ?? "http://localhost:4002";
