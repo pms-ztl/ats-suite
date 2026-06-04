@@ -196,6 +196,19 @@ function toInterview(iv: any): Interview {
 export async function listInterviews(): Promise<Interview[]> {
   return arr(await api.interviews.listInterviews({ page: 1, pageSize: 100 })).map(toInterview);
 }
+/* Interview rounds configured for a requisition (drives the schedule picker). */
+export interface RoundLite { id: string; name: string; interviewType: string; durationMinutes: number; order: number; autoAdvanceOnPass: boolean; }
+export async function listRounds(requisitionId: string): Promise<RoundLite[]> {
+  try { return arr(await raw("GET", `/rounds?requisitionId=${encodeURIComponent(requisitionId)}`)) as RoundLite[]; } catch { return []; }
+}
+/* Schedule a new interview (scheduler-gated: ADMIN/RECRUITER/HIRING_MANAGER). */
+export async function createInterview(body: {
+  requisitionId: string; candidateId: string; stage: string;
+  roundId?: string; type?: string; scheduledAt?: string; duration?: number;
+}): Promise<Interview> {
+  const res: any = await raw("POST", "/interviews", body);
+  return toInterview(res?.data ?? res);
+}
 
 /* ---------- Offers ---------- */
 function toOffer(o: any): Offer {
