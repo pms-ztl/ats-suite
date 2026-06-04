@@ -12,7 +12,9 @@ import { subscribeToEvents } from "@cdc-ats/nats-client";
 import type { Logger } from "pino";
 import { z } from "zod";
 import { toFairnessView } from "@cdc-ats/ai-engine";
-import { prisma } from "./prisma.js";
+// NATS subscriber runs outside any HTTP request; it scopes every query by the
+// event's tenantId explicitly, so it uses the admin (non-RLS) client.
+import { prismaAdmin as prisma } from "./prisma.js";
 import { embedCandidate } from "./matching.js";
 
 // Loose schema — accept ANY parsed shape. The Phase 37 resume-parser wraps

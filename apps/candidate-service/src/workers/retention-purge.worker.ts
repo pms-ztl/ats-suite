@@ -19,7 +19,8 @@
 import { Worker, Queue, type Job } from "bullmq";
 import { Redis } from "ioredis";
 import type { Logger } from "pino";
-import { prisma } from "../lib/prisma.js";
+// Cross-tenant maintenance job — uses the admin (non-RLS) client by design.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 
 const QUEUE = "candidate-retention-purge";
 const JOB_NAME = "purge";

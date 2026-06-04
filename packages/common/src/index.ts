@@ -11,6 +11,7 @@ export * from "./lib/shutdown.js";
 export * from "./lib/sso-state.js";
 
 export * from "./middleware/auth-headers.js";
+export * from "./middleware/tenant-context.js";
 export * from "./middleware/request-id.js";
 export * from "./middleware/error-handler.js";
 export * from "./middleware/request-timeout.js";

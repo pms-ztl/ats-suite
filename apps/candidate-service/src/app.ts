@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
-  notFoundHandler, requestId, readAuthHeaders,
+  notFoundHandler, requestId, readAuthHeaders, tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -33,6 +33,10 @@ export function createApp(logger: Logger): Express {
     res.set("Content-Type", metrics.registry.contentType);
     res.end(await metrics.registry.metrics());
   });
+
+  // Bind the request tenant to the async-local store so the RLS Prisma client
+  // scopes every query to it (X-Tenant-Id is gateway-verified upstream).
+  app.use(tenantContext);
 
   app.use("/internal/candidates", readAuthHeaders(), candidatesRouter);
   app.use("/internal/applications", readAuthHeaders(), applicationsRouter);

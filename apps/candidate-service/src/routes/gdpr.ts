@@ -11,7 +11,10 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { ok, Errors, getTenantId, getUserId, createLogger, requireTenantAdmin } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// GDPR erase does a multi-table $transaction with explicit tenant filters; it
+// uses the admin client so the batch transaction isn't reshaped by the RLS
+// per-operation wrapper.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 
 const logger = createLogger({ serviceName: "candidate-service:gdpr" });
 const router = Router();
