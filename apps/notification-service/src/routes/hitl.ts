@@ -15,7 +15,8 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, created, Errors, getTenantId, getUserId, requireTenantAdmin } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// Per-tenant router → RLS-scoped client.
+import { prismaRls as prisma } from "../lib/prisma.js";
 import { emitNotification } from "../lib/emit.js";
 
 const router = Router();

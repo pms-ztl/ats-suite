@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
-  notFoundHandler, requestId, readAuthHeaders,
+  notFoundHandler, requestId, readAuthHeaders, tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -33,6 +33,10 @@ export function createApp(logger: Logger): Express {
     res.set("Content-Type", metrics.registry.contentType);
     res.end(await metrics.registry.metrics());
   });
+
+  // Bind request tenant so the per-tenant routers (hitl, email-templates,
+  // integrations, webhooks) that use the RLS client are scoped correctly.
+  app.use(tenantContext);
 
   app.use("/internal/notifications", readAuthHeaders(), notificationsRouter);
   app.use("/internal/integrations", readAuthHeaders(), integrationsRouter);

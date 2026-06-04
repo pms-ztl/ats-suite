@@ -19,7 +19,8 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
 import { ok, created, Errors, requireTenantAdmin } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// Per-tenant router → RLS-scoped client.
+import { prismaRls as prisma } from "../lib/prisma.js";
 import { substituteVariables, renderNotificationEmail } from "../lib/mailer.js";
 import { getTenantBranding } from "../lib/branding-cache.js";
 
