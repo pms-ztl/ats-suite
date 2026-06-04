@@ -8,7 +8,7 @@ import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
 // Phase 27 F-028-micro-P1: requisitions are admin/recruiter/hiring-manager managed.
 const requireReqEditor = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { RequisitionStatusSchema, FormFieldSchema } from "@cdc-ats/contracts";
-import { prisma } from "../lib/prisma.js";
+import { prisma, prismaAdmin } from "../lib/prisma.js";
 
 const router = Router();
 
@@ -98,7 +98,7 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
 // /:id so the literal path isn't captured as a requisition id.
 router.get("/platform-stats", requireRole("SUPER_ADMIN"), async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const grouped = await prisma.requisition.groupBy({ by: ["tenantId"], _count: { _all: true } });
+    const grouped = await prismaAdmin.requisition.groupBy({ by: ["tenantId"], _count: { _all: true } });
     const byTenant: Record<string, number> = {};
     let total = 0;
     for (const r of grouped) {

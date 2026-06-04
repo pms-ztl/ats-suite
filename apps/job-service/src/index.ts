@@ -5,7 +5,8 @@ initSentry({ serviceName: "job-service" });
 import { createApp } from "./app.js";
 import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startOutboxWorker } from "@cdc-ats/outbox";
-import { prisma } from "./lib/prisma.js";
+// The outbox worker drains events across all tenants — admin (non-RLS) client.
+import { prismaAdmin as prisma } from "./lib/prisma.js";
 
 const logger = createLogger({ serviceName: "job-service" });
 const PORT = Number(process.env["PORT"] ?? 4004);

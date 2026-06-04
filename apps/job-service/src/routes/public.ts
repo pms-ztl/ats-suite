@@ -13,7 +13,9 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import multer from "multer";
 import { z } from "zod";
 import { ok, Errors } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// Public (unauthenticated) routes look up postings/forms by slug with no tenant
+// in context, so they use the admin (non-RLS) client.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { callCandidateService, forwardResumeUpload } from "../lib/service-client.js";
 
 const router = Router();

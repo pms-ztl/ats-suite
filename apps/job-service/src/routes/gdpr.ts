@@ -5,7 +5,8 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { ok, getTenantId, requireTenantAdmin } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// GDPR erase runs with an explicit tenant filter; uses the admin client.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 
 const router = Router();
 

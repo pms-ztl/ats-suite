@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
-  notFoundHandler, requestId, readAuthHeaders,
+  notFoundHandler, requestId, readAuthHeaders, tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -30,6 +30,10 @@ export function createApp(logger: Logger): Express {
     res.set("Content-Type", metrics.registry.contentType);
     res.end(await metrics.registry.metrics());
   });
+
+  // Bind request tenant for RLS-scoped queries (public routes below have no
+  // X-Tenant-Id and use the admin client, so they are unaffected).
+  app.use(tenantContext);
 
   // Internal authenticated routes
   app.use("/internal/requisitions", readAuthHeaders(), requisitionsRouter);
