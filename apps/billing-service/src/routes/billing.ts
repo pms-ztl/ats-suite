@@ -179,4 +179,15 @@ router.get("/check-agent", async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 });
 
+// GET /internal/billing/limits — the caller tenant's plan + full limit set.
+// Used by other services to enforce capability flags (customForms,
+// configurableRounds) and numeric caps (activeJobs).
+router.get("/limits", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const plan = await getTenantPlan(tenantId);
+    ok(res, { plan, limits: PLAN_LIMITS[plan] ?? PLAN_LIMITS["FREE"] });
+  } catch (err) { next(err); }
+});
+
 export default router;

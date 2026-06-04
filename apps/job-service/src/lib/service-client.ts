@@ -7,7 +7,31 @@ import { AppError } from "@cdc-ats/common";
 
 const CANDIDATE_URL = process.env["CANDIDATE_SERVICE_URL"] ?? "http://localhost:4005";
 const RESUME_URL = process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007";
+const BILLING_URL = process.env["BILLING_SERVICE_URL"] ?? "http://localhost:4003";
 const INTERNAL_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
+
+export interface PlanLimits {
+  seats: number; activeJobs: number; resumesPerMonth: number; bulkUploadMax: number;
+  agents: readonly string[] | "ALL"; customForms: boolean; configurableRounds: boolean;
+}
+
+/**
+ * Fetch the tenant's plan + limits from billing-service for capability gating
+ * (customForms, activeJobs). Fails OPEN (returns null) on a billing outage so a
+ * blip never blocks legitimate work.
+ */
+export async function fetchPlanLimits(tenantId: string): Promise<{ plan: string; limits: PlanLimits } | null> {
+  try {
+    const headers: Record<string, string> = {
+      "Accept": "application/json", "X-Tenant-Id": tenantId, "X-User-Id": "system", "X-User-Role": "ADMIN",
+    };
+    if (INTERNAL_TOKEN) headers["X-Internal-Service"] = INTERNAL_TOKEN;
+    const res = await fetch(`${BILLING_URL}/internal/billing/limits`, { headers, signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return null;
+    const body: any = await res.json();
+    return (body?.data ?? null) as { plan: string; limits: PlanLimits } | null;
+  } catch { return null; }
+}
 
 /**
  * Forward a public-apply resume to resume-service for storage + parsing.

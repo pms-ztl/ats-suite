@@ -6,8 +6,21 @@ import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
 const requireRoundEditor = requireRole("ADMIN", "RECRUITER");
 import { InterviewTypeSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
+import { fetchPlanLimits } from "../lib/service-client.js";
 
 const router = Router();
+
+// Plan gate: configuring interview rounds is a paid capability. Applied to the
+// round-mutation routes (not the read). Fails open if billing is unreachable.
+async function requireConfigurableRounds(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const pl = await fetchPlanLimits(getTenantId(req));
+    if (pl && pl.limits.configurableRounds === false) {
+      throw Errors.planLimit(`Configurable interview rounds are not included in your ${pl.plan} plan. Upgrade to customize the interview loop.`);
+    }
+    next();
+  } catch (err) { next(err); }
+}
 
 const CreateRoundSchema = z.object({
   requisitionId: z.string().uuid().nullable(),
@@ -40,7 +53,7 @@ const ReconcileItemSchema = CreateRoundSchema.omit({ requisitionId: true }).exte
 });
 const ReconcileSchema = z.object({ rounds: z.array(ReconcileItemSchema).max(50) });
 
-router.put("/", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
+router.put("/", requireRoundEditor, requireConfigurableRounds, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const requisitionId = (req.query["requisitionId"] as string | undefined) ?? null;
@@ -81,7 +94,7 @@ router.put("/", requireRoundEditor, async (req: Request, res: Response, next: Ne
   } catch (err) { next(err); }
 });
 
-router.post("/", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/", requireRoundEditor, requireConfigurableRounds, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = CreateRoundSchema.parse(req.body);
@@ -98,7 +111,7 @@ router.post("/", requireRoundEditor, async (req: Request, res: Response, next: N
 });
 
 // Phase 27 F-027-micro-d: gate + scope mutation by tenantId.
-router.patch("/:id", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
+router.patch("/:id", requireRoundEditor, requireConfigurableRounds, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
@@ -112,7 +125,7 @@ router.patch("/:id", requireRoundEditor, async (req: Request, res: Response, nex
   } catch (err) { next(err); }
 });
 
-router.delete("/:id", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/:id", requireRoundEditor, requireConfigurableRounds, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;

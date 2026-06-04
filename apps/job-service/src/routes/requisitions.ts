@@ -9,8 +9,12 @@ import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
 const requireReqEditor = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { RequisitionStatusSchema, FormFieldSchema } from "@cdc-ats/contracts";
 import { prisma, prismaAdmin } from "../lib/prisma.js";
+import { fetchPlanLimits } from "../lib/service-client.js";
 
 const router = Router();
+
+// Active requisitions (those still consuming a "job slot") for the activeJobs cap.
+const ACTIVE_REQ_STATUSES = ["DRAFT", "OPEN", "ON_HOLD"];
 
 // Phase 3 — admin-defined custom screening fields (label + value), passed to
 // the AI screener as additional criteria so screening is tuned to this job.
@@ -113,6 +117,14 @@ router.post("/", requireReqEditor, async (req: Request, res: Response, next: Nex
   try {
     const tenantId = getTenantId(req);
     const body = CreateReqSchema.parse(req.body);
+    // Plan cap: activeJobs (-1 = unlimited). Count current active requisitions.
+    const pl = await fetchPlanLimits(tenantId);
+    if (pl && pl.limits.activeJobs !== -1) {
+      const active = await prisma.requisition.count({ where: { tenantId, status: { in: ACTIVE_REQ_STATUSES as any } } });
+      if (active >= pl.limits.activeJobs) {
+        throw Errors.planLimit(`Your ${pl.plan} plan allows ${pl.limits.activeJobs} active jobs. You have ${active}. Close a job or upgrade to post more.`);
+      }
+    }
     const requisition = await prisma.requisition.create({
       data: {
         tenantId, ...body,
@@ -182,6 +194,11 @@ router.put("/:id/form", requireReqEditor, async (req: Request, res: Response, ne
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;
     const body = SaveFormSchema.parse(req.body);
+    // Plan gate: a custom application form is a paid capability.
+    const pl = await fetchPlanLimits(tenantId);
+    if (pl && pl.limits.customForms === false) {
+      throw Errors.planLimit(`Custom application forms are not included in your ${pl.plan} plan. Upgrade to build a custom form.`);
+    }
     const r = await prisma.requisition.findFirst({ where: { id, tenantId }, select: { id: true } });
     if (!r) throw Errors.notFound("Requisition");
     const saved = await prisma.applicationFormSchema.upsert({
