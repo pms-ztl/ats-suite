@@ -23,7 +23,9 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { z } from "zod";
 import { ok, created, Errors, getUserId, requireSuperAdmin } from "@cdc-ats/common";
 import { publishEvent } from "@cdc-ats/nats-client";
-import { prisma } from "../lib/prisma.js";
+// SUPER_ADMIN platform control plane — aggregates across all tenants, so it uses
+// the admin (non-RLS) client.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { ALL_AGENT_TYPES } from "../lib/plan-limits.js";
 
 const router = Router();

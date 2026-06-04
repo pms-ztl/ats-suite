@@ -18,7 +18,10 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { z } from "zod";
 import type Stripe from "stripe";
 import { ok, Errors, getTenantId, requireTenantAdmin } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+// Stripe webhook handlers derive their tenant from the event (no request
+// context), and the self-serve routes already filter by an explicit tenantId,
+// so this router uses the admin (non-RLS) client throughout.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { getStripe, planToPriceId, priceIdToPlan, getCheckoutUrls, getWebhookSecret } from "../lib/stripe.js";
 
 const router = Router();

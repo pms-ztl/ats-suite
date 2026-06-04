@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import {
   createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
-  notFoundHandler, requestId, readAuthHeaders,
+  notFoundHandler, requestId, readAuthHeaders, tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -60,6 +60,10 @@ export function createApp(logger: Logger): Express {
     res.set("Content-Type", metrics.registry.contentType);
     res.end(await metrics.registry.metrics());
   });
+
+  // Bind request tenant for RLS-scoped queries (the raw Stripe webhook above is
+  // mounted before this and uses the admin client, so it is unaffected).
+  app.use(tenantContext);
 
   // Internal routes — gateway forwards X-Tenant-Id/X-User-Id
   app.use("/internal/billing", readAuthHeaders(), billingRouter);

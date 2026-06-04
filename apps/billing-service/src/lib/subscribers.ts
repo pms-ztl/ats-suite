@@ -8,7 +8,8 @@
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
 import { TenantCreatedPayloadSchema, TenantPlanChangedPayloadSchema, AgentRunCompletedPayloadSchema } from "@cdc-ats/contracts";
-import { prisma } from "./prisma.js";
+// NATS subscribers mirror plans + costs across all tenants — admin (non-RLS).
+import { prismaAdmin as prisma } from "./prisma.js";
 import { PLAN_LIMITS, ALL_AGENT_TYPES, isPlanAgentEnabled } from "./plan-limits.js";
 import type { Logger } from "pino";
 
