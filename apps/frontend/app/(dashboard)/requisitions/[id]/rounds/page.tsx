@@ -59,24 +59,42 @@ async function raw(method: string, path: string, body?: unknown): Promise<any> {
   return res.json();
 }
 
-// Best-effort mapping of an unknown saved payload into our Round[] view-model.
-function coerceRounds(payload: any): Round[] | null {
-  const src = payload?.rounds ?? payload?.stages ?? payload?.interviewRounds ?? payload?.pipeline?.stages ?? payload?.data?.rounds;
-  if (!Array.isArray(src) || src.length === 0) return null;
-  return src.map((r: any, i: number): Round => {
-    const rawType = String(r?.type ?? r?.kind ?? r?.stageType ?? "TECHNICAL").toUpperCase().replace(/[\s-]+/g, "_");
+// Map the gateway response (GET /api/rounds?requisitionId=) into our Round[]
+// view-model. The interview-service returns InterviewRound rows whose
+// interviewType matches our RoundType exactly, already ordered (order asc).
+function extractRows(res: any): any[] {
+  const rows = Array.isArray(res) ? res : res?.data ?? res?.rounds ?? [];
+  return Array.isArray(rows) ? rows : [];
+}
+function fromServer(res: any): Round[] {
+  return extractRows(res).map((r: any): Round => {
+    const rawType = String(r?.interviewType ?? "TECHNICAL").toUpperCase();
     const type = (TYPE_ORDER.includes(rawType as RoundType) ? rawType : "TECHNICAL") as RoundType;
-    const dur = Number(r?.dur ?? r?.duration ?? r?.minutes ?? r?.durationMinutes ?? 45);
+    const dur = Number(r?.durationMinutes);
     return {
-      id: String(r?.id ?? r?.key ?? `rd${i + 1}`),
-      name: String(r?.name ?? r?.title ?? r?.stage ?? "Untitled round"),
+      id: String(r?.id ?? `rd${Date.now()}`),
+      name: String(r?.name ?? "Untitled round"),
       type,
       dur: Number.isFinite(dur) && dur > 0 ? Math.round(dur) : 45,
-      panel: String(r?.panel ?? r?.interviewers ?? r?.team ?? "Panel"),
-      auto: Boolean(r?.auto ?? r?.autoAdvance ?? r?.auto_advance ?? false),
-      instr: String(r?.instr ?? r?.instructions ?? r?.focus ?? r?.description ?? ""),
+      panel: String(r?.defaultPanelistRole ?? "Panel"),
+      auto: Boolean(r?.autoAdvanceOnPass),
+      instr: String(r?.instructions ?? ""),
     };
   });
+}
+// server rounds carry UUID ids; locally-added rounds use "rd<n>" — used to tell
+// the reconcile endpoint which rows to update vs create.
+const isServerId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+function toServerRound(r: Round) {
+  return {
+    ...(isServerId(r.id) ? { id: r.id } : {}),
+    name: r.name.trim() || "Untitled round",
+    interviewType: r.type,
+    durationMinutes: Math.max(15, Math.min(480, Math.round(r.dur) || 60)),
+    autoAdvanceOnPass: r.auto,
+    ...(r.panel.trim() ? { defaultPanelistRole: r.panel.trim() } : {}),
+    ...(r.instr.trim() ? { instructions: r.instr.trim() } : {}),
+  };
 }
 
 type SaveState = { kind: "idle" | "saving" | "ok" | "err"; msg?: string };
@@ -94,11 +112,10 @@ export default function RoundsPage() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      let next: Round[] | null = null;
-      try { next = coerceRounds(await raw("GET", `/requisitions/${id}/rounds`)); } catch { /* try fallback */ }
-      if (!next) { try { next = coerceRounds(await raw("GET", `/requisitions/${id}`)); } catch { /* keep defaults */ } }
+      let next: Round[] = [];
+      try { next = fromServer(await raw("GET", `/rounds?requisitionId=${encodeURIComponent(id)}`)); } catch { /* keep defaults */ }
       if (!alive) return;
-      if (next && next.length) { setRounds(next); setLoadedSaved(true); }
+      if (next.length) { setRounds(next); setLoadedSaved(true); }
       setLoading(false);
     })();
     return () => { alive = false; };
@@ -118,17 +135,14 @@ export default function RoundsPage() {
   // Save attempts PUT then POST; either success surfaces inline confirmation.
   const onSave = useCallback(async () => {
     setSave({ kind: "saving" });
-    const payload = { rounds };
     try {
-      await raw("PUT", `/requisitions/${id}/rounds`, payload);
+      const res = await raw("PUT", `/rounds?requisitionId=${encodeURIComponent(id)}`, { rounds: rounds.map(toServerRound) });
+      const saved = fromServer(res);
+      if (saved.length) setRounds(saved);
+      setLoadedSaved(true);
       setSave({ kind: "ok", msg: "Rounds saved." });
     } catch {
-      try {
-        await raw("POST", `/requisitions/${id}/rounds`, payload);
-        setSave({ kind: "ok", msg: "Rounds saved." });
-      } catch {
-        setSave({ kind: "err", msg: "Could not save to the server. Your changes are kept locally." });
-      }
+      setSave({ kind: "err", msg: "Could not save to the server. Your changes are kept locally." });
     }
   }, [rounds, id]);
 

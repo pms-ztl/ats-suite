@@ -31,6 +31,56 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
+// PUT /internal/rounds?requisitionId=  — reconcile the FULL ordered loop for a
+// requisition in one transaction: items with a known id are updated (preserving
+// their scheduled interviews), new items are created, omitted existing rounds are
+// deleted (their interviews are unlinked), and order is set by array position.
+const ReconcileItemSchema = CreateRoundSchema.omit({ requisitionId: true }).extend({
+  id: z.string().uuid().optional(),
+});
+const ReconcileSchema = z.object({ rounds: z.array(ReconcileItemSchema).max(50) });
+
+router.put("/", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const requisitionId = (req.query["requisitionId"] as string | undefined) ?? null;
+    const { rounds } = ReconcileSchema.parse(req.body);
+
+    const existing = await prisma.interviewRound.findMany({ where: { tenantId, requisitionId }, select: { id: true } });
+    const existingIds = new Set(existing.map((e) => e.id));
+    const keepIds = new Set(rounds.filter((r) => r.id && existingIds.has(r.id)).map((r) => r.id as string));
+    const toDelete = existing.filter((e) => !keepIds.has(e.id)).map((e) => e.id);
+
+    await prisma.$transaction(async (tx) => {
+      if (toDelete.length) {
+        await tx.interview.updateMany({ where: { roundId: { in: toDelete }, tenantId }, data: { roundId: null } });
+        await tx.interviewRound.deleteMany({ where: { id: { in: toDelete }, tenantId } });
+      }
+      let order = 1;
+      for (const r of rounds) {
+        const data = {
+          name: r.name,
+          interviewType: r.interviewType,
+          durationMinutes: r.durationMinutes,
+          instructions: r.instructions ?? null,
+          autoAdvanceOnPass: r.autoAdvanceOnPass,
+          defaultPanelistRole: r.defaultPanelistRole ?? null,
+          order,
+        };
+        if (r.id && existingIds.has(r.id)) {
+          await tx.interviewRound.updateMany({ where: { id: r.id, tenantId }, data });
+        } else {
+          await tx.interviewRound.create({ data: { tenantId, requisitionId, ...data } });
+        }
+        order++;
+      }
+    });
+
+    const fresh = await prisma.interviewRound.findMany({ where: { tenantId, requisitionId }, orderBy: { order: "asc" } });
+    ok(res, fresh);
+  } catch (err) { next(err); }
+});
+
 router.post("/", requireRoundEditor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
