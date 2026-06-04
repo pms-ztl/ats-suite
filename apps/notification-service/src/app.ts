@@ -6,6 +6,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import notificationsRouter from "./routes/notifications.js";
+import messagesRouter from "./routes/messages.js";
 import integrationsRouter from "./routes/integrations.js";
 import hitlRouter from "./routes/hitl.js";
 import emailTemplatesRouter from "./routes/email-templates.js";
@@ -39,6 +40,8 @@ export function createApp(logger: Logger): Express {
   app.use(tenantContext);
 
   app.use("/internal/notifications", readAuthHeaders(), notificationsRouter);
+  // In-app team messaging (tenant-isolated, RLS-scoped, real-time via SSE).
+  app.use("/internal/messages", readAuthHeaders(), messagesRouter);
   app.use("/internal/integrations", readAuthHeaders(), integrationsRouter);
   app.use("/internal/hitl", readAuthHeaders(), hitlRouter);
   app.use("/internal/email-templates", readAuthHeaders(), emailTemplatesRouter);

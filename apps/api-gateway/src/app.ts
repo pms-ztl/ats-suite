@@ -369,6 +369,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/interviews", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interviews"));
   app.use("/api/rounds", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/rounds"));
   app.use("/api/notifications", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/notifications"));
+  app.use("/api/messages", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/messages"));
   app.use("/api/integrations", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/integrations"));
   app.use("/api/webhooks", gatewayAuth(), express.json({ limit: "256kb" }), forwardHeaders(notificationUrl, "/internal/webhooks"));
   app.use("/api/compliance", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/compliance"));

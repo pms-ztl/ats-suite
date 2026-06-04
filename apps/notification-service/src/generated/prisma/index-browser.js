@@ -258,6 +258,34 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ConversationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  title: 'title',
+  isGroup: 'isGroup',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ConversationParticipantScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  lastReadAt: 'lastReadAt',
+  joinedAt: 'joinedAt'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  tenantId: 'tenantId',
+  senderId: 'senderId',
+  body: 'body',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -348,7 +376,10 @@ exports.Prisma.ModelName = {
   SupportTicket: 'SupportTicket',
   SupportTicketMessage: 'SupportTicketMessage',
   Webhook: 'Webhook',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  Conversation: 'Conversation',
+  ConversationParticipant: 'ConversationParticipant',
+  Message: 'Message'
 };
 
 /**

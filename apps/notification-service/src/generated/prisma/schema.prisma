@@ -246,3 +246,84 @@ model SupportTicketMessage {
 
   @@index([ticketId, createdAt])
 }
+
+// Phase 40 — outbound webhooks: tenants register URLs to receive domain events
+// (candidate.*, screening.*, interview.*, ...) signed with HMAC-SHA256.
+model Webhook {
+  id             String    @id @default(uuid())
+  tenantId       String
+  url            String
+  secret         String // HMAC signing secret (shown once on create)
+  events         String[]  @default([]) // subscribed event types; empty = all
+  active         Boolean   @default(true)
+  failureCount   Int       @default(0)
+  lastStatus     Int?
+  lastDeliveryAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId])
+}
+
+// Phase 40 — immutable audit trail for SOC2/GDPR evidence. Append-only;
+// records security- + decision-relevant events fanned in from NATS.
+model AuditLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  action      String // e.g. "interview.scheduled", "plan-change.approved"
+  actorUserId String?
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([action])
+}
+
+// ── In-app team messaging (tenant-isolated) ───────────────────────────────
+// A Conversation, its participants, and its messages all carry tenantId and are
+// RLS-protected, so a user can only ever see conversations in their own tenant.
+// Cross-tenant messaging is impossible: a conversation lives in exactly one
+// tenant, and RLS hides it from every other tenant's session.
+model Conversation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  title       String? // group title; null for 1:1
+  isGroup     Boolean  @default(false)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([tenantId, updatedAt])
+}
+
+model ConversationParticipant {
+  id             String    @id @default(uuid())
+  conversationId String
+  tenantId       String
+  userId         String
+  lastReadAt     DateTime?
+  joinedAt       DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([tenantId, userId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  tenantId       String
+  senderId       String
+  body           String   @db.Text
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([conversationId, createdAt])
+}

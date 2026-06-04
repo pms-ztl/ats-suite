@@ -15,7 +15,7 @@ import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const TENANT_TABLES = ["HitlCheckpoint", "EmailTemplate", "TenantIntegration", "Webhook"];
+const TENANT_TABLES = ["HitlCheckpoint", "EmailTemplate", "TenantIntegration", "Webhook", "Conversation", "ConversationParticipant", "Message"];
 
 const run = (sql: string) => prisma.$executeRawUnsafe(sql);
 

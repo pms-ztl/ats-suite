@@ -127,9 +127,12 @@ router.get("/stream", async (req: Request, res: Response) => {
 
   let unsubscribe: (() => Promise<void>) | null = null;
   try {
-    unsubscribe = await subscribeToUser(userId, (notif) => {
+    unsubscribe = await subscribeToUser(userId, (payload) => {
       try {
-        res.write(`event: notification\ndata: ${JSON.stringify(notif)}\n\n`);
+        // Messaging shares this per-user channel; route to a distinct SSE event
+        // so the client can append chat messages without touching notifications.
+        const event = (payload as any)?.kind === "message" ? "message" : "notification";
+        res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
       } catch {
         // socket closed
       }

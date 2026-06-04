@@ -201,6 +201,35 @@ export async function decidePlanRequest(id: string, action: "APPROVE" | "REJECT"
   await raw("PATCH", `/super-admin/plan-change-requests/${encodeURIComponent(id)}`, { action });
 }
 
+/* ---------- In-app messaging (tenant-isolated, real-time) ---------- */
+export interface Conversation {
+  id: string; title: string | null; isGroup: boolean; participantIds: string[];
+  lastMessage: { body: string; senderId: string; createdAt: string } | null; unread: number; updatedAt: string;
+}
+export interface ChatMessage { id: string; conversationId: string; senderId: string; body: string; createdAt: string }
+export interface AssignableUser { id: string; firstName: string; lastName: string; role: string }
+
+export async function listConversations(): Promise<Conversation[]> {
+  try { return arr(await raw("GET", "/messages/conversations")) as Conversation[]; } catch { return []; }
+}
+export async function createConversation(participantUserIds: string[], title?: string): Promise<{ id: string }> {
+  const r: any = await raw("POST", "/messages/conversations", { participantUserIds, ...(title ? { title } : {}) });
+  return r?.data ?? r;
+}
+export async function getConversationMessages(id: string): Promise<ChatMessage[]> {
+  try { return arr(await raw("GET", `/messages/conversations/${encodeURIComponent(id)}/messages`)) as ChatMessage[]; } catch { return []; }
+}
+export async function sendMessage(id: string, body: string): Promise<ChatMessage> {
+  const r: any = await raw("POST", `/messages/conversations/${encodeURIComponent(id)}/messages`, { body });
+  return (r?.data ?? r) as ChatMessage;
+}
+export async function markConversationRead(id: string): Promise<void> {
+  try { await raw("POST", `/messages/conversations/${encodeURIComponent(id)}/read`, {}); } catch { /* ignore */ }
+}
+export async function listAssignableUsers(): Promise<AssignableUser[]> {
+  try { return arr(await raw("GET", "/users/assignable")) as AssignableUser[]; } catch { return []; }
+}
+
 /* ---------- Decisions (human-gated) ---------- */
 function toDecision(d: any): Decision {
   return {
