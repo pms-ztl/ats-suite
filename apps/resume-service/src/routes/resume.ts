@@ -12,7 +12,7 @@ import os from "os";
 import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId, requireRole, createLogger } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireRole, createLogger, tenantContext } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: resume upload (single + bulk) is admin/recruiter.
 const requireUploader = requireRole("ADMIN", "RECRUITER");
@@ -61,6 +61,7 @@ router.post(
   "/upload",
   requireUploader,
   singleUpload.single("resume"),
+  tenantContext, // re-bind tenant after multer drops the async-local context
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(req);
@@ -136,6 +137,7 @@ router.post(
   "/bulk",
   requireUploader,
   bulkUpload.array("resumes", 1000),
+  tenantContext, // re-bind tenant after multer drops the async-local context
   async (req: Request, res: Response, next: NextFunction) => {
     const cleanupPaths: string[] = [];
     try {
