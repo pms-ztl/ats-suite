@@ -32,6 +32,7 @@ import type { Logger } from "pino";
 import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-middleware";
 import { gatewayAuth } from "./lib/auth-middleware.js";
 import { resolveTenantPlan } from "./lib/tenant-plan.js";
+import { requireAgentPlan } from "./lib/agent-gate.js";
 import authRouter from "./routes/auth.js";
 import impersonateRouter from "./routes/impersonate.js";
 import { publicIngestRouter } from "./routes/public-ingest.js";
@@ -320,7 +321,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/billing", gatewayAuth(), forwardHeaders(billingUrl, "/internal/billing"));
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
-  app.use("/api/jd-author", gatewayAuth(), forwardHeaders(jobUrl, "/internal/jd-author"));
+  app.use("/api/jd-author", gatewayAuth(), requireAgentPlan("jd-author"), forwardHeaders(jobUrl, "/internal/jd-author"));
 
   // Platform aggregator — fans out to job + candidate + billing in parallel
   app.use("/api/platform", gatewayAuth(), platformRouter(logger));
@@ -338,19 +339,19 @@ export function createApp(logger: Logger): Express {
   // gateway-hosted /api mount above for the same path, because the
   // gateway-hosted handlers use express.json() which would consume the
   // body before http-proxy-middleware could forward it).
-  app.use("/api/sourcing", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/sourcing"));
-  app.use("/api/offer", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/offer"));
-  app.use("/api/candidate-experience", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidate-experience"));
-  app.use("/api/interview-intelligence", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/interview-intelligence"));
-  app.use("/api/scheduling", gatewayAuth(), forwardHeaders(interviewUrl, "/internal/scheduling"));
+  app.use("/api/sourcing", gatewayAuth(), requireAgentPlan("sourcing"), forwardHeaders(candidateUrl, "/internal/sourcing"));
+  app.use("/api/offer", gatewayAuth(), requireAgentPlan("offer"), forwardHeaders(candidateUrl, "/internal/offer"));
+  app.use("/api/candidate-experience", gatewayAuth(), requireAgentPlan("candidate-assistant"), forwardHeaders(candidateUrl, "/internal/candidate-experience"));
+  app.use("/api/interview-intelligence", gatewayAuth(), requireAgentPlan("interview-intelligence"), forwardHeaders(interviewUrl, "/internal/interview-intelligence"));
+  app.use("/api/scheduling", gatewayAuth(), requireAgentPlan("interview-scheduler"), forwardHeaders(interviewUrl, "/internal/scheduling"));
 
   // Gateway-hosted agent routes (analytics, bias-auditor, copilot) — each
   // mounted at its own path with body parsing scoped to just that path.
   // NOTE: aggregatorRouter above handles GET /api/analytics/pipeline etc.,
   // these handle POST /api/analytics for the agent. Express routes by method.
-  app.use("/api/analytics", gatewayAuth(), express.json({ limit: "1mb" }), analyticsAgentRouter(logger));
-  app.use("/api/bias-auditor", gatewayAuth(), express.json({ limit: "1mb" }), biasAuditorRouter(logger));
-  app.use("/api/copilot", gatewayAuth(), express.json({ limit: "1mb" }), copilotRouter(logger));
+  app.use("/api/analytics", gatewayAuth(), requireAgentPlan("analytics"), express.json({ limit: "1mb" }), analyticsAgentRouter(logger));
+  app.use("/api/bias-auditor", gatewayAuth(), requireAgentPlan("bias-auditor"), express.json({ limit: "1mb" }), biasAuditorRouter(logger));
+  app.use("/api/copilot", gatewayAuth(), requireAgentPlan("copilot"), express.json({ limit: "1mb" }), copilotRouter(logger));
   app.use("/api/candidates", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidates"));
   app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
   app.use("/api/resume", gatewayAuth(), forwardHeaders(resumeUrl, "/internal/resume"));

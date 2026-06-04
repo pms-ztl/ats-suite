@@ -78,7 +78,7 @@ export async function checkResumeQuota(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
-    const res = await fetch(`${BILLING_URL}/internal/check-resume-quota?count=${count}`, {
+    const res = await fetch(`${BILLING_URL}/internal/billing/check-resume-quota?count=${count}`, {
       method: "GET",
       headers,
       signal: controller.signal,

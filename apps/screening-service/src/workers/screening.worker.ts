@@ -15,7 +15,7 @@ import type {
   AgentRunSnapshot,
 } from "@cdc-ats/ai-engine";
 import { prisma } from "../lib/prisma.js";
-import { fetchResume, fetchRequisition } from "../lib/service-client.js";
+import { fetchResume, fetchRequisition, isAgentAllowed } from "../lib/service-client.js";
 import { buildScreenerTools } from "../lib/screener-tools.js";
 import type { ScreeningJob } from "../lib/queue.js";
 import type { Logger } from "pino";
@@ -26,6 +26,14 @@ export function startScreeningWorker(logger: Logger) {
     async (job) => {
       const { candidateId, requisitionId, tenantId, userId, resumeId } = job.data;
       logger.info({ jobId: job.id, candidateId, requisitionId }, "Screening starting");
+
+      // Plan-gate: candidate-screener is a paid agent (STARTER and up). FREE
+      // tenants still get resume parsing (which emitted this event), but not AI
+      // screening — skip quietly without creating a screening record.
+      if (!(await isAgentAllowed(tenantId, "candidate-screener"))) {
+        logger.info({ jobId: job.id, tenantId, candidateId }, "Screening skipped — candidate-screener not in tenant plan");
+        return;
+      }
 
       // Fetch resume parsed data + requisition requirements via internal calls
       // For Phase 3 stub: synthesize minimal inputs from job data

@@ -9,6 +9,7 @@ const URLS = {
   resume: process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007",
   job: process.env["JOB_SERVICE_URL"] ?? "http://localhost:4004",
   candidate: process.env["CANDIDATE_SERVICE_URL"] ?? "http://localhost:4005",
+  billing: process.env["BILLING_SERVICE_URL"] ?? "http://localhost:4003",
 };
 
 const INTERNAL_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
@@ -74,6 +75,23 @@ export async function fetchRequisition(
   tenantId: string
 ): Promise<RequisitionData | null> {
   return call<RequisitionData>("job", `/internal/requisitions/${requisitionId}`, tenantId, "system");
+}
+
+/**
+ * Plan-gate for the auto-screening worker. candidate-screener is a paid agent
+ * (STARTER and up), so FREE tenants get resume parsing but not AI screening.
+ * Asks billing-service (the source of truth for plan + kill switches). Fails
+ * OPEN on a billing outage so a blip never silently drops screenings.
+ */
+export async function isAgentAllowed(tenantId: string, agentType: string): Promise<boolean> {
+  const r = await call<{ allowed?: boolean }>(
+    "billing",
+    `/internal/billing/check-agent?agentType=${encodeURIComponent(agentType)}`,
+    tenantId,
+    "system",
+  );
+  if (r === null) return true; // billing unreachable — do not hard-block
+  return r.allowed === true;
 }
 
 export async function fetchCandidateApplications(
