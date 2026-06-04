@@ -32,3 +32,32 @@ export const tenantContext: RequestHandler = (req, _res, next) => {
   if (typeof tid === "string" && tid) store.run(tid, () => next());
   else next();
 };
+
+/**
+ * Wrap a PrismaClient so every model operation runs with the current request's
+ * tenant stamped onto the DB session (set_config 'app.current_tenant_id'), which
+ * the Postgres RLS policies key on. Each op is run inside a 2-statement
+ * transaction so the LOCAL setting only applies to that op's connection. With no
+ * tenant in context the op runs unchanged (raw/admin paths, startup probes).
+ *
+ * Typed loosely (any) because each service has its own generated PrismaClient;
+ * callers cast the result back to their PrismaClient type.
+ */
+export function rlsExtend(base: any): any {
+  return base.$extends({
+    name: "rls-tenant-scope",
+    query: {
+      $allModels: {
+        async $allOperations({ args, query }: { args: unknown; query: (a: unknown) => Promise<unknown> }) {
+          const tid = getCurrentTenantId();
+          if (!tid) return query(args);
+          const [, result] = await base.$transaction([
+            base.$executeRaw`SELECT set_config('app.current_tenant_id', ${tid}, true)`,
+            query(args),
+          ]);
+          return result;
+        },
+      },
+    },
+  });
+}

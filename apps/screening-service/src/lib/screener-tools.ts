@@ -16,7 +16,9 @@ import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
 import type { ToolImpl } from "@cdc-ats/ai-engine";
 import type { Logger } from "pino";
-import { prisma } from "./prisma.js";
+// Invoked by the background screening worker; uses the admin client (filters by
+// the screening context's tenantId explicitly).
+import { prismaAdmin as prisma } from "./prisma.js";
 import { fetchResume, fetchRequisition } from "./service-client.js";
 
 const STOPWORDS = new Set([

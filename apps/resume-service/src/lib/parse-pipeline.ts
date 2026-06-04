@@ -28,7 +28,9 @@ import type {
   GithubCorroboration,
 } from "@cdc-ats/ai-engine";
 import type { Logger } from "pino";
-import { prisma } from "./prisma.js";
+// Runs inside the background parse worker; uses the admin client and writes
+// Resume rows with an explicit tenantId.
+import { prismaAdmin as prisma } from "./prisma.js";
 import { buildVerifierTools } from "./verifier-tools.js";
 
 function persistRunFor(tenantId: string, userId: string | null) {

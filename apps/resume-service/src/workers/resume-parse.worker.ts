@@ -9,7 +9,9 @@
  * 6. Publishes tenant.{tenantId}.agent.completed (billing-service consumes)
  */
 import { createWorker } from "@cdc-ats/nats-client";
-import { prisma } from "../lib/prisma.js";
+// Background worker (no HTTP request) — scopes by the job's tenantId explicitly,
+// so it uses the admin (non-RLS) client.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { runParsePipeline } from "../lib/parse-pipeline.js";
 import type { ResumeParseJob } from "../lib/queue.js";
 import type { Logger } from "pino";

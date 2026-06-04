@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import {
   createHealthRouter, createMetrics, createErrorHandler, requestTimeout, sentryErrorHandler,
-  notFoundHandler, requestId, readAuthHeaders,
+  notFoundHandler, requestId, readAuthHeaders, tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -25,6 +25,7 @@ export function createApp(logger: Logger): Express {
   });
 
   // Multer handles its own body parsing; don't put express.json() before it.
+  app.use(tenantContext); // bind request tenant for RLS-scoped queries
   app.use("/internal/resume", readAuthHeaders(), resumeRouter);
 
   app.use(notFoundHandler());

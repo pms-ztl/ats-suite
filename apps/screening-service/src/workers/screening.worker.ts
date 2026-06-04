@@ -14,7 +14,9 @@ import type {
   AgenticScreeningOutput,
   AgentRunSnapshot,
 } from "@cdc-ats/ai-engine";
-import { prisma } from "../lib/prisma.js";
+// Background worker (no HTTP request) — scopes by the job's tenantId explicitly,
+// so it uses the admin (non-RLS) client.
+import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { fetchResume, fetchRequisition, isAgentAllowed } from "../lib/service-client.js";
 import { buildScreenerTools } from "../lib/screener-tools.js";
 import type { ScreeningJob } from "../lib/queue.js";
