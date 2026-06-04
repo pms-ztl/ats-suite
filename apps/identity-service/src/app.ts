@@ -6,6 +6,7 @@ import {
   notFoundHandler,
   requestId,
   readAuthHeaders,
+  tenantContext,
 } from "@cdc-ats/common";
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
@@ -58,6 +59,10 @@ export function createApp(logger: Logger): Express {
   // role-guarded routes (GET list, invite, role/deactivate, platform-stats,
   // assignable) need req.user populated from the gateway's X-User-* headers;
   // without this middleware requireRole/requireTenantAdmin always 401'd.
+  // Bind request tenant (when present) so the RLS-scoped user-management
+  // handlers see it. Pre-auth requests (login, register saga) carry no
+  // X-Tenant-Id, which is fine — those handlers use the admin client.
+  app.use(tenantContext);
   app.use("/internal/users", readAuthHeaders({ optional: true }), usersRouter);
   // Auth polish — forgot/reset password are unauthenticated; the others
   // (change-password, mfa/*) require X-User-Id from a logged-in JWT.

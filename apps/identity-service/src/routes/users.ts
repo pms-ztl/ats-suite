@@ -8,7 +8,10 @@ import { z } from "zod";
 import argon2 from "argon2";
 import { ok, created, Errors, getTenantId, requireRole, requireTenantAdmin } from "@cdc-ats/common";
 import { CreateUserInputSchema, LoginInputSchema, UserRoleSchema } from "@cdc-ats/contracts";
-import { prisma } from "../lib/prisma.js";
+// prisma = admin (default, used by the auth/saga/super-admin/invite paths).
+// prismaRls = RLS-scoped, used ONLY by the pure per-tenant user-management
+// handlers below (assignable list, role change, deactivate).
+import { prisma, prismaRls } from "../lib/prisma.js";
 import { PLAN_LIMITS, canAddSeats, isUnlimited } from "../lib/plan-limits.js";
 
 const router = Router();
@@ -148,7 +151,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantId = getTenantId(req);
-      const users = await prisma.user.findMany({
+      const users = await prismaRls.user.findMany({
         where: { tenantId, isActive: true },
         orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
         select: { id: true, firstName: true, lastName: true, role: true },
@@ -373,10 +376,10 @@ router.patch("/:id/role", requireTenantAdmin, async (req: Request, res: Response
     const id = req.params["id"] as string;
     const { role } = RoleSchema.parse(req.body);
     if (id === actorId) throw Errors.validation("You cannot change your own role");
-    const target = await prisma.user.findFirst({ where: { id, tenantId } });
+    const target = await prismaRls.user.findFirst({ where: { id, tenantId } });
     if (!target) throw Errors.notFound("User");
     if (target.role === "SUPER_ADMIN") throw Errors.forbidden("Cannot change a super-admin's role");
-    const updated = await prisma.user.update({ where: { id }, data: { role } });
+    const updated = await prismaRls.user.update({ where: { id }, data: { role } });
     ok(res, { id: updated.id, role: updated.role });
   } catch (err) { next(err); }
 });
@@ -390,11 +393,11 @@ router.patch("/:id/deactivate", requireTenantAdmin, async (req: Request, res: Re
     const actorId = req.headers["x-user-id"] as string | undefined;
     const id = req.params["id"] as string;
     if (id === actorId) throw Errors.validation("You cannot deactivate yourself");
-    const target = await prisma.user.findFirst({ where: { id, tenantId } });
+    const target = await prismaRls.user.findFirst({ where: { id, tenantId } });
     if (!target) throw Errors.notFound("User");
     if (target.role === "SUPER_ADMIN") throw Errors.forbidden("Cannot deactivate a super-admin");
     const isActive = req.body?.reactivate === true;
-    const updated = await prisma.user.update({ where: { id }, data: { isActive } });
+    const updated = await prismaRls.user.update({ where: { id }, data: { isActive } });
     ok(res, { id: updated.id, isActive: updated.isActive });
   } catch (err) { next(err); }
 });
