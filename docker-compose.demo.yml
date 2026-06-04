@@ -35,6 +35,21 @@ x-svc-env: &svc-env
   AGENT_SERVICE_URL: http://agent-service:4011
   ANALYTICS_SERVICE_URL: http://analytics-service:4012
   COMPLIANCE_SERVICE_URL: http://compliance-service:4013
+  # Each service's Prisma schema reads its own <SVC>_DATABASE_URL (not the
+  # generic DATABASE_URL). Every service gets the full set; each uses only its own.
+  IDENTITY_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/identity_db
+  TENANT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tenant_db
+  BILLING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/billing_db
+  JOB_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db
+  CANDIDATE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/candidate_db
+  INTERVIEW_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/interview_db
+  RESUME_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/resume_db
+  SCREENING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/screening_db
+  NOTIFICATION_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
+  SEARCH_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/search_db
+  AGENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_db
+  ANALYTICS_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
+  COMPLIANCE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
 
 x-svc-build: &svc-build
   context: .

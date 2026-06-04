@@ -86,6 +86,14 @@ RUN if [ -f "apps/${SERVICE}/prisma/schema.prisma" ]; then \
 # Build the target service
 RUN npm run build --workspace=@cdc-ats/${SERVICE}
 
+# tsc only compiles .ts, so the generated Prisma client (plain .js under
+# src/generated) never lands in dist. The compiled service imports
+# dist/generated/prisma at runtime, so copy the generated client into dist.
+RUN if [ -d "apps/${SERVICE}/src/generated" ]; then \
+      mkdir -p "apps/${SERVICE}/dist/generated" && \
+      cp -r apps/${SERVICE}/src/generated/. apps/${SERVICE}/dist/generated/; \
+    fi
+
 # ── Stage 3: production runtime (smallest possible) ──────────────────────────
 FROM node:${NODE_VERSION} AS runner
 ENV NODE_ENV=production
