@@ -33,7 +33,19 @@ mig resume-service       "$RESUME_DATABASE_URL"
 mig screening-service    "$SCREENING_DATABASE_URL"
 mig notification-service "$NOTIFICATION_DATABASE_URL"
 
-# --- notification: add in-app messaging tables (pushed, not migrated) ---
+# --- Sync schema-only additions on the core services. Some columns/tables were
+# --- added via `db push`, not migrations (e.g. Requisition.customFields, the
+# --- in-app chat tables), so migrate deploy alone misses them. No
+# --- --accept-data-loss here, so this only ADDS columns, never drops (candidate's
+# --- raw-SQL embedding column, which is not in the schema, is preserved). ---
+push identity-service     "$IDENTITY_DATABASE_URL"
+push tenant-service       "$TENANT_DATABASE_URL"
+push billing-service      "$BILLING_DATABASE_URL"
+push job-service          "$JOB_DATABASE_URL"
+push candidate-service    "$CANDIDATE_DATABASE_URL"
+push interview-service    "$INTERVIEW_DATABASE_URL"
+push resume-service       "$RESUME_DATABASE_URL"
+push screening-service    "$SCREENING_DATABASE_URL"
 push notification-service "$NOTIFICATION_DATABASE_URL"
 
 # --- 4 extra services (schemas, no migrations) ---
