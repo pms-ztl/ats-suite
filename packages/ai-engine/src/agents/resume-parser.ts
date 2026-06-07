@@ -50,7 +50,7 @@ const AchievementSchema = z.object({
 const ExperienceSchema = z.object({
   company: z.string(),
   title: z.string(),
-  startDate: z.string().describe("YYYY, YYYY-MM, or YYYY-MM-DD"),
+  startDate: z.string().nullable().describe("YYYY, YYYY-MM, or YYYY-MM-DD; null if absent"),
   endDate: z.string().nullable().describe("null when still current"),
   location: z.string().nullable(),
   bullets: z.array(z.string()).describe("Raw bullets as-written"),
@@ -65,7 +65,7 @@ const EducationSchema = z.object({
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
   gpa: z.string().nullable().describe('"3.8/4.0" — verbatim string, no inference'),
-  honors: z.array(z.string()),
+  honors: z.array(z.string()).nullable(),
   confidence: z.number().min(0).max(1),
 });
 
