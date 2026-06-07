@@ -30,7 +30,9 @@ import { resolvePromptConfig } from "./prompt-override-cache.js";
 const openRouter = process.env["OPENROUTER_API_KEY"]
   ? createOpenAI({
       apiKey: process.env["OPENROUTER_API_KEY"],
-      baseURL: "https://openrouter.ai/api/v1",
+      // OpenAI-compatible base URL. Point at Groq (https://api.groq.com/openai/v1),
+      // a local LLM, or any compatible endpoint by setting OPENROUTER_BASE_URL.
+      baseURL: process.env["OPENROUTER_BASE_URL"] ?? "https://openrouter.ai/api/v1",
       headers: {
         // Required by OpenRouter for attribution + ranking
         "HTTP-Referer": process.env["OPENROUTER_REFERER"] ?? "https://cdc-ats.local",
@@ -154,9 +156,13 @@ export function estimateCost(modelId: string, tokensIn: number, tokensOut: numbe
 }
 
 export function getModel(modelId: string): LanguageModelV1 {
-  // 1. OpenRouter takes priority — single API for all model families
+  // 1. OpenRouter (or any OpenAI-compatible endpoint, e.g. Groq) takes priority.
   if (openRouter) {
-    const routedId = OPENROUTER_MODEL_MAP[modelId] ?? modelId;
+    // AI_MODEL_OVERRIDE forces one model id for every agent. Needed when the
+    // endpoint serves different model names than the OpenRouter map (e.g. Groq's
+    // "llama-3.3-70b-versatile"). Applied here so every getModel() call honors it.
+    const override = process.env["AI_MODEL_OVERRIDE"];
+    const routedId = override || OPENROUTER_MODEL_MAP[modelId] || modelId;
     return openRouter(routedId);
   }
   // 2. Native SDKs as fallback

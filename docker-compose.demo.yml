@@ -18,6 +18,11 @@ x-svc-env: &svc-env
   JWT_SECRET: ${JWT_SECRET:-demo-jwt-secret-min-32-chars-change-me-0123456789}
   INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-demo-internal-service-token}
   OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+  # LLM endpoint is pluggable. Defaults to OpenRouter; for Groq's FREE tier set in
+  # .env: OPENROUTER_API_KEY=<groq key>, OPENROUTER_BASE_URL=https://api.groq.com/openai/v1,
+  # AI_MODEL_OVERRIDE=llama-3.3-70b-versatile
+  OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+  AI_MODEL_OVERRIDE: ${AI_MODEL_OVERRIDE:-}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   CORS_ORIGIN: ${CORS_ORIGIN:-}
