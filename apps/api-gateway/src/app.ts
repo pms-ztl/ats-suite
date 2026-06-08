@@ -354,6 +354,7 @@ export function createApp(logger: Logger): Express {
   app.use("/api/copilot", gatewayAuth(), requireAgentPlan("copilot"), express.json({ limit: "1mb" }), copilotRouter(logger));
   app.use("/api/candidates", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/candidates"));
   app.use("/api/applications", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/applications"));
+  app.use("/api/offers", gatewayAuth(), forwardHeaders(candidateUrl, "/internal/offers"));
   app.use("/api/resume", gatewayAuth(), forwardHeaders(resumeUrl, "/internal/resume"));
   app.use("/api/screening", gatewayAuth(), forwardHeaders(screeningUrl, "/internal/screening"));
   // Phase 6 — search & matching microservice (port 4010).

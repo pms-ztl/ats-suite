@@ -33,6 +33,11 @@ export type ApplicationAttachment = $Result.DefaultSelection<Prisma.$Application
  * 
  */
 export type CandidateNote = $Result.DefaultSelection<Prisma.$CandidateNotePayload>
+/**
+ * Model Offer
+ * 
+ */
+export type Offer = $Result.DefaultSelection<Prisma.$OfferPayload>
 
 /**
  * Enums
@@ -64,6 +69,19 @@ export const ApplicationStatus: {
 
 export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus]
 
+
+export const OfferStatus: {
+  DRAFT: 'DRAFT',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  APPROVED: 'APPROVED',
+  SENT: 'SENT',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type OfferStatus = (typeof OfferStatus)[keyof typeof OfferStatus]
+
 }
 
 export type ApplicationStage = $Enums.ApplicationStage
@@ -73,6 +91,10 @@ export const ApplicationStage: typeof $Enums.ApplicationStage
 export type ApplicationStatus = $Enums.ApplicationStatus
 
 export const ApplicationStatus: typeof $Enums.ApplicationStatus
+
+export type OfferStatus = $Enums.OfferStatus
+
+export const OfferStatus: typeof $Enums.OfferStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -231,6 +253,16 @@ export class PrismaClient<
     * ```
     */
   get candidateNote(): Prisma.CandidateNoteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.offer`: Exposes CRUD operations for the **Offer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Offers
+    * const offers = await prisma.offer.findMany()
+    * ```
+    */
+  get offer(): Prisma.OfferDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -675,7 +707,8 @@ export namespace Prisma {
     Candidate: 'Candidate',
     Application: 'Application',
     ApplicationAttachment: 'ApplicationAttachment',
-    CandidateNote: 'CandidateNote'
+    CandidateNote: 'CandidateNote',
+    Offer: 'Offer'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -694,7 +727,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "candidate" | "application" | "applicationAttachment" | "candidateNote"
+      modelProps: "candidate" | "application" | "applicationAttachment" | "candidateNote" | "offer"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -994,6 +1027,80 @@ export namespace Prisma {
           }
         }
       }
+      Offer: {
+        payload: Prisma.$OfferPayload<ExtArgs>
+        fields: Prisma.OfferFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OfferFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OfferFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          findFirst: {
+            args: Prisma.OfferFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OfferFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          findMany: {
+            args: Prisma.OfferFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>[]
+          }
+          create: {
+            args: Prisma.OfferCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          createMany: {
+            args: Prisma.OfferCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OfferCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>[]
+          }
+          delete: {
+            args: Prisma.OfferDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          update: {
+            args: Prisma.OfferUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          deleteMany: {
+            args: Prisma.OfferDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OfferUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OfferUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>[]
+          }
+          upsert: {
+            args: Prisma.OfferUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OfferPayload>
+          }
+          aggregate: {
+            args: Prisma.OfferAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOffer>
+          }
+          groupBy: {
+            args: Prisma.OfferGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OfferGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OfferCountArgs<ExtArgs>
+            result: $Utils.Optional<OfferCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1094,6 +1201,7 @@ export namespace Prisma {
     application?: ApplicationOmit
     applicationAttachment?: ApplicationAttachmentOmit
     candidateNote?: CandidateNoteOmit
+    offer?: OfferOmit
   }
 
   /* Types for Logging */
@@ -5942,6 +6050,1182 @@ export namespace Prisma {
 
 
   /**
+   * Model Offer
+   */
+
+  export type AggregateOffer = {
+    _count: OfferCountAggregateOutputType | null
+    _avg: OfferAvgAggregateOutputType | null
+    _sum: OfferSumAggregateOutputType | null
+    _min: OfferMinAggregateOutputType | null
+    _max: OfferMaxAggregateOutputType | null
+  }
+
+  export type OfferAvgAggregateOutputType = {
+    baseSalary: number | null
+    bonusPercent: number | null
+  }
+
+  export type OfferSumAggregateOutputType = {
+    baseSalary: number | null
+    bonusPercent: number | null
+  }
+
+  export type OfferMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    candidateId: string | null
+    requisitionId: string | null
+    applicationId: string | null
+    baseSalary: number | null
+    currency: string | null
+    bonusPercent: number | null
+    equity: string | null
+    startDate: Date | null
+    expiresAt: Date | null
+    status: $Enums.OfferStatus | null
+    approvedBy: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OfferMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    candidateId: string | null
+    requisitionId: string | null
+    applicationId: string | null
+    baseSalary: number | null
+    currency: string | null
+    bonusPercent: number | null
+    equity: string | null
+    startDate: Date | null
+    expiresAt: Date | null
+    status: $Enums.OfferStatus | null
+    approvedBy: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OfferCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    candidateId: number
+    requisitionId: number
+    applicationId: number
+    baseSalary: number
+    currency: number
+    bonusPercent: number
+    equity: number
+    startDate: number
+    expiresAt: number
+    status: number
+    approvedBy: number
+    notes: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OfferAvgAggregateInputType = {
+    baseSalary?: true
+    bonusPercent?: true
+  }
+
+  export type OfferSumAggregateInputType = {
+    baseSalary?: true
+    bonusPercent?: true
+  }
+
+  export type OfferMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    candidateId?: true
+    requisitionId?: true
+    applicationId?: true
+    baseSalary?: true
+    currency?: true
+    bonusPercent?: true
+    equity?: true
+    startDate?: true
+    expiresAt?: true
+    status?: true
+    approvedBy?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OfferMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    candidateId?: true
+    requisitionId?: true
+    applicationId?: true
+    baseSalary?: true
+    currency?: true
+    bonusPercent?: true
+    equity?: true
+    startDate?: true
+    expiresAt?: true
+    status?: true
+    approvedBy?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OfferCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    candidateId?: true
+    requisitionId?: true
+    applicationId?: true
+    baseSalary?: true
+    currency?: true
+    bonusPercent?: true
+    equity?: true
+    startDate?: true
+    expiresAt?: true
+    status?: true
+    approvedBy?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OfferAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Offer to aggregate.
+     */
+    where?: OfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Offers to fetch.
+     */
+    orderBy?: OfferOrderByWithRelationInput | OfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Offers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Offers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Offers
+    **/
+    _count?: true | OfferCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OfferAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OfferSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OfferMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OfferMaxAggregateInputType
+  }
+
+  export type GetOfferAggregateType<T extends OfferAggregateArgs> = {
+        [P in keyof T & keyof AggregateOffer]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOffer[P]>
+      : GetScalarType<T[P], AggregateOffer[P]>
+  }
+
+
+
+
+  export type OfferGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OfferWhereInput
+    orderBy?: OfferOrderByWithAggregationInput | OfferOrderByWithAggregationInput[]
+    by: OfferScalarFieldEnum[] | OfferScalarFieldEnum
+    having?: OfferScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OfferCountAggregateInputType | true
+    _avg?: OfferAvgAggregateInputType
+    _sum?: OfferSumAggregateInputType
+    _min?: OfferMinAggregateInputType
+    _max?: OfferMaxAggregateInputType
+  }
+
+  export type OfferGroupByOutputType = {
+    id: string
+    tenantId: string
+    candidateId: string
+    requisitionId: string
+    applicationId: string | null
+    baseSalary: number
+    currency: string
+    bonusPercent: number | null
+    equity: string | null
+    startDate: Date | null
+    expiresAt: Date | null
+    status: $Enums.OfferStatus
+    approvedBy: string | null
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: OfferCountAggregateOutputType | null
+    _avg: OfferAvgAggregateOutputType | null
+    _sum: OfferSumAggregateOutputType | null
+    _min: OfferMinAggregateOutputType | null
+    _max: OfferMaxAggregateOutputType | null
+  }
+
+  type GetOfferGroupByPayload<T extends OfferGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OfferGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OfferGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OfferGroupByOutputType[P]>
+            : GetScalarType<T[P], OfferGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OfferSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    applicationId?: boolean
+    baseSalary?: boolean
+    currency?: boolean
+    bonusPercent?: boolean
+    equity?: boolean
+    startDate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    approvedBy?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["offer"]>
+
+  export type OfferSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    applicationId?: boolean
+    baseSalary?: boolean
+    currency?: boolean
+    bonusPercent?: boolean
+    equity?: boolean
+    startDate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    approvedBy?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["offer"]>
+
+  export type OfferSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    applicationId?: boolean
+    baseSalary?: boolean
+    currency?: boolean
+    bonusPercent?: boolean
+    equity?: boolean
+    startDate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    approvedBy?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["offer"]>
+
+  export type OfferSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    applicationId?: boolean
+    baseSalary?: boolean
+    currency?: boolean
+    bonusPercent?: boolean
+    equity?: boolean
+    startDate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    approvedBy?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "candidateId" | "requisitionId" | "applicationId" | "baseSalary" | "currency" | "bonusPercent" | "equity" | "startDate" | "expiresAt" | "status" | "approvedBy" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
+
+  export type $OfferPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Offer"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      candidateId: string
+      requisitionId: string
+      applicationId: string | null
+      baseSalary: number
+      currency: string
+      bonusPercent: number | null
+      equity: string | null
+      startDate: Date | null
+      expiresAt: Date | null
+      status: $Enums.OfferStatus
+      approvedBy: string | null
+      notes: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["offer"]>
+    composites: {}
+  }
+
+  type OfferGetPayload<S extends boolean | null | undefined | OfferDefaultArgs> = $Result.GetResult<Prisma.$OfferPayload, S>
+
+  type OfferCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OfferFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OfferCountAggregateInputType | true
+    }
+
+  export interface OfferDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Offer'], meta: { name: 'Offer' } }
+    /**
+     * Find zero or one Offer that matches the filter.
+     * @param {OfferFindUniqueArgs} args - Arguments to find a Offer
+     * @example
+     * // Get one Offer
+     * const offer = await prisma.offer.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OfferFindUniqueArgs>(args: SelectSubset<T, OfferFindUniqueArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Offer that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OfferFindUniqueOrThrowArgs} args - Arguments to find a Offer
+     * @example
+     * // Get one Offer
+     * const offer = await prisma.offer.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OfferFindUniqueOrThrowArgs>(args: SelectSubset<T, OfferFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Offer that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferFindFirstArgs} args - Arguments to find a Offer
+     * @example
+     * // Get one Offer
+     * const offer = await prisma.offer.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OfferFindFirstArgs>(args?: SelectSubset<T, OfferFindFirstArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Offer that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferFindFirstOrThrowArgs} args - Arguments to find a Offer
+     * @example
+     * // Get one Offer
+     * const offer = await prisma.offer.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OfferFindFirstOrThrowArgs>(args?: SelectSubset<T, OfferFindFirstOrThrowArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Offers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Offers
+     * const offers = await prisma.offer.findMany()
+     * 
+     * // Get first 10 Offers
+     * const offers = await prisma.offer.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const offerWithIdOnly = await prisma.offer.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OfferFindManyArgs>(args?: SelectSubset<T, OfferFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Offer.
+     * @param {OfferCreateArgs} args - Arguments to create a Offer.
+     * @example
+     * // Create one Offer
+     * const Offer = await prisma.offer.create({
+     *   data: {
+     *     // ... data to create a Offer
+     *   }
+     * })
+     * 
+     */
+    create<T extends OfferCreateArgs>(args: SelectSubset<T, OfferCreateArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Offers.
+     * @param {OfferCreateManyArgs} args - Arguments to create many Offers.
+     * @example
+     * // Create many Offers
+     * const offer = await prisma.offer.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OfferCreateManyArgs>(args?: SelectSubset<T, OfferCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Offers and returns the data saved in the database.
+     * @param {OfferCreateManyAndReturnArgs} args - Arguments to create many Offers.
+     * @example
+     * // Create many Offers
+     * const offer = await prisma.offer.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Offers and only return the `id`
+     * const offerWithIdOnly = await prisma.offer.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OfferCreateManyAndReturnArgs>(args?: SelectSubset<T, OfferCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Offer.
+     * @param {OfferDeleteArgs} args - Arguments to delete one Offer.
+     * @example
+     * // Delete one Offer
+     * const Offer = await prisma.offer.delete({
+     *   where: {
+     *     // ... filter to delete one Offer
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OfferDeleteArgs>(args: SelectSubset<T, OfferDeleteArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Offer.
+     * @param {OfferUpdateArgs} args - Arguments to update one Offer.
+     * @example
+     * // Update one Offer
+     * const offer = await prisma.offer.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OfferUpdateArgs>(args: SelectSubset<T, OfferUpdateArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Offers.
+     * @param {OfferDeleteManyArgs} args - Arguments to filter Offers to delete.
+     * @example
+     * // Delete a few Offers
+     * const { count } = await prisma.offer.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OfferDeleteManyArgs>(args?: SelectSubset<T, OfferDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Offers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Offers
+     * const offer = await prisma.offer.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OfferUpdateManyArgs>(args: SelectSubset<T, OfferUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Offers and returns the data updated in the database.
+     * @param {OfferUpdateManyAndReturnArgs} args - Arguments to update many Offers.
+     * @example
+     * // Update many Offers
+     * const offer = await prisma.offer.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Offers and only return the `id`
+     * const offerWithIdOnly = await prisma.offer.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OfferUpdateManyAndReturnArgs>(args: SelectSubset<T, OfferUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Offer.
+     * @param {OfferUpsertArgs} args - Arguments to update or create a Offer.
+     * @example
+     * // Update or create a Offer
+     * const offer = await prisma.offer.upsert({
+     *   create: {
+     *     // ... data to create a Offer
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Offer we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OfferUpsertArgs>(args: SelectSubset<T, OfferUpsertArgs<ExtArgs>>): Prisma__OfferClient<$Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Offers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferCountArgs} args - Arguments to filter Offers to count.
+     * @example
+     * // Count the number of Offers
+     * const count = await prisma.offer.count({
+     *   where: {
+     *     // ... the filter for the Offers we want to count
+     *   }
+     * })
+    **/
+    count<T extends OfferCountArgs>(
+      args?: Subset<T, OfferCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OfferCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Offer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OfferAggregateArgs>(args: Subset<T, OfferAggregateArgs>): Prisma.PrismaPromise<GetOfferAggregateType<T>>
+
+    /**
+     * Group by Offer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OfferGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OfferGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OfferGroupByArgs['orderBy'] }
+        : { orderBy?: OfferGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OfferGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOfferGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Offer model
+   */
+  readonly fields: OfferFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Offer.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OfferClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Offer model
+   */
+  interface OfferFieldRefs {
+    readonly id: FieldRef<"Offer", 'String'>
+    readonly tenantId: FieldRef<"Offer", 'String'>
+    readonly candidateId: FieldRef<"Offer", 'String'>
+    readonly requisitionId: FieldRef<"Offer", 'String'>
+    readonly applicationId: FieldRef<"Offer", 'String'>
+    readonly baseSalary: FieldRef<"Offer", 'Int'>
+    readonly currency: FieldRef<"Offer", 'String'>
+    readonly bonusPercent: FieldRef<"Offer", 'Int'>
+    readonly equity: FieldRef<"Offer", 'String'>
+    readonly startDate: FieldRef<"Offer", 'DateTime'>
+    readonly expiresAt: FieldRef<"Offer", 'DateTime'>
+    readonly status: FieldRef<"Offer", 'OfferStatus'>
+    readonly approvedBy: FieldRef<"Offer", 'String'>
+    readonly notes: FieldRef<"Offer", 'String'>
+    readonly createdAt: FieldRef<"Offer", 'DateTime'>
+    readonly updatedAt: FieldRef<"Offer", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Offer findUnique
+   */
+  export type OfferFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter, which Offer to fetch.
+     */
+    where: OfferWhereUniqueInput
+  }
+
+  /**
+   * Offer findUniqueOrThrow
+   */
+  export type OfferFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter, which Offer to fetch.
+     */
+    where: OfferWhereUniqueInput
+  }
+
+  /**
+   * Offer findFirst
+   */
+  export type OfferFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter, which Offer to fetch.
+     */
+    where?: OfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Offers to fetch.
+     */
+    orderBy?: OfferOrderByWithRelationInput | OfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Offers.
+     */
+    cursor?: OfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Offers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Offers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Offers.
+     */
+    distinct?: OfferScalarFieldEnum | OfferScalarFieldEnum[]
+  }
+
+  /**
+   * Offer findFirstOrThrow
+   */
+  export type OfferFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter, which Offer to fetch.
+     */
+    where?: OfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Offers to fetch.
+     */
+    orderBy?: OfferOrderByWithRelationInput | OfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Offers.
+     */
+    cursor?: OfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Offers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Offers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Offers.
+     */
+    distinct?: OfferScalarFieldEnum | OfferScalarFieldEnum[]
+  }
+
+  /**
+   * Offer findMany
+   */
+  export type OfferFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter, which Offers to fetch.
+     */
+    where?: OfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Offers to fetch.
+     */
+    orderBy?: OfferOrderByWithRelationInput | OfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Offers.
+     */
+    cursor?: OfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Offers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Offers.
+     */
+    skip?: number
+    distinct?: OfferScalarFieldEnum | OfferScalarFieldEnum[]
+  }
+
+  /**
+   * Offer create
+   */
+  export type OfferCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Offer.
+     */
+    data: XOR<OfferCreateInput, OfferUncheckedCreateInput>
+  }
+
+  /**
+   * Offer createMany
+   */
+  export type OfferCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Offers.
+     */
+    data: OfferCreateManyInput | OfferCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Offer createManyAndReturn
+   */
+  export type OfferCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * The data used to create many Offers.
+     */
+    data: OfferCreateManyInput | OfferCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Offer update
+   */
+  export type OfferUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Offer.
+     */
+    data: XOR<OfferUpdateInput, OfferUncheckedUpdateInput>
+    /**
+     * Choose, which Offer to update.
+     */
+    where: OfferWhereUniqueInput
+  }
+
+  /**
+   * Offer updateMany
+   */
+  export type OfferUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Offers.
+     */
+    data: XOR<OfferUpdateManyMutationInput, OfferUncheckedUpdateManyInput>
+    /**
+     * Filter which Offers to update
+     */
+    where?: OfferWhereInput
+    /**
+     * Limit how many Offers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Offer updateManyAndReturn
+   */
+  export type OfferUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * The data used to update Offers.
+     */
+    data: XOR<OfferUpdateManyMutationInput, OfferUncheckedUpdateManyInput>
+    /**
+     * Filter which Offers to update
+     */
+    where?: OfferWhereInput
+    /**
+     * Limit how many Offers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Offer upsert
+   */
+  export type OfferUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Offer to update in case it exists.
+     */
+    where: OfferWhereUniqueInput
+    /**
+     * In case the Offer found by the `where` argument doesn't exist, create a new Offer with this data.
+     */
+    create: XOR<OfferCreateInput, OfferUncheckedCreateInput>
+    /**
+     * In case the Offer was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OfferUpdateInput, OfferUncheckedUpdateInput>
+  }
+
+  /**
+   * Offer delete
+   */
+  export type OfferDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+    /**
+     * Filter which Offer to delete.
+     */
+    where: OfferWhereUniqueInput
+  }
+
+  /**
+   * Offer deleteMany
+   */
+  export type OfferDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Offers to delete
+     */
+    where?: OfferWhereInput
+    /**
+     * Limit how many Offers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Offer without action
+   */
+  export type OfferDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Offer
+     */
+    select?: OfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Offer
+     */
+    omit?: OfferOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -6026,6 +7310,28 @@ export namespace Prisma {
   };
 
   export type CandidateNoteScalarFieldEnum = (typeof CandidateNoteScalarFieldEnum)[keyof typeof CandidateNoteScalarFieldEnum]
+
+
+  export const OfferScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    candidateId: 'candidateId',
+    requisitionId: 'requisitionId',
+    applicationId: 'applicationId',
+    baseSalary: 'baseSalary',
+    currency: 'currency',
+    bonusPercent: 'bonusPercent',
+    equity: 'equity',
+    startDate: 'startDate',
+    expiresAt: 'expiresAt',
+    status: 'status',
+    approvedBy: 'approvedBy',
+    notes: 'notes',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OfferScalarFieldEnum = (typeof OfferScalarFieldEnum)[keyof typeof OfferScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -6162,6 +7468,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferStatus'
+   */
+  export type EnumOfferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferStatus[]'
+   */
+  export type ListEnumOfferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferStatus[]'>
     
 
 
@@ -6554,6 +7874,115 @@ export namespace Prisma {
     isPrivate?: BoolWithAggregatesFilter<"CandidateNote"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"CandidateNote"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CandidateNote"> | Date | string
+  }
+
+  export type OfferWhereInput = {
+    AND?: OfferWhereInput | OfferWhereInput[]
+    OR?: OfferWhereInput[]
+    NOT?: OfferWhereInput | OfferWhereInput[]
+    id?: StringFilter<"Offer"> | string
+    tenantId?: StringFilter<"Offer"> | string
+    candidateId?: StringFilter<"Offer"> | string
+    requisitionId?: StringFilter<"Offer"> | string
+    applicationId?: StringNullableFilter<"Offer"> | string | null
+    baseSalary?: IntFilter<"Offer"> | number
+    currency?: StringFilter<"Offer"> | string
+    bonusPercent?: IntNullableFilter<"Offer"> | number | null
+    equity?: StringNullableFilter<"Offer"> | string | null
+    startDate?: DateTimeNullableFilter<"Offer"> | Date | string | null
+    expiresAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
+    status?: EnumOfferStatusFilter<"Offer"> | $Enums.OfferStatus
+    approvedBy?: StringNullableFilter<"Offer"> | string | null
+    notes?: StringNullableFilter<"Offer"> | string | null
+    createdAt?: DateTimeFilter<"Offer"> | Date | string
+    updatedAt?: DateTimeFilter<"Offer"> | Date | string
+  }
+
+  export type OfferOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    baseSalary?: SortOrder
+    currency?: SortOrder
+    bonusPercent?: SortOrderInput | SortOrder
+    equity?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    status?: SortOrder
+    approvedBy?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OfferWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OfferWhereInput | OfferWhereInput[]
+    OR?: OfferWhereInput[]
+    NOT?: OfferWhereInput | OfferWhereInput[]
+    tenantId?: StringFilter<"Offer"> | string
+    candidateId?: StringFilter<"Offer"> | string
+    requisitionId?: StringFilter<"Offer"> | string
+    applicationId?: StringNullableFilter<"Offer"> | string | null
+    baseSalary?: IntFilter<"Offer"> | number
+    currency?: StringFilter<"Offer"> | string
+    bonusPercent?: IntNullableFilter<"Offer"> | number | null
+    equity?: StringNullableFilter<"Offer"> | string | null
+    startDate?: DateTimeNullableFilter<"Offer"> | Date | string | null
+    expiresAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
+    status?: EnumOfferStatusFilter<"Offer"> | $Enums.OfferStatus
+    approvedBy?: StringNullableFilter<"Offer"> | string | null
+    notes?: StringNullableFilter<"Offer"> | string | null
+    createdAt?: DateTimeFilter<"Offer"> | Date | string
+    updatedAt?: DateTimeFilter<"Offer"> | Date | string
+  }, "id">
+
+  export type OfferOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    baseSalary?: SortOrder
+    currency?: SortOrder
+    bonusPercent?: SortOrderInput | SortOrder
+    equity?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    status?: SortOrder
+    approvedBy?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OfferCountOrderByAggregateInput
+    _avg?: OfferAvgOrderByAggregateInput
+    _max?: OfferMaxOrderByAggregateInput
+    _min?: OfferMinOrderByAggregateInput
+    _sum?: OfferSumOrderByAggregateInput
+  }
+
+  export type OfferScalarWhereWithAggregatesInput = {
+    AND?: OfferScalarWhereWithAggregatesInput | OfferScalarWhereWithAggregatesInput[]
+    OR?: OfferScalarWhereWithAggregatesInput[]
+    NOT?: OfferScalarWhereWithAggregatesInput | OfferScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Offer"> | string
+    tenantId?: StringWithAggregatesFilter<"Offer"> | string
+    candidateId?: StringWithAggregatesFilter<"Offer"> | string
+    requisitionId?: StringWithAggregatesFilter<"Offer"> | string
+    applicationId?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    baseSalary?: IntWithAggregatesFilter<"Offer"> | number
+    currency?: StringWithAggregatesFilter<"Offer"> | string
+    bonusPercent?: IntNullableWithAggregatesFilter<"Offer"> | number | null
+    equity?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    startDate?: DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
+    status?: EnumOfferStatusWithAggregatesFilter<"Offer"> | $Enums.OfferStatus
+    approvedBy?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Offer"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Offer"> | Date | string
   }
 
   export type CandidateCreateInput = {
@@ -6988,6 +8417,139 @@ export namespace Prisma {
     authorUserId?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     isPrivate?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OfferCreateInput = {
+    id?: string
+    tenantId: string
+    candidateId: string
+    requisitionId: string
+    applicationId?: string | null
+    baseSalary: number
+    currency?: string
+    bonusPercent?: number | null
+    equity?: string | null
+    startDate?: Date | string | null
+    expiresAt?: Date | string | null
+    status?: $Enums.OfferStatus
+    approvedBy?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OfferUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    candidateId: string
+    requisitionId: string
+    applicationId?: string | null
+    baseSalary: number
+    currency?: string
+    bonusPercent?: number | null
+    equity?: string | null
+    startDate?: Date | string | null
+    expiresAt?: Date | string | null
+    status?: $Enums.OfferStatus
+    approvedBy?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OfferUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    requisitionId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    baseSalary?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    bonusPercent?: NullableIntFieldUpdateOperationsInput | number | null
+    equity?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OfferUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    requisitionId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    baseSalary?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    bonusPercent?: NullableIntFieldUpdateOperationsInput | number | null
+    equity?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OfferCreateManyInput = {
+    id?: string
+    tenantId: string
+    candidateId: string
+    requisitionId: string
+    applicationId?: string | null
+    baseSalary: number
+    currency?: string
+    bonusPercent?: number | null
+    equity?: string | null
+    startDate?: Date | string | null
+    expiresAt?: Date | string | null
+    status?: $Enums.OfferStatus
+    approvedBy?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OfferUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    requisitionId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    baseSalary?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    bonusPercent?: NullableIntFieldUpdateOperationsInput | number | null
+    equity?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OfferUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    candidateId?: StringFieldUpdateOperationsInput | string
+    requisitionId?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    baseSalary?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    bonusPercent?: NullableIntFieldUpdateOperationsInput | number | null
+    equity?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7447,6 +9009,142 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type EnumOfferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusFilter<$PrismaModel> | $Enums.OfferStatus
+  }
+
+  export type OfferCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    applicationId?: SortOrder
+    baseSalary?: SortOrder
+    currency?: SortOrder
+    bonusPercent?: SortOrder
+    equity?: SortOrder
+    startDate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    approvedBy?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OfferAvgOrderByAggregateInput = {
+    baseSalary?: SortOrder
+    bonusPercent?: SortOrder
+  }
+
+  export type OfferMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    applicationId?: SortOrder
+    baseSalary?: SortOrder
+    currency?: SortOrder
+    bonusPercent?: SortOrder
+    equity?: SortOrder
+    startDate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    approvedBy?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OfferMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    applicationId?: SortOrder
+    baseSalary?: SortOrder
+    currency?: SortOrder
+    bonusPercent?: SortOrder
+    equity?: SortOrder
+    startDate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    approvedBy?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OfferSumOrderByAggregateInput = {
+    baseSalary?: SortOrder
+    bonusPercent?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumOfferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferStatusFilter<$PrismaModel>
+  }
+
   export type CandidateCreatetagsInput = {
     set: string[]
   }
@@ -7656,6 +9354,22 @@ export namespace Prisma {
     update?: XOR<XOR<CandidateUpdateToOneWithWhereWithoutNotesInput, CandidateUpdateWithoutNotesInput>, CandidateUncheckedUpdateWithoutNotesInput>
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type EnumOfferStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OfferStatus
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -7860,6 +9574,75 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedEnumOfferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusFilter<$PrismaModel> | $Enums.OfferStatus
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferStatusFilter<$PrismaModel>
   }
 
   export type ApplicationCreateWithoutCandidateInput = {

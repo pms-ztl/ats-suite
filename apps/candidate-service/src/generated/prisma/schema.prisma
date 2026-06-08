@@ -131,3 +131,39 @@ model CandidateNote {
   @@index([tenantId])
   @@index([candidateId])
 }
+
+enum OfferStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// Extends the pipeline past INTERVIEW into offer management. The AI
+// offer-LETTER generator lives separately (agent-offer.ts); this is the
+// plain offer RECORD that the Offers board reads + the approval flow updates.
+model Offer {
+  id            String      @id @default(uuid())
+  tenantId      String
+  candidateId   String
+  requisitionId String // FK to job-service Requisition (cross-service, no relation)
+  applicationId String?
+  baseSalary    Int
+  currency      String      @default("USD")
+  bonusPercent  Int?
+  equity        String?
+  startDate     DateTime?
+  expiresAt     DateTime?
+  status        OfferStatus @default(DRAFT)
+  approvedBy    String? // identity-service userId who approved
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([candidateId])
+}

@@ -9,6 +9,7 @@ import candidatesRouter from "./routes/candidates.js";
 import applicationsRouter from "./routes/applications.js";
 import sourcingRouter from "./routes/agent-sourcing.js";
 import offerRouter from "./routes/agent-offer.js";
+import offersRouter from "./routes/offers.js";
 import experienceRouter from "./routes/agent-experience.js";
 import gdprRouter from "./routes/gdpr.js";
 import importRouter from "./routes/import.js";
@@ -42,6 +43,7 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/applications", readAuthHeaders(), applicationsRouter);
   app.use("/internal/sourcing", readAuthHeaders(), sourcingRouter);
   app.use("/internal/offer", readAuthHeaders(), offerRouter);
+  app.use("/internal/offers", readAuthHeaders(), offersRouter);
   app.use("/internal/candidate-experience", readAuthHeaders(), experienceRouter);
   app.use("/internal/gdpr", readAuthHeaders(), gdprRouter);
   // Phase 34a — CSV/Excel bulk candidate import.
