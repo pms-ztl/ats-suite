@@ -103,10 +103,14 @@ export function middleware(request: NextRequest) {
     // Tier-3 staff cannot access tenant-admin-only pages
     const tier3 = ["RECRUITER", "HIRING_MANAGER", "INTERVIEWER"];
     if (tier3.includes(role)) {
-      if (
-        pathname.startsWith("/settings/team") ||
-        pathname.startsWith("/billing")
-      ) {
+      // Billing stays tenant-admin only.
+      if (pathname.startsWith("/billing")) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+      // Phase 35 — Recruiters and Hiring Managers manage their own team (view
+      // their direct reports + add people beneath them) at /settings/team.
+      // Interviewers are leaf nodes and have no team to manage.
+      if (pathname.startsWith("/settings/team") && role === "INTERVIEWER") {
         return NextResponse.redirect(new URL("/", request.url));
       }
     }

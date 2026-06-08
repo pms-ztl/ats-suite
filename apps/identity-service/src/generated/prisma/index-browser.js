@@ -139,7 +139,8 @@ exports.Prisma.UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   emailVerifiedAt: 'emailVerifiedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  managerId: 'managerId'
 };
 
 exports.Prisma.TenantApiKeyScalarFieldEnum = {

@@ -1622,6 +1622,7 @@ export namespace Prisma {
     emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    managerId: string | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -1643,6 +1644,7 @@ export namespace Prisma {
     emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    managerId: string | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -1664,6 +1666,7 @@ export namespace Prisma {
     emailVerifiedAt: number
     createdAt: number
     updatedAt: number
+    managerId: number
     _all: number
   }
 
@@ -1687,6 +1690,7 @@ export namespace Prisma {
     emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
+    managerId?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -1708,6 +1712,7 @@ export namespace Prisma {
     emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
+    managerId?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -1729,6 +1734,7 @@ export namespace Prisma {
     emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
+    managerId?: true
     _all?: true
   }
 
@@ -1823,6 +1829,7 @@ export namespace Prisma {
     emailVerifiedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    managerId: string | null
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -1861,6 +1868,7 @@ export namespace Prisma {
     emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    managerId?: boolean
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
     passwordResets?: boolean | User$passwordResetsArgs<ExtArgs>
     emailVerifications?: boolean | User$emailVerificationsArgs<ExtArgs>
@@ -1886,6 +1894,7 @@ export namespace Prisma {
     emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    managerId?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1907,6 +1916,7 @@ export namespace Prisma {
     emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    managerId?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -1928,9 +1938,10 @@ export namespace Prisma {
     emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    managerId?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "externalId" | "ssoLastLogin" | "emailVerified" | "emailVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "firstName" | "lastName" | "role" | "department" | "isActive" | "lastLoginAt" | "mfaSecret" | "mfaEnabled" | "externalId" | "ssoLastLogin" | "emailVerified" | "emailVerifiedAt" | "createdAt" | "updatedAt" | "managerId", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     inviteTokens?: boolean | User$inviteTokensArgs<ExtArgs>
     passwordResets?: boolean | User$passwordResetsArgs<ExtArgs>
@@ -1966,6 +1977,7 @@ export namespace Prisma {
       emailVerifiedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      managerId: string | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -2410,6 +2422,7 @@ export namespace Prisma {
     readonly emailVerifiedAt: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
+    readonly managerId: FieldRef<"User", 'String'>
   }
     
 
@@ -10500,7 +10513,8 @@ export namespace Prisma {
     emailVerified: 'emailVerified',
     emailVerifiedAt: 'emailVerifiedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    managerId: 'managerId'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -10792,6 +10806,7 @@ export namespace Prisma {
     emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    managerId?: StringNullableFilter<"User"> | string | null
     inviteTokens?: InviteTokenListRelationFilter
     passwordResets?: PasswordResetListRelationFilter
     emailVerifications?: EmailVerificationListRelationFilter
@@ -10816,6 +10831,7 @@ export namespace Prisma {
     emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    managerId?: SortOrderInput | SortOrder
     inviteTokens?: InviteTokenOrderByRelationAggregateInput
     passwordResets?: PasswordResetOrderByRelationAggregateInput
     emailVerifications?: EmailVerificationOrderByRelationAggregateInput
@@ -10844,6 +10860,7 @@ export namespace Prisma {
     emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    managerId?: StringNullableFilter<"User"> | string | null
     inviteTokens?: InviteTokenListRelationFilter
     passwordResets?: PasswordResetListRelationFilter
     emailVerifications?: EmailVerificationListRelationFilter
@@ -10868,6 +10885,7 @@ export namespace Prisma {
     emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    managerId?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -10895,6 +10913,7 @@ export namespace Prisma {
     emailVerifiedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    managerId?: StringNullableWithAggregatesFilter<"User"> | string | null
   }
 
   export type TenantApiKeyWhereInput = {
@@ -11459,6 +11478,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
     emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
@@ -11483,6 +11503,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
     emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
@@ -11507,6 +11528,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
     emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
@@ -11531,6 +11553,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
     emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
@@ -11555,6 +11578,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -11576,6 +11600,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -11597,6 +11622,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TenantApiKeyCreateInput = {
@@ -12349,6 +12375,7 @@ export namespace Prisma {
     emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    managerId?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -12370,6 +12397,7 @@ export namespace Prisma {
     emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    managerId?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -12391,6 +12419,7 @@ export namespace Prisma {
     emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    managerId?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -13465,6 +13494,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
   }
@@ -13488,6 +13518,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
   }
@@ -13527,6 +13558,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
   }
@@ -13550,6 +13582,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -13573,6 +13606,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenCreateNestedManyWithoutInvitedByInput
     emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
   }
@@ -13596,6 +13630,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     inviteTokens?: InviteTokenUncheckedCreateNestedManyWithoutInvitedByInput
     emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
   }
@@ -13635,6 +13670,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUpdateManyWithoutInvitedByNestedInput
     emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
   }
@@ -13658,6 +13694,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     inviteTokens?: InviteTokenUncheckedUpdateManyWithoutInvitedByNestedInput
     emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
   }
@@ -13681,6 +13718,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     passwordResets?: PasswordResetCreateNestedManyWithoutUserInput
     emailVerifications?: EmailVerificationCreateNestedManyWithoutUserInput
   }
@@ -13704,6 +13742,7 @@ export namespace Prisma {
     emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    managerId?: string | null
     passwordResets?: PasswordResetUncheckedCreateNestedManyWithoutUserInput
     emailVerifications?: EmailVerificationUncheckedCreateNestedManyWithoutUserInput
   }
@@ -13743,6 +13782,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     passwordResets?: PasswordResetUpdateManyWithoutUserNestedInput
     emailVerifications?: EmailVerificationUpdateManyWithoutUserNestedInput
   }
@@ -13766,6 +13806,7 @@ export namespace Prisma {
     emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    managerId?: NullableStringFieldUpdateOperationsInput | string | null
     passwordResets?: PasswordResetUncheckedUpdateManyWithoutUserNestedInput
     emailVerifications?: EmailVerificationUncheckedUpdateManyWithoutUserNestedInput
   }

@@ -50,6 +50,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Phase 35 — self-referential org hierarchy. The user's direct manager
+  // (another User.id in the SAME tenant). null = top of the tenant tree (the
+  // tenant admin). Modeled as a plain scalar (NO Prisma relation/FK) so that
+  // FORCE-RLS inserts and the admin-client seed never trip a self-FK
+  // referential check; the manager/report tree is resolved in app code.
+  managerId    String?
+
   inviteTokens InviteToken[]
   passwordResets PasswordReset[]
   emailVerifications EmailVerification[]
@@ -58,6 +65,7 @@ model User {
   @@index([tenantId])
   @@index([email])
   @@index([externalId])
+  @@index([managerId])
 }
 
 // Phase 34b — per-tenant API keys for the public ingest API.

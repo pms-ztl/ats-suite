@@ -57,7 +57,7 @@ async function raw(path: string, init?: RequestInit): Promise<any> {
   return res?.data ?? res;
 }
 
-interface Member { id: string; name: string; email: string; role: string; status: "active" | "invited"; }
+interface Member { id: string; name: string; email: string; role: string; status: "active" | "invited"; managerName?: string; }
 
 // Map a backend UserRole enum (or any free-form role) to the prototype's
 // human-readable role label.
@@ -80,18 +80,35 @@ function initials(name: string): string {
 }
 
 // GET /users (workspace members), mapped defensively. No fabricated members.
+// Admins see the whole tenant; Recruiters / Hiring Managers can't list the
+// tenant, so we fall back to /users/my-team (their own org subtree). Each
+// member's managerId is resolved to a readable "Reports to" label so the
+// 3-level hierarchy (admin -> manager -> report) is visible inline.
 async function getTeam(): Promise<Member[]> {
-  const res = await raw("/users");
+  let res: any;
+  try {
+    res = await raw("/users");
+  } catch {
+    res = await raw("/users/my-team");
+  }
   const rows: any[] = Array.isArray(res) ? res : res?.users ?? res?.members ?? res?.items ?? [];
+  const nameById = new Map<string, string>();
+  for (const u of rows) {
+    const id = String(u.id ?? u.userId ?? u._id ?? "");
+    const nm = u.name || [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Member";
+    if (id) nameById.set(id, nm);
+  }
   return rows.map((u: any): Member => {
     const name = u.name || [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Member";
     const status = String(u.status ?? "").toLowerCase() === "invited" || u.invited === true || u.invitedAt ? "invited" : "active";
+    const managerId = u.managerId ? String(u.managerId) : "";
     return {
       id: String(u.id ?? u.userId ?? u._id ?? u.email ?? name),
       name,
       email: u.email ?? "",
       role: roleLabel(u.role ?? u.roleName),
       status: status as Member["status"],
+      managerName: managerId ? (nameById.get(managerId) ?? "") : "",
     };
   });
 }
@@ -210,6 +227,11 @@ function TeamPanel() {
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
                 <div style={{ fontSize: 11, color: "var(--c-ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</div>
+                {m.managerName && (
+                  <div style={{ fontSize: 10.5, color: "var(--c-ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    Reports to {m.managerName}
+                  </div>
+                )}
               </div>
             </div>
             <select defaultValue={m.role} style={{ ...inp, padding: "6px 8px", cursor: "pointer", width: "auto" }}>

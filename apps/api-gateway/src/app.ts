@@ -287,9 +287,44 @@ export function createApp(logger: Logger): Express {
           }).catch(() => { /* email failure is non-fatal */ });
         }
 
-        // Strip inviteToken from the response so it doesn't leak to the
-        // admin's browser network tab (email is the only legit channel).
-        const { inviteToken, inviteExpiresAt, ...safe } = result;
+        // Phase 35 — "added beneath you" notices (notify-only). Tell the
+        // inviter (the manager who added) and, if they report to someone, that
+        // manager too (e.g. the tenant admin) that a new user joined the org.
+        // in_app + email; best-effort, never blocks the invite.
+        try {
+          const newName = `${result?.firstName ?? ""} ${result?.lastName ?? ""}`.trim() || result?.email || "A new teammate";
+          const inviterName = req.user.email ?? "a manager";
+          const teamUrl = `${process.env["APP_URL"] ?? "http://localhost:3000"}/settings/team`;
+          const targets: Array<{ userId: string; body: string }> = [
+            { userId: req.user.id, body: `${newName} was added to your team as ${result?.role ?? "a team member"}.` },
+          ];
+          if (result?.inviterManagerId && result.inviterManagerId !== req.user.id) {
+            targets.push({
+              userId: result.inviterManagerId,
+              body: `${newName} was added under ${inviterName} as ${result?.role ?? "a team member"}.`,
+            });
+          }
+          for (const tg of targets) {
+            await callService("notification", {
+              method: "POST",
+              path: "/internal/notifications/system",
+              userHeaders: { userId: "system", tenantId: req.user.tenantId, role: "SUPER_ADMIN", email: "system@cdc-ats.local" },
+              body: {
+                tenantId: req.user.tenantId,
+                userId: tg.userId,
+                type: "SYSTEM",
+                title: "New team member added",
+                body: tg.body,
+                link: teamUrl,
+                channels: ["in_app", "email"],
+              },
+            }).catch(() => { /* notice delivery is non-fatal */ });
+          }
+        } catch { /* notices never block the invite */ }
+
+        // Strip inviteToken + the internal inviterManagerId from the response
+        // so neither leaks to the admin's browser network tab.
+        const { inviteToken, inviteExpiresAt, inviterManagerId: _imid, ...safe } = result;
         res.status(201).json({ success: true, data: safe });
       } catch (err) {
         next(err);
@@ -533,6 +568,40 @@ export function createApp(logger: Logger): Express {
     }
   );
 
+  // GET /api/super-admin/security — platform security telemetry. In-process
+  // aggregator (matches the /super-admin/stats + /super-admin/health style)
+  // that reads identity-service's real-derived security KPIs: 24h active
+  // sessions, MFA adoption %, and the active-sessions list. Fail-soft: if
+  // identity is down it returns neutral zeros + an empty list so the screen
+  // keeps its designed suspicious-activity / SSO panels.
+  app.get(
+    "/api/super-admin/security",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { callService, uh } = await superAdminFanout(req);
+        const sec = await Promise.allSettled([
+          callService<any>("identity", { path: "/internal/users/platform/security", userHeaders: uh, timeoutMs: 4000 }),
+        ]);
+        const r0 = sec[0];
+        const s: any = r0.status === "fulfilled" && r0.value ? r0.value : {};
+        res.json({
+          success: true,
+          data: {
+            activeSessions: s.activeSessions ?? 0,
+            totalUsers: s.totalUsers ?? 0,
+            mfaEnabledUsers: s.mfaEnabledUsers ?? 0,
+            mfaAdoptionPct: s.mfaAdoptionPct ?? 0,
+            sessions: Array.isArray(s.sessions) ? s.sessions : [],
+          },
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
   // GET /api/super-admin/tenants — enriched tenant list. Forwards the query to
   // tenant-service, then merges per-tenant userCount/candidateCount/
   // requisitionCount (from the platform-stats maps) + agentRunCount/costUsd30d
@@ -627,6 +696,12 @@ export function createApp(logger: Logger): Express {
   // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
   app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
 
+  // Cross-tenant Integrations & Webhooks console (super-admin only). Proxies to
+  // notification-service which owns TenantIntegration + Webhook; the platform
+  // router returns ALL rows across tenants (admin/non-RLS client).
+  app.use("/api/super-admin/integrations", gatewayAuth(), requireSuperAdmin, forwardHeaders(notificationUrl, "/internal/platform/integrations"));
+  app.use("/api/super-admin/webhooks", gatewayAuth(), requireSuperAdmin, forwardHeaders(notificationUrl, "/internal/platform/webhooks"));
+
   // Phase 32a — super-admin impersonation. In-process router (signs JWT +
   // writes audit). Mounted BEFORE the proxy routes so super-admin gating
   // happens before any forwarding.
@@ -646,6 +721,10 @@ export function createApp(logger: Logger): Express {
   // Phase 32c — audit log viewer. Read-only super-admin path proxied
   // straight to identity-service /internal/audit (GET only).
   app.use("/api/super-admin/audit", gatewayAuth(), requireSuperAdmin, forwardHeaders(identityUrl, "/internal/audit"));
+
+  // Operators & Roles — the platform operator roster (all SUPER_ADMIN users),
+  // proxied to identity-service /internal/users/platform/operators (GET only).
+  app.use("/api/super-admin/operators", gatewayAuth(), requireSuperAdmin, forwardHeaders(identityUrl, "/internal/users/platform/operators"));
 
   // Phase 34b — public ingest API. NO gatewayAuth (it uses tenant API keys,
   // verified inside the router via identity-service /api-keys/verify).
@@ -703,6 +782,10 @@ export function createApp(logger: Logger): Express {
   // Phase 32b — support tickets. Tenant side (open / list / reply) is
   // standard auth; super-admin side is gated inside the router.
   app.use("/api/support", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/support"));
+  // Exact-path mount MUST precede the generic /api/super-admin/support mount
+  // (Express matches in order): the platform inbox returns pre-shaped rows +
+  // KPIs; the generic mount maps to /internal/support/admin (raw tickets).
+  app.use("/api/super-admin/support/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(notificationUrl, "/internal/support/platform"));
   app.use("/api/super-admin/support", gatewayAuth(), requireSuperAdmin, forwardHeaders(notificationUrl, "/internal/support/admin"));
 
   // Phase 28 — Tenant SSO config (auth-gated; identity-service handles requireTenantAdmin internally).

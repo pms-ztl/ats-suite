@@ -179,6 +179,85 @@ router.get("/audit", async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
+// ─── GET /internal/platform/flags ───────────────────────────────────────────
+// Cross-tenant feature-flag rollout view for the super-admin "Feature Flags"
+// screen. FeatureFlag rows are per-tenant (tenantId, name, enabled); this
+// collapses them by name into one row per flag with:
+//   tenants = how many tenants have it ENABLED
+//   roll    = rollout % = enabled tenants / total tenants (0-100)
+//   on      = is the flag live anywhere (enabled for ≥1 tenant)
+// Uses the admin (non-RLS) client because this is a platform-wide rollup.
+//
+// FeatureFlag has no description column, so `desc` is synthesized from a small
+// known-label map (keeps parity with the designed copy) with a humanized
+// fallback derived from the flag name.
+const FLAG_DESCRIPTIONS: Record<string, string> = {
+  customForms: "Custom application form builder",
+  configurableRounds: "Configurable interview rounds",
+  aiSourcing: "AI candidate sourcing",
+  internalMobility: "Internal mobility engine",
+  videoInterviews: "Native video interviews",
+  copilotV3: "Copilot v3, grounded retrieval",
+};
+
+function humanizeFlagName(name: string): string {
+  // camelCase / snake_case / kebab-case -> "Title Case words"
+  const words = name
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return name;
+  return words
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+router.get("/flags", async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [byNameEnabled, byNameTotal, tenantTotal] = await Promise.all([
+      // Tenants with the flag ENABLED, grouped by flag name.
+      prisma.featureFlag.groupBy({
+        by: ["name"],
+        where: { enabled: true },
+        _count: { _all: true },
+      }),
+      // Every flag name that exists anywhere (so a flag rolled out to 0 tenants
+      // still appears as an off/0% row instead of vanishing).
+      prisma.featureFlag.groupBy({
+        by: ["name"],
+        _count: { _all: true },
+      }),
+      // Denominator for the rollout %: total tenants known to the platform
+      // (mirrored into TenantPlanCache via NATS).
+      prisma.tenantPlanCache.count(),
+    ]);
+
+    const enabledMap = new Map(byNameEnabled.map((r) => [r.name, r._count._all]));
+    const denom = tenantTotal > 0 ? tenantTotal : 0;
+
+    const flags = byNameTotal
+      .map((r) => {
+        const name = r.name;
+        const enabledCount = enabledMap.get(name) ?? 0;
+        const roll = denom > 0 ? Math.round((enabledCount / denom) * 100) : 0;
+        return {
+          n: name,
+          desc: FLAG_DESCRIPTIONS[name] ?? humanizeFlagName(name),
+          roll: Math.max(0, Math.min(100, roll)),
+          on: enabledCount > 0,
+          tenants: enabledCount,
+        };
+      })
+      .sort((a, b) => b.tenants - a.tenants || a.n.localeCompare(b.n));
+
+    ok(res, { flags });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── GET /internal/platform/cost?days=30&groupBy=tenant|agent ───────────────
 // Cross-tenant cost rollup. Returns aggregates suitable for the super-admin
 // "who's spending what" dashboard.

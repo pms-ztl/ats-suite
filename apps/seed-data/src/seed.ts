@@ -128,6 +128,64 @@ function sample<T>(arr: readonly T[], n: number): T[] {
   return out;
 }
 
+// ── Phase 35 — org-hierarchy staff (1 hiring manager + 2 recruiters per
+// tenant). Idempotent: create-or-skip by email. Each staff user is created
+// ACTIVE with a known password (loginable) and attached to a manager via
+// managerId, so the 3-level tree (admin -> manager -> recruiter) is real and
+// the "add beneath me" flow has live people to demo against. Runs for both
+// freshly-created AND already-seeded tenants. ──
+async function seedStaff(t: typeof TENANTS[number]): Promise<void> {
+  let login: any;
+  try {
+    login = await api("POST", "/auth/login", { body: { email: t.email, password: t.password } });
+  } catch {
+    console.log(`  ! staff: could not log in as admin — skipping hierarchy`);
+    return;
+  }
+  const token: string | undefined = login?.token;
+  const adminId: string | undefined = login?.user?.id;
+  const tenantId: string | undefined = login?.user?.tenantId;
+  if (!token || !adminId || !tenantId) {
+    console.log(`  ! staff: missing admin context — skipping hierarchy`);
+    return;
+  }
+  const domain = t.email.split("@")[1] ?? "demo";
+
+  // Create the user, or recover its id if it already exists (idempotent re-run).
+  async function ensureUser(
+    email: string, firstName: string, lastName: string,
+    role: string, password: string, managerId: string,
+  ): Promise<string | undefined> {
+    try {
+      const u = await api<{ id: string }>("POST", "/users", {
+        token,
+        body: { tenantId, email, firstName, lastName, role, password, managerId },
+      });
+      return u.id;
+    } catch {
+      try {
+        const list = await api<any>("GET", "/users", { token });
+        const arr: any[] = Array.isArray(list) ? list : list?.users ?? [];
+        const found = arr.find((x) => String(x.email ?? "").toLowerCase() === email.toLowerCase());
+        return found?.id;
+      } catch {
+        return undefined;
+      }
+    }
+  }
+
+  // Level 3: one hiring manager reporting to the tenant admin.
+  const hmId = await ensureUser(`manager@${domain}`, "Maya", "Chen", "HIRING_MANAGER", "ManagerDemo123!", adminId);
+  // Level 4: two recruiters reporting to the hiring manager.
+  if (hmId) {
+    await ensureUser(`sam@${domain}`, "Sam", "Rivera", "RECRUITER", "RecruiterDemo123!", hmId);
+    await ensureUser(`nina@${domain}`, "Nina", "Park", "RECRUITER", "RecruiterDemo123!", hmId);
+    console.log(`  ✓ hierarchy: admin -> Maya Chen (manager) -> Sam Rivera, Nina Park`);
+  } else {
+    console.log(`  ! staff: hiring manager not created — recruiters skipped`);
+  }
+}
+
 // ── Per-tenant seeding ───────────────────────────────────────────────────────
 async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
   console.log(`\n━━━ ${t.orgName} ━━━`);
@@ -139,14 +197,21 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
   //    So probe with a LOGIN first — if it succeeds the tenant is already
   //    seeded and we skip it entirely: no duplicate tenant, no extra reqs.
   let token: string;
+  let existing = false;
   try {
     await api<{ token: string }>("POST", "/auth/login", {
       body: { email: t.email, password: t.password },
     });
-    console.log(`  ↻ tenant already exists — skipping (idempotent)`);
-    return;
+    existing = true;
+    console.log(`  ↻ tenant already exists — refreshing org hierarchy only (idempotent)`);
   } catch {
     // Tenant does not exist yet — create it below.
+  }
+  if (existing) {
+    // Phase 35 — even for an already-seeded tenant, make sure the manager +
+    // recruiters exist, then skip the heavy requisition/candidate data.
+    await seedStaff(t);
+    return;
   }
   try {
     const reg = await api<{ token: string }>("POST", "/auth/register-company", {
@@ -164,6 +229,9 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
     console.log(`  ! tenant creation failed: ${(err as Error).message.slice(0, 100)}`);
     return;
   }
+
+  // Phase 35 — seed the org hierarchy for the freshly-created tenant.
+  await seedStaff(t);
 
   // 2. Requisitions
   const reqIds: string[] = [];
@@ -294,9 +362,11 @@ async function main() {
   console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`✓ Seed complete`);
   console.log(`  ${TENANTS.length} tenants · ~${totalReqs} requisitions · ~${totalCandidates} candidates`);
-  console.log(`\n  Login as any seeded admin:`);
+  console.log(`\n  Login as any seeded admin (or their hiring manager):`);
   for (const t of TENANTS) {
-    console.log(`    ${t.email}  password: ${t.password}`);
+    const domain = t.email.split("@")[1];
+    console.log(`    ${t.email}  password: ${t.password}  (Tenant Admin)`);
+    console.log(`    manager@${domain}  password: ManagerDemo123!  (Hiring Manager)`);
   }
   console.log(`\n  Visit dashboard: http://localhost:3000/`);
   console.log(`  Visit AI Ops: http://localhost:3001/d/cdc-ats-ai-ops`);

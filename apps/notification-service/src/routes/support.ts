@@ -197,4 +197,117 @@ router.patch("/admin/tickets/:id", async (req: Request, res: Response, next: Nex
   } catch (err) { next(err); }
 });
 
+// ─── GET /internal/support/platform — super-admin platform support inbox ─────
+// Cross-tenant support tickets pre-shaped for the super-admin console Support
+// screen + KPI counts. Uses the default admin prisma client (cross-tenant read);
+// SUPER_ADMIN gated inline. Mounted under /internal/support → /internal/support/platform.
+router.get("/platform", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (getRole(req) !== "SUPER_ADMIN") throw Errors.forbidden("Super-admin only");
+
+    const tickets = await prisma.supportTicket.findMany({
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      take: 200,
+      include: {
+        messages: { orderBy: { createdAt: "desc" } },
+      },
+    });
+
+    const now = Date.now();
+    const HOUR = 3_600_000;
+
+    const humanizeAge = (ms: number): string => {
+      if (ms < HOUR) return Math.max(1, Math.round(ms / 60_000)) + "m";
+      if (ms < 24 * HOUR) return Math.round(ms / HOUR) + "h";
+      return Math.round(ms / (24 * HOUR)) + "d";
+    };
+
+    const slaTargetHours = (priority: string): number => {
+      if (priority === "URGENT") return 1;
+      if (priority === "HIGH") return 4;
+      if (priority === "NORMAL") return 8;
+      return 24;
+    };
+
+    const priClass = (priority: string): string => {
+      if (priority === "URGENT" || priority === "HIGH") return "high";
+      if (priority === "NORMAL") return "medium";
+      return "low";
+    };
+    const statusClass = (status: string): string => {
+      if (status === "OPEN") return "open";
+      if (status === "AWAITING_CUSTOMER") return "pending";
+      return "resolved";
+    };
+
+    let firstResponseTotalMs = 0;
+    let firstResponseCount = 0;
+    let slaBreaches = 0;
+
+    const rows = tickets.map((t) => {
+      const msgs = t.messages ?? [];
+      const supportMsg = msgs.find((m) => m.authorRole === "SUPPORT");
+      const who = supportMsg?.authorEmail
+        ? supportMsg.authorEmail.split("@")[0]
+        : "Unassigned";
+
+      const ageMs = now - new Date(t.createdAt).getTime();
+
+      const supportMsgsAsc = msgs
+        .filter((m) => m.authorRole === "SUPPORT")
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const firstSupport = supportMsgsAsc[0];
+      if (firstSupport) {
+        const frMs = new Date(firstSupport.createdAt).getTime() - new Date(t.createdAt).getTime();
+        if (frMs >= 0) {
+          firstResponseTotalMs += frMs;
+          firstResponseCount += 1;
+        }
+      }
+
+      const targetMs = slaTargetHours(t.priority) * HOUR;
+      let sla: string;
+      if (t.status === "RESOLVED") {
+        sla = "met";
+      } else {
+        const remainingMs = targetMs - ageMs;
+        if (remainingMs <= 0) {
+          sla = "1h";
+          slaBreaches += 1;
+        } else if (remainingMs >= 12 * HOUR) {
+          sla = "ok";
+        } else {
+          sla = humanizeAge(remainingMs);
+        }
+      }
+
+      return {
+        id: t.id,
+        tenantId: t.tenantId,
+        subject: t.subject,
+        priority: priClass(t.priority),
+        status: statusClass(t.status),
+        assignee: who,
+        age: humanizeAge(ageMs),
+        sla,
+      };
+    });
+
+    const open = rows.filter((r) => r.status === "open").length;
+    const avgFirstResponseMin = firstResponseCount
+      ? Math.round(firstResponseTotalMs / firstResponseCount / 60_000)
+      : null;
+
+    ok(res, {
+      tickets: rows,
+      kpis: {
+        open,
+        slaBreaches,
+        avgFirstResponseMin,
+        total: rows.length,
+      },
+    });
+  } catch (err) { next(err); }
+});
+
 export default router;

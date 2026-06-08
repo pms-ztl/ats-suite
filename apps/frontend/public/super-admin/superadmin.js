@@ -189,7 +189,7 @@ document.addEventListener("click",closeMenus);
 /* Screens wired to live platform data. Anything NOT in here renders a
    "Sample data" banner so designed placeholder content is never mistaken
    for real platform data. */
-var WIRED={tenants:1,agents:1,audit:1,requests:1,health:1};
+var WIRED={tenants:1,agents:1,audit:1,requests:1,health:1,detail:1,usage:1};
 function render(){
   if(active==="tenants")renderTenants();
   else if(active==="detail")renderDetail();
@@ -221,6 +221,50 @@ function render(){
 
 /* 1. TENANTS */
 var detailId=null;
+/* live drill-down cache: detailId -> {planHistory,roster,cost30,runs,users,candidates,reqs}
+   filled by GET /api/super-admin/tenants/:id/detail. Null entry = fetch in flight/failed,
+   so renderDetail falls back to the designed demo data and never errors. */
+var DETAIL_CACHE={};
+function loadDetail(id){
+  if(!id||DETAIL_CACHE.hasOwnProperty(id)) return;     // already cached (or in flight)
+  DETAIL_CACHE[id]=null;                                 // mark in flight -> keep designed data
+  var PLAN_RANK={FREE:0,STARTER:1,PROFESSIONAL:2,ENTERPRISE:3};
+  fetch("/api/super-admin/tenants/"+encodeURIComponent(id)+"/detail",{credentials:"same-origin"})
+    .then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+    .then(function(res){
+      var d=res&&res.data?res.data:{};
+      var rel=function(iso){ if(!iso) return ""; var t=new Date(iso).getTime(); if(isNaN(t)) return ""; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var dy=Math.floor(h/24); return dy===1?"Yesterday":dy+"d ago"; };
+      var when=function(iso){ if(!iso) return ""; var dt=new Date(iso); return isNaN(dt.getTime())?"":dt.toLocaleDateString(undefined,{month:"short",year:"numeric"}); };
+      // roster from real users (firstName/lastName/email/role/lastLoginAt)
+      var roster=(Array.isArray(d.users)?d.users:[]).map(function(u){
+        var nm=((u.firstName||"")+" "+(u.lastName||"")).replace(/\s+/g," ").trim()||u.email||"User";
+        return { n:nm, r:u.role?(u.role.charAt(0)+u.role.slice(1).toLowerCase()):"Member", e:u.email||"", last:u.lastLoginAt?rel(u.lastLoginAt):"—" };
+      });
+      // plan-change history from real approved/pending requests (newest first), capped to keep the timeline tidy
+      var reqs=(Array.isArray(d.planChangeRequests)?d.planChangeRequests:[]);
+      var planHistory=reqs.slice().sort(function(a,b){return new Date(b.requestedAt||0)-new Date(a.requestedAt||0);}).slice(0,6).map(function(p){
+        var approved=p.status==="APPROVED", denied=p.status==="REJECTED"||p.status==="DENIED";
+        var up=(PLAN_RANK[p.toPlan]||0)>=(PLAN_RANK[p.fromPlan]||0);
+        var stamp=when(p.reviewedAt||p.requestedAt);
+        var verb=approved?(up?"Upgraded to ":"Changed to "):denied?("Denied "+(p.toPlan||"plan")):("Requested "+(p.toPlan||"plan"));
+        return {
+          t:approved?(verb+(p.toPlan||"")):verb,
+          d:(stamp?stamp+" · ":"")+(approved?"approved":denied?"denied":"pending")+(p.reason?(' · "'+String(p.reason).slice(0,80)+'"'):""),
+          c:approved?"var(--brand)":denied?"var(--danger)":"var(--info)"
+        };
+      });
+      DETAIL_CACHE[id]={
+        planHistory:planHistory, roster:roster,
+        cost30:Math.round(Number(d.costUsd30d)||0),
+        runs:Number(d.agentRunCount)||0,
+        users:Number(d.userCount)||roster.length||0,
+        candidates:Number(d.candidateCount)||0,
+        reqs:Number(d.requisitionCount)||0
+      };
+      if(active==="detail"&&detailId===id){ render(); }     // re-render the open drill-down with live data
+    })
+    .catch(function(){ /* leave DETAIL_CACHE[id]=null -> renderDetail keeps designed data */ });
+}
 function renderTenants(){
   var activeTenants=TENANTS.length;
   var mrr=TENANTS.reduce(function(a,t){return a+t.mrr;},0);
@@ -286,12 +330,20 @@ function renderTenants(){
 /* 2. TENANT DETAIL */
 function renderDetail(){
   var t=TENANTS.filter(function(x){return x.id===detailId;})[0]||TENANTS[0];
-  var planHistory=[
+  loadDetail(detailId);                                   // fire the live drill-down fetch (no-op if cached/in-flight)
+  var live=DETAIL_CACHE[detailId]||null;
+  if(live){
+    // overlay live drill-down numbers so the header/mini-KPIs/at-a-glance read true
+    t={id:t.id,name:t.name,slug:t.slug,color:t.color,created:t.created,plan:t.plan,health:t.health,
+       users:live.users||t.users,candidates:live.candidates||t.candidates,reqs:live.reqs||t.reqs,
+       cost30:live.cost30||t.cost30,runs:live.runs||t.runs,mrr:t.mrr};
+  }
+  var planHistory=(live&&live.planHistory&&live.planHistory.length)?live.planHistory:[
     {t:"Upgraded to "+t.plan,d:"Mar 2025 · approved by Riley Kerr",c:"var(--brand)"},
     {t:"Upgraded to STARTER",d:"Nov 2024 · approved by Jordan Vale",c:"var(--info)"},
     {t:"Started on FREE",d:t.created+" · self-serve signup",c:"var(--ink-3)"}
   ];
-  var roster=[
+  var roster=(live&&live.roster&&live.roster.length)?live.roster:[
     {n:"Avery Chen",r:"Admin",e:"avery@"+t.id+".co",last:"2m ago"},
     {n:"Marcus Bell",r:"Recruiter",e:"marcus@"+t.id+".co",last:"1h ago"},
     {n:"Sofia Nguyen",r:"Sourcer",e:"sofia@"+t.id+".co",last:"3h ago"},
@@ -319,8 +371,9 @@ function renderDetail(){
     +'<polyline points="'+pts+'" fill="none" stroke="var(--ai)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   html+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:6px;font-family:var(--font-mono)"><span>30 days ago</span><span>Avg '+money(Math.round(t.cost30/30))+'/day</span><span>Today</span></div></div></div>';
   // roster
-  html+='<div class="card"><div class="ch"><div><h3>User roster</h3><div class="sub">'+t.users+' users · showing 5</div></div></div><div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>User</th><th>Role</th><th>Last active</th></tr></thead><tbody>';
-  roster.forEach(function(u){html+='<tr><td><div class="org"><span class="av" style="width:30px;height:30px;font-size:11px;background:'+t.color+'">'+avatarInit(u.n)+'</span><div><div class="nm" style="font-size:13px">'+u.n+'</div><div class="sl">'+u.e+'</div></div></div></td><td><span class="pill plan-starter">'+u.r+'</span></td><td style="color:var(--ink-3);font-size:12.5px">'+u.last+'</td></tr>';});
+  var rosterShown=roster.slice(0,5);
+  html+='<div class="card"><div class="ch"><div><h3>User roster</h3><div class="sub">'+(t.users||roster.length)+' users · showing '+rosterShown.length+'</div></div></div><div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>User</th><th>Role</th><th>Last active</th></tr></thead><tbody>';
+  rosterShown.forEach(function(u){html+='<tr><td><div class="org"><span class="av" style="width:30px;height:30px;font-size:11px;background:'+t.color+'">'+avatarInit(u.n)+'</span><div><div class="nm" style="font-size:13px">'+u.n+'</div><div class="sl">'+u.e+'</div></div></div></td><td><span class="pill plan-starter">'+u.r+'</span></td><td style="color:var(--ink-3);font-size:12.5px">'+u.last+'</td></tr>';});
   html+='</tbody></table></div></div>';
   html+='</div><div>';
   // plan history
@@ -845,6 +898,198 @@ renderNav();render();
     SERVICES.length=0;
     list.forEach(function(s){ SERVICES.push({n:s.n,s:s.s,lat:s.lat||0,err:s.err||0}); });
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="health") it.ct=SERVICES.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Operators & Roles (real SUPER_ADMIN roster; the
+   permissions matrix stays designed/static). Empty -> keep designed data. ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function rel(iso){ if(!iso) return "never"; var t=new Date(iso).getTime(); if(isNaN(t)) return "never"; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var dy=Math.floor(h/24); return dy===1?"Yesterday":dy+" days ago"; }
+  api("/super-admin/operators").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.operators||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)||!list.length) return;
+    OPERATORS.length=0;
+    list.forEach(function(o){ o=o||{};
+      OPERATORS.push({
+        n:o.name||o.email||"Operator",
+        e:o.email||"",
+        role:o.role||"Super Admin",
+        last:rel(o.lastActive),
+        mfa:o.mfa===true,
+        status:o.status==="active"?"active":"inactive"
+      });
+    });
+    if(typeof WIRED==="object"&&WIRED) WIRED.operators=1;
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="operators") it.ct=OPERATORS.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Prompts (real prompt-override registry; no override -> keep designed text) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  var KEY={ "candidate-screener":"screener", "jd-author":"jdauthor", "bias-auditor":"bias", "copilot":"copilot" };
+  function fmtDate(iso){ if(!iso) return ""; var t=new Date(iso); if(isNaN(t.getTime())) return ""; var M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return M[t.getMonth()]+" "+t.getDate()+", "+t.getFullYear(); }
+  api("/super-admin/platform/prompts").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.prompts||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)||!list.length) return;
+    var applied=0;
+    list.forEach(function(row){
+      row=row||{};
+      var key=KEY[row.agentType];
+      if(!key||!PROMPTS[key]) return;
+      var ov=row.override;
+      if(!ov||typeof ov.systemPrompt!=="string"||!ov.systemPrompt) return;
+      var slot=PROMPTS[key];
+      slot.text=ov.systemPrompt;
+      if(Array.isArray(slot.versions)){ slot.versions.forEach(function(v){ v.live=false; }); }
+      else { slot.versions=[]; }
+      var ver=(typeof ov.version==="number"&&ov.version>0)?("v"+ov.version):"override";
+      var date=fmtDate(ov.createdAt)||"deployed";
+      var author=ov.createdByUserId?("Operator "+String(ov.createdByUserId).slice(0,8)):"Platform operator";
+      slot.versions.unshift({ v:ver, note:ov.notes||"Active prompt override", date:date, author:author, live:true });
+      applied++;
+    });
+    if(!applied) return;
+    if(typeof WIRED==="object"&&WIRED) WIRED.prompts=1;
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Feature Flags (cross-tenant FeatureFlag rollout rollup) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/platform/flags").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.flags||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)||!list.length) return;
+    FLAGS.length=0;
+    list.forEach(function(f){
+      var name=f.n!=null?String(f.n):"";
+      if(!name) return;
+      var tenants=Number(f.tenants||0)||0;
+      var roll=Number(f.roll||0)||0; if(roll<0)roll=0; if(roll>100)roll=100;
+      var on=f.on===true||(f.on==null&&tenants>0);
+      FLAGS.push({ n:name, desc:f.desc!=null?String(f.desc):name, roll:roll, on:on, tenants:tenants });
+    });
+    if(typeof flagState==="object"&&flagState){ FLAGS.forEach(function(f){ flagState[f.n]=f.on; }); }
+    if(typeof WIRED==="object"&&WIRED) WIRED.flags=1;
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="flags") it.ct=FLAGS.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Security & Access (real active sessions + MFA %; the
+   suspicious-activity feed + SSO/policy panel stay designed) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function rel(iso){ if(!iso) return "just now"; var t=new Date(iso).getTime(); if(isNaN(t)) return "just now"; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var d=Math.floor(h/24); return d===1?"Yesterday":d+"d ago"; }
+  function dev(role){ return role?String(role).replace(/_/g," ").toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}):"—"; }
+  function patchKpi(label,value){
+    try{
+      var kpis=document.querySelectorAll(".kpi");
+      Array.prototype.forEach.call(kpis,function(k){
+        var lbl=k.querySelector(".lbl"); var val=k.querySelector(".val");
+        if(lbl&&val&&lbl.textContent&&lbl.textContent.indexOf(label)!==-1){ val.textContent=value; }
+      });
+    }catch(e){}
+  }
+  api("/super-admin/security").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.sessions||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    if(typeof WIRED==="object"&&WIRED) WIRED.security=1;
+    SESSIONS.length=0;
+    list.forEach(function(s){
+      SESSIONS.push({
+        u:s.name||s.email||"User",
+        tid:s.tenantId,
+        ip:"—",
+        loc:"—",
+        dev:dev(s.role)+(s.mfaEnabled?" · MFA on":" · MFA off"),
+        started:rel(s.lastLoginAt)
+      });
+    });
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="security") it.ct=SESSIONS.length; }); });
+    renderNav(); render();
+    if(typeof body.activeSessions==="number") patchKpi("Active sessions",String(body.activeSessions));
+    if(typeof body.mfaAdoptionPct==="number") patchKpi("MFA adoption",body.mfaAdoptionPct+"%");
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Integrations & Webhooks (real cross-tenant; empty -> honest empty state) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function rel(iso){ if(!iso) return "—"; var t=new Date(iso).getTime(); if(isNaN(t)) return "—"; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var d=Math.floor(h/24); return d===1?"Yesterday":d+"d ago"; }
+  function kindLabel(k){ var m={slack:"Slack",email:"SMTP / Email","smtp":"SMTP / Email",calendar:"Calendar","calendar-google":"Calendar (Google)","google-calendar":"Calendar (Google)",sso:"SSO / SAML",saml:"SSO / SAML",greenhouse:"ATS import (Greenhouse)"}; return m[String(k||"").toLowerCase()]||(String(k||"Integration").charAt(0).toUpperCase()+String(k||"Integration").slice(1)); }
+  var done={i:false,w:false};
+  function markWired(){ if(done.i&&done.w&&typeof WIRED==="object"&&WIRED){ WIRED.integrations=1; } }
+  api("/super-admin/integrations").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.integrations||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    INTEGRATIONS.length=0;
+    list.forEach(function(g){
+      INTEGRATIONS.push({
+        type:kindLabel(g.kind),
+        t:Number(g.tenantCount||0)||0,
+        s:(g.status==="degraded"||g.status==="down")?g.status:"healthy",
+        last:rel(g.lastSyncAt)
+      });
+    });
+    done.i=true; markWired();
+    NAV.forEach(function(gp){ gp.items.forEach(function(it){ if(it.id==="integrations") it.ct=INTEGRATIONS.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+  api("/super-admin/webhooks").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.webhooks||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    WEBHOOKS.length=0;
+    list.forEach(function(w){
+      var fc=Number(w.failureCount||0)||0;
+      var pct=(w.lastOk===false)?Math.max(0,100-Math.min(100,fc*10)):(fc>0?Math.max(80,100-fc):100);
+      WEBHOOKS.push({
+        ep:w.endpoint||"—",
+        tid:w.tenantId,
+        ev:w.events||"all events",
+        ok:Math.round(pct*10)/10,
+        last:rel(w.lastDeliveryAt)
+      });
+    });
+    done.w=true; markWired();
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Support inbox (cross-tenant platform tickets; empty -> honest empty) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/support/platform").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.tickets||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    if(typeof WIRED==="object"&&WIRED) WIRED.support=1;
+    TICKETS.length=0;
+    list.forEach(function(t){
+      var pri=t.priority==="high"?"high":t.priority==="low"?"low":"medium";
+      var status=t.status==="open"?"open":t.status==="resolved"?"resolved":"pending";
+      TICKETS.push({
+        tid:t.tenantId||t.tid||"",
+        subj:t.subject||"(no subject)",
+        pri:pri,
+        status:status,
+        who:t.assignee||"Unassigned",
+        age:t.age||"",
+        sla:t.sla||"ok"
+      });
+    });
+    var open=TICKETS.filter(function(t){return t.status==="open";}).length;
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="support") it.ct=open; }); });
     renderNav(); render();
   }).catch(function(){});
 })();

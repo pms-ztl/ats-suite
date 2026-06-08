@@ -67,6 +67,13 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     if (existing) throw Errors.conflict("User with this email already exists in this tenant");
 
     const passwordHash = await argon2.hash(body.password, { type: argon2.argon2id });
+    // Phase 35 — optional org-hierarchy link. It is NOT part of the shared
+    // CreateUserInputSchema (which strips unknown keys), so read it off the
+    // raw body. Used by the seed to attach staff to a manager.
+    const managerId =
+      typeof (req.body as any)?.managerId === "string" && (req.body as any).managerId
+        ? ((req.body as any).managerId as string)
+        : null;
     const user = await prisma.user.create({
       data: {
         tenantId: body.tenantId,
@@ -76,6 +83,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         lastName: body.lastName,
         role: body.role,
         isActive: true,
+        managerId,
       },
     });
 
@@ -87,6 +95,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
+      managerId: user.managerId,
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -139,6 +148,89 @@ router.get("/platform-stats", requireRole("SUPER_ADMIN"), async (_req: Request, 
   }
 });
 
+// ─── GET /internal/users/platform/operators — SUPER_ADMIN operator roster ─
+// Cross-tenant read of every SUPER_ADMIN user (the platform operator team) for
+// the super-admin console's Operators & Roles screen. Uses the admin (non-RLS)
+// `prisma` client because operators live across tenants and must all be seen.
+// Returns { operators: [{ name, email, role, mfa, lastActive, status }] }.
+// Declared before /:id so the literal path isn't captured as a user id.
+router.get("/platform/operators", requireRole("SUPER_ADMIN"), async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { role: "SUPER_ADMIN" },
+      orderBy: [{ lastLoginAt: "desc" }, { createdAt: "asc" }],
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        mfaEnabled: true,
+        lastLoginAt: true,
+        isActive: true,
+      },
+      take: 500,
+    });
+    const operators = users.map((u: typeof users[number]) => ({
+      name: `${u.firstName} ${u.lastName}`.trim() || u.email,
+      email: u.email,
+      role: "Super Admin",
+      mfa: u.mfaEnabled,
+      lastActive: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
+      status: u.isActive ? "active" : "inactive",
+    }));
+    ok(res, { operators });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /internal/users/platform/security — SUPER_ADMIN security telemetry ─
+// Real-derived KPIs (24h active sessions, MFA adoption %) + the active-sessions
+// list for the super-admin "Security & Access" screen. Cross-tenant admin read,
+// gated to SUPER_ADMIN. Declared before /:id so "platform" isn't read as a user id.
+router.get(
+  "/platform/security",
+  requireRole("SUPER_ADMIN"),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const [totalUsers, mfaEnabledUsers, activeSessions, recent] = await Promise.all([
+        prisma.user.count({ where: { isActive: true } }),
+        prisma.user.count({ where: { isActive: true, mfaEnabled: true } }),
+        prisma.user.count({ where: { isActive: true, lastLoginAt: { gte: since24h } } }),
+        prisma.user.findMany({
+          where: { isActive: true, lastLoginAt: { not: null } },
+          orderBy: { lastLoginAt: "desc" },
+          take: 25,
+          select: {
+            id: true,
+            tenantId: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            mfaEnabled: true,
+            lastLoginAt: true,
+          },
+        }),
+      ]);
+      const mfaAdoptionPct = totalUsers > 0 ? Math.round((mfaEnabledUsers / totalUsers) * 100) : 0;
+      const sessions = recent.map((u: typeof recent[number]) => ({
+        userId: u.id,
+        tenantId: u.tenantId,
+        name: `${u.firstName} ${u.lastName}`.trim() || u.email,
+        email: u.email,
+        role: u.role,
+        mfaEnabled: u.mfaEnabled,
+        lastLoginAt: u.lastLoginAt,
+      }));
+      ok(res, { activeSessions, totalUsers, mfaEnabledUsers, mfaAdoptionPct, sessions });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // ─── GET /internal/users/assignable — minimal tenant roster for pickers ───
 // Powers the interview-panel assignment UI. Accessible to scheduler roles
 // (not just ADMIN, unlike the full GET /). Returns a minimal projection — id,
@@ -176,6 +268,20 @@ const InviteSchema = z.object({
   invitedByUserId: z.string().uuid(),
 });
 
+// Phase 35 — who can add whom. An inviter may only create users in roles
+// strictly beneath their own; this builds the dynamic org tree (ADMIN ->
+// HIRING_MANAGER -> RECRUITER -> INTERVIEWER) without letting anyone mint a
+// peer or a higher tier. The new user's managerId is set to the inviter below.
+const ROLE_HIERARCHY: Record<string, string[]> = {
+  SUPER_ADMIN: ["ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER"],
+  ADMIN: ["RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER"],
+  HIRING_MANAGER: ["RECRUITER", "INTERVIEWER"],
+  RECRUITER: ["INTERVIEWER"],
+  INTERVIEWER: [],
+  COMPLIANCE_OFFICER: [],
+  CANDIDATE: [],
+};
+
 // Phase 27 F-028-micro-P0: only tenant admins can invite users.
 // Phase 31a — closes the "invited users can never log in" gap.
 //
@@ -187,9 +293,18 @@ const InviteSchema = z.object({
 // create an InviteToken (7-day expiry). Gateway emails an /accept-invite
 // link via notification-service. User sets their real password through
 // the accept flow, which marks the token used and overwrites passwordHash.
-router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/invite", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = InviteSchema.parse(req.body);
+
+    // Phase 35 — role-hierarchy gate. An inviter may only add users in roles
+    // strictly beneath their own, so a manager can grow their team but cannot
+    // mint a peer or a tenant admin. ADMIN keeps full reach (minus SUPER_ADMIN).
+    const inviterRole = String(req.user?.role ?? "");
+    const allowedSubordinates = ROLE_HIERARCHY[inviterRole] ?? [];
+    if (!allowedSubordinates.includes(body.role)) {
+      throw Errors.forbidden(`A ${inviterRole || "user"} cannot add a user with the role ${body.role}.`);
+    }
 
     // Seat-limit gate (Phase 1 reads plan from request body; Phase 2 calls billing-service)
     const used = await prisma.user.count({
@@ -225,6 +340,9 @@ router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, n
           role: body.role,
           passwordHash,
           isActive: true,
+          // Phase 35 — the inviter becomes this new user's manager, growing
+          // the org tree one level beneath whoever issued the invite.
+          managerId: body.invitedByUserId,
         },
       });
       const inv = await tx.inviteToken.create({
@@ -251,6 +369,13 @@ router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, n
       },
     }).catch(() => { /* non-fatal */ });
 
+    // Phase 35 — resolve the inviter's own manager (e.g. the tenant admin) so
+    // the gateway can fire the "added beneath you" notice up one level too.
+    const inviter = await prisma.user.findUnique({
+      where: { id: body.invitedByUserId },
+      select: { managerId: true },
+    });
+
     created(res, {
       id: user.id,
       tenantId: user.tenantId,
@@ -259,12 +384,72 @@ router.post("/invite", requireTenantAdmin, async (req: Request, res: Response, n
       lastName: user.lastName,
       role: user.role,
       isActive: user.isActive,
+      managerId: user.managerId,
+      inviterManagerId: inviter?.managerId ?? null,
       // Returned so the gateway can compose the accept-invite URL and
       // hand it to notification-service. Internal-only — never exposed
       // via /api/users/:id GET.
       inviteToken: invite.token,
       inviteExpiresAt: invite.expiresAt.toISOString(),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /internal/users/my-team — the caller's org subtree (Phase 35) ────
+// Returns the caller plus every user beneath them in the managerId tree
+// (direct + indirect reports), scoped to the caller's tenant. Lets a manager
+// (or admin) see and manage the people they added without exposing the whole
+// tenant roster. Declared before /:id so "my-team" isn't read as a user id.
+router.get("/my-team", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const callerId = req.user?.id;
+    if (!tenantId || !callerId) throw Errors.validation("tenant and user context required");
+
+    const all = await prisma.user.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "asc" },
+      take: 2000,
+    });
+
+    // Index children by managerId, then breadth-first down from the caller.
+    const childrenOf = new Map<string, typeof all>();
+    for (const u of all) {
+      const key = u.managerId ?? "";
+      const arr = childrenOf.get(key) ?? [];
+      arr.push(u);
+      childrenOf.set(key, arr);
+    }
+    const team: typeof all = [];
+    const seen = new Set<string>([callerId]);
+    const queue: string[] = [callerId];
+    while (queue.length) {
+      const mid = queue.shift()!;
+      for (const child of childrenOf.get(mid) ?? []) {
+        if (seen.has(child.id)) continue;
+        seen.add(child.id);
+        team.push(child);
+        queue.push(child.id);
+      }
+    }
+    const self = all.find((u: typeof all[number]) => u.id === callerId);
+    const rows = self ? [self, ...team] : team;
+
+    ok(res, rows.map((u: typeof all[number]) => ({
+      id: u.id,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: u.role,
+      tenantId: u.tenantId,
+      isActive: u.isActive,
+      managerId: u.managerId,
+      lastLoginAt: u.lastLoginAt,
+      createdAt: u.createdAt,
+      self: u.id === callerId,
+    })));
   } catch (err) {
     next(err);
   }
@@ -337,6 +522,7 @@ router.get("/", requireRole("SUPER_ADMIN", "ADMIN"), async (req: Request, res: R
       role: u.role,
       tenantId: u.tenantId,
       isActive: u.isActive,
+      managerId: u.managerId,
       lastLoginAt: u.lastLoginAt,
       createdAt: u.createdAt,
     })));

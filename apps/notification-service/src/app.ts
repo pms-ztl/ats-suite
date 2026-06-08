@@ -16,6 +16,7 @@ import cloudSyncRouter from "./routes/cloud-sync.js";
 import smsApplyRouter from "./routes/sms-apply.js";
 import webhooksRouter from "./routes/webhooks.js";
 import complianceRouter from "./routes/compliance.js";
+import platformRouter from "./routes/platform.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -50,6 +51,9 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/support", readAuthHeaders(), supportRouter);
   app.use("/internal/webhooks", readAuthHeaders(), webhooksRouter);
   app.use("/internal/compliance", readAuthHeaders(), complianceRouter);
+  // Cross-tenant super-admin platform reads (Integrations & Webhooks console).
+  // SUPER_ADMIN-gated inside each handler; uses the admin (non-RLS) prisma client.
+  app.use("/internal/platform", readAuthHeaders(), platformRouter);
   // Phase 34c — email-to-apply. Public webhook endpoints (no auth header;
   // each route validates its own provider-specific signature).
   app.use("/internal/inbound-email", inboundEmailRouter);
