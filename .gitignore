@@ -21,3 +21,17 @@ coverage/
 
 # Demo launcher runtime output (changes every run)
 CURRENT-DEMO-URL.txt
+
+# Session recon + design-export artifacts (kept on disk, not committed)
+.cloudflared-demo.log.err
+.recon/
+claude-design/
+samples/
+docs/CLAUDE_DESIGN_PROMPT.md
+docs/DESIGN_KICKOFF_PROMPTS.md
+docs/MOTIONSITES_STYLE_PROMPTS.md
+docs/UI_INSPIRATION_MAP.md
+scripts/audit-frontend-coverage.cjs
+scripts/build-design-prompt.cjs
+scripts/digest-recon.cjs
+scripts/split-recon.cjs
