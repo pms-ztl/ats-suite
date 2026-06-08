@@ -113,5 +113,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  // Exclude the standalone /super-admin static console (its own full-bleed shell,
+  // served from public/super-admin) so middleware does not redirect the static
+  // asset requests to /login. The console's live data stays API-gated by the
+  // gateway's requireSuperAdmin, so the page itself being reachable is harmless.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|super-admin|.*\\.png$).*)"],
 };
