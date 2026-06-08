@@ -132,8 +132,22 @@ function sample<T>(arr: readonly T[], n: number): T[] {
 async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
   console.log(`\n━━━ ${t.orgName} ━━━`);
 
-  // 1. Register company (or login if it exists)
+  // 1. Idempotency guard. We CANNOT rely on register-company throwing on a
+  //    duplicate org: email uniqueness is PER-TENANT by design, so the API
+  //    happily creates a second "Pinnacle Tech" with its own admin every run.
+  //    (That is exactly how this seed once spawned 10 duplicate tenants.)
+  //    So probe with a LOGIN first — if it succeeds the tenant is already
+  //    seeded and we skip it entirely: no duplicate tenant, no extra reqs.
   let token: string;
+  try {
+    await api<{ token: string }>("POST", "/auth/login", {
+      body: { email: t.email, password: t.password },
+    });
+    console.log(`  ↻ tenant already exists — skipping (idempotent)`);
+    return;
+  } catch {
+    // Tenant does not exist yet — create it below.
+  }
   try {
     const reg = await api<{ token: string }>("POST", "/auth/register-company", {
       body: {
@@ -147,12 +161,8 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
     token = reg.token;
     console.log(`  ✓ tenant created`);
   } catch (err) {
-    // Already exists — try login
-    const login = await api<{ token: string }>("POST", "/auth/login", {
-      body: { email: t.email, password: t.password },
-    });
-    token = login.token;
-    console.log(`  ↻ tenant exists, logged in`);
+    console.log(`  ! tenant creation failed: ${(err as Error).message.slice(0, 100)}`);
+    return;
   }
 
   // 2. Requisitions
