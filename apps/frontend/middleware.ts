@@ -84,11 +84,14 @@ export function middleware(request: NextRequest) {
   const role = roleFromJwt(token);
 
   if (role) {
-    // Platform tier MUST stay in /admin and /admin sub-tree
+    // Platform tier lives in the standalone /super-admin console (served from
+    // public/, outside the gated React /admin tree). Route the operator there
+    // directly: the React /admin gate resolves the role client-side via /auth/me,
+    // which is brittle for the operator account, so the console (cookie-authed) is
+    // the reliable surface.
     if (role === "SUPER_ADMIN") {
-      // Root path → push to platform dashboard
-      if (pathname === "/" || pathname === "") {
-        return NextResponse.redirect(new URL("/admin", request.url));
+      if (pathname === "/" || pathname === "" || pathname === "/admin" || pathname.startsWith("/admin/")) {
+        return NextResponse.redirect(new URL("/super-admin/index.html", request.url));
       }
     } else {
       // Non-SUPER_ADMIN trying to reach the platform portal → bounce home

@@ -186,6 +186,10 @@ function closeMenus(){Array.prototype.forEach.call(document.querySelectorAll(".m
 document.addEventListener("click",closeMenus);
 
 /* ================= SCREENS ================= */
+/* Screens wired to live platform data. Anything NOT in here renders a
+   "Sample data" banner so designed placeholder content is never mistaken
+   for real platform data. */
+var WIRED={tenants:1,agents:1,audit:1,requests:1};
 function render(){
   if(active==="tenants")renderTenants();
   else if(active==="detail")renderDetail();
@@ -207,6 +211,12 @@ function render(){
   else if(active==="alerting")renderAlerting();
   else if(active==="support")renderSupport();
   else if(active==="settings")renderSettings();
+  if(!WIRED[active]&&screenEl){
+    var sb=document.createElement("div");
+    sb.style.cssText="display:flex;gap:9px;align-items:center;margin:0 0 18px;padding:10px 14px;border-radius:var(--r);background:var(--warn-tint);color:var(--warn);border:1px solid color-mix(in oklab,var(--warn) 32%,transparent);font-size:12.5px;font-weight:600;line-height:1.35;";
+    sb.innerHTML=svg(IC.alert,15,2)+"<span><b>Sample data</b>: design preview, not yet wired to live platform data.</span>";
+    screenEl.insertBefore(sb,screenEl.firstChild);
+  }
 }
 
 /* 1. TENANTS */
@@ -399,8 +409,11 @@ function renderCost(){
 var agentState={};AGENTS.forEach(function(a){agentState[a.id]=a.on;});
 function renderAgents(){
   var deployed=AGENTS.filter(function(a){return a.status==="deployed";}).length;
+  var degraded=AGENTS.filter(function(a){return a.status==="degraded";}).length;
+  var paused=AGENTS.filter(function(a){return a.status==="paused";}).length;
+  var avgErr=AGENTS.length?(AGENTS.reduce(function(a,x){return a+(x.err||0);},0)/AGENTS.length):0;
   var html='<div class="phead"><div class="row"><div><h1>Agents</h1><p>Fleet health for every platform AI agent. Toggle the kill-switch to pause an agent across all tenants.</p></div></div></div>';
-  html+='<div class="summary">'+svg(IC.agents,15,1.9)+'<span><b>'+deployed+' deployed</b>, <b>1 degraded</b>, <b>1 paused</b>. Fleet error rate is <b>1.1%</b> across '+k(AGENTS.reduce(function(a,x){return a+x.runs;},0))+' runs this month.</span></div>';
+  html+='<div class="summary">'+svg(IC.agents,15,1.9)+'<span><b>'+deployed+' deployed</b>, <b>'+degraded+' degraded</b>, <b>'+paused+' paused</b>. Fleet error rate is <b>'+avgErr.toFixed(1)+'%</b> across '+k(AGENTS.reduce(function(a,x){return a+x.runs;},0))+' runs this month.</span></div>';
   html+='<div class="card"><div class="ch"><h3>Platform agent fleet</h3></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th class="num">Tenants</th><th class="num">Runs</th><th class="num">Cost</th><th class="num">Error rate</th><th>Status</th><th>Kill-switch</th></tr></thead><tbody>';
   AGENTS.forEach(function(a){
     var on=agentState[a.id];
@@ -712,14 +725,14 @@ function renderSettings(){
 renderNav();render();
 
 /* ---- live hydration: swap designed demo data for the platform API where it exists.
-   Reads the super-admin JWT the React app stored in sessionStorage; if absent (the
-   console was opened without logging in) the designed demo data stays. ---- */
+   Same-origin fetch carries the httpOnly ats-token cookie (set by login), which the
+   gateway's requireSuperAdmin accepts directly, so no Bearer or sessionStorage token
+   is needed. Opened without a logged-in session -> 401 -> the catch keeps the
+   designed demo data. ---- */
 (function hydrate(){
-  var tok; try { tok = sessionStorage.getItem("ats-access-token"); } catch(e){ tok = null; }
-  if(!tok) return;
   var PLAN_MRR = {FREE:0,STARTER:149,PROFESSIONAL:399,ENTERPRISE:2400};
   var COLORS = ["#16916a","#2563eb","#7c5cff","#c2410c","#db2777","#0891b2","#65a30d","#9333ea"];
-  function api(p){ return fetch("/api"+p,{headers:{Authorization:"Bearer "+tok}}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
   api("/super-admin/tenants").then(function(res){
     var body = res && res.data ? res.data : {};
     var list = body.data || (Array.isArray(body)?body:[]);
@@ -741,5 +754,78 @@ renderNav();render();
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="tenants") it.ct=TENANTS.length; }); });
     renderNav(); render();
   }).catch(function(){ /* keep designed data on any failure */ });
+})();
+
+/* ---- live hydration: Agents fleet (also feeds the AI Cost spend-by-agent) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  var DESC={"candidate-screener":"Evidence-backed candidate scoring","resume-parser":"Structured field extraction","jd-author":"Inclusive job-description drafting","bias-auditor":"Adverse-impact monitoring","copilot":"In-product operator assistant","analytics":"Funnel and trend surfacing","offer":"Offer-letter drafting","interview-scheduler":"Interview slot proposals","interview-intelligence":"Interview signal synthesis","candidate-assistant":"Applicant-facing assistant","sourcing":"Candidate sourcing"};
+  function slug(t){ return String(t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+  api("/super-admin/platform/agents").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.agents||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)||!list.length) return;
+    AGENTS.length=0;
+    list.forEach(function(a){
+      var type=a.agentType!=null?a.agentType:a.id; if(type==null) return;
+      var killed=(a.platformKillDisabled===true)||(a.killState==="paused")||(a.killState==="killed");
+      var err=typeof a.errorRate==="number"?a.errorRate:0;
+      var status=killed?"paused":(err>2?"degraded":"deployed");
+      AGENTS.push({ id:slug(type), name:String(type), desc:DESC[type]||"Platform AI agent",
+        tenants:Number(a.tenantsWithKillSwitch||a.tenants||0)||0,
+        runs:Number(a.runs30d||a.runs||0)||0,
+        cost:Math.round(Number(a.costUsd30d||a.cost||0)||0),
+        err:err, status:status, on:!killed });
+    });
+    if(typeof agentState==="object"&&agentState){ AGENTS.forEach(function(a){ agentState[a.id]=a.on; }); }
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="agents") it.ct=AGENTS.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Audit (real events; empty -> honest empty state) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function kindOf(ev){ var s=((ev.action||"")+" "+(ev.resourceType||"")).toLowerCase();
+    if(s.indexOf("impersonat")!==-1) return "impersonation";
+    if(s.indexOf("kill")!==-1||s.indexOf("pause")!==-1||s.indexOf("suspend")!==-1) return "killswitch";
+    if(s.indexOf("bill")!==-1||s.indexOf("plan")!==-1||s.indexOf("invoice")!==-1||s.indexOf("payment")!==-1) return "billing";
+    if(s.indexOf("agent")!==-1||s.indexOf("bias")!==-1||s.indexOf("model")!==-1||s.indexOf("prompt")!==-1) return "ai";
+    return "deploy"; }
+  function rel(iso){ if(!iso) return ""; var t=new Date(iso).getTime(); if(isNaN(t)) return ""; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var dy=Math.floor(h/24); return dy===1?"Yesterday":dy+"d ago"; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  api("/super-admin/audit").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.data||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    AUDIT.length=0;
+    list.forEach(function(ev){ ev=ev||{}; var meta=ev.metadata||{};
+      var actor=meta.actorName||meta.actorEmail||ev.actorUserId||"Platform operator";
+      var action=meta.summary||(esc(ev.action||"performed an action")+(ev.resourceType?(" on <b>"+esc(ev.resourceType)+"</b>"):""));
+      AUDIT.push({ actor:esc(actor), action:action, kind:kindOf(ev), ts:rel(ev.createdAt) }); });
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="audit") it.ct=AUDIT.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Plan Requests (real; empty -> honest "all caught up") ---- */
+(function(){
+  var PLAN_MRR={FREE:0,STARTER:149,PROFESSIONAL:399,ENTERPRISE:2400};
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  function ago(iso){ if(!iso) return "just now"; var t=new Date(iso).getTime(); if(isNaN(t)) return "just now"; var m=Math.floor(Math.max(0,Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+"m ago"; var h=Math.floor(m/60); if(h<24) return h+"h ago"; var d=Math.floor(h/24); return d+"d ago"; }
+  api("/super-admin/plan-change-requests").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.data||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)) return;
+    requests.length=0;
+    list.forEach(function(r){ var trel=r.tenant||{}; var tid=trel.id||r.tenantId;
+      if(tid && !TENANTS.filter(function(x){return x.id===tid;})[0]){
+        TENANTS.push({ id:tid, name:trel.name||"Tenant", slug:trel.slug||"tenant", color:"#16916a", created:"", plan:trel.plan||r.fromPlan||"FREE", users:0, mrr:0, cost30:0, runs:0, health:"healthy", candidates:0, reqs:0, spark:[1,1,1,1,1,1,1,1] });
+      }
+      var from=r.fromPlan||"FREE", to=r.toPlan||"FREE";
+      requests.push({ id:r.id, tid:tid, from:from, to:to, mrrDelta:Math.max(0,(PLAN_MRR[to]||0)-(PLAN_MRR[from]||0)), reason:r.reason||"No reason provided.", requester:r.requestedByUserId?("User "+String(r.requestedByUserId).slice(0,8)):"Tenant admin", ago:ago(r.requestedAt) }); });
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="requests") it.ct=requests.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
 })();
 })();
