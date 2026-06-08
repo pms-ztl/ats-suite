@@ -490,6 +490,49 @@ export function createApp(logger: Logger): Express {
     }
   );
 
+  // GET /api/super-admin/health — LIVE service health. Pings every backend
+  // service's /healthz, measures round-trip latency, and reports status. This
+  // is genuinely live: it reflects the real running fleet, not seeded data.
+  app.get(
+    "/api/super-admin/health",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (_req: Request, res: Response) => {
+      const targets = [
+        { n: "identity-service", u: identityUrl },
+        { n: "tenant-service", u: tenantUrl },
+        { n: "billing-service", u: billingUrl },
+        { n: "job-service", u: jobUrl },
+        { n: "candidate-service", u: candidateUrl },
+        { n: "interview-service", u: interviewUrl },
+        { n: "resume-service", u: resumeUrl },
+        { n: "screening-service", u: screeningUrl },
+        { n: "notification-service", u: notificationUrl },
+        { n: "search-service", u: searchUrl },
+        { n: "agent-service", u: agentUrl },
+        { n: "analytics-service", u: analyticsServiceUrl },
+        { n: "compliance-service", u: complianceServiceUrl },
+      ];
+      const services = await Promise.all(
+        targets.map(async (s) => {
+          const t0 = Date.now();
+          try {
+            const ctrl = new AbortController();
+            const to = setTimeout(() => ctrl.abort(), 3000);
+            const r = await fetch(`${s.u}/healthz`, { signal: ctrl.signal });
+            clearTimeout(to);
+            const lat = Date.now() - t0;
+            return { n: s.n, s: r.ok ? "healthy" : "degraded", lat, err: r.ok ? 0 : (r.status >= 500 ? 5 : 1) };
+          } catch {
+            return { n: s.n, s: "down", lat: 0, err: 100 };
+          }
+        })
+      );
+      const healthy = services.filter((x) => x.s === "healthy").length;
+      res.json({ success: true, data: { services, healthy, total: services.length } });
+    }
+  );
+
   // GET /api/super-admin/tenants — enriched tenant list. Forwards the query to
   // tenant-service, then merges per-tenant userCount/candidateCount/
   // requisitionCount (from the platform-stats maps) + agentRunCount/costUsd30d

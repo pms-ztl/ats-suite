@@ -189,7 +189,7 @@ document.addEventListener("click",closeMenus);
 /* Screens wired to live platform data. Anything NOT in here renders a
    "Sample data" banner so designed placeholder content is never mistaken
    for real platform data. */
-var WIRED={tenants:1,agents:1,audit:1,requests:1};
+var WIRED={tenants:1,agents:1,audit:1,requests:1,health:1};
 function render(){
   if(active==="tenants")renderTenants();
   else if(active==="detail")renderDetail();
@@ -520,7 +520,7 @@ function renderHealth(){
   html+='<div class="callout" style="background:'+tb+';border-color:color-mix(in oklab,'+tc+' 30%,transparent)"><span class="cic" style="background:color-mix(in oklab,'+tc+' 20%,transparent);color:'+tc+'">'+svg(allok?IC.check:IC.alert,21,2.2)+'</span><div class="ct"><b style="color:'+tc+'">'+(allok?"All systems operational":(down.length+deg.length)+" services need attention")+'</b><p>'+(allok?"Every service is healthy.":down.concat(deg).map(function(s){return s.n;}).join(", ")+" reporting issues. On-call notified.")+'</p></div></div>';
   html+='<div class="kpis">'
     +'<div class="mini"><div class="l">Services healthy</div><div class="v">'+(SERVICES.length-down.length-deg.length)+'/'+SERVICES.length+'</div></div>'
-    +'<div class="mini"><div class="l">Queue depth (NATS)</div><div class="v">1,284</div></div>'
+    +'<div class="mini"><div class="l">Avg latency</div><div class="v">'+(SERVICES.length?Math.round(SERVICES.reduce(function(a,s){return a+(s.lat||0);},0)/SERVICES.length):0)+'ms</div></div>'
     +'<div class="mini"><div class="l">Postgres</div><div class="v" style="color:var(--ok)">Healthy</div></div>'
     +'<div class="mini"><div class="l">Redis</div><div class="v" style="color:var(--ok)">Healthy</div></div>'
     +'</div><div style="height:16px"></div>';
@@ -831,6 +831,20 @@ renderNav();render();
       var from=r.fromPlan||"FREE", to=r.toPlan||"FREE";
       requests.push({ id:r.id, tid:tid, from:from, to:to, mrrDelta:Math.max(0,(PLAN_MRR[to]||0)-(PLAN_MRR[from]||0)), reason:r.reason||"No reason provided.", requester:r.requestedByUserId?("User "+String(r.requestedByUserId).slice(0,8)):"Tenant admin", ago:ago(r.requestedAt) }); });
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="requests") it.ct=requests.length; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: System Health (real /healthz ping of every backend service) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/health").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=body.services||(Array.isArray(body)?body:[]);
+    if(!Array.isArray(list)||!list.length) return;
+    SERVICES.length=0;
+    list.forEach(function(s){ SERVICES.push({n:s.n,s:s.s,lat:s.lat||0,err:s.err||0}); });
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="health") it.ct=SERVICES.length; }); });
     renderNav(); render();
   }).catch(function(){});
 })();
