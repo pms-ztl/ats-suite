@@ -495,4 +495,97 @@ router.delete("/prompts/:type", requireSuperAdmin, async (req: Request, res: Res
   }
 });
 
+// ─── GET /internal/platform/models ─────────────────────────────────────────
+// Super-admin Models & Providers screen. Real per-provider + per-agent AI spend
+// derived from AgentRunCost (last 30d): provider spend (grouped by the provider
+// inferred from modelName) + per-agent model routing cost. Cross-tenant admin
+// read. Empty if there has been no AI usage (console then keeps designed data).
+router.get("/models", async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const inferProvider = (model: string): string => {
+      const lc = model.toLowerCase();
+      if (lc.includes("stub")) return "Stub (local)";
+      if (lc.includes("claude")) return "Anthropic";
+      if (lc.includes("gpt") || lc.includes("o1") || lc.includes("o3")) return "OpenAI";
+      if (lc.includes("llama") || lc.includes("groq")) return "Groq";
+      if (lc.includes("gemini")) return "Google";
+      if (lc.includes("mistral")) return "Mistral";
+      return "OpenRouter";
+    };
+
+    const [byModel, byAgent] = await Promise.all([
+      prisma.agentRunCost.groupBy({
+        by: ["modelName"],
+        where: { createdAt: { gte: since }, modelName: { not: null } },
+        _sum: { costUsd: true },
+        _avg: { latencyMs: true },
+        _count: { _all: true },
+      }),
+      prisma.agentRunCost.groupBy({
+        by: ["agentType", "modelName"],
+        where: { createdAt: { gte: since } },
+        _sum: { costUsd: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    // Providers — group real model spend by inferred provider.
+    const provMap = new Map<string, { spend: number; models: Set<string>; latSum: number; latN: number }>();
+    for (const r of byModel) {
+      const model = String(r.modelName ?? "");
+      if (!model) continue;
+      const prov = inferProvider(model);
+      const agg = provMap.get(prov) ?? { spend: 0, models: new Set<string>(), latSum: 0, latN: 0 };
+      agg.spend += Number(r._sum.costUsd ?? 0);
+      agg.models.add(model);
+      const n = r._count._all || 0;
+      agg.latSum += Number(r._avg.latencyMs ?? 0) * n;
+      agg.latN += n;
+      provMap.set(prov, agg);
+    }
+    const providers = Array.from(provMap.entries())
+      .map(([n, a]) => {
+        const models = Array.from(a.models);
+        const modelStr = models.slice(0, 4).join(", ") + (models.length > 4 ? `, +${models.length - 4} more` : "");
+        return {
+          n,
+          s: "connected",
+          models: modelStr || "(no recent usage)",
+          spend: Math.round(a.spend * 100) / 100,
+          head: Math.max(20, 100 - Math.round(a.spend / 50)),
+          lat: a.latN ? Math.round(a.latSum / a.latN) : 0,
+        };
+      })
+      .sort((x, y) => y.spend - x.spend);
+
+    // Routing — per agent, the top model by run count + total 30d cost.
+    const agentMap = new Map<string, { models: Map<string, number>; cost: number }>();
+    for (const r of byAgent) {
+      const a = String(r.agentType ?? "");
+      if (!a) continue;
+      const entry = agentMap.get(a) ?? { models: new Map<string, number>(), cost: 0 };
+      entry.cost += Number(r._sum.costUsd ?? 0);
+      const m = String(r.modelName ?? "—");
+      entry.models.set(m, (entry.models.get(m) ?? 0) + (r._count._all || 0));
+      agentMap.set(a, entry);
+    }
+    const routing = Array.from(agentMap.entries())
+      .map(([a, e]) => {
+        const sorted = Array.from(e.models.entries()).sort((x, y) => y[1] - x[1]);
+        return {
+          a,
+          p: sorted[0]?.[0] ?? "—",
+          f: sorted[1]?.[0] ?? "—",
+          cost: Math.round(e.cost * 100) / 100,
+        };
+      })
+      .sort((x, y) => y.cost - x.cost);
+
+    ok(res, { providers, routing });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

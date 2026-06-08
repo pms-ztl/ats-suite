@@ -725,6 +725,7 @@ function renderOperators(){
   Array.prototype.forEach.call(document.querySelectorAll("[data-deact]"),function(b){b.onclick=function(){toast(b.getAttribute("data-deact")+" deactivated","danger");};});
 }
 var ALERT_RULES=[{r:"Tenant over budget",c:"AI cost > 120% of plan",sev:"high",ch:"PagerDuty",on:true},{r:"Agent error spike",c:"Error rate > 3% / 5min",sev:"high",ch:"PagerDuty",on:true},{r:"AI drift detected",c:"Quality score drop > 10%",sev:"medium",ch:"Slack",on:true},{r:"Webhook failure spike",c:"Delivery < 90% / 1h",sev:"medium",ch:"Slack",on:true},{r:"Failed payment",c:"Invoice payment failed",sev:"medium",ch:"Email",on:true},{r:"New tenant signup",c:"Tenant provisioned",sev:"low",ch:"Slack",on:false}];
+var RECENT_ALERTS=[["Atlas Health over budget","resolved","var(--ok)","2h ago"],["ai-gateway error spike","acknowledged","var(--warn)","3h ago"],["Orbit failed payment","resolved","var(--ok)","Yesterday"]];
 var alertState={};ALERT_RULES.forEach(function(a,i){alertState[i]=a.on;});
 function renderAlerting(){
   var html='<div class="phead"><h1>Alerting</h1><p>Alert rules, routing, and on-call escalation.</p></div>';
@@ -735,7 +736,7 @@ function renderAlerting(){
     +[["Email","ops@cdcats.io","var(--info)"],["Slack","#platform-alerts","var(--brand-ink)"],["PagerDuty","On-call rotation","var(--danger)"]].map(function(r){return '<div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)"><span style="width:9px;height:9px;border-radius:50%;background:'+r[2]+'"></span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+r[0]+'</div><div style="font-size:12px;color:var(--ink-3)">'+r[1]+'</div></div><span class="pill h-healthy"><span class="d"></span>active</span></div>';}).join("")
     +'<div style="margin-top:12px;font-size:12px;color:var(--ink-3)">Escalation: Slack → PagerDuty after 10 min unacknowledged → secondary on-call after 30 min.</div></div></div></div>'
     +'<div><div class="card"><div class="ch"><h3>Recent alerts</h3></div><div style="padding:6px 18px 12px">'
-    +[["Atlas Health over budget","resolved","var(--ok)","2h ago"],["ai-gateway error spike","acknowledged","var(--warn)","3h ago"],["Orbit failed payment","resolved","var(--ok)","Yesterday"]].map(function(a){return '<div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)"><span style="width:7px;height:7px;border-radius:50%;background:'+a[2]+'"></span><div style="flex:1;font-size:13px;font-weight:600">'+a[0]+'</div><span style="font-size:11px;color:'+a[2]+';font-weight:600;text-transform:uppercase">'+a[1]+'</span><span style="font-size:11.5px;color:var(--ink-3)">'+a[3]+'</span></div>';}).join("")
+    +(RECENT_ALERTS.length?RECENT_ALERTS.map(function(a){return '<div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)"><span style="width:7px;height:7px;border-radius:50%;background:'+a[2]+'"></span><div style="flex:1;font-size:13px;font-weight:600">'+a[0]+'</div><span style="font-size:11px;color:'+a[2]+';font-weight:600;text-transform:uppercase">'+a[1]+'</span><span style="font-size:11.5px;color:var(--ink-3)">'+a[3]+'</span></div>';}).join(""):'<div style="padding:14px 2px;color:var(--ink-3);font-size:13px">No active alerts. All monitored signals nominal.</div>')
     +'</div></div></div></div>';
   screenEl.innerHTML=html;
   Array.prototype.forEach.call(document.querySelectorAll("[data-alert]"),function(b){b.onclick=function(){var i=b.getAttribute("data-alert");alertState[i]=!alertState[i];b.classList.toggle("off",!alertState[i]);toast((alertState[i]?"Enabled: ":"Disabled: ")+ALERT_RULES[i].r,alertState[i]?"ok":"danger");};});
@@ -1090,6 +1091,85 @@ renderNav();render();
     });
     var open=TICKETS.filter(function(t){return t.status==="open";}).length;
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="support") it.ct=open; }); });
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Billing & Invoices (one paid invoice per paying tenant, real plan MRR) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/billing/invoices").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var list=Array.isArray(body)?body:(body.invoices||[]);
+    if(!Array.isArray(list)||!list.length) return;
+    INVOICES.length=0;
+    list.forEach(function(i){ i=i||{};
+      INVOICES.push({
+        tid:i.tid||"",
+        amt:Number(i.amt||0),
+        status:(i.status==="failed"||i.status==="refunded")?i.status:"paid",
+        date:i.date||"—"
+      });
+    });
+    if(typeof WIRED==="object"&&WIRED) WIRED.billing=1;
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Models & Providers (real per-provider + per-agent AI spend) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/models").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var provs=body.providers||[];
+    var routes=body.routing||[];
+    if(!Array.isArray(provs)||!provs.length) return;
+    PROVIDERS.length=0;
+    provs.forEach(function(p){ p=p||{};
+      PROVIDERS.push({
+        n:p.n||"Unknown",
+        s:p.s==="degraded"?"degraded":"connected",
+        models:p.models||"(no usage)",
+        spend:Number(p.spend)||0,
+        head:Number(p.head)||50,
+        lat:Number(p.lat)||0
+      });
+    });
+    if(Array.isArray(routes)&&routes.length){
+      ROUTING.length=0;
+      routes.forEach(function(r){ r=r||{}; ROUTING.push({ a:r.a||"agent", p:r.p||"—", f:r.f||"—", cost:Number(r.cost)||0 }); });
+    }
+    if(typeof WIRED==="object"&&WIRED) WIRED.models=1;
+    renderNav(); render();
+  }).catch(function(){});
+})();
+
+/* ---- live hydration: Alerting (real ops alerts derived from health + over-budget tenants) ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  var PLAN_MRR={FREE:0,STARTER:149,PROFESSIONAL:399,ENTERPRISE:2400};
+  Promise.all([
+    api("/super-admin/health").catch(function(){return null;}),
+    api("/super-admin/tenants").catch(function(){return null;})
+  ]).then(function(rs){
+    if(!rs[0]&&!rs[1]) return;
+    var health=rs[0]&&rs[0].data?rs[0].data:{};
+    var tbody=rs[1]&&rs[1].data?rs[1].data:{};
+    var tenants=tbody.data||(Array.isArray(tbody)?tbody:[]);
+    var alerts=[];
+    (health.services||[]).forEach(function(s){
+      if(s.s==="down") alerts.push([s.n+" service down","unresolved","var(--danger)","now"]);
+      else if(s.s==="degraded") alerts.push([s.n+" degraded","acknowledged","var(--warn)","now"]);
+    });
+    (Array.isArray(tenants)?tenants:[]).forEach(function(t){
+      var planMrr=PLAN_MRR[t.plan]||0;
+      var cost=Number(t.cost30||t.costUsd30d||0);
+      if(planMrr>0 && cost>planMrr*1.2) alerts.push([(t.name||"A tenant")+" over AI budget","unresolved","var(--danger)","now"]);
+    });
+    RECENT_ALERTS.length=0;
+    alerts.forEach(function(a){ RECENT_ALERTS.push(a); });
+    if(typeof WIRED==="object"&&WIRED) WIRED.alerting=1;
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="alerting") it.ct=alerts.length; }); });
     renderNav(); render();
   }).catch(function(){});
 })();

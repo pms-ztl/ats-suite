@@ -696,6 +696,38 @@ export function createApp(logger: Logger): Express {
   // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
   app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
 
+  // GET /api/super-admin/billing/invoices — current-cycle invoices derived from
+  // each tenant's REAL plan + MRR. One "paid" invoice per PAYING tenant; FREE
+  // tenants (no MRR) generate no invoice (so no false "failed payment" alarms).
+  app.get(
+    "/api/super-admin/billing/invoices",
+    gatewayAuth(),
+    requireSuperAdmin,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { callService, uh } = await superAdminFanout(req);
+        const listRes = await callService<any>("tenant", { path: "/internal/tenants?pageSize=200", userHeaders: uh, timeoutMs: 4000 });
+        const PLAN_MRR: Record<string, number> = { FREE: 0, STARTER: 149, PROFESSIONAL: 399, ENTERPRISE: 2400 };
+        const now = new Date();
+        const dateStr = new Date(now.getUTCFullYear(), now.getUTCMonth(), 1).toLocaleString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+        const invoices = ((listRes?.data ?? []) as any[])
+          .map((tn) => {
+            const plan = tn.plan ?? "FREE";
+            const mrr = Number(tn.mrr ?? PLAN_MRR[plan] ?? 0);
+            return { tid: tn.id, plan, amt: mrr, status: "paid", date: dateStr };
+          })
+          .filter((inv) => inv.amt > 0);
+        res.json({ success: true, data: invoices });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  // GET /api/super-admin/models — Models & Providers (real AI spend per provider
+  // + per-agent routing, derived from billing AgentRunCost).
+  app.use("/api/super-admin/models", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform/models"));
+
   // Cross-tenant Integrations & Webhooks console (super-admin only). Proxies to
   // notification-service which owns TenantIntegration + Webhook; the platform
   // router returns ALL rows across tenants (admin/non-RLS client).
