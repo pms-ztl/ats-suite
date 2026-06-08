@@ -27,6 +27,11 @@ x-svc-env: &svc-env
   # default in the demo, so each resume costs far fewer tokens and fits tight
   # free-tier budgets. Set AGENTIC_RESUME_VERIFY=1 in .env to re-enable it.
   AGENTIC_RESUME_VERIFY: ${AGENTIC_RESUME_VERIFY:-0}
+  # Skip the GitHub-corroborator (another ~6-12k-token LLM call, fired when a
+  # resume has a GitHub URL) by default in the demo, for the same reason. This
+  # is what pushes a single resume over Groq's 12k tokens/min free cap. Set
+  # RESUME_GITHUB_CORROBORATE=1 in .env to re-enable the richer signal.
+  RESUME_GITHUB_CORROBORATE: ${RESUME_GITHUB_CORROBORATE:-0}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   CORS_ORIGIN: ${CORS_ORIGIN:-}

@@ -121,6 +121,11 @@ export async function runParsePipeline(opts: {
   let githubCorroboration: GithubCorroboration | null = null;
   const ghHandle = extractGithubHandle(result.output.links?.github);
   const verifyEnabled = process.env["AGENTIC_RESUME_VERIFY"] !== "0";
+  // GitHub corroboration is a SEPARATE LLM call (~6-12k tokens) that only
+  // fires when the resume has a GitHub URL and the agentic verifier did not
+  // run. On by default; set RESUME_GITHUB_CORROBORATE=0 to skip it to stay
+  // under a tight free-tier token budget (e.g. bulk re-screens on Groq free).
+  const githubCorroborateEnabled = process.env["RESUME_GITHUB_CORROBORATE"] !== "0";
 
   if (verifyEnabled && hasAgenticAgent("resume-verifier")) {
     try {
@@ -140,7 +145,10 @@ export async function runParsePipeline(opts: {
     }
   }
 
-  if (!verification && ghHandle) {
+  if (!githubCorroborateEnabled && !verification && ghHandle) {
+    logger.info({ resumeId, ghHandle }, "GitHub corroboration disabled (RESUME_GITHUB_CORROBORATE=0); skipping");
+  }
+  if (githubCorroborateEnabled && !verification && ghHandle) {
     const ghProfile = await fetchGithubProfile(ghHandle);
     if (ghProfile) {
       try {
