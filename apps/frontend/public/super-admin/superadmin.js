@@ -482,7 +482,13 @@ function renderAudit(){
 }
 
 /* ===== NEW: Revenue, Platform, Trust & Safety screens ===== */
-function ten(id){return TENANTS.filter(function(x){return x.id===id;})[0];}
+/* Snapshot the designed tenants BEFORE the live hydration replaces TENANTS, so
+   the still-sample screens (Billing/Compliance/Security/Impersonation/Support/
+   Integrations) that look tenants up by the mock ids ("foundry" etc.) keep
+   resolving instead of crashing. Falls back to a neutral placeholder if neither
+   the live nor the mock set has the id. */
+var MOCK_TENANTS=TENANTS.slice();
+function ten(id){return TENANTS.filter(function(x){return x.id===id;})[0]||MOCK_TENANTS.filter(function(x){return x.id===id;})[0]||{id:id,name:String(id||"Tenant"),slug:String(id||"tenant"),color:"#7c5cff",plan:"FREE",mrr:0,cost30:0,runs:0,users:0,candidates:0,reqs:0,health:"healthy",created:"",spark:[1,1,1,1,1,1,1,1]};}
 function ipill(s){var m={paid:["var(--ok)","var(--ok-tint)"],failed:["var(--danger)","var(--danger-tint)"],refunded:["var(--warn)","var(--warn-tint)"],pending:["var(--warn)","var(--warn-tint)"],"in-progress":["var(--info)","var(--info-tint)"],complete:["var(--ok)","var(--ok-tint)"],active:["var(--ai-ink)","var(--ai-tint)"],ended:["var(--ink-3)","var(--surface-3)"],healthy:["var(--ok)","var(--ok-tint)"],degraded:["var(--warn)","var(--warn-tint)"],down:["var(--danger)","var(--danger-tint)"]};var c=m[s]||m.ended;return '<span class="pill" style="color:'+c[0]+';background:'+c[1]+'"><span class="d"></span>'+s+'</span>';}
 var INVOICES=[{tid:"foundry",amt:3200,status:"paid",date:"Jun 1"},{tid:"helios",amt:2400,status:"paid",date:"Jun 1"},{tid:"orbit",amt:399,status:"failed",date:"May 31"},{tid:"northwind",amt:399,status:"paid",date:"May 30"},{tid:"atlas",amt:399,status:"refunded",date:"May 29"},{tid:"lumina",amt:149,status:"paid",date:"May 28"},{tid:"vertex",amt:149,status:"paid",date:"May 28"}];
 var SERVICES=[{n:"identity-service",s:"healthy",lat:42,err:0.1},{n:"tenant-service",s:"healthy",lat:38,err:0.0},{n:"candidate-service",s:"healthy",lat:61,err:0.2},{n:"screening-service",s:"degraded",lat:240,err:2.4},{n:"billing-service",s:"healthy",lat:55,err:0.1},{n:"notification-service",s:"healthy",lat:48,err:0.3},{n:"analytics-service",s:"healthy",lat:120,err:0.4},{n:"ai-gateway",s:"degraded",lat:380,err:2.8},{n:"scheduling-service",s:"down",lat:0,err:100}];
