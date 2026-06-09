@@ -131,7 +131,7 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
   const filtered = rows.filter((r) => filter === "all" || r.kind === filter);
   const counts = { all: rows.length, pass: rows.filter((r) => r.kind === "pass").length, review: rows.filter((r) => r.kind === "review").length, fail: rows.filter((r) => r.kind === "fail").length };
   const decide = (id: string, d: string) => { setDecided((x) => ({ ...x, [id]: d })); setOpen(null); onDecideProp?.(id, d); };
-  const toggle = (id: string) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
+  const toggle = (id: string) => { const n = new Set(sel); if (n.has(id)) n.delete(id); else n.add(id); setSel(n); };
   const cols = "30px 1.6fr 0.9fr 80px 100px 130px 110px 90px";
   const { sorted, sort, toggle: toggleSort } = useTableSort(filtered, { key: "score", dir: "desc" });
 

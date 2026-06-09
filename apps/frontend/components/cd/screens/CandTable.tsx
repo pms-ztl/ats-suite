@@ -45,7 +45,7 @@ function Check({ on, onClick }: { on: boolean; onClick: () => void }) {
 export function CandTable({ cands, stages, sel, setSel, onOpen, blind, dense }: { cands: Candidate[]; stages: CandStage[]; sel: Set<string>; setSel: (s: Set<string>) => void; onOpen: (id: string) => void; blind: boolean; dense: boolean }) {
   const allSel = cands.length > 0 && cands.every((c) => sel.has(c.id));
   const toggleAll = () => setSel(allSel ? new Set() : new Set(cands.map((c) => c.id)));
-  const toggle = (id: string) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
+  const toggle = (id: string) => { const n = new Set(sel); if (n.has(id)) n.delete(id); else n.add(id); setSel(n); };
   const pad = dense ? "7px 14px" : "11px 14px";
   const cols = "30px 1.7fr 1fr 110px 1fr 130px 0.9fr 70px";
   const { sorted, sort, toggle: toggleSort } = useTableSort(cands, { key: "score", dir: "desc" });

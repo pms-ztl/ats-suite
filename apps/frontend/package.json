@@ -11,6 +11,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf .next .turbo",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test e2e/a11y.spec.ts"
   },
@@ -61,18 +62,24 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/three": "^0.169.0",
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.10.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
+    "jsdom": "^25.0.1",
     "postcss": "^8",
     "rimraf": "^6.0.1",
     "shx": "^0.4.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.8"
   }
 }

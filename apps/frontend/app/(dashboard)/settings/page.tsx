@@ -159,10 +159,10 @@ function PSecurity() {
   const [mfa, setMfa] = useState(true);
   const [sso, setSso] = useState(false);
   const rows: [string, string, React.ReactNode][] = [
-    ["Two-factor authentication", "Require a second factor for all members.", <Toggle on={mfa} onClick={() => setMfa(v => !v)} />],
-    ["Enforce SSO", "Members must sign in through your identity provider.", <Toggle on={sso} onClick={() => setSso(v => !v)} />],
-    ["Session timeout", "Sign members out after inactivity.", <select style={{ ...inp, width: "auto", padding: "6px 9px", cursor: "pointer" }}><option>8 hours</option><option>24 hours</option><option>30 days</option></select>],
-    ["Password policy", "Minimum strength for password-based logins.", <select style={{ ...inp, width: "auto", padding: "6px 9px", cursor: "pointer" }}><option>Strong (12+)</option><option>Medium</option></select>],
+    ["Two-factor authentication", "Require a second factor for all members.", <Toggle key="mfa" on={mfa} onClick={() => setMfa(v => !v)} />],
+    ["Enforce SSO", "Members must sign in through your identity provider.", <Toggle key="sso" on={sso} onClick={() => setSso(v => !v)} />],
+    ["Session timeout", "Sign members out after inactivity.", <select key="session" style={{ ...inp, width: "auto", padding: "6px 9px", cursor: "pointer" }}><option>8 hours</option><option>24 hours</option><option>30 days</option></select>],
+    ["Password policy", "Minimum strength for password-based logins.", <select key="pwpolicy" style={{ ...inp, width: "auto", padding: "6px 9px", cursor: "pointer" }}><option>Strong (12+)</option><option>Medium</option></select>],
   ];
   return <><PanelHead title="Security" desc="Authentication, sessions, and access policy for your workspace." />
     <Card pad={0}>

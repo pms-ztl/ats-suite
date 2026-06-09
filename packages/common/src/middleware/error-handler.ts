@@ -27,6 +27,27 @@ export function createErrorHandler(logger: Logger): ErrorRequestHandler {
       return;
     }
 
+    // Zod validation errors (duck-typed so this survives multiple zod copies
+    // across workspaces, where `instanceof` would fail). Map to 400 instead of
+    // letting an unmapped throw fall through to a generic 500.
+    if (
+      err && typeof err === "object" &&
+      (err as { name?: string }).name === "ZodError" &&
+      Array.isArray((err as { issues?: unknown }).issues)
+    ) {
+      const issues = (err as { issues: Array<{ path?: Array<string | number>; message?: string }> }).issues;
+      logger.warn({ requestId: req.id, path: req.path, issues }, "Validation error");
+      res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Request validation failed",
+          details: issues.map((i) => ({ field: (i.path ?? []).join("."), message: i.message })),
+        },
+      });
+      return;
+    }
+
     const message = err instanceof Error ? err.message : "Internal server error";
     logger.error({ err, requestId: req.id, path: req.path }, "Unhandled error");
     res.status(500).json({

@@ -123,12 +123,14 @@ function toRows(res: any): AuditRow[] {
   return arr.map(mapRow);
 }
 
-// Try the tenant audit log first; fall back to the admin audit log.
+// Gateway mounts compliance under /api/audit -> /internal/compliance/, whose
+// real read route is /audit, so the tenant audit log lives at /api/audit/audit.
+// Fall back to the bare mount only if a future gateway alias is added.
 async function fetchAudit(): Promise<AuditRow[]> {
   try {
-    return toRows(await raw("/audit"));
+    return toRows(await raw("/audit/audit"));
   } catch {
-    return toRows(await raw("/admin/audit"));
+    return toRows(await raw("/audit"));
   }
 }
 
