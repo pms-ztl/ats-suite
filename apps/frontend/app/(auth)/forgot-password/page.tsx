@@ -34,6 +34,11 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,100..1000&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0&display=swap');
 
+/* The global "html { zoom: 0.9 }" (globals.css) shrinks the dense dashboard
+   chrome, but it also scales this full-screen fixed hero down to 90%, leaving a
+   ~10% dead strip on the right + bottom. Neutralise it only while this page is
+   mounted, so every other route keeps the intended zoom. */
+html:has(.nf-root) { zoom: 1; }
 .nf-root, .nf-root * { box-sizing: border-box; }
 .nf-root {
   --text-main:#1a1a1a; --text-secondary:#888888; --bg-page:#F5F5F5; --card-bg:#ffffff;
@@ -42,17 +47,17 @@ const CSS = `
   font-family: 'DM Sans', system-ui, sans-serif; color: var(--text-main);
   background-image:
     url('https://pub-e68758f43067417dba612b2371819aa1.r2.dev/viktor-components/alien-spaceship.png'),
-    linear-gradient(to top left, #F5F5F5, #F7F7F7);
+    linear-gradient(150deg, #EFF1F8, #F6F7FB 55%, #F2F3FA);
   background-repeat: no-repeat, no-repeat;
-  background-position: center 40%, center;
-  background-size: contain, cover;
+  background-position: 42% 46%, center;
+  background-size: cover, cover;
   background-attachment: fixed, fixed;
 }
 .nf-root .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; }
 
 /* ---- navbar ---- */
-.nf-nav { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.nf-nav::after { content: ""; position: absolute; left: 40px; right: 40px; bottom: 0; height: 1px; background-image: linear-gradient(to right, rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 6px 1px; }
+.nf-nav { position: relative; width: 100%; padding: 26px clamp(24px, 4vw, 80px); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.nf-nav::after { content: ""; position: absolute; left: clamp(24px, 4vw, 80px); right: clamp(24px, 4vw, 80px); bottom: 0; height: 1px; background-image: linear-gradient(to right, rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 6px 1px; }
 .nf-left { display: flex; align-items: center; gap: 9px; }
 .nf-left img { height: 30px; }
 .nf-brand { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; color: #111; }
@@ -80,7 +85,12 @@ const CSS = `
 .nf-mnav .nf-cta .nf-arrow { width: 32px; height: 32px; }
 
 /* ---- main ---- */
-.nf-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; max-width: 700px; margin: 0 auto; padding: 20px 20px 30px; width: 100%; }
+.nf-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 520px); align-items: center; gap: clamp(24px, 5vw, 96px); width: 100%; padding: clamp(16px, 3vh, 44px) clamp(24px, 4vw, 80px); }
+.nf-left-col { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; padding: 0; min-width: 0; }
+.nf-right-col { display: flex; flex-direction: column; justify-content: center; align-items: stretch; padding: 0; min-width: 0; }
+.nf-right-inner { width: 100%; max-width: 520px; margin-left: auto; display: flex; flex-direction: column; gap: 12px; }
+.nf-reassure { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 0 6px; font-size: 12px; color: var(--text-secondary); }
+.nf-reassure .material-symbols-rounded { font-size: 15px; color: #2e9e6b; }
 .nf-lost { font-size: 15px; color: var(--text-secondary); font-weight: 400; margin: 0 0 12px; }
 .nf-titlewrap { position: relative; display: inline-block; margin-bottom: 14px; }
 .nf-deco { position: absolute; background: linear-gradient(to bottom, #F7B2FB 50%, #786EF1 80%, #5588FB 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff); pointer-events: none; }
@@ -89,13 +99,23 @@ const CSS = `
 .nf-title { font-size: clamp(34px, 5vw, 52px); font-weight: 500; letter-spacing: -1.5px; line-height: 1.08; color: #0f0f0f; margin: 0; }
 .nf-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 470px; margin: 0 0 28px; }
 .nf-tag { display: inline-flex; align-items: center; background: #E0E2E7; font-size: 12.5px; font-weight: 600; color: var(--text-main); padding: 2px 12px; border-radius: 6px; }
+.nf-steps { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+.nf-steps li { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--text-main); }
+.nf-step-n { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(145deg, #786EF1, #5588FB); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 9px rgba(120,110,241,0.32); }
+
+/* ---- footer ---- */
+.nf-foot { flex-shrink: 0; width: 100%; padding: 12px clamp(24px, 4vw, 80px) 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12.5px; color: var(--text-secondary); }
+.nf-foot .nf-trust { display: inline-flex; align-items: center; gap: 7px; }
+.nf-foot .nf-trust .material-symbols-rounded { font-size: 16px; color: #2e9e6b; }
+.nf-foot a { color: var(--text-main); opacity: 0.72; text-decoration: none; }
+.nf-foot a:hover { opacity: 1; }
 
 /* ---- bottom card stack (form + nav) ---- */
 .nf-stack { display: flex; flex-direction: column; gap: 12px; max-width: 460px; width: 100%; margin-top: auto; }
-.nf-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: var(--card-bg); border: 1px solid rgba(0,0,0,0.05); border-radius: 18px; padding: 18px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; cursor: pointer; }
-.nf-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.08); }
+.nf-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.26), rgba(236,240,255,0.10)); backdrop-filter: blur(18px) saturate(165%); -webkit-backdrop-filter: blur(18px) saturate(165%); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 18px 22px; box-shadow: 0 12px 34px rgba(60,70,130,0.11), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.16); text-decoration: none; color: inherit; transition: transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .3s, background .3s; cursor: pointer; }
+.nf-card:hover { transform: translateY(-3px); background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(238,242,255,0.2)); box-shadow: 0 18px 46px rgba(60,70,130,0.16), inset 0 1px 1.5px rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,0.24); }
 .nf-card .nf-cl { display: flex; align-items: center; gap: 14px; text-align: left; min-width: 0; }
-.nf-cicon { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: #eaecf0; display: flex; align-items: center; justify-content: center; transition: transform .2s; }
+.nf-cicon { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(228,231,238,0.5)); border: 1px solid rgba(255,255,255,0.75); box-shadow: inset 0 1px 1px rgba(255,255,255,0.95), 0 3px 10px rgba(70,80,150,0.10); display: flex; align-items: center; justify-content: center; transition: transform .25s; }
 .nf-card:hover .nf-cicon { transform: scale(1.05); }
 .nf-cicon svg { width: 22px; height: 22px; }
 .nf-cicon .material-symbols-rounded { font-size: 24px; color: #1a1a1a; }
@@ -105,10 +125,14 @@ const CSS = `
 .nf-card:hover .nf-chev { transform: translateX(6px); }
 
 /* ---- form card ---- */
-.nf-form { background: var(--card-bg); border: 1px solid rgba(0,0,0,0.05); border-radius: 18px; padding: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); text-align: left; }
+.nf-form { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(236,240,255,0.12)); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border: 1px solid rgba(255,255,255,0.65); border-radius: 22px; padding: 20px; box-shadow: 0 14px 42px rgba(60,70,130,0.13), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.18); text-align: left; }
+.nf-form::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 55%; border-radius: 22px 22px 60% 60% / 22px 22px 24px 24px; background: linear-gradient(180deg, rgba(255,255,255,0.45), transparent); pointer-events: none; z-index: 0; }
+.nf-form > * { position: relative; z-index: 1; }
+.nf-form::after { content: ""; position: absolute; top: 0; bottom: 0; left: -70%; width: 42%; z-index: 3; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.32) 50%, transparent); transform: skewX(-16deg); animation: nfSheen 7s ease-in-out 2.4s infinite; }
 .nf-flabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px 4px; display: block; }
-.nf-field { display: flex; align-items: center; gap: 10px; background: #F5F6F8; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 0 14px; transition: border-color .15s, box-shadow .15s; }
-.nf-field:focus-within { border-color: #786EF1; box-shadow: 0 0 0 3px rgba(120,110,241,0.12); }
+.nf-field { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; background: rgba(255,255,255,0.66); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(70,72,110,0.14); border-radius: 13px; padding: 0 14px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.7); transition: border-color .18s, box-shadow .18s, background .18s; }
+.nf-field:focus-within { border-color: rgba(120,110,241,0.55); background: rgba(255,255,255,0.85); box-shadow: 0 0 0 3px rgba(120,110,241,0.14); }
+.nf-field input:-webkit-autofill { -webkit-text-fill-color: #1a1a1a; -webkit-box-shadow: 0 0 0 60px rgba(255,255,255,0.92) inset; }
 .nf-field.err { border-color: #e5484d; }
 .nf-field .material-symbols-rounded { font-size: 20px; color: var(--text-secondary); flex-shrink: 0; }
 .nf-field input { flex: 1; min-width: 0; border: none; background: none; outline: none; padding: 13px 0; font-family: inherit; font-size: 14px; color: var(--text-main); }
@@ -130,10 +154,20 @@ const CSS = `
 .nf-sent-banner b { color: #1a1a1a; }
 
 @keyframes nfFloat { 0%,100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+@keyframes nfSheen { 0% { left: -70%; } 16%, 100% { left: 140%; } }
 
 /* ---- responsive ---- */
+@media (max-width: 900px) {
+  .nf-main { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; gap: 22px; padding: 10px 24px 28px; }
+  .nf-left-col { align-items: center; text-align: center; padding: 6px 0 0; }
+  .nf-right-col { padding: 0; align-items: stretch; }
+  .nf-right-inner { max-width: 460px; margin: 0 auto; }
+  .nf-root { background-position: center 42%, center; background-size: cover, cover; }
+  .nf-steps { align-items: center; }
+  .nf-foot { flex-direction: column; gap: 6px; text-align: center; padding: 10px 24px 16px; }
+}
 @media (max-width: 768px) {
-  .nf-root { background-size: 90%, cover; background-position: center 45%, center; }
+  .nf-root { background-size: cover, cover; background-position: center 40%, center; }
   .nf-links, .nf-nav > .nf-cta { display: none; }
   .nf-burger { display: flex; }
   .nf-nav { padding: 20px; }
@@ -145,7 +179,7 @@ const CSS = `
   .nf-cicon { width: 42px; height: 42px; }
 }
 @media (max-width: 480px) {
-  .nf-root { background-size: 100%, cover; }
+  .nf-root { background-size: cover, cover; }
   .nf-title { font-size: 26px; }
   .nf-deco.cloud { font-size: 30px; }
   .nf-deco.heart { font-size: 22px; }
@@ -163,7 +197,7 @@ const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ];
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ left, right }: { left: React.ReactNode; right: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="nf-root">
@@ -189,7 +223,14 @@ function Shell({ children }: { children: React.ReactNode }) {
           <span className="nf-arrow"><ChevronArrow /></span> Sign in
         </Link>
       </div>
-      <main className="nf-main">{children}</main>
+      <main className="nf-main">
+        <div className="nf-left-col">{left}</div>
+        <div className="nf-right-col"><div className="nf-right-inner">{right}<div className="nf-reassure"><span className="material-symbols-rounded">lock</span> 256-bit encryption · we never email your password</div></div></div>
+      </main>
+      <footer className="nf-foot">
+        <span className="nf-trust"><span className="material-symbols-rounded">verified_user</span> SOC 2 Type II · SSO · SAML · GDPR</span>
+        <span>© 2026 TalentFlow · <Link href="/contact">Need help?</Link></span>
+      </footer>
     </div>
   );
 }
@@ -260,7 +301,8 @@ function ResetPasswordForm({ token }: { token: string }) {
   ];
 
   return (
-    <Shell>
+    <Shell
+      left={<>
       <p className="nf-lost">Almost there. One last step.</p>
       <div className="nf-titlewrap">
         <span className="nf-deco cloud material-symbols-rounded">cloud</span>
@@ -270,7 +312,8 @@ function ResetPasswordForm({ token }: { token: string }) {
       <p className="nf-sub">
         Choose a strong <span className="nf-tag">password</span> you&apos;ll remember. We&apos;ll log you straight back into your <span className="nf-tag">workspace</span>.
       </p>
-      <div className="nf-stack">
+      </>}
+      right={<>
         <form className="nf-form" onSubmit={handleSubmit}>
           <label className="nf-flabel">New password</label>
           <div className={"nf-field" + (errors.password ? " err" : "")}>
@@ -304,8 +347,8 @@ function ResetPasswordForm({ token }: { token: string }) {
           </button>
         </form>
         <BackToSignIn />
-      </div>
-    </Shell>
+      </>}
+    />
   );
 }
 
@@ -351,7 +394,8 @@ function ForgotPasswordForm() {
 
   if (step === "sent") {
     return (
-      <Shell>
+      <Shell
+        left={<>
         <p className="nf-lost">Sent! Now check your inbox.</p>
         <div className="nf-titlewrap">
           <span className="nf-deco cloud material-symbols-rounded">cloud</span>
@@ -361,7 +405,8 @@ function ForgotPasswordForm() {
         <p className="nf-sub">
           We sent a secure <span className="nf-tag">reset link</span> to your inbox. Open it within 30 minutes to set a new <span className="nf-tag">password</span>.
         </p>
-        <div className="nf-stack">
+        </>}
+      right={<>
           <div className="nf-form">
             <div className="nf-sent-banner">
               <span className="material-symbols-rounded">mark_email_read</span>
@@ -372,13 +417,14 @@ function ForgotPasswordForm() {
             </button>
           </div>
           <BackToSignIn />
-        </div>
-      </Shell>
+        </>}
+      />
     );
   }
 
   return (
-    <Shell>
+    <Shell
+      left={<>
       <p className="nf-lost">Forgot your password? Happens to the best of us.</p>
       <div className="nf-titlewrap">
         <span className="nf-deco cloud material-symbols-rounded">cloud</span>
@@ -388,7 +434,13 @@ function ForgotPasswordForm() {
       <p className="nf-sub">
         Enter your work <span className="nf-tag">email</span> and we&apos;ll send a secure <span className="nf-tag">reset link</span>. It expires in 30 minutes, so keep an eye on your inbox.
       </p>
-      <div className="nf-stack">
+      <ol className="nf-steps">
+        <li><span className="nf-step-n">1</span> Enter your work email below</li>
+        <li><span className="nf-step-n">2</span> Open the secure link we email you</li>
+        <li><span className="nf-step-n">3</span> Choose a fresh password and you&apos;re in</li>
+      </ol>
+      </>}
+      right={<>
         <form className="nf-form" onSubmit={handleSubmit}>
           <label className="nf-flabel">Work email</label>
           <div className={"nf-field" + (emailErr ? " err" : "")}>
@@ -401,8 +453,8 @@ function ForgotPasswordForm() {
           </button>
         </form>
         <BackToSignIn />
-      </div>
-    </Shell>
+      </>}
+    />
   );
 }
 
