@@ -1,8 +1,9 @@
 "use client";
-// app/chat/page.tsx
+// app/(dashboard)/chat/page.tsx
 // Functional, tenant-isolated, real-time team chat wired to the real backend
-// (notification-service /internal/messages, RLS-scoped) instead of the previous
-// local-only design prototype. Conversations, threads and unread counts come
+// (notification-service /internal/messages, RLS-scoped). Lives INSIDE the dashboard
+// shell (sidebar + nav) so it is no longer a dead-end full-screen route — fills the
+// shell's main area at height:100%. Conversations, threads and unread counts come
 // from the API; new messages arrive live over the shared SSE stream
 // (/api/notifications/stream, "message" events). A user can only ever see and
 // message people in their own tenant — enforced by RLS server-side.
@@ -97,7 +98,7 @@ export default function ChatPage() {
   const title = (c: Conversation) => c.title || c.participantIds.filter((p) => p !== meId).map(nameOf).join(", ") || "Conversation";
 
   return (
-    <div className="cd-scope" style={{ height: "100vh", display: "flex", background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}>
+    <div className="cd-scope" style={{ height: "100%", display: "flex", background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}>
       {/* sidebar */}
       <div style={{ width: 300, borderRight: "1px solid var(--c-line)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
         <div style={{ padding: "18px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>

@@ -109,6 +109,25 @@ const CSS = `
 .supportx .faq .ans{padding:0 20px 18px;font-size:13.5px;color:rgba(26, 26, 26, .62);line-height:1.6;}
 .supportx .foot{text-align:center;padding:34px 0 12px;font-size:12px;color:rgba(26, 26, 26, .45);font-family:var(--mono);}
 @media(prefers-reduced-motion:reduce){.supportx .hwrap{animation:none;}.supportx .search .cur{animation:none;}}
+/* dark theme: this page lives inside the dashboard shell, which flips to dark.
+   The base styles hardcode light surfaces (#fff) and dark ink (#1a1a1a), which
+   render dark-on-dark in dark mode. Override the surfaces, ink, lines and the
+   hardcoded text greys so the help center reads correctly in dark mode. */
+.dark .supportx{--ink:#e7e9ee;--bg:#0e1320;--line:rgba(255,255,255,.12);}
+.dark .supportx .search,.dark .supportx .card,.dark .supportx .faq{background:#161b27;border-color:rgba(255,255,255,.10);}
+.dark .supportx .search{box-shadow:0 14px 40px -16px rgba(0,0,0,.55);}
+.dark .supportx .card{box-shadow:0 10px 34px -18px rgba(0,0,0,.5);}
+.dark .supportx .card:hover{box-shadow:0 20px 48px -20px rgba(0,0,0,.65);border-color:rgba(22,145,106,.5);}
+.dark .supportx .eyebrow{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
+.dark .supportx .lede{color:rgba(231,233,238,.74);}
+.dark .supportx .card p{color:rgba(231,233,238,.62);}
+.dark .supportx .faq .ans{color:rgba(231,233,238,.66);}
+.dark .supportx .hint{color:rgba(231,233,238,.5);}
+.dark .supportx .foot{color:rgba(231,233,238,.45);}
+.dark .supportx h1 em{color:#2fcf94;}
+.dark .supportx .card .lnk,.dark .supportx .card .note{color:#2fcf94;}
+.dark .supportx .search .typed .ph,.dark .supportx .search .typed input::placeholder{color:rgba(231,233,238,.42);}
+.dark .supportx .search .ic,.dark .supportx .faq .chev{color:#8a93a3;}
 `;
 
 // Inline SVG icon helpers, kept identical to the source markup.

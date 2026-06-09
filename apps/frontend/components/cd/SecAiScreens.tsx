@@ -8,6 +8,7 @@ import { Icon } from "./icon";
 import type { SecurityData, AiOpsData } from "./types";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
+import { SceneArt } from "@/components/shared/scene-art";
 
 export function SecurityScreen({ data, onReport }: { data: SecurityData; onReport?: () => void }) {
   const s = data;
@@ -49,6 +50,13 @@ export function SecurityScreen({ data, onReport }: { data: SecurityData; onRepor
             ))}
           </SectionCard>
         </div>
+        {s.alerts.length === 0 && s.checklist.length === 0 && (
+          <div style={{ padding: "34px 0 6px" }}>
+            <SceneArt scene="shield" maxWidth={380}
+              title="Continuous protection, watching quietly"
+              body="MFA and SSO coverage, encryption at rest and the hardening checklist are monitored around the clock. Risk findings surface here the moment they appear." />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -118,6 +118,76 @@ export async function bulkUploadResumes(
     failed: Number(d?.failed ?? 0),
   };
 }
+// Copilot — POST /api/copilot. Returns a grounded answer + cited sources from
+// the real agent (backed by the configured LLM). Throws on failure so the UI can
+// show an honest error instead of a fabricated answer.
+export interface CopilotResponse {
+  answer: string;
+  confidence: number;
+  sources: Array<{ type: string; id: string; snippet: string }>;
+  suggestedActions?: Array<{ label: string; type?: string }>;
+  followUpQuestions?: string[];
+  modelName?: string;
+}
+export async function askCopilot(query: string): Promise<CopilotResponse> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/copilot`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify({ query }),
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /copilot -> ${r.status}`);
+  const d = res?.data ?? res;
+  return {
+    answer: String(d?.answer ?? ""),
+    confidence: Number(d?.confidence ?? 0),
+    sources: Array.isArray(d?.sources) ? d.sources : [],
+    suggestedActions: Array.isArray(d?.suggestedActions) ? d.suggestedActions : [],
+    followUpQuestions: Array.isArray(d?.followUpQuestions) ? d.followUpQuestions : [],
+    modelName: d?.modelName,
+  };
+}
+// Real two-step CSV import (candidate-service /import/preview + /commit).
+export interface ImportPreviewRow {
+  row: number;
+  status: string; // valid_new | valid_update | invalid_email | missing_required | duplicate_in_file
+  candidate: { firstName?: string; lastName?: string; email?: string; location?: string; source?: string; [k: string]: unknown };
+  reason?: string;
+}
+export interface ImportPreview {
+  headers: string[];
+  preview: ImportPreviewRow[];
+  summary: { total: number; newCount: number; updateCount: number; invalidEmailCount: number; missingRequiredCount: number; duplicateInFileCount: number };
+}
+export async function previewCandidateImport(csv: string): Promise<ImportPreview> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/candidates/import/preview`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify({ csv }),
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /candidates/import/preview -> ${r.status}`);
+  const d = res?.data ?? res;
+  return {
+    headers: Array.isArray(d?.headers) ? d.headers : [],
+    preview: Array.isArray(d?.preview) ? d.preview : [],
+    summary: d?.summary ?? { total: 0, newCount: 0, updateCount: 0, invalidEmailCount: 0, missingRequiredCount: 0, duplicateInFileCount: 0 },
+  };
+}
+export async function commitCandidateImport(csv: string): Promise<{ created: number; updated: number; skipped: number; totalRows: number }> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/candidates/import/commit`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify({ csv, skipDuplicates: true, source: "CSV_IMPORT" }),
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /candidates/import/commit -> ${r.status}`);
+  const s = (res?.data ?? res)?.summary ?? {};
+  return { created: Number(s?.created ?? 0), updated: Number(s?.updated ?? 0), skipped: Number(s?.skipped ?? 0), totalRows: Number(s?.totalRows ?? 0) };
+}
 export async function getCandidate(id: string): Promise<Candidate> {
   const res: any = await api.candidates.getCandidate(id);
   return toCandidate(res?.data ?? res);
@@ -360,6 +430,20 @@ export async function listOffers(): Promise<Offer[]> {
 }
 export async function approveOffer(id: string): Promise<void> {
   try { await raw("POST", `/offers/${id}/approve`); } catch { /* surfaced via toast when wired */ }
+}
+/* Create a real offer (ADMIN/RECRUITER/HIRING_MANAGER). POST /api/offers ->
+   candidate-service /internal/offers; status defaults to DRAFT server-side. */
+export async function createOffer(body: {
+  candidateId: string; requisitionId: string; baseSalary: number;
+  currency?: string; bonusPercent?: number; equity?: string; startDate?: string; expiresAt?: string; notes?: string;
+}): Promise<Offer> {
+  const res: any = await raw("POST", "/offers", body);
+  return toOffer(res?.data ?? res);
+}
+
+/* ---------- Plan changes (tenant admin requests; super-admin approves) ---------- */
+export async function requestPlanChange(toPlan: string, reason?: string): Promise<void> {
+  await raw("POST", "/tenants/plan-change-request", { toPlan, ...(reason ? { reason } : {}) });
 }
 
 /* ---------- Analytics + Compliance ---------- */

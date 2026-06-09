@@ -8,6 +8,8 @@
 import { BillingScreen } from "./BillingScreen";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { requestPlanChange } from "@/lib/api";
+import { toast } from "sonner";
 import type { BillingData, BillingUsage, BillingTier, BillingSpendMonth } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -60,5 +62,15 @@ export function BillingLive() {
     tiers: TIERS.map((t) => ({ ...t, cur: t.n === plan })),
   };
 
-  return <BillingScreen data={data} spendTrend={spendTrend} />;
+  const onSelectPlan = async (toPlan: string) => {
+    try {
+      await requestPlanChange(toPlan);
+      const pretty = toPlan.charAt(0) + toPlan.slice(1).toLowerCase();
+      toast.success(`Plan change to ${pretty} requested — it goes to your workspace owner for approval.`);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not submit the plan change request.");
+    }
+  };
+
+  return <BillingScreen data={data} spendTrend={spendTrend} onSelectPlan={onSelectPlan} />;
 }

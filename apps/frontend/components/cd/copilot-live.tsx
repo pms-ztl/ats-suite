@@ -1,40 +1,106 @@
 "use client";
 // components/cd/copilot-live.tsx
-// Mounts the byte-exact CD CopilotScreen with the design's example grounded Q&A.
-// There is no copilot backend yet, so the thread + answer are the design's seed
-// (the streaming reasoning + cited cards are the CopilotScreen's own animation).
-// onAsk is a local no-op until a real copilot endpoint exists.
+// Wires the CD CopilotScreen to the REAL /api/copilot agent. Each question is
+// sent to the backend (askCopilot); the grounded answer + cited sources are
+// mapped into the screen's CopilotData shape. While the request is in flight the
+// screen holds in its "thinking" state (loading prop). On failure it shows an
+// honest error message instead of a fabricated answer.
+import { useState } from "react";
 import { CopilotScreen } from "./CopilotScreen";
-import type { CopilotData } from "./types";
+import type { CopilotData, CopilotAnswer } from "./types";
+import { askCopilot, type CopilotResponse } from "@/lib/api";
 
-const COPILOT_DATA: CopilotData = {
-  thread: { text: "Which candidates in the pipeline are the strongest fit for our Senior Backend Engineer role, and why?" },
+const SUGGESTIONS = [
+  "Which reqs are falling behind on time-to-hire?",
+  "Summarize this week's screening verdicts",
+  "Which candidates are awaiting a human decision?",
+  "Show the diversity of the current interview slate",
+];
+
+// Cosmetic "thinking" steps shown during the live request (the backend single
+// call doesn't stream a trace; these are UI chrome, not claimed facts).
+const THINKING = [
+  "Reading your pipeline data",
+  "Retrieving candidates and requisitions",
+  "Reading the AI screening verdicts",
+  "Synthesizing a grounded answer",
+];
+
+const humanType = (t: string): string =>
+  ({ candidate: "Candidate", requisition: "Requisition", interview: "Interview", metric: "Metric", policy: "Policy" } as Record<string, string>)[t] ?? t;
+
+function mapAnswer(out: CopilotResponse): CopilotAnswer {
+  const srcs = out.sources ?? [];
+  return {
+    reasoning: THINKING,
+    confidence: typeof out.confidence === "number" ? out.confidence : 0,
+    text: out.answer || "No answer was returned.",
+    // Cited sources rendered as cards (snippet = real cited content).
+    items: srcs.slice(0, 6).map((s) => ({
+      n: humanType(s.type) + (s.id ? " · " + String(s.id).slice(0, 8) : ""),
+      meta: s.snippet || "",
+      src: s.type,
+    })),
+    sources: Array.from(new Set(srcs.map((s) => s.type))),
+    actions: (out.suggestedActions ?? []).map((a) => a.label).filter(Boolean),
+    followups: (out.followUpQuestions ?? []).filter(Boolean),
+  };
+}
+
+function errorAnswer(): CopilotAnswer {
+  return {
+    reasoning: THINKING,
+    confidence: 0,
+    text:
+      "I couldn't reach the AI just now. The model service may be **rate-limited** (the demo runs on a free tier) or temporarily busy — please try again in a moment. If this keeps happening, the LLM API key needs more budget.",
+    items: [],
+    sources: [],
+    actions: [],
+    followups: [],
+  };
+}
+
+const INTRO: CopilotData = {
+  thread: { text: "What can you help me with?" },
   answer: {
-    reasoning: [
-      "Retrieving open requisitions and their required skills",
-      "Pulling candidates currently in screening and interview",
-      "Reading each candidate's AI screening verdict",
-      "Ranking by match score, weighted toward must-have requirements",
-    ],
-    confidence: 0.86,
-    text: "Three candidates stand out for **Senior Backend Engineer**. Each clears the must-have requirements and has moved past the screening stage. The ranking weights distributed-systems depth and payments-domain experience most heavily.",
-    items: [
-      { n: "Lena Whitfield", meta: "Match 87 · 5 of 5 requirements met", src: "verdict" },
-      { n: "Marcus Bell", meta: "Match 81 · 4 of 5 requirements met", src: "verdict" },
-      { n: "Priya Raman", meta: "Match 78 · flagged for human review", src: "verdict" },
-    ],
-    sources: ["requisition", "screening-verdicts", "pipeline-stages"],
-    actions: ["Schedule interviews for the top two", "Open the highest-match profile"],
-    followups: ["Who is most at risk of dropping off?", "Compare the top two side by side"],
+    reasoning: THINKING,
+    confidence: 0,
+    text:
+      "I answer questions about your live hiring pipeline — candidates, requisitions, screening verdicts, and metrics — and I cite every source. Pick a prompt on the right, or ask your own below.",
+    items: [],
+    sources: [],
+    actions: [],
+    followups: [],
   },
-  suggestions: [
-    "Which reqs are falling behind on time-to-hire?",
-    "Summarize this week's screening verdicts",
-    "Which candidates are awaiting a human decision?",
-    "Show the diversity of the current interview slate",
-  ],
+  suggestions: SUGGESTIONS,
 };
 
+const loadingData = (q: string): CopilotData => ({
+  thread: { text: q },
+  answer: { reasoning: THINKING, confidence: 0, text: "", items: [], sources: [], actions: [], followups: [] },
+  suggestions: SUGGESTIONS,
+});
+
 export function CopilotLive() {
-  return <CopilotScreen data={COPILOT_DATA} />;
+  const [threadId, setThreadId] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<CopilotData>(INTRO);
+
+  async function ask(q: string) {
+    const query = q.trim();
+    if (!query || loading) return;
+    setThreadId((n) => n + 1); // remount CopilotScreen -> restart its thinking animation
+    setLoading(true);
+    setData(loadingData(query));
+    try {
+      const out = await askCopilot(query);
+      setData({ thread: { text: query }, answer: mapAnswer(out), suggestions: SUGGESTIONS });
+    } catch {
+      setData({ thread: { text: query }, answer: errorAnswer(), suggestions: SUGGESTIONS });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return <CopilotScreen key={threadId} data={data} loading={loading} onAsk={(q) => void ask(q)} />;
 }

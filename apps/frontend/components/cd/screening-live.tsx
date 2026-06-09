@@ -3,15 +3,18 @@
 // Wires the verbatim CD Screening (./screens/Screening) to the real gateway:
 // listScreening() -> ScreeningData. The CD screen is props-only, so this maps the
 // ScreeningVerdict[] the gateway returns onto the rows it expects. AI is advisory;
-// the human's click is recorded as the deciding action (handled in-screen).
+// the human's click is recorded as the deciding action (handled in-screen). The
+// "Export" button downloads the real screening rows as CSV via lib/export.
 import { Screening } from "./screens/Screening";
 import { useData } from "@/lib/use-data";
 import { listScreening, listCandidates, listRequisitions } from "@/lib/api";
+import { exportToCSV } from "@/lib/export";
 import type { ScreeningVerdict, ScreeningResult, RequirementMatch, Candidate, Requisition } from "@/lib/types";
 import type { ScreeningData, ScreeningRow, ReqBreakdown, VerdictKind } from "./types";
 
 const KIND: Record<ScreeningResult, VerdictKind> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
 const BAND: Record<VerdictKind, string> = { pass: "Strong match", review: "Strong potential", fail: "Below the bar" };
+const RESULT_LABEL: Record<VerdictKind, string> = { pass: "PASS", review: "REVIEW", fail: "FAIL" };
 
 function initials(name: string): string {
   const p = String(name).trim().split(/\s+/).filter(Boolean);
@@ -55,12 +58,19 @@ export function ScreeningLive() {
   const reqs = useData<Requisition[]>(listRequisitions);
   const candById = new Map((cands.data ?? []).map((c) => [c.id, c.name]));
   const reqById = new Map((reqs.data ?? []).map((r) => [r.id, r.title]));
-  const data: ScreeningData = {
-    rows: (queue.data ?? []).map((v) =>
-      toRow(v, candById.get(v.candidateId) ?? v.candidateId, reqById.get(v.requisitionId ?? "") ?? "")
-    ),
-    requirements: [],
-    trace: [],
-  };
-  return <Screening data={data} />;
+
+  const rows: ScreeningRow[] = (queue.data ?? []).map((v) =>
+    toRow(v, candById.get(v.candidateId) ?? v.candidateId, reqById.get(v.requisitionId ?? "") ?? "")
+  );
+  const data: ScreeningData = { rows, requirements: [], trace: [] };
+
+  // Real CSV export of exactly the rows shown (no backend needed — data in hand).
+  const onExport = () =>
+    exportToCSV(
+      `screening-queue-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Candidate", "Role", "Score", "Result", "Confidence", "Recommendation", "Summary"],
+      rows.map((r) => [r.name, r.role, r.score, RESULT_LABEL[r.kind], r.conf.toFixed(2), r.band, r.reasoning ?? ""]),
+    );
+
+  return <Screening data={data} onExport={onExport} />;
 }

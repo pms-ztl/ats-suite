@@ -7,7 +7,7 @@ import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { CopilotData } from "./types";
 
-export function CopilotScreen({ data, onAsk }: { data: CopilotData; onAsk?: (q: string) => void }) {
+export function CopilotScreen({ data, onAsk, loading }: { data: CopilotData; onAsk?: (q: string) => void; loading?: boolean }) {
   const seed = data.thread;
   const ans = data.answer;
   const [phase, setPhase] = useState<"idle" | "thinking" | "answer">("idle");
@@ -19,9 +19,12 @@ export function CopilotScreen({ data, onAsk }: { data: CopilotData; onAsk?: (q: 
   useEffect(() => { run(); }, []);
   useEffect(() => {
     if (phase !== "thinking") return;
-    if (steps >= ans.reasoning.length) { const t = setTimeout(() => setPhase("answer"), 400); return () => clearTimeout(t); }
+    if (steps >= ans.reasoning.length) {
+      if (loading) return; // hold in "thinking" until the real answer arrives
+      const t = setTimeout(() => setPhase("answer"), 400); return () => clearTimeout(t);
+    }
     const t = setTimeout(() => setSteps(s => s + 1), 620); return () => clearTimeout(t);
-  }, [phase, steps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, steps, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", height: "100%", minHeight: 0 }} className="copilot-grid">

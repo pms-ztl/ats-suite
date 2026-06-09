@@ -9,6 +9,7 @@ import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill } from "../aurora-kit";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
+import { SceneArt } from "@/components/shared/scene-art";
 import type { InterviewsData, InterviewDetail } from "../types";
 
 const recTone: Record<string, string> = { STRONG_YES: "var(--ok)", YES: "var(--ok)", NEUTRAL: "var(--warn)", NO: "var(--danger)", STRONG_NO: "var(--danger)" };
@@ -34,7 +35,15 @@ function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (i
             <button key={k} onClick={() => setFilter(k)} style={{ fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: "var(--r-pill)", cursor: "pointer", border: "1px solid", borderColor: filter === k ? "transparent" : "var(--line-2)", background: filter === k ? "var(--brand-tint)" : "var(--surface)", color: filter === k ? "var(--brand-ink)" : "var(--ink-2)" }}>{l}</button>
           ))}
         </div>
-        {rows.length === 0 ? <EmptyHint icon="calendar" text="No interviews in this view." /> : (
+        {rows.length === 0 ? (
+          all.length === 0 ? (
+            <div style={{ padding: "24px 0 6px" }}>
+              <SceneArt scene="interview" maxWidth={400}
+                title="No interviews scheduled yet"
+                body="Schedule a round and it lands here with the panel, timing and the AI interview-intelligence summary alongside every conversation." />
+            </div>
+          ) : <EmptyHint icon="calendar" text="No interviews in this view." />
+        ) : (
           <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1fr 130px 120px", gap: 12, padding: "11px 18px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", alignItems: "center" }}>
               <SortHead label="Candidate" sortKey="name" sort={sort} onSort={toggle} className="" style={headCell} />

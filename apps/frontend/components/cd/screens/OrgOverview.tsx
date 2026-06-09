@@ -10,6 +10,7 @@ import {
   CommandHero, KPICard, Reveal, SectionCard, Timeline, PendingList, Pill,
 } from "../aurora-kit";
 import { FunnelViz, DonutChart, TrendChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { exportToCSV } from "@/lib/export";
 import type { OrgOverviewData } from "../types";
 
 export function OrgOverview({ data }: { data: OrgOverviewData }) {
@@ -29,11 +30,22 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
   // the backend exposes a history series, so this maps to an EmptyChart below.
   const trendData = trend.map((v, i) => ({ t: trendLabels[i] ?? `P${i + 1}`, days: v }));
 
+  // Export the real KPIs + pipeline funnel shown on this dashboard as a CSV report.
+  const onExport = () => {
+    const kpiRows = (kpis as any[]).map((k) => [String(k.label ?? k.id ?? ""), String(k.value ?? ""), String(k.delta ?? k.deltaLabel ?? k.change ?? "")]);
+    const funnelRows = funnel.map((s) => [`Funnel: ${s.stage}`, String(s.n), ""]);
+    exportToCSV(
+      `org-overview-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Metric", "Value", "Change"],
+      [...kpiRows, ["", "", ""], ...funnelRows],
+    );
+  };
+
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
       <CommandHero title="Org overview" sub="Everything happening across your hiring operation, in real time." workspace={workspace} stats={heroStats} live={live} onToggleLive={() => setLive((v) => !v)}>
         <Pill icon="clock" tone="var(--ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 30 days</Pill>
-        <Btn variant="primary" icon="arrowUpRight">Export report</Btn>
+        <Btn variant="primary" icon="arrowUpRight" onClick={onExport}>Export report</Btn>
       </CommandHero>
 
       {/* 8 KPIs */}

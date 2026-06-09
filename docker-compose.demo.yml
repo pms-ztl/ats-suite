@@ -23,6 +23,11 @@ x-svc-env: &svc-env
   # AI_MODEL_OVERRIDE=llama-3.3-70b-versatile
   OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
   AI_MODEL_OVERRIDE: ${AI_MODEL_OVERRIDE:-}
+  # Copilot defaults to the multi-step agentic ReAct loop (several LLM calls).
+  # On Groq's 12k tokens/min free tier that blows the limit, so set
+  # AGENTIC_COPILOT=0 in .env to use the single-call (pre-fetch + synthesize)
+  # path, which stays well under the cap and still answers from real data.
+  AGENTIC_COPILOT: ${AGENTIC_COPILOT:-}
   # Skip the optional agentic resume-verifier (a SECOND LLM run per resume) by
   # default in the demo, so each resume costs far fewer tokens and fits tight
   # free-tier budgets. Set AGENTIC_RESUME_VERIFY=1 in .env to re-enable it.

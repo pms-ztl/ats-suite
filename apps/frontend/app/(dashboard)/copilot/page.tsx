@@ -1,6 +1,7 @@
 // app/(dashboard)/copilot/page.tsx
-// Exact Claude Design Copilot (components/cd/CopilotScreen.tsx), mounted via
-// CopilotLive with the design's example grounded Q&A (no copilot backend yet).
+// Claude Design Copilot (components/cd/CopilotScreen.tsx), mounted via CopilotLive
+// which sends each question to the REAL /api/copilot agent and renders the
+// grounded answer + cited sources (or an honest error).
 import { CopilotLive } from "@/components/cd/copilot-live";
 
 export default function CopilotPage() {

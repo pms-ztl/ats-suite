@@ -16,10 +16,13 @@ import {
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
 import { BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { exportToCSV } from "@/lib/export";
+import { toast } from "sonner";
 import { useData } from "@/lib/use-data";
 import { getAdverseImpact } from "@/lib/api";
 import type { FairnessMetric } from "@/lib/types";
 import { toTitleCase } from "@/lib/utils";
+import { SceneArt } from "@/components/shared/scene-art";
 
 const THRESHOLD = 0.8;
 
@@ -111,6 +114,21 @@ export default function ComplianceHubScreen() {
     flagged: m.flagged || m.impactRatio < THRESHOLD,
   }));
 
+  // Download the REAL EEOC adverse-impact (four-fifths) report from the live
+  // fairness metrics shown in the Adverse-impact tab.
+  const onDownloadEEOC = () => {
+    if (metrics.length === 0) { toast.info("No adverse-impact data to export yet. It appears once enough decisions are recorded."); return; }
+    exportToCSV(
+      `eeoc-adverse-impact-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Group", "Selection rate", "Impact ratio", "Four-fifths threshold", "Status"],
+      metrics.map((m) => [m.group, m.selectionRate.toFixed(3), m.impactRatio.toFixed(2), THRESHOLD.toFixed(2), (!m.flagged && m.impactRatio >= THRESHOLD) ? "PASS" : "REVIEW"]),
+    );
+  };
+  const onMethodology = () => toast.info(
+    "EEOC four-fifths rule: each group's selection rate is divided by the highest group's rate. A ratio below 0.80 flags potential adverse impact for human review — advisory only, never an automated decision.",
+    { duration: 9000 },
+  );
+
   const tabs: [string, string, string][] = [["overview", "Overview", "shield"], ["impact", "Adverse impact", "flag"], ["audit", "Audit log", "scroll"]];
 
   return (
@@ -121,7 +139,7 @@ export default function ComplianceHubScreen() {
             <div style={{ display: "flex", gap: 9, alignItems: "center" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Compliance &amp; governance</h1><Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">bias-auditor</Pill></div>
             <p style={{ margin: "4px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>EEOC · GDPR · model oversight · {c.range}</p>
           </div>
-          <div style={{ display: "flex", gap: 9 }}><Btn variant="soft" icon="scroll">Methodology</Btn><Btn variant="primary" icon="arrowUpRight">Download EEOC report</Btn></div>
+          <div style={{ display: "flex", gap: 9 }}><Btn variant="soft" icon="scroll" onClick={onMethodology}>Methodology</Btn><Btn variant="primary" icon="arrowUpRight" onClick={onDownloadEEOC}>Download EEOC report</Btn></div>
         </div>
         <div style={{ display: "flex", gap: 2, marginTop: 16, borderBottom: "1px solid var(--c-line)" }}>
           {tabs.map(([id, l, ic]) => (
@@ -158,6 +176,11 @@ export default function ComplianceHubScreen() {
                   </div>
                 ))}
               </SectionCard>
+            </div>
+            <div style={{ padding: "32px 0 4px" }}>
+              <SceneArt scene="compliance" maxWidth={420}
+                title="Fairness, monitored end to end"
+                body="Adverse-impact ratios, policy status and certifications stay continuously checked against the four-fifths rule. Open the Adverse impact tab for the evidence behind every signal." />
             </div>
           </div>
         )}

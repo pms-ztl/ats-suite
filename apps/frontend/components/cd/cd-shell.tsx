@@ -53,7 +53,8 @@ const NAV: NavGrp[] = [
   ] },
   { section: "Workspace", items: [
     { label: "Workspace admin", icon: "building", href: "/workspace", roles: ["admin"] },
-    { label: "Team", icon: "userCog", href: "/settings/team", roles: ["admin"] },
+    // "Team" lives under Settings -> Team & roles (/settings/team); removed the
+    // duplicate top-level sidebar entry that pointed at the same page.
     { label: "Internal Mobility", icon: "mobility", href: "/mobility", roles: ["admin", "hiring_manager"] },
     { label: "Integrations", icon: "plug", href: "/integrations", roles: ["admin", "recruiter"] },
     { label: "Billing & Plan", icon: "card", href: "/billing", roles: ["admin"] },

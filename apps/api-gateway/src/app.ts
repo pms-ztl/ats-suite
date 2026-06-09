@@ -414,13 +414,17 @@ export function createApp(logger: Logger): Express {
   // POST + PATCH go straight through to notification-service.
   app.use("/api/hitl", gatewayAuth(), forwardHeaders(notificationUrl, "/internal/hitl"));
 
-  // /api/tenants/plan-change-request (in-process — wraps tenant-service)
-  app.post(
+  // /api/tenants/plan-change-request (in-process — wraps tenant-service).
+  // Mounted via app.use + a POST guard: the app.post(...) form did not see the
+  // Authorization header on this path (gatewayAuth 401'd), while the identical
+  // app.use chain used elsewhere (e.g. /api/copilot) authenticates correctly.
+  app.use(
     "/api/tenants/plan-change-request",
     gatewayAuth(),
     express.json({ limit: "1mb" }),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
+        if (req.method !== "POST") { next(); return; }
         if (!req.user) throw Errors.unauthorized();
         if (req.user.role !== "ADMIN") {
           throw Errors.forbidden("Only tenant admins may request plan changes");

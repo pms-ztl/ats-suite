@@ -67,9 +67,12 @@ function UsageMeter({ k, used, limit }: BillingUsage) {
   );
 }
 
-export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard, charts, spendTrend }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onUpdateCard?: () => void; charts?: React.ReactNode; spendTrend?: BillingSpendMonth[] }) {
+export function BillingScreen({ data, onUpgrade, onChangePlan, onSelectPlan, onUpdateCard, charts, spendTrend }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onSelectPlan?: (plan: string) => void; onUpdateCard?: () => void; charts?: React.ReactNode; spendTrend?: BillingSpendMonth[] }) {
   const b = data;
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const PLAN_RANK: Record<string, number> = { FREE: 0, STARTER: 1, PROFESSIONAL: 2, ENTERPRISE: 3 };
+  const curRank = PLAN_RANK[b.tiers.find((t) => t.cur)?.n ?? ""] ?? 0;
+  const planAction = (n: string) => (n === "ENTERPRISE" ? "Contact sales" : (PLAN_RANK[n] ?? 0) > curRank ? "Upgrade" : "Downgrade");
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px", position: "relative" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -133,8 +136,8 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard, cha
       {showUpgrade && (
         <div onMouseDown={e => { if (e.target === e.currentTarget) setShowUpgrade(false); }} style={{ position: "fixed", inset: 0, zIndex: 200, display: "grid", placeItems: "center", padding: 24, background: "color-mix(in oklab, var(--bg-deep) 50%, transparent)", animation: "fadein .2s" }}>
           <div style={{ width: "min(820px, 96vw)", borderRadius: "var(--r-2xl)", background: "var(--surface)", border: "1px solid var(--line)", boxShadow: "var(--e3)", padding: 26, animation: "rise .25s var(--ease-out)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><h2 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>Choose your plan</h2><button onClick={() => setShowUpgrade(false)} style={{ width: 32, height: 32, borderRadius: 99, border: "1px solid var(--line)", background: "var(--surface-2)", color: "var(--ink-2)", cursor: "pointer" }}><Icon name="x" size={16} /></button></div>
-            <p style={{ margin: "0 0 20px", fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>You&apos;re on Professional. Upgrade for SSO, integrations, and unlimited seats.</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><h2 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>Choose your plan</h2><button aria-label="Close" onClick={() => setShowUpgrade(false)} style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 99, border: "1px solid var(--line)", background: "var(--surface-2)", color: "var(--ink-2)", cursor: "pointer", display: "grid", placeItems: "center", padding: 0, lineHeight: 0 }}><Icon name="x" size={16} /></button></div>
+            <p style={{ margin: "0 0 20px", fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>You&apos;re on the {toTitleCase(b.tiers.find((t) => t.cur)?.n ?? "current")} plan. Pick a plan to request a change — it goes to your workspace owner for approval.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }} className="billing-tiers">
               {b.tiers.map(t => (
                 <div key={t.n} style={{ borderRadius: "var(--r-xl)", padding: 18, border: "1.5px solid", borderColor: t.cur ? "var(--brand)" : "var(--line)", background: t.n === "ENTERPRISE" ? "linear-gradient(160deg, var(--ai-tint), transparent 60%)" : "var(--surface)", position: "relative" }}>
@@ -142,7 +145,7 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard, cha
                   <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{toTitleCase(t.n)}</div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "8px 0 14px" }}>{t.price ? <><span className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{m$(t.price)}</span><span style={{ fontSize: 12, color: "var(--ink-3)" }}>/mo</span></> : <span className="mono" style={{ fontSize: 22, fontWeight: 700 }}>Custom</span>}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>{t.feats.map(f => <span key={f} style={{ fontSize: 12, color: "var(--ink-2)", display: "flex", gap: 7, alignItems: "center" }}><Icon name="check" size={13} style={{ color: t.n === "ENTERPRISE" ? "var(--ai)" : "var(--brand)" }} />{f}</span>)}</div>
-                  {t.cur ? <Btn variant="soft" style={{ width: "100%", justifyContent: "center" }}>Current plan</Btn> : <Btn variant={t.n === "ENTERPRISE" ? "ai" : "primary"} style={{ width: "100%", justifyContent: "center" }}>{t.n === "ENTERPRISE" ? "Contact sales" : "Downgrade"}</Btn>}
+                  {t.cur ? <Btn variant="soft" style={{ width: "100%", justifyContent: "center" }}>Current plan</Btn> : <Btn variant={t.n === "ENTERPRISE" ? "ai" : "primary"} style={{ width: "100%", justifyContent: "center" }} onClick={() => { onSelectPlan?.(t.n); setShowUpgrade(false); }}>{planAction(t.n)}</Btn>}
                 </div>
               ))}
             </div>

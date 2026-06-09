@@ -1,7 +1,8 @@
 "use client";
 // app/(dashboard)/sourcing/page.tsx, AI sourcing.
 import { useState } from "react";
-import { Button, AIChip, Card, EmptyState } from "@/components/aurora";
+import { Button, Card } from "@/components/aurora";
+import { SceneArt } from "@/components/shared/scene-art";
 
 export default function SourcingPage() {
   const [q, setQ] = useState("");
@@ -14,7 +15,11 @@ export default function SourcingPage() {
         {/* POST /api/sourcing */}
         <Button variant="ai">Find candidates</Button>
       </Card>
-      <EmptyState title="Describe your ideal candidate" body="The sourcing agent ranks people by fit and shows the evidence behind every match. Results appear here." />
+      <div style={{ padding: "26px 0 10px" }}>
+        <SceneArt scene="radar" maxWidth={400}
+          title="Describe your ideal candidate"
+          body="The sourcing agent ranks people by fit and shows the evidence behind every match. Your results appear here." />
+      </div>
     </div>
   );
 }
