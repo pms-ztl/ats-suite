@@ -641,6 +641,8 @@ export interface AnalyticsData {
 export interface BillingUsage { k: string; used: number; limit: number | string; } // limit string = unlimited
 export interface BillingTier { n: string; price: number | null; feats: string[]; cur?: boolean; } // price null = Custom
 export interface BillingInvoice { id: string; date: string; amount: number; status: string; }
+// One month of AI spend: total + per-provider breakdown (Anthropic/Groq/OpenAI/Stub/Other).
+export interface BillingSpendMonth { month: string; label: string; total: number; byProvider: Record<string, number>; }
 export interface BillingData {
   plan: string;                  // current plan name
   price: number; cycle: string;  // price + billing cycle ("month"/"year")

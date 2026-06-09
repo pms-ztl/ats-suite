@@ -13,6 +13,7 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Skeleton, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
+import { toTitleCase } from "@/lib/utils";
 import type { Interview, InterviewStatus } from "@/lib/types";
 
 /* ---------- local raw() gateway helper (unwrap res?.data ?? res) ---------- */
@@ -232,7 +233,7 @@ export default function InterviewDetailPage() {
                   <Pill mono tone="var(--c-ai-ink)" bg="var(--c-ai-tint-2)">interview-intelligence</Pill>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  {d.ai.rec && <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="check">{d.ai.rec}</Pill>}
+                  {d.ai.rec && <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)" icon="check">{toTitleCase(d.ai.rec)}</Pill>}
                   {d.ai.confidence != null && <Pill mono tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">conf {d.ai.confidence.toFixed(2)}</Pill>}
                 </div>
               </div>
@@ -248,7 +249,7 @@ export default function InterviewDetailPage() {
                           <div key={i} style={{ padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", background: "var(--c-surface-2)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                               <span style={{ fontWeight: 600, fontSize: 12.5 }}>{s.skill}</span>
-                              <Pill tone={rt} bg={`color-mix(in oklab, ${rt} 13%, transparent)`} style={{ fontSize: 10 }}>{s.rating}</Pill>
+                              <Pill tone={rt} bg={`color-mix(in oklab, ${rt} 13%, transparent)`} style={{ fontSize: 10 }}>{toTitleCase(s.rating)}</Pill>
                             </div>
                             {s.quote && <div style={{ fontSize: 12, color: "var(--c-ink-2)", marginTop: 5, fontStyle: "italic", lineHeight: 1.45 }}>{s.quote}{s.note && <span style={{ fontStyle: "normal", color: "var(--c-ink-3)" }}>, {s.note}</span>}</div>}
                           </div>
@@ -296,10 +297,10 @@ export default function InterviewDetailPage() {
                       {p.status === "submitted" ? (
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           {p.overall && <span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>{p.overall}</span>}
-                          {p.rec && <Pill tone={recOf(p.rec)} bg={`color-mix(in oklab, ${recOf(p.rec)} 13%, transparent)`}>{p.rec.replace("_", " ")}</Pill>}
+                          {p.rec && <Pill tone={recOf(p.rec)} bg={`color-mix(in oklab, ${recOf(p.rec)} 13%, transparent)`}>{toTitleCase(p.rec)}</Pill>}
                         </div>
                       ) : (
-                        <Pill icon="clock" tone="var(--c-warn)" bg="var(--c-warn-tint)">pending</Pill>
+                        <Pill icon="clock" tone="var(--c-warn)" bg="var(--c-warn-tint)">Pending</Pill>
                       )}
                     </div>
                     {p.status === "submitted" && (

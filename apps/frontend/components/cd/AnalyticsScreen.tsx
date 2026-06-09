@@ -2,20 +2,60 @@
 // AnalyticsScreen.tsx, Analytics dashboard (funnel, time-to-hire, source-effectiveness,
 // diversity, AI insights). Ported byte-faithful from screen-analytics.jsx. Data via props only.
 import React from "react";
-import { Pill, Reveal, KPICard, SectionCard, Funnel, Donut, TrendArea } from "./aurora-kit";
+import dynamic from "next/dynamic";
+import { Pill, Reveal, KPICard, SectionCard } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
+import {
+  FunnelViz, BarsChart, TrendChart, EmptyChart, CHART_COLORS,
+} from "@/components/shared/charts";
 import type { AnalyticsData, AnalyticsInsight } from "./types";
+import type { FairnessMetric } from "@/lib/types";
+
+// One real monthly time-to-hire row (from /api/analytics/time-to-hire).
+export interface TthRow { label: string; avgDays: number; medianDays: number; p90Days: number; hires: number; }
+
+// Live 3D pipeline funnel. The three.js stack must never run during SSR.
+const PipelineFlow = dynamic(() => import("@/components/shared/hero3d").then((m) => m.PipelineFlow), {
+  ssr: false,
+  loading: () => <div className="h-[360px] animate-pulse rounded-xl border border-border bg-card/60" />,
+});
 
 function SevDot({ sev }: { sev: AnalyticsInsight["sev"] }) {
   const c = sev === "critical" ? "var(--danger)" : sev === "warning" ? "var(--warn)" : "var(--info)";
   return <span style={{ width: 8, height: 8, borderRadius: 99, background: c, flexShrink: 0 }} />;
 }
 
-export function AnalyticsScreen({ data, onExport }: { data: AnalyticsData; onExport?: () => void }) {
+export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; onExport?: () => void }) {
   const a = data;
-  const maxDept = Math.max(...a.tthByDept.map(d => d.days));
-  const maxHires = Math.max(...a.sources.map(s => s.hires));
+
+  // Real time-to-hire trend (avg line + dashed median + dashed p90) from the
+  // /analytics/time-to-hire endpoint. Empty array -> honest EmptyChart below.
+  const tthData = (tthRows ?? []).map((r) => ({
+    label: r.label, avgDays: r.avgDays, medianDays: r.medianDays, p90Days: r.p90Days,
+  }));
+  const hasTth = tthData.length > 0;
+
+  // Pipeline funnel - real stage counts from getFunnel (pipelineData aggregate).
+  const funnelData = a.funnel.map((s) => ({ name: s.stage, value: s.n, fill: s.color }));
+
+  // 3D pipeline funnel - same real per-stage candidate counts (stage -> name, n -> value).
+  // When funnel is empty the hero renders its own no-data state.
+  const flowStages = a.funnel.map((s) => ({ name: s.stage, value: s.n }));
+
+  // Diversity / four-fifths - real per-group impact ratio from getAdverseImpact.
+  // The 0.80 line is the legal four-fifths threshold; a flagged group renders danger.
+  const diversityBars = (fairness ?? []).map((m) => ({
+    group: m.group,
+    ratio: +(m.impactRatio ?? 0).toFixed(2),
+    flagged: !!m.flagged || (m.impactRatio ?? 1) < 0.8,
+  }));
+
+  // Source effectiveness - real hires per source ranked desc (sources from props).
+  const sourceBars = a.sources
+    .slice()
+    .sort((x, y) => y.hires - x.hires)
+    .map((s) => ({ src: s.src, hires: s.hires, color: s.color }));
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto" }}>
@@ -27,6 +67,14 @@ export function AnalyticsScreen({ data, onExport }: { data: AnalyticsData; onExp
             <Btn variant="primary" icon="arrowUpRight" onClick={onExport}>Export</Btn>
           </div>
         </div>
+
+        {/* Live 3D pipeline funnel - drag to rotate. Same real stage counts as the funnel chart. */}
+        <Reveal i={3}>
+          <SectionCard title="Pipeline flow - drag to rotate" icon="radar">
+            <PipelineFlow stages={flowStages} />
+          </SectionCard>
+        </Reveal>
+        <div style={{ height: 16 }} />
 
         {/* KPIs */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }} className="an-kpis">
@@ -55,47 +103,69 @@ export function AnalyticsScreen({ data, onExport }: { data: AnalyticsData; onExp
 
         {/* funnel + diversity */}
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
-          <Reveal i={5}><SectionCard title="Pipeline funnel" icon="radar" headRight={<Pill mono tone="var(--ok)" bg="var(--ok-tint)">{a.funnelConversion}</Pill>}><Funnel stages={a.funnel} /></SectionCard></Reveal>
-          <Reveal i={6}><SectionCard title="Diversity (hires)" icon="grid" action="EEOC report"><Donut data={a.diversity} /></SectionCard></Reveal>
-        </div>
-
-        {/* time-to-hire trend + by dept */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
-          <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={<Pill mono tone="var(--ok)" bg="var(--ok-tint)" icon="arrowUpRight">{a.tthDelta}</Pill>}><TrendArea data={a.tthTrend} labels={a.tthLabels} /></SectionCard></Reveal>
-          <Reveal i={8}><SectionCard title="By department" icon="briefcase">
-            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {a.tthByDept.map((d, i) => (
-                <div key={d.dept} style={{ display: "grid", gridTemplateColumns: "92px 1fr 56px", gap: 10, alignItems: "center" }}>
-                  <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 500 }}>{d.dept}</span>
-                  <div style={{ height: 16, borderRadius: 6, background: "var(--surface-2)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: ((d.days / maxDept) * 100) + "%", borderRadius: 6, background: d.days > 28 ? "var(--warn)" : "var(--brand)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
-                  </div>
-                  <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right" }}>{d.days}d</span>
-                </div>
-              ))}
+          <Reveal i={5}><SectionCard title="Pipeline funnel" icon="radar" headRight={a.funnelConversion ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{a.funnelConversion}</Pill> : undefined}>
+            <div style={{ height: 260 }}>
+              {funnelData.some((s) => s.value > 0)
+                ? <FunnelViz data={funnelData} valueFormatter={(v) => Number(v).toLocaleString()} />
+                : <EmptyChart label="Pipeline funnel - no candidates in pipeline yet" />}
+            </div>
+          </SectionCard></Reveal>
+          <Reveal i={6}><SectionCard title="Adverse impact (four-fifths)" icon="grid" action="EEOC report">
+            <div style={{ height: 260 }}>
+              {diversityBars.length
+                ? <BarsChart
+                    data={diversityBars}
+                    categoryKey="group"
+                    series={[{ key: "ratio", name: "Impact ratio" }]}
+                    valueFormatter={(v) => Number(v).toFixed(2)}
+                    threshold={{ value: 0.8, label: "0.80 four-fifths" }}
+                    colorFn={(row) => (row.flagged ? CHART_COLORS.danger : CHART_COLORS.brand)}
+                  />
+                : <EmptyChart label="Diversity - no demographic data yet" />}
             </div>
           </SectionCard></Reveal>
         </div>
 
-        {/* source effectiveness */}
-        <Reveal i={9}><SectionCard title="Source effectiveness" icon="radar" action="Details">
-          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 90px 90px 90px", gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", borderBottom: "1px solid var(--line)" }}>
-            <span>Source</span><span>Hires</span><span style={{ textAlign: "right" }}>Quality</span><span style={{ textAlign: "right" }}>Apps</span><span style={{ textAlign: "right" }}>Cost/hire</span>
-          </div>
-          {a.sources.map((s, i) => (
-            <div key={s.src} style={{ display: "grid", gridTemplateColumns: "120px 1fr 90px 90px 90px", gap: 12, alignItems: "center", padding: "11px 4px", borderTop: i ? "1px solid var(--line)" : "none" }}>
-              <span style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 12.5, fontWeight: 600 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: s.color }} />{s.src}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <div style={{ flex: 1, maxWidth: 200, height: 18, borderRadius: 6, background: "var(--surface-2)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: ((s.hires / maxHires) * 100) + "%", borderRadius: 6, background: s.color, animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
-                </div>
-                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 700 }}>{s.hires}</span>
-              </div>
-              <span style={{ textAlign: "right", display: "inline-flex", justifyContent: "flex-end", alignItems: "center", gap: 5 }}><span className="mono" style={{ fontSize: 12, fontWeight: 600, color: s.quality >= 75 ? "var(--ok)" : s.quality >= 60 ? "var(--warn)" : "var(--danger)" }}>{s.quality}</span></span>
-              <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--ink-3)" }}>{s.apps.toLocaleString()}</span>
-              <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", fontWeight: 600, color: s.cost > 4000 ? "var(--danger)" : "var(--ink)" }}>${s.cost.toLocaleString()}</span>
+        {/* time-to-hire trend + by dept */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
+          <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={hasTth && a.tthDelta ? <Pill mono tone="var(--ink-2)" bg="var(--surface-2)">{a.tthDelta}</Pill> : undefined}>
+            {/* Real monthly avg-days-to-hire with dashed median + p90 bands from
+                /api/analytics/time-to-hire. Empty -> honest EmptyChart. */}
+            <div style={{ height: 200 }}>
+              {hasTth
+                ? <TrendChart
+                    data={tthData}
+                    xKey="label"
+                    series={[
+                      { key: "avgDays", name: "Avg days", color: CHART_COLORS.brand, type: "area" },
+                      { key: "medianDays", name: "Median", color: CHART_COLORS.info, type: "line", dashed: true },
+                      { key: "p90Days", name: "P90", color: CHART_COLORS.violet, type: "line", dashed: true },
+                    ]}
+                    valueFormatter={(v) => `${Math.round(Number(v))}d`}
+                  />
+                : <EmptyChart label="Time-to-hire trend - no hires yet" />}
             </div>
-          ))}
+          </SectionCard></Reveal>
+          <Reveal i={8}><SectionCard title="By department" icon="briefcase">
+            {/* No per-department time-to-hire series from the gateway today. */}
+            <div style={{ height: 200 }}><EmptyChart label="By department - awaiting analytics aggregator" /></div>
+          </SectionCard></Reveal>
+        </div>
+
+        {/* source effectiveness - real hires per source, ranked desc */}
+        <Reveal i={9}><SectionCard title="Source effectiveness" icon="radar" action="Details">
+          <div style={{ height: Math.max(180, sourceBars.length * 34 + 40) }}>
+            {sourceBars.length
+              ? <BarsChart
+                  data={sourceBars}
+                  categoryKey="src"
+                  layout="horizontal"
+                  series={[{ key: "hires", name: "Hires" }]}
+                  valueFormatter={(v) => Number(v).toLocaleString()}
+                  colorFn={(row) => row.color || CHART_COLORS.brand}
+                />
+              : <EmptyChart label="Source effectiveness - open the Details page for the live breakdown" />}
+          </div>
         </SectionCard></Reveal>
       </div>
     </div>

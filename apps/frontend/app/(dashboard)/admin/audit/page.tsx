@@ -16,6 +16,8 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Skeleton, ErrorState, EmptyState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -52,6 +54,7 @@ type AuditRow = {
   target: string;  // resource / target
   cat: string;     // category bucket
   t: string;       // timestamp label
+  ts: number;      // sortable timestamp (epoch ms; 0 when unknown)
 };
 
 // Format the timestamp. A pre-formatted string passes through; an ISO/Date is
@@ -102,8 +105,11 @@ function mapRow(a: any): AuditRow {
   const target = String(a?.target ?? a?.resource ?? a?.resourceId ?? a?.resource_id ?? a?.entity ?? a?.resourceType ?? a?.resource_type ?? "");
   const cat = deriveCat(a, ai);
   const ini = String(a?.ini ?? a?.initials ?? "") || initials(actor);
-  const t = fmtTime(a?.t ?? a?.createdAt ?? a?.created_at ?? a?.timestamp ?? a?.at ?? a?.date);
-  return { actor, ini, ai, action, target, cat, t };
+  const rawT = a?.t ?? a?.createdAt ?? a?.created_at ?? a?.timestamp ?? a?.at ?? a?.date;
+  const t = fmtTime(rawT);
+  const parsed = rawT != null ? new Date(rawT).getTime() : NaN;
+  const ts = Number.isNaN(parsed) ? 0 : parsed;
+  return { actor, ini, ai, action, target, cat, t, ts };
 }
 
 // Coerce the backend envelope into a flat array, then map.
@@ -148,6 +154,8 @@ export default function AuditPage() {
     ),
     [rows, q, filter]
   );
+  // Sortable columns (Actor / Action / Category / Timestamp). Default: newest first.
+  const { sorted, sort, toggle } = useTableSort(filtered, { key: "ts", dir: "desc" });
 
   return (
     <div className="mx-auto w-full max-w-[1280px]">
@@ -190,7 +198,7 @@ export default function AuditPage() {
         {/* table */}
         <div style={{ border: "1px solid var(--c-line)", borderRadius: "var(--r-xl)", overflow: "hidden", background: "var(--c-surface)", boxShadow: "var(--e1)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 110px 150px", gap: 12, padding: "11px 18px", background: "var(--c-surface-2)", borderBottom: "1px solid var(--c-line)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)" }}>
-            <span>Actor</span><span>Action</span><span>Category</span><span style={{ textAlign: "right" }}>Timestamp</span>
+            <SortHead label="Actor" sortKey="actor" sort={sort} onSort={toggle} /><SortHead label="Action" sortKey="action" sort={sort} onSort={toggle} /><SortHead label="Category" sortKey="cat" sort={sort} onSort={toggle} /><SortHead label="Timestamp" sortKey="ts" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} />
           </div>
           <div style={{ maxHeight: "calc(100vh - 290px)", overflowY: "auto" }}>
             {/* loading rows */}
@@ -239,7 +247,7 @@ export default function AuditPage() {
             )}
 
             {/* data rows */}
-            {!log.loading && !log.error && filtered.map((r, i) => {
+            {!log.loading && !log.error && sorted.map((r, i) => {
               const [cc, cb] = CAT_COLOR[r.cat] || CAT_COLOR.config;
               return (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: "160px 1fr 110px 150px", gap: 12, padding: "12px 18px", alignItems: "center", borderTop: i ? "1px solid var(--c-line)" : "none", transition: "background var(--t-fast)" }}
@@ -255,7 +263,7 @@ export default function AuditPage() {
                     <span style={{ color: "var(--c-ink)", fontWeight: 600 }}>{r.action}</span>
                     {r.target ? <span style={{ color: "var(--c-ink-3)" }}> · {r.target}</span> : null}
                   </div>
-                  <span><Pill tone={cc} bg={cb} style={{ fontSize: 10 }}>{r.cat}</Pill></span>
+                  <span><Pill tone={cc} bg={cb} style={{ fontSize: 10 }}>{toTitleCase(r.cat)}</Pill></span>
                   <span className="mono" style={{ fontSize: 11.5, color: "var(--c-ink-3)", textAlign: "right" }}>{r.t}</span>
                 </div>
               );

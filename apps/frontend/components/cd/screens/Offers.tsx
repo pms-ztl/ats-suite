@@ -9,7 +9,10 @@ import { Icon, type IconName } from "../icon";
 import { Logo } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill } from "../aurora-kit";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 import type { OffersData, OfferDetail, OfferStatusKey } from "../types";
+import { ChartCard, FunnelViz, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 const money = (n: number) => "$" + n.toLocaleString();
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
@@ -33,6 +36,27 @@ function CompRow({ k, v, sub, big }: { k: string; v: string; sub?: string; big?:
 
 function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id: string) => void; onCreate?: () => void }) {
   const offers = data.offers ?? [];
+  const { sorted, sort, toggle } = useTableSort(offers, { key: "base", dir: "desc" });
+
+  // ----- Real-data funnel: offers by stage, from the real offer statuses -----
+  // The offer lifecycle is linear (draft->pending->approved->sent->accepted); an offer
+  // in a later status has by definition passed every earlier one, so each stage counts
+  // every offer at-or-beyond it. "declined" is terminal/off-path, so it is excluded from
+  // the cumulative counts (we cannot know which stage it declined from).
+  const STAGE_ORDER: OfferStatusKey[] = ["draft", "pending", "approved", "sent", "accepted"];
+  const STAGE_LABEL: Record<string, string> = {
+    draft: "Draft", pending: "Pending", approved: "Approved", sent: "Sent", accepted: "Accepted",
+  };
+  const FUNNEL_COLORS = [
+    CHART_COLORS.ink3, CHART_COLORS.warn, CHART_COLORS.brand, CHART_COLORS.info, CHART_COLORS.ok,
+  ];
+  const linearOffers = offers.filter((o) => o.status !== "declined");
+  const offerFunnel = STAGE_ORDER.map((stage, i) => ({
+    name: STAGE_LABEL[stage],
+    value: linearOffers.filter((o) => STAGE_ORDER.indexOf(o.status) >= i).length,
+    fill: FUNNEL_COLORS[i],
+  }));
+  const hasFunnel = offerFunnel[0].value > 0;
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -41,12 +65,25 @@ function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id:
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>{offers.filter((o) => o.status === "draft").length} drafts · {offers.filter((o) => o.status === "pending").length} awaiting approval · {offers.filter((o) => o.status === "sent").length} sent.</p></div>
           <Btn variant="primary" icon="plus" onClick={onCreate}>Create offer</Btn>
         </div>
+        {offers.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <ChartCard title="Offers by stage" subtitle={`${linearOffers.length} active in the approval funnel`} height={190}>
+              {hasFunnel ? (
+                <FunnelViz data={offerFunnel} valueFormatter={(v) => `${v}`} />
+              ) : <EmptyChart label="No active offers in the funnel" />}
+            </ChartCard>
+          </div>
+        )}
         {offers.length === 0 ? <EmptyHint icon="fileText" text="No offers yet." /> : (
           <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 130px 100px", gap: 12, padding: "11px 18px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)" }}>
-              <span>Candidate</span><span>Requisition</span><span>Base salary</span><span>Status</span><span style={{ textAlign: "right" }}>Expires</span>
+              <SortHead label="Candidate" sortKey="name" sort={sort} onSort={toggle} className="" />
+              <SortHead label="Requisition" sortKey="reqId" sort={sort} onSort={toggle} className="" />
+              <SortHead label="Base salary" sortKey="base" sort={sort} onSort={toggle} className="" />
+              <SortHead label="Status" sortKey="status" sort={sort} onSort={toggle} className="" />
+              <SortHead label="Expires" sortKey="expires" sort={sort} onSort={toggle} className="" align="right" />
             </div>
-            {offers.map((o, i) => {
+            {sorted.map((o, i) => {
               const st = OFFER_STATUS[o.status];
               return (
                 <div key={o.id} onClick={() => onOpen(o.id)} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 130px 100px", gap: 12, padding: "13px 18px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", transition: "background var(--t-fast)" }}
@@ -57,7 +94,7 @@ function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id:
                   </div>
                   <span className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{o.reqId}</span>
                   <span className="mono tnum" style={{ fontSize: 13.5, fontWeight: 600 }}>{money(o.base)}</span>
-                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 11, fontWeight: 700, color: st.tone, background: st.bg, padding: "3px 10px", borderRadius: 99, justifySelf: "start" }}><Icon name={st.icon} size={11} />{st.label}</span>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 11, fontWeight: 700, color: st.tone, background: st.bg, padding: "3px 10px", borderRadius: 99, justifySelf: "start" }}><Icon name={st.icon} size={11} />{toTitleCase(st.label)}</span>
                   <span className="mono" style={{ fontSize: 11.5, color: "var(--ink-3)", textAlign: "right" }}>{o.expires}</span>
                 </div>
               );
@@ -80,7 +117,7 @@ function Composer({ d, onBack, onStatus }: { d: OfferDetail; onBack: () => void;
         <button onClick={onBack} style={{ width: 32, height: 32, borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="chevsL" size={16} /></button>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", gap: 9, alignItems: "center" }}><h1 style={{ margin: 0, fontSize: "var(--fs-lg)", fontWeight: 700, letterSpacing: "-0.02em" }}>Offer · {d.name}</h1>
-            <Pill icon={OFFER_STATUS[status].icon} tone={OFFER_STATUS[status].tone} bg={OFFER_STATUS[status].bg}>{OFFER_STATUS[status].label}</Pill></div>
+            <Pill icon={OFFER_STATUS[status].icon} tone={OFFER_STATUS[status].tone} bg={OFFER_STATUS[status].bg}>{toTitleCase(OFFER_STATUS[status].label)}</Pill></div>
           <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{d.role} · {d.level} · <span className="mono">{d.reqId}</span></div>
         </div>
         <Btn variant="ghost">Save draft</Btn>
@@ -134,7 +171,7 @@ function Composer({ d, onBack, onStatus }: { d: OfferDetail; onBack: () => void;
                   {i < d.approvalChain.length - 1 && <span style={{ position: "absolute", left: 13, top: 28, height: "calc(100% - 24px)", width: 2, background: "var(--line)" }} />}
                   <span style={{ width: 28, height: 28, borderRadius: 99, flexShrink: 0, display: "grid", placeItems: "center", zIndex: 1, background: eff === "pending" ? "var(--surface-2)" : "color-mix(in oklab," + tone + " 14%, transparent)", color: tone, border: "1px solid " + (eff === "pending" ? "var(--line)" : "transparent") }}><Icon name={eff === "done" ? "check" : eff === "current" ? "clock" : "dot"} size={14} stroke={2.3} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{a.role}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{a.who}</div></div>
-                  <Pill tone={tone} bg={eff === "pending" ? "var(--surface-2)" : "color-mix(in oklab," + tone + " 13%, transparent)"} style={{ fontSize: 10 }}>{eff === "current" ? "needs review" : eff}</Pill>
+                  <Pill tone={tone} bg={eff === "pending" ? "var(--surface-2)" : "color-mix(in oklab," + tone + " 13%, transparent)"} style={{ fontSize: 10 }}>{eff === "current" ? "Needs review" : toTitleCase(eff)}</Pill>
                 </div>
               );
             })}

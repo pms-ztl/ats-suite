@@ -9,6 +9,9 @@ import { Icon, type IconName } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill, ScoreRing, Confidence } from "../aurora-kit";
 import type { ScreeningRow, ReqBreakdown, TraceStep, VerdictKind, ScreeningData } from "../types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
+import { ChartCard, DonutChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 // Display constants (presentational, not data).
 const RESULT: Record<VerdictKind, { code: string; tone: string; bg: string; rec: string }> = {
@@ -130,6 +133,27 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
   const decide = (id: string, d: string) => { setDecided((x) => ({ ...x, [id]: d })); setOpen(null); onDecideProp?.(id, d); };
   const toggle = (id: string) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
   const cols = "30px 1.6fr 0.9fr 80px 100px 130px 110px 90px";
+  const { sorted, sort, toggle: toggleSort } = useTableSort(filtered, { key: "score", dir: "desc" });
+
+  // ----- Real-data summary charts (derived only from the rows already in props) -----
+  // Verdict split: count of PASS / REVIEW / FAIL across the real screening verdicts.
+  const verdictSplit = [
+    { name: "PASS", value: counts.pass, fill: CHART_COLORS.ok },
+    { name: "REVIEW", value: counts.review, fill: CHART_COLORS.warn },
+    { name: "FAIL", value: counts.fail, fill: CHART_COLORS.danger },
+  ].filter((d) => d.value > 0);
+  // Match-score distribution: bucket each real AI match score (0..100) into deciles.
+  const scoreBuckets = Array.from({ length: 10 }, (_, i) => ({
+    band: `${i * 10}-${i * 10 + 9}`,
+    count: 0,
+    lo: i * 10,
+  }));
+  for (const r of rows) {
+    const s = Math.max(0, Math.min(99, Math.round(r.score)));
+    scoreBuckets[Math.floor(s / 10)].count += 1;
+  }
+  const scoreColor = (row: { lo: number }) =>
+    row.lo >= 70 ? CHART_COLORS.ok : row.lo >= 40 ? CHART_COLORS.warn : CHART_COLORS.danger;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, position: "relative" }}>
@@ -156,12 +180,45 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
         </div>
       </div>
 
+      {rows.length > 0 && (
+        <div style={{ padding: "0 28px 4px", display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) 1.2fr", gap: 16 }}>
+          <ChartCard title="Verdict split" subtitle={`${rows.length} screened`} height={180}>
+            {verdictSplit.length ? (
+              <DonutChart
+                data={verdictSplit}
+                colors={verdictSplit.map((d) => d.fill)}
+                centerLabel={rows.length}
+                centerSub="verdicts"
+                valueFormatter={(v) => `${v}`}
+              />
+            ) : <EmptyChart label="No verdicts yet" />}
+          </ChartCard>
+          <ChartCard title="AI match-score distribution" subtitle="candidates per decile (0-100)" height={180}>
+            <BarsChart
+              data={scoreBuckets}
+              categoryKey="band"
+              series={[{ key: "count", name: "Candidates" }]}
+              layout="vertical"
+              colorFn={(row) => scoreColor(row)}
+              valueFormatter={(v) => `${v}`}
+            />
+          </ChartCard>
+        </div>
+      )}
+
       <div style={{ flex: 1, minHeight: 0, padding: "0 28px 20px" }}>
         <div style={{ height: "100%", overflowY: "auto", borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)" }}>
           <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "10px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", position: "sticky", top: 0, zIndex: 2, fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", alignItems: "center" }}>
-            <span></span><span>Candidate</span><span>Requisition</span><span>Score</span><span>Result</span><span>Confidence</span><span>Recommended</span><span style={{ textAlign: "right" }}>Status</span>
+            <span></span>
+            <SortHead label="Candidate" sortKey="name" sort={sort} onSort={toggleSort} />
+            <SortHead label="Requisition" sortKey="reqId" sort={sort} onSort={toggleSort} />
+            <SortHead label="Score" sortKey="score" sort={sort} onSort={toggleSort} />
+            <SortHead label="Result" sortKey="kind" sort={sort} onSort={toggleSort} />
+            <SortHead label="Confidence" sortKey="conf" sort={sort} onSort={toggleSort} />
+            <SortHead label="Recommended" sortKey="kind" sort={sort} onSort={toggleSort} />
+            <SortHead label="Status" sortKey="status" sort={sort} onSort={toggleSort} align="right" className="justify-end" style={{ width: "100%" }} />
           </div>
-          {filtered.length === 0 ? <EmptyHint icon="scan" text="Nothing in the screening queue right now." /> : filtered.map((row, i) => {
+          {filtered.length === 0 ? <EmptyHint icon="scan" text="Nothing in the screening queue right now." /> : sorted.map((row, i) => {
             const r = RESULT[row.kind], on = sel.has(row.id), dec = decided[row.id];
             return (
               <div key={row.id} onClick={() => setOpen(row)} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "11px 16px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", background: on ? "var(--brand-tint)" : "transparent", transition: "background var(--t-fast)" }}
@@ -185,8 +242,8 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
                   <Icon name={r.rec === "Advance" ? "check" : r.rec === "Reject" ? "x" : "eye"} size={13} />{r.rec}</span>
                 <span style={{ textAlign: "right" }}>
                   {dec ? <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)" style={{ fontSize: 10 }}>{dec === "advance" ? "Advanced" : dec === "decline" ? "Declined" : "In review"}</Pill>
-                    : row.status === "approved" ? <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)">approved</Pill>
-                      : <Pill tone="var(--ink-3)" bg="var(--surface-2)">pending</Pill>}
+                    : row.status === "approved" ? <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)">{toTitleCase(row.status)}</Pill>
+                      : <Pill tone="var(--ink-3)" bg="var(--surface-2)">{toTitleCase(row.status)}</Pill>}
                 </span>
               </div>
             );

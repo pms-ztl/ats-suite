@@ -21,6 +21,7 @@ import { Greeting, SectionCard, Btn, Pill, Reveal } from "@/components/aurora-ki
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
+import { toTitleCase } from "@/lib/utils";
 
 /* ------------------------------- wiring ------------------------------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -120,7 +121,7 @@ const STATUS_META: Record<string, { dot: string; tone: string; bg: string; label
   RESOLVED: { dot: "var(--c-ok)", tone: "var(--c-ok)", bg: "var(--c-ok-tint)", label: "Resolved" },
 };
 function statusMeta(s: string) {
-  return STATUS_META[s] ?? { dot: "var(--c-ink-3)", tone: "var(--c-ink-2)", bg: "var(--c-surface-2)", label: s ? s.replace(/_/g, " ").toLowerCase() : "Unknown" };
+  return STATUS_META[s] ?? { dot: "var(--c-ink-3)", tone: "var(--c-ink-2)", bg: "var(--c-surface-2)", label: s ? toTitleCase(s) : "Unknown" };
 }
 const PRIORITY_META: Record<string, { tone: string; bg: string }> = {
   URGENT: { tone: "var(--c-danger)", bg: "var(--c-danger-tint)" },
@@ -274,7 +275,7 @@ export default function SupportPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
                     <span style={{ width: 8, height: 8, borderRadius: 99, background: sm.dot, flexShrink: 0 }} />
                     <span style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-sm)", fontWeight: 600, color: active ? "var(--c-brand-ink)" : "var(--c-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.subject}</span>
-                    {t.priority !== "NORMAL" && <Pill tone={priorityMeta(t.priority).tone} bg={priorityMeta(t.priority).bg} style={{ fontSize: 9, padding: "1px 6px" }}>{t.priority.toLowerCase()}</Pill>}
+                    {t.priority !== "NORMAL" && <Pill tone={priorityMeta(t.priority).tone} bg={priorityMeta(t.priority).bg} style={{ fontSize: 9, padding: "1px 6px" }}>{toTitleCase(t.priority)}</Pill>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 4, paddingLeft: 17 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--c-ink-3)", minWidth: 0 }}>
@@ -312,8 +313,8 @@ export default function SupportPage() {
                   </div>
                   <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
                     <Pill tone={statusMeta(sel.status).tone} bg={statusMeta(sel.status).bg}>{statusMeta(sel.status).label}</Pill>
-                    <Pill tone={priorityMeta(sel.priority).tone} bg={priorityMeta(sel.priority).bg}>{sel.priority.toLowerCase()}</Pill>
-                    {sel.category && <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{sel.category}</Pill>}
+                    <Pill tone={priorityMeta(sel.priority).tone} bg={priorityMeta(sel.priority).bg}>{toTitleCase(sel.priority)}</Pill>
+                    {sel.category && <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{toTitleCase(sel.category)}</Pill>}
                   </div>
                 </div>
                 {/* status actions */}

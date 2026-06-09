@@ -5,9 +5,50 @@ import React, { useState } from "react";
 import { Pill, fStyles } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
-import type { BillingData, BillingUsage } from "./types";
+import type { BillingData, BillingUsage, BillingSpendMonth } from "./types";
+import { toTitleCase } from "@/lib/utils";
+import { TrendChart, ChartCard, EmptyChart, CHART_COLORS, colorAt } from "@/components/shared/charts";
 
 const m$ = (n: number) => "$" + n.toLocaleString();
+
+// Stable, recognizable color per provider; falls back to the rotating palette.
+const PROVIDER_COLOR: Record<string, string> = {
+  Anthropic: CHART_COLORS.ai,
+  Groq: CHART_COLORS.brand,
+  OpenAI: CHART_COLORS.info,
+  Stub: CHART_COLORS.ink3,
+  Other: CHART_COLORS.warn,
+};
+const fmtUsd = (v: number) => "$" + Number(v ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+// Flatten the per-month spend into rows with one numeric column per provider so
+// the providers stack as areas. Honest: only providers that actually have spend
+// in the window become series.
+function SpendTrendChart({ spendTrend }: { spendTrend: BillingSpendMonth[] }) {
+  const providers = Array.from(
+    new Set(spendTrend.flatMap((m) => Object.keys(m.byProvider))),
+  ).sort();
+  const rows = spendTrend.map((m) => {
+    const row: Record<string, number | string> = { label: m.label };
+    for (const p of providers) row[p] = Number(m.byProvider[p] ?? 0);
+    return row;
+  });
+  const series = providers.map((p, i) => ({
+    key: p,
+    name: p,
+    color: PROVIDER_COLOR[p] ?? colorAt(i),
+    type: "area" as const,
+  }));
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <ChartCard title="AI spend trend" subtitle="Monthly AI agent cost by provider (last 12 months)" height={220}>
+        {spendTrend.length > 0
+          ? <TrendChart data={rows} xKey="label" series={series} valueFormatter={fmtUsd} />
+          : <EmptyChart label="No AI spend recorded yet" />}
+      </ChartCard>
+    </div>
+  );
+}
 
 function UsageMeter({ k, used, limit }: BillingUsage) {
   const unlimited = typeof limit === "string";
@@ -26,7 +67,7 @@ function UsageMeter({ k, used, limit }: BillingUsage) {
   );
 }
 
-export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onUpdateCard?: () => void }) {
+export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard, charts, spendTrend }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onUpdateCard?: () => void; charts?: React.ReactNode; spendTrend?: BillingSpendMonth[] }) {
   const b = data;
   const [showUpgrade, setShowUpgrade] = useState(false);
   return (
@@ -42,7 +83,7 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard }: {
           <div style={{ borderRadius: "var(--r-xl)", border: "1.5px solid color-mix(in oklab, var(--brand) 30%, var(--line))", background: "linear-gradient(135deg, var(--brand-tint) 0%, transparent 60%)", padding: 24, boxShadow: "var(--e1)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <Pill tone="var(--brand)" bg="var(--surface)" style={{ fontSize: 10, fontWeight: 800 }}>{b.plan}</Pill>
+                <Pill tone="var(--brand)" bg="var(--surface)" style={{ fontSize: 10, fontWeight: 800 }}>{toTitleCase(b.plan)}</Pill>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}><span className="mono" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.02em" }}>{m$(b.price)}</span><span style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>/ {b.cycle}</span></div>
                 <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 4 }}>Renews {b.renews}</div>
               </div>
@@ -59,6 +100,9 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>{b.usage.map(u => <UsageMeter key={u.k} {...u} />)}</div>
           </div>
         </div>
+
+        {/* spend trend / usage charts (real data only; honest empty-state otherwise) */}
+        {spendTrend !== undefined ? <SpendTrendChart spendTrend={spendTrend} /> : charts}
 
         {/* payment + invoices */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18, alignItems: "start" }} className="billing-row">
@@ -77,7 +121,7 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard }: {
                 <span className="mono" style={{ fontSize: 12, fontWeight: 600 }}>{iv.id}</span>
                 <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{iv.date}</span>
                 <span className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600 }}>{m$(iv.amount)}</span>
-                <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)">{iv.status}</Pill>
+                <Pill icon="check" tone="var(--ok)" bg="var(--ok-tint)">{toTitleCase(iv.status)}</Pill>
                 <button style={{ fontSize: 11.5, color: "var(--ink-2)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, textAlign: "right" }}>PDF</button>
               </div>
             ))}
@@ -95,7 +139,7 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onUpdateCard }: {
               {b.tiers.map(t => (
                 <div key={t.n} style={{ borderRadius: "var(--r-xl)", padding: 18, border: "1.5px solid", borderColor: t.cur ? "var(--brand)" : "var(--line)", background: t.n === "ENTERPRISE" ? "linear-gradient(160deg, var(--ai-tint), transparent 60%)" : "var(--surface)", position: "relative" }}>
                   {t.cur && <span style={{ position: "absolute", top: -9, left: 16, fontSize: 9.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--on-brand)", background: "var(--brand)", padding: "2px 9px", borderRadius: 99 }}>Current</span>}
-                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{t.n}</div>
+                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{toTitleCase(t.n)}</div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "8px 0 14px" }}>{t.price ? <><span className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{m$(t.price)}</span><span style={{ fontSize: 12, color: "var(--ink-3)" }}>/mo</span></> : <span className="mono" style={{ fontSize: 22, fontWeight: 700 }}>Custom</span>}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>{t.feats.map(f => <span key={f} style={{ fontSize: 12, color: "var(--ink-2)", display: "flex", gap: 7, alignItems: "center" }}><Icon name="check" size={13} style={{ color: t.n === "ENTERPRISE" ? "var(--ai)" : "var(--brand)" }} />{f}</span>)}</div>
                   {t.cur ? <Btn variant="soft" style={{ width: "100%", justifyContent: "center" }}>Current plan</Btn> : <Btn variant={t.n === "ENTERPRISE" ? "ai" : "primary"} style={{ width: "100%", justifyContent: "center" }}>{t.n === "ENTERPRISE" ? "Contact sales" : "Downgrade"}</Btn>}

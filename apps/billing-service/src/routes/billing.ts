@@ -94,6 +94,66 @@ router.get("/usage", async (req: Request, res: Response, next: NextFunction) => 
   } catch (err) { next(err); }
 });
 
+// Derive a provider label from the model name. Mirrors the bucketing the
+// super-admin Models console uses so the trend lines up with that view.
+function providerOf(modelName: string | null | undefined): string {
+  const m = (modelName ?? "").toLowerCase();
+  if (m.startsWith("claude") || m.includes("anthropic")) return "Anthropic";
+  if (m.startsWith("llama") || m.includes("groq")) return "Groq";
+  if (m.startsWith("gpt") || m.includes("openai")) return "OpenAI";
+  if (m.startsWith("stub")) return "Stub";
+  return "Other";
+}
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// GET /internal/billing/spend-trend — AI cost over the last ~12 calendar months
+// for the caller's tenant, totalled and broken down by provider. Shaped for a
+// trend chart. Returns an empty trend when no AgentRunCost rows exist (the
+// frontend keeps its honest empty-state rather than fabricating a line).
+router.get("/spend-trend", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    // Start of the calendar month 11 months ago → a 12-month inclusive window.
+    const now = new Date();
+    const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+
+    const runs = await prisma.agentRunCost.findMany({
+      where: { tenantId, createdAt: { gte: since } },
+      select: { costUsd: true, modelName: true, createdAt: true },
+    });
+
+    // Bucket by calendar month (YYYY-MM, UTC), summing total + per-provider spend.
+    const buckets = new Map<string, { total: number; byProvider: Record<string, number> }>();
+    let totalSpend = 0;
+    for (const r of runs) {
+      const cost = Number(r.costUsd);
+      totalSpend += cost;
+      const d = r.createdAt;
+      const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+      const bucket = buckets.get(month) ?? { total: 0, byProvider: {} };
+      bucket.total += cost;
+      const provider = providerOf(r.modelName);
+      bucket.byProvider[provider] = (bucket.byProvider[provider] ?? 0) + cost;
+      buckets.set(month, bucket);
+    }
+
+    const round = (n: number) => Number(n.toFixed(4));
+    const trend = Array.from(buckets.entries())
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([month, b]) => ({
+        month,
+        label: MONTH_LABELS[Number(month.slice(5, 7)) - 1] ?? month,
+        total: round(b.total),
+        byProvider: Object.fromEntries(
+          Object.entries(b.byProvider).map(([p, v]) => [p, round(v)]),
+        ),
+      }));
+
+    ok(res, { trend, totalSpend: round(totalSpend) });
+  } catch (err) { next(err); }
+});
+
 // GET /internal/agents — list agents with plan/kill-switch combined status
 router.get("/agents", async (req: Request, res: Response, next: NextFunction) => {
   try {

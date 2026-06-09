@@ -15,9 +15,11 @@ import {
 } from "@/components/aurora-kit";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
+import { BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 import { useData } from "@/lib/use-data";
 import { getAdverseImpact } from "@/lib/api";
 import type { FairnessMetric } from "@/lib/types";
+import { toTitleCase } from "@/lib/utils";
 
 const THRESHOLD = 0.8;
 
@@ -102,6 +104,12 @@ export default function ComplianceHubScreen() {
   const failing = metrics.filter((a) => a.flagged || a.impactRatio < THRESHOLD).length;
   const maxRate = metrics.reduce((mx, m) => Math.max(mx, m.selectionRate), 0);
   const attrs = metrics.map((m) => ({ ...m, ref: m.selectionRate === maxRate && maxRate > 0, max: maxRate }));
+  // Real four-fifths impact-ratio bars (per group) for the kit BarsChart + 0.80 line.
+  const ratioBars = metrics.map((m) => ({
+    group: m.group,
+    ratio: +(m.impactRatio ?? 0).toFixed(2),
+    flagged: m.flagged || m.impactRatio < THRESHOLD,
+  }));
 
   const tabs: [string, string, string][] = [["overview", "Overview", "shield"], ["impact", "Adverse impact", "flag"], ["audit", "Audit log", "scroll"]];
 
@@ -138,7 +146,7 @@ export default function ComplianceHubScreen() {
                   <div key={i} style={{ display: "flex", gap: 11, alignItems: "center", padding: "9px 4px", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
                     <span style={{ width: 22, height: 22, borderRadius: 6, display: "grid", placeItems: "center", flexShrink: 0, background: p.st === "active" ? "var(--c-ok-tint)" : "var(--c-warn-tint)", color: p.st === "active" ? "var(--c-ok)" : "var(--c-warn)" }}><Icon name={p.st === "active" ? "check" : "eye"} size={13} stroke={2.3} /></span>
                     <div style={{ flex: 1 }}><div style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>{p.p}</div><div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{p.note}</div></div>
-                    <Pill tone={p.st === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg="transparent">{p.st}</Pill>
+                    <Pill tone={p.st === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg="transparent">{toTitleCase(p.st)}</Pill>
                   </div>
                 ))}
               </SectionCard>
@@ -180,19 +188,31 @@ export default function ComplianceHubScreen() {
                   <span style={{ width: 46, height: 46, borderRadius: 13, display: "grid", placeItems: "center", background: failing ? "var(--c-danger)" : "var(--c-ok)", color: "white", flexShrink: 0 }}><Icon name={failing ? "flag" : "check"} size={24} /></span>
                   <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>{failing} of {metrics.length} group{metrics.length === 1 ? "" : "s"} show potential adverse impact</div><div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 2 }}>Any ratio below 0.80 warrants review. The threshold and groupings are legal facts, not choices.</div></div>
                 </div>
+                {/* real four-fifths impact-ratio bars (per group), with the 0.80 line */}
+                <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 18, boxShadow: "var(--e1)", marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Impact ratio by group</div>
+                  <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginBottom: 14 }}>Each group vs the highest-selected group · 0.80 four-fifths threshold</div>
+                  <div style={{ height: Math.max(180, ratioBars.length * 40 + 36) }}>
+                    <BarsChart
+                      data={ratioBars}
+                      categoryKey="group"
+                      series={[{ key: "ratio", name: "Impact ratio" }]}
+                      valueFormatter={(v) => Number(v).toFixed(2)}
+                      threshold={{ value: THRESHOLD, label: "0.80 four-fifths" }}
+                      colorFn={(row) => (row.flagged ? CHART_COLORS.danger : CHART_COLORS.brand)}
+                    />
+                  </div>
+                </div>
+
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   {attrs.map((a) => <AttrCard key={a.group} a={a} />)}
+                  {/* intersectional grid - the gateway exposes no per-cell counts, so this
+                      stays an honest empty state (the fabricated demo grid was removed) */}
                   <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 18, boxShadow: "var(--e1)" }}>
                     <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Intersectional view</div>
                     <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginBottom: 14 }}>Selection rate · gender × ethnicity</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "84px repeat(3, 1fr)", gap: 4, fontSize: 11 }}>
-                      <div></div>{["White", "Asian", "Black"].map((cc) => <div key={cc} style={{ textAlign: "center", fontWeight: 600, color: "var(--c-ink-3)", paddingBottom: 4 }}>{cc}</div>)}
-                      {([["Men", [0.24, 0.25, 0.17]], ["Women", [0.22, 0.23, 0.15]], ["Non-binary", [0.21, 0.20, 0.14]]] as [string, number[]][]).map(([row, vals]) => (
-                        <div key={row} style={{ display: "contents" }}>
-                          <div style={{ fontWeight: 600, color: "var(--c-ink-3)", display: "flex", alignItems: "center" }}>{row}</div>
-                          {vals.map((v, i) => { const ok = v >= 0.18; return <div key={i} className="mono" style={{ height: 38, borderRadius: 7, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600, color: ok ? "var(--c-ink)" : "white", background: ok ? `color-mix(in oklab, var(--c-ok) ${v * 180}%, var(--c-surface-2))` : `color-mix(in oklab, var(--c-danger) ${(0.25 - v) * 420}%, var(--c-surface-2))` }}>{(v * 100).toFixed(0)}%</div>; })}
-                        </div>
-                      ))}
+                    <div style={{ height: 150 }}>
+                      <EmptyChart label="Intersectional grid - awaiting per-cell counts from the auditor" />
                     </div>
                     <div style={{ marginTop: 14, fontSize: 11.5, color: "var(--c-ink-2)", lineHeight: 1.5, display: "flex", gap: 7, alignItems: "flex-start" }}><Icon name="shield" size={14} style={{ flexShrink: 0, marginTop: 1, color: "var(--c-ai)" }} />Privacy-preserving: only group counts, never individual identities.</div>
                   </div>

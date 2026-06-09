@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Icon, type IconName } from "../icon";
 import { Btn } from "../aurora-ui";
 import type { ReqListData, ReqStatusKey } from "../types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
 
 export function Requisitions({ data, onCreate, onOpen, onExport }: {
   data: ReqListData; onCreate?: () => void; onOpen?: (id: string) => void; onExport?: () => void;
@@ -25,6 +26,7 @@ export function Requisitions({ data, onCreate, onOpen, onExport }: {
   const statuses = ["All", "OPEN", "DRAFT", "ON_HOLD", "FILLED", "CLOSED", "CANCELLED"];
   const pad = dense ? "8px 16px" : "13px 16px";
   const cols = "1.8fr 1fr 1.1fr 90px 80px 130px 90px";
+  const { sorted, sort, toggle: toggleSort } = useTableSort(rows, { key: "created", dir: "desc" });
 
   const Select = ({ val, set, opts, render }: { val: string; set: (v: string) => void; opts: string[]; render?: (o: string) => string }) => (
     <select value={val} onChange={(e) => set(e.target.value)} style={{ padding: "8px 10px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: "var(--fs-sm)", fontWeight: 600, fontFamily: "var(--font-sans)", cursor: "pointer" }}>
@@ -61,9 +63,15 @@ export function Requisitions({ data, onCreate, onOpen, onExport }: {
 
         <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
           <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)" }}>
-            <span>Requisition</span><span>Status</span><span>Salary range</span><span style={{ textAlign: "center" }}>Cands</span><span style={{ textAlign: "center" }}>Heads</span><span>Recruiter</span><span style={{ textAlign: "right" }}>Created</span>
+            <SortHead label="Requisition" sortKey="title" sort={sort} onSort={toggleSort} />
+            <SortHead label="Status" sortKey="status" sort={sort} onSort={toggleSort} />
+            <SortHead label="Salary range" sortKey="min" sort={sort} onSort={toggleSort} />
+            <SortHead label="Cands" sortKey="cands" sort={sort} onSort={toggleSort} align="center" className="justify-center" style={{ width: "100%" }} />
+            <SortHead label="Heads" sortKey="head" sort={sort} onSort={toggleSort} align="center" className="justify-center" style={{ width: "100%" }} />
+            <SortHead label="Recruiter" sortKey="rec" sort={sort} onSort={toggleSort} />
+            <SortHead label="Created" sortKey="created" sort={sort} onSort={toggleSort} align="right" className="justify-end" style={{ width: "100%" }} />
           </div>
-          {rows.map((r, i) => {
+          {sorted.map((r, i) => {
             const m = statusMeta[r.status];
             return (
               <div key={r.id} onClick={() => onOpen?.(r.id)} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: pad, alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", transition: "background var(--t-fast)" }}

@@ -35,6 +35,8 @@
 // exact "12 / 15" / 80%. Every card, row, and bar from the prototype is always
 // rendered.
 import { useEffect, useMemo, useState } from "react";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 
 /* ----------------------------- inline raw() ----------------------------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -292,6 +294,10 @@ export default function WorkspaceAdminPage() {
     { l: "Seats used", v: seatsPct, c: "var(--brand)" },
   ];
 
+  // Sortable audit log. No initial key, so the table renders in its original
+  // chronological order and becomes sortable (Member / Category) on click.
+  const { sorted: auditSorted, sort: auditSort, toggle: auditToggle } = useTableSort(AUDIT_ROWS);
+
   return (
     <div className="wsadminx mx-auto w-full max-w-[1200px]">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
@@ -446,8 +452,13 @@ export default function WorkspaceAdminPage() {
             </div>
 
             <div className="audit">
-              <div className="ahead"><span>Time</span><span>Action</span><span>Member</span><span>Category</span></div>
-              {AUDIT_ROWS.map((r, i) => {
+              <div className="ahead">
+                <span>Time</span>
+                <span>Action</span>
+                <SortHead label="Member" sortKey="who" sort={auditSort} onSort={auditToggle} />
+                <SortHead label="Category" sortKey="cat" sort={auditSort} onSort={auditToggle} />
+              </div>
+              {auditSorted.map((r, i) => {
                 const tone = CAT_TONE[r.cat];
                 return (
                   <div className="arow" key={i}>
@@ -459,7 +470,7 @@ export default function WorkspaceAdminPage() {
                     <div className="who2">
                       <span className="av-s" style={r.ai ? { background: "var(--ai-tint)", color: "var(--ai)" } : undefined}>{r.ini}</span>{r.who}
                     </div>
-                    <span className="cat" style={{ background: `var(--${tone}-tint)`, color: `var(--${tone})` }}>{r.cat}</span>
+                    <span className="cat" style={{ background: `var(--${tone}-tint)`, color: `var(--${tone})` }}>{toTitleCase(r.cat)}</span>
                   </div>
                 );
               })}

@@ -21,6 +21,7 @@ import { useState } from "react";
 import { Pill, Btn } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { toTitleCase } from "@/lib/utils";
 
 type CSS = React.CSSProperties;
 
@@ -98,7 +99,7 @@ export default function BillingScreen() {
           <div style={{ borderRadius: "var(--r-xl)", border: "1.5px solid color-mix(in oklab, var(--c-brand) 30%, var(--c-line))", background: "linear-gradient(135deg, var(--c-brand-tint) 0%, transparent 60%)", padding: 24, boxShadow: "var(--e1)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <Pill tone="var(--c-brand)" bg="var(--c-surface)" style={{ fontSize: 10, fontWeight: 800 }}>{b.plan}</Pill>
+                <Pill tone="var(--c-brand)" bg="var(--c-surface)" style={{ fontSize: 10, fontWeight: 800 }}>{toTitleCase(b.plan)}</Pill>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}><span className="mono" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.02em" }}>{m$(b.price)}</span><span style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>/ {b.cycle}</span></div>
                 <div style={{ fontSize: 12.5, color: "var(--c-ink-2)", marginTop: 4 }}>Renews {b.renews}</div>
               </div>
@@ -153,7 +154,7 @@ export default function BillingScreen() {
                 return (
                 <div key={t.n} style={{ borderRadius: "var(--r-xl)", padding: 18, border: "1.5px solid", borderColor: cur ? "var(--c-brand)" : "var(--c-line)", background: t.n === "ENTERPRISE" ? "linear-gradient(160deg, var(--c-ai-tint), transparent 60%)" : "var(--c-surface)", position: "relative" }}>
                   {cur && <span style={{ position: "absolute", top: -9, left: 16, fontSize: 9.5, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--c-on-brand)", background: "var(--c-brand)", padding: "2px 9px", borderRadius: 99 }}>Current</span>}
-                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{t.n}</div>
+                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".02em" }}>{toTitleCase(t.n)}</div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "8px 0 14px" }}>{t.price ? <><span className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{m$(t.price)}</span><span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>/mo</span></> : <span className="mono" style={{ fontSize: 22, fontWeight: 700 }}>Custom</span>}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>{t.feats.map(f => <span key={f} style={{ fontSize: 12, color: "var(--c-ink-2)", display: "flex", gap: 7, alignItems: "center" }}><Icon name="check" size={13} style={{ color: t.n === "ENTERPRISE" ? "var(--c-ai)" : "var(--c-brand)" }} />{f}</span>)}</div>
                   {cur ? <Btn variant="soft" style={{ width: "100%", justifyContent: "center" }}>Current plan</Btn> : <Btn variant={t.n === "ENTERPRISE" ? "ai" : "primary"} style={{ width: "100%", justifyContent: "center" }}>{t.n === "ENTERPRISE" ? "Contact sales" : "Downgrade"}</Btn>}

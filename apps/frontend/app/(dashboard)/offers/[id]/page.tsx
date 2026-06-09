@@ -16,6 +16,7 @@ import { Skeleton, ErrorState } from "@/components/aurora";
 import { Icon, Logo } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
 import { approveOffer } from "@/lib/api";
+import { toTitleCase } from "@/lib/utils";
 import type { Offer, OfferStatus, UserRole } from "@/lib/types";
 
 /* ---- local gateway fetch: bearer from sessionStorage, unwrap res?.data ?? res ---- */
@@ -169,7 +170,7 @@ export default function OfferDetailPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Offer · {offer.candidateId}</h1>
-            <Pill icon={st.icon} tone={st.tone} bg={st.bg}>{st.label}</Pill>
+            <Pill icon={st.icon} tone={st.tone} bg={st.bg}>{toTitleCase(st.label)}</Pill>
           </div>
           <div style={{ fontSize: 12.5, color: "var(--c-ink-3)", marginTop: 3 }}>
             Requisition <span className="mono">{offer.requisitionId || "unassigned"}</span> · starts <b style={{ color: "var(--c-ink-2)" }}>{fmtDate(offer.startDate)}</b>
@@ -279,7 +280,7 @@ export default function OfferDetailPage() {
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600 }}>{a.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{a.role}</div>
+                    <div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{toTitleCase(a.role)}</div>
                   </div>
                   <Pill tone={tone} bg={eff === "wait" ? "var(--c-surface-2)" : `color-mix(in oklab, ${tone} 13%, transparent)`} style={{ fontSize: 10 }}>{eff === "current" ? "needs review" : eff === "done" ? "approved" : "waiting"}</Pill>
                 </div>

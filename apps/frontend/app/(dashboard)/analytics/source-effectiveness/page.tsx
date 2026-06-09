@@ -16,6 +16,7 @@
 import { KpiRow, SectionCard, Spark, Pill, Btn, type Kpi } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { BarsChart, colorAt } from "@/components/shared/charts";
 import { useData } from "@/lib/use-data";
 
 /* ---------- local raw() (unwrap res?.data ?? res) ---------- */
@@ -133,6 +134,18 @@ export default function SourceEffectivenessPage() {
         )}
         {sources.data && rows.length > 0 && (
           <>
+            {/* ranked hires bar (kit) - real hires per source, ordered desc */}
+            <div style={{ height: Math.max(160, rows.length * 34 + 36), marginBottom: 14 }}>
+              <BarsChart
+                data={rows.map((r) => ({ source: r.source, hires: r.hired }))}
+                categoryKey="source"
+                layout="horizontal"
+                series={[{ key: "hires", name: "Hires" }]}
+                valueFormatter={(v) => Number(v).toLocaleString()}
+                colorFn={(_row, i) => colorAt(i)}
+              />
+            </div>
+
             {/* column heads */}
             <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--c-ink-3)", borderBottom: "1px solid var(--c-line)" }}>
               <span>Source</span>

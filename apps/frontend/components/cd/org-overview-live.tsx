@@ -37,7 +37,6 @@ const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", 
 const FUNNEL_COLORS = ["var(--brand)", "var(--brand)", "var(--info)", "var(--info)", "var(--ai-2)", "var(--ai)", "var(--ai)", "var(--ok)"];
 const GROUP_COLORS = ["var(--brand)", "var(--ai)", "var(--info)", "var(--warn)", "var(--ok)", "var(--ink-3)"];
 const AGENTS = ["candidate-screener", "bias-auditor", "jd-author", "copilot"];
-const AGENT_BARS = [14, 22, 18, 30, 26, 38, 34, 46, 40, 52, 48, 58];
 
 function ago(iso?: string): string {
   if (!iso) return "just now";
@@ -100,7 +99,9 @@ export function OrgOverviewLive() {
     activity: activity.data ?? [],
     pending,
     pendingCountLabel: pending.length ? `${pending.length} need attention` : undefined,
-    agentBars: AGENT_BARS,
+    // No real per-agent run-count series is exposed yet -> empty; the screen renders an
+    // honest EmptyChart for the agent-activity sparkline. (Was a fabricated AGENT_BARS array.)
+    agentBars: [],
     agents: AGENTS.map((n) => ({ name: n, stat: "advisory" })),
   };
 

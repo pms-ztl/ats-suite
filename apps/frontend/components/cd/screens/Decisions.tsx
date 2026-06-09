@@ -10,6 +10,7 @@ import { Icon, type IconName } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill } from "../aurora-kit";
 import type { Decision, DecisionsData, DecStatus } from "../types";
+import { ChartCard, DonutChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 const DEC_STATUS: Record<string, { label: string; tone: string; bg: string; icon: IconName }> = {
   pending: { label: "Pending approval", tone: "var(--warn)", bg: "var(--warn-tint)", icon: "clock" },
@@ -49,6 +50,17 @@ export function Decisions({ data, onDecision }: { data: DecisionsData; onDecisio
   const [filter, setFilter] = useState("all");
   const cur = items.find((d) => d.id === selId);
   const list = items.filter((d) => filter === "all" || (filter === "pending" ? d.status === "pending" : d.status !== "pending"));
+
+  // ----- Real-data summary: count by AI recommendation across the real decision rows -----
+  const recCounts = items.reduce(
+    (acc, d) => { acc[d.aiRec] = (acc[d.aiRec] ?? 0) + 1; return acc; },
+    {} as Record<string, number>
+  );
+  const recSplit = [
+    { name: "Hire", value: recCounts.hire ?? 0, fill: CHART_COLORS.ok },
+    { name: "Hold", value: recCounts.hold ?? 0, fill: CHART_COLORS.warn },
+    { name: "Reject", value: recCounts.reject ?? 0, fill: CHART_COLORS.danger },
+  ].filter((d) => d.value > 0);
   const setStatus = (st: DecStatus) => { if (!cur) return; setItems(items.map((d) => (d.id === selId ? { ...d, status: st, by: "You" } : d))); setConfirm(false); onDecision?.(cur.id, st); };
 
   if (items.length === 0) {
@@ -66,6 +78,19 @@ export function Decisions({ data, onDecision }: { data: DecisionsData; onDecisio
               <button key={k} onClick={() => setFilter(k)} style={{ fontSize: 12, fontWeight: 600, padding: "5px 11px", borderRadius: "var(--r-pill)", cursor: "pointer", border: "1px solid", borderColor: filter === k ? "transparent" : "var(--line-2)", background: filter === k ? "var(--brand-tint)" : "var(--surface)", color: filter === k ? "var(--brand-ink)" : "var(--ink-2)" }}>{l}</button>
             ))}
           </div>
+        </div>
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)" }}>
+          <ChartCard title="AI recommendation split" subtitle={`${items.length} decisions`} height={170}>
+            {recSplit.length ? (
+              <DonutChart
+                data={recSplit}
+                colors={recSplit.map((d) => d.fill)}
+                centerLabel={items.length}
+                centerSub="decisions"
+                valueFormatter={(v) => `${v}`}
+              />
+            ) : <EmptyChart label="No recommendations yet" />}
+          </ChartCard>
         </div>
         {list.map((d) => {
           const rec = AI_REC[d.aiRec], st = DEC_STATUS[d.status];

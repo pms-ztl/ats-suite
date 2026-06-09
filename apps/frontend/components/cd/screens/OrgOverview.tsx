@@ -7,8 +7,9 @@ import { useState } from "react";
 import { Icon } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import {
-  CommandHero, KPICard, Reveal, SectionCard, Funnel, Donut, TrendArea, Timeline, PendingList, Pill,
+  CommandHero, KPICard, Reveal, SectionCard, Timeline, PendingList, Pill,
 } from "../aurora-kit";
+import { FunnelViz, DonutChart, TrendChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 import type { OrgOverviewData } from "../types";
 
 export function OrgOverview({ data }: { data: OrgOverviewData }) {
@@ -16,9 +17,17 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
   const {
     workspace, heroStats = [], kpis = [], funnel = [], funnelConversionLabel,
     diversity = [], diversityIndex = "0.78", trend = [], trendLabels = [], trendDeltaLabel,
-    activity = [], pending = [], pendingCountLabel, agentBars = [], agents = [],
+    activity = [], pending = [], pendingCountLabel, agents = [],
   } = data;
-  const barMax = agentBars.length ? Math.max(...agentBars) : 1;
+
+  // Real pipeline funnel (from /platform/unified-overview pipelineData) -> chart-kit FunnelViz.
+  const funnelData = funnel.map((s) => ({ name: s.stage, value: s.n, fill: s.color }));
+  // Real diversity mix (from /platform/unified-overview diversityData) -> chart-kit DonutChart.
+  const diversityData = diversity.map((d) => ({ name: d.g, value: d.v, fill: d.color }));
+  const diversityColors = diversity.map((d) => d.color);
+  // Time-to-hire trend: real series only (days per period). The wrapper passes [] until
+  // the backend exposes a history series, so this maps to an EmptyChart below.
+  const trendData = trend.map((v, i) => ({ t: trendLabels[i] ?? `P${i + 1}`, days: v }));
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -37,17 +46,27 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
       {/* charts row */}
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
         <Reveal i={8}><SectionCard title="Pipeline funnel" icon="radar" action="Breakdown" headRight={funnelConversionLabel ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{funnelConversionLabel}</Pill> : undefined}>
-          {funnel.length ? <Funnel stages={funnel} /> : <EmptyHint icon="radar" text="No pipeline data yet." />}
+          <div style={{ height: 240 }}>
+            {funnelData.length ? <FunnelViz data={funnelData} valueFormatter={(v) => v.toLocaleString()} /> : <EmptyChart label="No pipeline data yet." />}
+          </div>
         </SectionCard></Reveal>
         <Reveal i={9}><SectionCard title="Diversity" icon="grid" action="EEOC report">
-          {diversity.length ? <Donut data={diversity} centerValue={diversityIndex} /> : <EmptyHint icon="grid" text="No diversity data yet." />}
+          <div style={{ height: 240 }}>
+            {diversityData.length ? <DonutChart data={diversityData} colors={diversityColors} centerLabel={diversityIndex} centerSub="four-fifths" valueFormatter={(v) => `${v}%`} /> : <EmptyChart label="No diversity data yet." />}
+          </div>
         </SectionCard></Reveal>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Reveal i={10}><SectionCard title="Time-to-hire trend" icon="chart" headRight={trendDeltaLabel ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)" icon="arrowUpRight">{trendDeltaLabel}</Pill> : undefined}>
-            {trend.length ? <TrendArea data={trend} labels={trendLabels} /> : <EmptyHint icon="chart" text="Not enough history yet." />}
+            <div style={{ height: 200 }}>
+              {/* Real series only. The backend does not yet expose a time-to-hire history
+                  series (the wrapper passes []), so this stays an honest empty state. */}
+              {trendData.length
+                ? <TrendChart data={trendData} xKey="t" series={[{ key: "days", name: "Time to hire", color: CHART_COLORS.brand }]} valueFormatter={(v) => `${v}d`} />
+                : <EmptyChart label="Not enough history yet." />}
+            </div>
           </SectionCard></Reveal>
           <Reveal i={12}><SectionCard title="Activity" icon="bolt" action="Full log">
             {activity.length ? <Timeline items={activity} /> : <EmptyHint icon="bolt" text="No recent activity." />}
@@ -58,10 +77,12 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
             {pending.length ? <PendingList items={pending} /> : <EmptyHint icon="listChecks" text="Nothing needs your attention." />}
           </SectionCard></Reveal>
           <Reveal i={13}><SectionCard title="Agent activity" icon="sparkles">
-            <svg viewBox="0 0 280 70" style={{ width: "100%", height: "auto", display: "block", marginBottom: 12 }} aria-hidden="true">
-              <defs><linearGradient id="agp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--ai)" stopOpacity="0.05" /><stop offset="1" stopColor="var(--ai)" stopOpacity="0.4" /></linearGradient></defs>
-              {agentBars.map((h, i) => { const hh = (h / barMax) * 58; return <rect key={i} x={8 + i * 22} y={64 - hh} width="13" height={hh} rx="3" fill="url(#agp)" />; })}
-            </svg>
+            {/* The fabricated agentBars sparkline was removed. No per-agent run-count
+                time series is exposed by the gateway yet, so this is an honest empty
+                state until that endpoint lands. The agent roster below is static config. */}
+            <div style={{ height: 70, marginBottom: 12 }}>
+              <EmptyChart label="Agent activity coming soon" />
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {agents.map((a) => (
                 <div key={a.name} style={{ padding: "9px 11px", borderRadius: "var(--r)", background: "var(--ai-tint)", border: "1px solid color-mix(in oklab, var(--ai) 18%, transparent)" }}>

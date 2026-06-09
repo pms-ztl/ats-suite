@@ -67,6 +67,78 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) { next(err); }
 });
 
+// GET /internal/applications/time-to-hire
+// Time-to-hire trend over the trailing ~12 months. A "hire" is an Application
+// whose stage = HIRED; we approximate its hire date with stageUpdatedAt (the last
+// stage transition) and compute time-to-hire days as (stageUpdatedAt - appliedAt)
+// in whole-day units. Returned series is grouped by hire-month with per-month and
+// overall avg/median/p90. Percentiles are computed in JS from the per-hire deltas
+// (no raw-SQL percentile). Zero hires -> empty `trend` array (honest empty state).
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function percentile(sortedAsc: number[], p: number): number {
+  if (sortedAsc.length === 0) return 0;
+  if (sortedAsc.length === 1) return sortedAsc[0]!;
+  // nearest-rank on a 0..1 fraction; clamp the index into range.
+  const idx = Math.min(sortedAsc.length - 1, Math.max(0, Math.ceil(p * sortedAsc.length) - 1));
+  return sortedAsc[idx]!;
+}
+function summarize(deltas: number[]): { avgDays: number; medianDays: number; p90Days: number; hires: number } {
+  const hires = deltas.length;
+  if (hires === 0) return { avgDays: 0, medianDays: 0, p90Days: 0, hires: 0 };
+  const sorted = deltas.slice().sort((a, b) => a - b);
+  const sum = sorted.reduce((acc, d) => acc + d, 0);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+  return {
+    avgDays: Math.round((sum / hires) * 10) / 10,
+    medianDays: Math.round(median * 10) / 10,
+    p90Days: Math.round(percentile(sorted, 0.9) * 10) / 10,
+    hires,
+  };
+}
+router.get("/time-to-hire", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    // Window: start of the month 11 months ago (gives a trailing 12-month span).
+    const now = new Date();
+    const windowStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+
+    const hires = await prisma.application.findMany({
+      where: { tenantId, stage: "HIRED", stageUpdatedAt: { gte: windowStart } },
+      select: { appliedAt: true, stageUpdatedAt: true },
+      take: 5000,
+    });
+
+    // Bucket per-hire deltas by hire-month (keyed YYYY-MM).
+    const buckets = new Map<string, number[]>();
+    const allDeltas: number[] = [];
+    for (const h of hires) {
+      const hiredAt = h.stageUpdatedAt ?? h.appliedAt;
+      const tth = (hiredAt.getTime() - h.appliedAt.getTime()) / 86_400_000;
+      if (!Number.isFinite(tth) || tth < 0) continue; // skip dirty rows (hire before apply)
+      const key = `${hiredAt.getUTCFullYear()}-${String(hiredAt.getUTCMonth() + 1).padStart(2, "0")}`;
+      const list = buckets.get(key) ?? [];
+      list.push(tth);
+      buckets.set(key, list);
+      allDeltas.push(tth);
+    }
+
+    // Emit one row per month across the full window so the trend has continuous
+    // x-axis labels; months with no hires report hires:0 and zeroed stats.
+    const trend: { month: string; label: string; hires: number; avgDays: number; medianDays: number; p90Days: number }[] = [];
+    if (allDeltas.length > 0) {
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11 + i, 1));
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        const s = summarize(buckets.get(key) ?? []);
+        trend.push({ month: key, label: MONTH_LABELS[d.getUTCMonth()]!, ...s });
+      }
+    }
+
+    ok(res, { trend, overall: summarize(allDeltas) });
+  } catch (err) { next(err); }
+});
+
 // PATCH /internal/applications/:id
 const UpdateApplicationSchema = z.object({
   stage: ApplicationStageSchema.optional(),

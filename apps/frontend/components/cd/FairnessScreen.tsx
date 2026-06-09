@@ -6,7 +6,9 @@ import React from "react";
 import { Pill } from "./aurora-kit";
 import { Btn, StatusBadge } from "./aurora-ui";
 import { Icon } from "./icon";
+import { BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 import type { FairnessData, FairnessAttr } from "./types";
+import type { FairnessMetric } from "@/lib/types";
 
 function Bar({ rate, max, isRef, pass }: { rate: number; max: number; isRef: boolean; pass: boolean }) {
   const w = (rate / max) * 100;
@@ -56,9 +58,17 @@ function AttrCard({ a }: { a: FairnessAttr }) {
   );
 }
 
-export function FairnessScreen({ data, onMethodology, onPublish }: { data: FairnessData; onMethodology?: () => void; onPublish?: () => void }) {
+export function FairnessScreen({ data, metrics, onMethodology, onPublish }: { data: FairnessData; metrics?: FairnessMetric[]; onMethodology?: () => void; onPublish?: () => void }) {
   const f = data;
   const failing = f.attributes.filter(a => !a.pass).length;
+
+  // Real per-group four-fifths impact ratios (from getAdverseImpact). The 0.80 line
+  // is the legal four-fifths threshold; a flagged / sub-0.80 group renders danger.
+  const ratioBars = (metrics ?? []).map((m) => ({
+    group: m.group,
+    ratio: +(m.impactRatio ?? 0).toFixed(2),
+    flagged: !!m.flagged || (m.impactRatio ?? 1) < 0.8,
+  }));
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
@@ -99,26 +109,34 @@ export function FairnessScreen({ data, onMethodology, onPublish }: { data: Fairn
           </div>
         </div>
 
+        {/* real four-fifths impact-ratio bars (per group), with the 0.80 threshold line */}
+        <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)", marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Impact ratio by group</div>
+          <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginBottom: 14 }}>Each group vs the highest-selected group · 0.80 four-fifths threshold</div>
+          <div style={{ height: Math.max(180, ratioBars.length * 40 + 36) }}>
+            {ratioBars.length
+              ? <BarsChart
+                  data={ratioBars}
+                  categoryKey="group"
+                  series={[{ key: "ratio", name: "Impact ratio" }]}
+                  valueFormatter={(v) => Number(v).toFixed(2)}
+                  threshold={{ value: 0.8, label: "0.80 four-fifths" }}
+                  colorFn={(row) => (row.flagged ? CHART_COLORS.danger : CHART_COLORS.brand)}
+                />
+              : <EmptyChart label="No demographic data yet" />}
+          </div>
+        </div>
+
         {/* attribute cards */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="fairness-grid">
           {f.attributes.map(a => <AttrCard key={a.name} a={a} />)}
-          {/* intersection heatmap */}
+          {/* intersection heatmap - no real intersectional grid is exposed by the
+              gateway today, so it stays an honest empty state (never fabricated cells) */}
           <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
             <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", marginBottom: 4 }}>Intersectional view</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginBottom: 14 }}>Selection rate · {f.heatmap.subtitle}</div>
-            <div style={{ display: "grid", gridTemplateColumns: `84px repeat(${f.heatmap.cols.length}, 1fr)`, gap: 4, fontSize: 11 }}>
-              <div></div>
-              {f.heatmap.cols.map(c => <div key={c} style={{ textAlign: "center", fontWeight: 600, color: "var(--ink-3)", paddingBottom: 4 }}>{c}</div>)}
-              {f.heatmap.rows.map(([row, vals]) => (
-                <React.Fragment key={row}>
-                  <div style={{ fontWeight: 600, color: "var(--ink-3)", display: "flex", alignItems: "center" }}>{row}</div>
-                  {vals.map((v, i) => {
-                    const ok = v >= f.heatmap.okThreshold;
-                    return <div key={i} className="mono" style={{ height: 38, borderRadius: 7, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600,
-                      color: ok ? "var(--ink)" : "white", background: ok ? `color-mix(in oklab, var(--ok) ${v * 180}%, var(--surface-2))` : `color-mix(in oklab, var(--danger) ${(0.25 - v) * 420}%, var(--surface-2))` }}>{(v * 100).toFixed(0)}%</div>;
-                  })}
-                </React.Fragment>
-              ))}
+            <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginBottom: 14 }}>Selection rate · gender × ethnicity</div>
+            <div style={{ height: 150 }}>
+              <EmptyChart label="Intersectional grid - awaiting per-cell counts from the auditor" />
             </div>
             <div style={{ marginTop: 14, fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.5, display: "flex", gap: 7, alignItems: "flex-start" }}>
               <Icon name="shield" size={14} style={{ flexShrink: 0, marginTop: 1, color: "var(--ai)" }} />

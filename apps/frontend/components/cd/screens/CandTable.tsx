@@ -6,6 +6,7 @@ import * as React from "react";
 import { Icon, type IconName } from "../icon";
 import { Pill } from "../aurora-kit";
 import type { Candidate, CandStage } from "../types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
 
 const stIcon = (s: string): IconName => (s === "pass" ? "check" : s === "review" ? "eye" : s === "fail" ? "x" : "clock");
 const stCol = (s: string) => (s === "pass" ? "var(--ok)" : s === "review" ? "var(--warn)" : s === "fail" ? "var(--danger)" : "var(--ink-3)");
@@ -47,14 +48,21 @@ export function CandTable({ cands, stages, sel, setSel, onOpen, blind, dense }: 
   const toggle = (id: string) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
   const pad = dense ? "7px 14px" : "11px 14px";
   const cols = "30px 1.7fr 1fr 110px 1fr 130px 0.9fr 70px";
+  const { sorted, sort, toggle: toggleSort } = useTableSort(cands, { key: "score", dir: "desc" });
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ flex: 1, overflowY: "auto", borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)" }}>
         <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "10px 14px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", position: "sticky", top: 0, zIndex: 2, fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", alignItems: "center" }}>
           <Check on={allSel} onClick={toggleAll} />
-          <span>Candidate</span><span>Requisition</span><span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}><Icon name="sparkles" size={11} style={{ color: "var(--ai)" }} />AI score</span><span>Stage</span><span>Requirement match</span><span>Source</span><span style={{ textAlign: "right" }}>Age</span>
+          <SortHead label="Candidate" sortKey="name" sort={sort} onSort={toggleSort} />
+          <SortHead label="Requisition" sortKey="reqId" sort={sort} onSort={toggleSort} />
+          <SortHead sortKey="score" sort={sort} onSort={toggleSort} label={<span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}><Icon name="sparkles" size={11} style={{ color: "var(--ai)" }} />AI score</span>} />
+          <SortHead label="Stage" sortKey="stage" sort={sort} onSort={toggleSort} />
+          <SortHead label="Requirement match" sortKey="match" sort={sort} onSort={toggleSort} />
+          <SortHead label="Source" sortKey="source" sort={sort} onSort={toggleSort} />
+          <SortHead label="Age" sortKey="days" sort={sort} onSort={toggleSort} align="right" className="justify-end" style={{ width: "100%" }} />
         </div>
-        {cands.map((c, i) => {
+        {sorted.map((c, i) => {
           const on = sel.has(c.id);
           return (
             <div key={c.id} onClick={() => onOpen(c.id)} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: pad, alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", background: on ? "var(--brand-tint)" : "transparent", transition: "background var(--t-fast)" }}

@@ -92,6 +92,11 @@ export function aggregatorRouter(logger: Logger): Router {
   });
 
   // ── Time-to-hire ───────────────────────────────────────────────────────
+  // Real monthly trend computed by candidate-service from HIRED applications
+  // (stageUpdatedAt - appliedAt). We surface that shape directly, plus a
+  // `trendByMonth` alias for the legacy detail-page normaliser, and a
+  // top-level avg/median/p90 from the `overall` block. Zero hires -> empty
+  // trend (the frontend keeps its EmptyChart — no fabrication).
   router.get("/analytics/time-to-hire", async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) throw Errors.unauthorized();
@@ -101,23 +106,34 @@ export function aggregatorRouter(logger: Logger): Router {
         role: req.user.role,
         email: req.user.email,
       };
-      const candRes = await callService<CandOverview>("candidate", {
-        path: "/internal/candidates/overview",
+      const tth = await callService<{
+        trend: { month: string; label: string; hires: number; avgDays: number; medianDays: number; p90Days: number }[];
+        overall: { avgDays: number; medianDays: number; p90Days: number; hires: number };
+      }>("candidate", {
+        path: "/internal/applications/time-to-hire",
         userHeaders,
         timeoutMs: 3000,
       }).catch(() => null);
-      // Honest empty state: until we have a per-application timestamp
-      // history endpoint, TTH can't be computed.
+
+      const trend = tth?.trend ?? [];
+      const overall = tth?.overall ?? { avgDays: 0, medianDays: 0, p90Days: 0, hires: 0 };
+      const hasHires = overall.hires > 0;
+
       ok(res, {
-        avgDays: null,
-        medianDays: null,
-        p90Days: null,
+        // Real per-month series (empty when there are no hires in the window).
+        trend,
+        // Alias the detail page's normaliser reads (out.trendByMonth).
+        trendByMonth: trend,
+        // Top-level metrics: null when there are no hires so the UI shows a dash,
+        // not an invented "0 days".
+        avgDays: hasHires ? overall.avgDays : null,
+        medianDays: hasHires ? overall.medianDays : null,
+        p90Days: hasHires ? overall.p90Days : null,
         byDepartment: [],
-        trendByMonth: [],
-        hiredCount: candRes?.hiredApplications ?? 0,
-        note: candRes?.hiredApplications
-          ? "Hire timestamp history not yet captured; per-stage durations are unavailable."
-          : "No hires yet — time-to-hire cannot be computed.",
+        hiredCount: overall.hires,
+        note: hasHires
+          ? undefined
+          : "No hires in the last 12 months — time-to-hire cannot be computed.",
       });
     } catch (err) { next(err); }
   });

@@ -17,6 +17,7 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
 import { Skeleton, ErrorState, EmptyState } from "@/components/aurora";
+import { toTitleCase } from "@/lib/utils";
 
 type CSS = React.CSSProperties;
 
@@ -238,7 +239,7 @@ function TeamPanel() {
               {ROLE_NAMES.map((r) => <option key={r}>{r}</option>)}
               <option>Compliance Officer</option>
             </select>
-            <Pill tone={m.status === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg={m.status === "active" ? "var(--c-ok-tint)" : "var(--c-warn-tint)"} icon={m.status === "active" ? "check" : "clock"}>{m.status}</Pill>
+            <Pill tone={m.status === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg={m.status === "active" ? "var(--c-ok-tint)" : "var(--c-warn-tint)"} icon={m.status === "active" ? "check" : "clock"}>{toTitleCase(m.status)}</Pill>
             <button style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", color: "var(--c-ink-3)", cursor: "pointer", display: "grid", placeItems: "center" }} aria-label={`Manage ${m.name}`}><Icon name="settings" size={15} /></button>
           </div>
         ))}

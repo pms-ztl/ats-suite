@@ -1,31 +1,30 @@
 "use client";
 // components/cd/ai-ops-live.tsx
-// Mounts the byte-exact CD AiOpsScreen. The gateway exposes no agent-fleet telemetry
-// endpoint, so the KPI tiles + fleet table are the design's example content (mirrors
-// the prototype's AIOPS data) using our real agent names.
-import { AiOpsScreen } from "./SecAiScreens";
-import type { AiOpsData } from "./types";
-
-const AI_OPS_DATA: AiOpsData = {
-  agentCount: 12,
-  kpis: [
-    { id: "runs", label: "Agent runs (24h)", value: 8420, delta: 12, good: true, ai: true, spark: [6800, 7000, 7300, 7600, 7900, 8100, 8300, 8420], icon: "cpu" },
-    { id: "cost", label: "Inference cost (mo)", value: 2840, prefix: "$", delta: -120, good: true, spark: [3200, 3100, 3050, 2990, 2940, 2900, 2870, 2840], icon: "card" },
-    { id: "lat", label: "Median latency", value: 3.4, suffix: "s", delta: -0.3, good: true, spark: [4.2, 4.0, 3.9, 3.7, 3.6, 3.5, 3.4, 3.4], icon: "clock" },
-    { id: "health", label: "Agents healthy", value: 11, suffix: "/12", delta: 0, good: true, spark: [11, 11, 12, 11, 11, 11, 11, 11], icon: "check" },
-  ],
-  agents: [
-    { n: "candidate-screener", status: "healthy", acc: 0.93, drift: "stable", cost: 980, lat: 3.8 },
-    { n: "resume-parser", status: "healthy", acc: 0.91, drift: "stable", cost: 620, lat: 1.2 },
-    { n: "jd-author", status: "healthy", acc: 0.96, drift: "stable", cost: 410, lat: 5.1 },
-    { n: "bias-auditor", status: "watch", acc: 0.91, drift: "watch", cost: 180, lat: 6.4 },
-    { n: "copilot", status: "healthy", acc: 0.89, drift: "stable", cost: 520, lat: 2.9 },
-    { n: "analytics", status: "watch", acc: 0.87, drift: "watch", cost: 130, lat: 4.0 },
-    { n: "offer", status: "healthy", acc: 0.94, drift: "stable", cost: 90, lat: 3.3 },
-    { n: "scheduling", status: "healthy", acc: 0.92, drift: "stable", cost: 110, lat: 2.4 },
-  ],
-};
+// AI operations fleet view. There is NO agent-fleet telemetry endpoint today
+// (no per-agent accuracy / drift / latency series is exposed by any service),
+// so rather than render the design's fabricated fleet numbers we show an honest
+// empty-state. Real cross-tenant AI *spend* lives on the Cost analytics screen
+// (PlatformCostLive), which is wired to the billing AgentRunCost rollup.
+import { EmptyChart } from "@/components/shared/charts";
+import { Pill } from "./aurora-kit";
 
 export function AiOpsLive() {
-  return <AiOpsScreen data={AI_OPS_DATA} />;
+  return (
+    <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+          <div>
+            <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
+              <h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>AI operations</h1>
+              <Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)">fleet telemetry</Pill>
+            </div>
+            <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>Per-agent health, accuracy, drift, and latency across the fleet.</p>
+          </div>
+        </div>
+        <div style={{ height: 320 }}>
+          <EmptyChart label="Agent-fleet telemetry (accuracy / drift / latency) is not yet collected. See Cost analytics for live AI spend." />
+        </div>
+      </div>
+    </div>
+  );
 }

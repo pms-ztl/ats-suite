@@ -6,12 +6,20 @@ import { Pill, ScoreRing, Reveal, KPICard, SectionCard } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { PlatformCostData, NotifPrefsData, NotifPref, MobilityData, PlatformJobsData } from "./types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
+import { TreemapChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 export function PlatformCostScreen({ data }: { data: PlatformCostData }) {
+  // Pareto: agent spend, sorted desc (real per-agent costUsd from billing rollup).
   const agents = data.agents.slice().sort((a, b) => b.cost - a.cost);
-  const maxC = Math.max(...agents.map(a => a.cost));
-  const tenants = data.tenants.slice().sort((a, b) => b.cost - a.cost).slice(0, 6);
-  const maxT = Math.max(...tenants.map(t => t.cost));
+  // Treemap: tenant spend (real per-tenant costUsd). Over-budget tenants tinted red.
+  const tenants = data.tenants.slice().sort((a, b) => b.cost - a.cost).slice(0, 10);
+  const agentBars = agents.map((a) => ({ agent: a.n, cost: Math.round(a.cost * 100) / 100 }));
+  const tenantTree = tenants
+    .filter((t) => t.cost > 0)
+    .map((t) => ({ name: t.name, size: Math.round(t.cost * 100) / 100, fill: t.health === "over" ? CHART_COLORS.danger : undefined }));
+  const usd = (v: any) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1240, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
@@ -22,22 +30,18 @@ export function PlatformCostScreen({ data }: { data: PlatformCostData }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }} className="cost-kpis">{data.kpis.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }} className="cost-row">
         <Reveal i={4}><SectionCard title="Spend by agent" icon="cpu" headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)">{agents.length} agents</Pill>}>
-          {agents.map((a, i) => (
-            <div key={a.n} style={{ display: "grid", gridTemplateColumns: "150px 1fr 70px", gap: 10, alignItems: "center", padding: "7px 0" }}>
-              <span className="mono" style={{ fontSize: 11.5, color: "var(--ai-ink)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.n}</span>
-              <div style={{ height: 16, borderRadius: 6, background: "var(--surface-2)", overflow: "hidden" }}><div style={{ height: "100%", width: ((a.cost / maxC) * 100) + "%", borderRadius: 6, background: "var(--ai)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 60) + "ms" }} /></div>
-              <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right" }}>${a.cost.toLocaleString()}</span>
-            </div>
-          ))}
+          <div style={{ height: 280, marginTop: 4 }}>
+            {agentBars.length > 0
+              ? <BarsChart data={agentBars} categoryKey="agent" layout="horizontal" series={[{ key: "cost", name: "Spend (30d)", color: CHART_COLORS.ai }]} valueFormatter={usd} />
+              : <EmptyChart label="No agent spend in the last 30 days" />}
+          </div>
         </SectionCard></Reveal>
-        <Reveal i={5}><SectionCard title="Top tenant spenders" icon="building" action="All tenants">
-          {tenants.map((t, i) => (
-            <div key={t.id} style={{ display: "grid", gridTemplateColumns: "150px 1fr 70px", gap: 10, alignItems: "center", padding: "7px 0" }}>
-              <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
-              <div style={{ height: 16, borderRadius: 6, background: "var(--surface-2)", overflow: "hidden" }}><div style={{ height: "100%", width: ((t.cost / maxT) * 100) + "%", borderRadius: 6, background: t.health === "over" ? "var(--danger)" : "var(--brand)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 60) + "ms" }} /></div>
-              <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right", color: t.health === "over" ? "var(--danger)" : "var(--ink)" }}>${t.cost}</span>
-            </div>
-          ))}
+        <Reveal i={5}><SectionCard title="Spend by tenant" icon="building" action="All tenants">
+          <div style={{ height: 280, marginTop: 4 }}>
+            {tenantTree.length > 0
+              ? <TreemapChart data={tenantTree} valueFormatter={usd} />
+              : <EmptyChart label="No tenant spend in the last 30 days" />}
+          </div>
           {data.overBudgetNote && <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: "var(--r)", background: "var(--danger-tint)", fontSize: 11.5, color: "var(--ink-2)", display: "flex", gap: 8, alignItems: "center" }}><Icon name="flag" size={13} style={{ color: "var(--danger)" }} />{data.overBudgetNote}</div>}
         </SectionCard></Reveal>
       </div>
@@ -108,6 +112,7 @@ export function MobilityScreen({ data }: { data: MobilityData }) {
 
 export function PlatformJobsScreen({ data }: { data: PlatformJobsData }) {
   const cols = "1.8fr 1.3fr 110px 90px 90px 90px";
+  const { sorted: jobs, sort, toggle } = useTableSort(data.jobs, { key: "apps", dir: "desc" });
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1080, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
@@ -117,13 +122,13 @@ export function PlatformJobsScreen({ data }: { data: PlatformJobsData }) {
       </div>
       <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "auto", boxShadow: "var(--e1)" }}>
         <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "11px 18px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", minWidth: 760 }}>
-          <span>Posting</span><span>Channels</span><span>Status</span><span style={{ textAlign: "right" }}>Apps</span><span style={{ textAlign: "right" }}>Views</span><span></span>
+          <SortHead label="Posting" sortKey="title" sort={sort} onSort={toggle} /><SortHead label="Channels" sortKey="board" sort={sort} onSort={toggle} /><SortHead label="Status" sortKey="status" sort={sort} onSort={toggle} /><SortHead label="Apps" sortKey="apps" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Views" sortKey="views" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><span></span>
         </div>
-        {data.jobs.map((j, i) => (
+        {jobs.map((j, i) => (
           <div key={i} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "13px 18px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", minWidth: 760 }}>
             <div><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{j.title}</div><div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{j.reqId} · posted {j.posted}</div></div>
             <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{j.board}</span>
-            <Pill tone={j.status === "published" ? "var(--brand)" : "var(--ink-3)"} bg={j.status === "published" ? "var(--brand-tint)" : "var(--surface-3)"} icon={j.status === "published" ? "arrowUpRight" : "dot"} style={{ justifySelf: "start" }}>{j.status}</Pill>
+            <Pill tone={j.status === "published" ? "var(--brand)" : "var(--ink-3)"} bg={j.status === "published" ? "var(--brand-tint)" : "var(--surface-3)"} icon={j.status === "published" ? "arrowUpRight" : "dot"} style={{ justifySelf: "start" }}>{toTitleCase(j.status)}</Pill>
             <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>{j.apps || ","}</span>
             <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--ink-3)" }}>{j.views ? j.views.toLocaleString() : ","}</span>
             <Btn variant="soft" size="sm" style={{ justifySelf: "end" }}>{j.status === "published" ? "Unpublish" : "Publish"}</Btn>

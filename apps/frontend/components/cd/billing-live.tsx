@@ -8,7 +8,7 @@
 import { BillingScreen } from "./BillingScreen";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import type { BillingData, BillingUsage, BillingTier } from "./types";
+import type { BillingData, BillingUsage, BillingTier, BillingSpendMonth } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 async function raw(path: string): Promise<unknown> {
@@ -28,9 +28,15 @@ const TIERS: BillingTier[] = [
   { n: "ENTERPRISE", price: null, feats: ["Unlimited seats", "SSO and SAML", "Dedicated support", "Custom SLAs"] },
 ];
 
+type SpendTrendResp = { trend: BillingSpendMonth[]; totalSpend: number };
+
 export function BillingLive() {
   const { user } = useCurrentUser();
   const usage = useData<UsageSummary>(() => raw("/billing/usage?days=30") as Promise<UsageSummary>);
+  // Real AI spend over the last ~12 months, by provider. Honest empty array
+  // when the tenant has recorded no AgentRunCost rows.
+  const spend = useData<SpendTrendResp>(() => raw("/billing/spend-trend") as Promise<SpendTrendResp>);
+  const spendTrend: BillingSpendMonth[] = spend.data?.trend ?? [];
 
   const plan = (user?.tenant?.plan as string) ?? "FREE";
   const renews = user?.tenant?.trialEndsAt ? new Date(user.tenant.trialEndsAt).toLocaleDateString() : "monthly";
@@ -53,5 +59,6 @@ export function BillingLive() {
     invoices: [],
     tiers: TIERS.map((t) => ({ ...t, cur: t.n === plan })),
   };
-  return <BillingScreen data={data} />;
+
+  return <BillingScreen data={data} spendTrend={spendTrend} />;
 }

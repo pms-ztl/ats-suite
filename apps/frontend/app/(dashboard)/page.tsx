@@ -10,11 +10,12 @@ import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { OrgOverviewLive } from "@/components/cd/org-overview-live";
+import { EmptyChart } from "@/components/shared/charts";
 import {
-  getDashboardKpis, listScreening, listRequisitions, listReviewQueue, listInterviews,
+  getDashboardKpis, listScreening, listRequisitions, listReviewQueue, listInterviews, listCandidates,
   type DashKpi,
 } from "@/lib/api";
-import type { ScreeningVerdict, Requisition, ReviewItem, Interview, ScreeningResult } from "@/lib/types";
+import type { ScreeningVerdict, Requisition, ReviewItem, Interview, ScreeningResult, Candidate, ApplicationStage } from "@/lib/types";
 
 // Role-dispatched home (matches the design's DashboardHome): admins / compliance /
 // super-admins land on the org-overview command center; recruiters, hiring
@@ -49,6 +50,28 @@ function firstName(user: { name?: string } | null | undefined): string {
   return (user?.name || "there").split(" ")[0];
 }
 
+/* Real per-requisition pipeline: group THIS requisition's loaded candidates by stage
+   into the 4 funnel buckets the Aurora rows show. No fabricated ratios — every count
+   traces to a real Candidate.stage from GET /api/candidates. Returns null when no
+   candidate data is available client-side (endpoint empty/errored) so callers can
+   fall back to an honest EmptyChart instead of inventing numbers. */
+const FUNNEL_BUCKETS: { label: string; stages: ApplicationStage[]; color: string }[] = [
+  { label: "Applied", stages: ["APPLIED"], color: "var(--c-ink-3)" },
+  { label: "Screen", stages: ["SCREENED", "PHONE_SCREEN", "ASSESSMENT"], color: "var(--c-info)" },
+  { label: "Interview", stages: ["INTERVIEW", "FINAL_REVIEW"], color: "var(--c-ai)" },
+  { label: "Offer", stages: ["OFFER", "HIRED"], color: "var(--c-brand)" },
+];
+function reqFunnel(reqId: string | undefined, candidates: Candidate[] | undefined): { label: string; n: number; color: string }[] | null {
+  if (!reqId || !candidates) return null;
+  const mine = candidates.filter((c) => c.requisitionId === reqId);
+  if (mine.length === 0) return null;
+  return FUNNEL_BUCKETS.map((b) => ({
+    label: b.label,
+    n: mine.filter((c) => b.stages.includes(c.stage)).length,
+    color: b.color,
+  }));
+}
+
 // Reusable KPI strip with the three data states inside the row's container.
 function KpiStrip({ kpis }: { kpis: ReturnType<typeof useData<DashKpi[]>> }) {
   return (
@@ -77,6 +100,7 @@ function RecruiterDash() {
   const screening = useData<ScreeningVerdict[]>(listScreening);
   const reqs = useData<Requisition[]>(listRequisitions);
   const interviews = useData<Interview[]>(listInterviews);
+  const candidates = useData<Candidate[]>(() => listCandidates());
 
   const applications = (screening.data ?? []).slice(0, 5);
   const myReqs = (reqs.data ?? []).slice(0, 3);
@@ -119,13 +143,19 @@ function RecruiterDash() {
             {reqs.data && myReqs.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
                 {myReqs.map((r, i) => {
-                  const stagePct = [60, 25, 10, 5];
+                  // Real per-stage breakdown for THIS req from loaded candidates (no fabricated ratios).
+                  const buckets = reqFunnel(r.id, candidates.data);
+                  const totalInBuckets = buckets ? buckets.reduce((s, b) => s + b.n, 0) : 0;
                   return (
                     <div key={r.id ?? i} style={{ display: "grid", gridTemplateColumns: "1fr 150px 60px", gap: 14, alignItems: "center" }}>
                       <div><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.title}</div><div style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{r.department}</div></div>
-                      <div style={{ display: "flex", height: 8, borderRadius: 99, overflow: "hidden", gap: 2 }}>
-                        {stagePct.map((p, j) => <div key={j} style={{ width: p + "%", background: ["var(--c-ink-3)", "var(--c-info)", "var(--c-ai)", "var(--c-brand)"][j], animation: "growx .9s var(--ease-out) both", animationDelay: (j * 100) + "ms" }} />)}
-                      </div>
+                      {buckets && totalInBuckets > 0 ? (
+                        <div style={{ display: "flex", height: 8, borderRadius: 99, overflow: "hidden", gap: 2 }}>
+                          {buckets.map((b, j) => b.n > 0 ? <div key={j} title={`${b.label}: ${b.n}`} style={{ width: ((b.n / totalInBuckets) * 100) + "%", background: b.color, animation: "growx .9s var(--ease-out) both", animationDelay: (j * 100) + "ms" }} /> : null)}
+                        </div>
+                      ) : (
+                        <div style={{ height: 8, borderRadius: 99, background: "var(--c-surface-2)" }} title="No staged candidates yet" />
+                      )}
                       <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>{r.candidateCount ?? 0}</span>
                     </div>
                   );
@@ -168,6 +198,7 @@ function HMDash() {
   const kpis = useData<DashKpi[]>(getDashboardKpis);
   const review = useData<ReviewItem[]>(listReviewQueue);
   const reqs = useData<Requisition[]>(listRequisitions);
+  const candidates = useData<Candidate[]>(() => listCandidates());
 
   const decisions = (review.data ?? []).slice(0, 4);
   const myReqs = (reqs.data ?? []).slice(0, 3);
@@ -218,10 +249,10 @@ function HMDash() {
           {reqs.data && myReqs.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
               {myReqs.map((r, i) => {
-                const labels = ["Applied", "Screen", "Interview", "Offer"];
-                const total = r.candidateCount ?? 0;
-                const funnel = [total, Math.round(total * 0.32), Math.round(total * 0.1), Math.max(1, Math.round(total * 0.025))];
-                const max = funnel[0] || 1;
+                // Real per-stage funnel for THIS req from loaded candidates. The previous
+                // total*0.32 / total*0.1 / total*0.025 ratios were fabricated and are gone.
+                const buckets = reqFunnel(r.id, candidates.data);
+                const max = buckets ? Math.max(1, ...buckets.map((b) => b.n)) : 1;
                 const risk = r.status === "ON_HOLD" || r.status === "CANCELLED" ? "at-risk" : "on-track";
                 const target = r.status;
                 return (
@@ -230,17 +261,21 @@ function HMDash() {
                       <span style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.title}</span>
                       <Pill tone={risk === "at-risk" ? "var(--c-danger)" : "var(--c-ok)"} bg={risk === "at-risk" ? "var(--c-danger-tint)" : "var(--c-ok-tint)"} icon={risk === "at-risk" ? "flag" : "check"}>{target}</Pill>
                     </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {funnel.map((n, j) => (
-                        <div key={j} style={{ flex: 1, textAlign: "center" }}>
-                          <div style={{ height: 34, borderRadius: 7, background: "var(--c-surface-2)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
-                            <div style={{ width: "100%", height: ((n / max) * 100) + "%", background: ["var(--c-ink-3)", "var(--c-info)", "var(--c-ai)", "var(--c-brand)"][j], borderRadius: 7, animation: "growy 1s var(--ease-out) both", animationDelay: (j * 90) + "ms" }} />
+                    {buckets ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {buckets.map((b, j) => (
+                          <div key={j} style={{ flex: 1, textAlign: "center" }}>
+                            <div style={{ height: 34, borderRadius: 7, background: "var(--c-surface-2)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
+                              <div style={{ width: "100%", height: ((b.n / max) * 100) + "%", background: b.color, borderRadius: 7, animation: "growy 1s var(--ease-out) both", animationDelay: (j * 90) + "ms" }} />
+                            </div>
+                            <div className="mono tnum" style={{ fontSize: 11, fontWeight: 600, marginTop: 3 }}>{b.n}</div>
+                            <div style={{ fontSize: 9, color: "var(--c-ink-3)" }}>{b.label}</div>
                           </div>
-                          <div className="mono tnum" style={{ fontSize: 11, fontWeight: 600, marginTop: 3 }}>{n}</div>
-                          <div style={{ fontSize: 9, color: "var(--c-ink-3)" }}>{labels[j]}</div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ height: 56 }}><EmptyChart label="No staged candidates yet" /></div>
+                    )}
                   </div>
                 );
               })}

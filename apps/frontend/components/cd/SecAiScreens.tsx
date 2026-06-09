@@ -6,6 +6,8 @@ import { Pill, ScoreRing, Reveal, KPICard, SectionCard } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { SecurityData, AiOpsData } from "./types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 
 export function SecurityScreen({ data, onReport }: { data: SecurityData; onReport?: () => void }) {
   const s = data;
@@ -31,7 +33,7 @@ export function SecurityScreen({ data, onReport }: { data: SecurityData; onRepor
                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px", borderRadius: "var(--r-lg)", border: "1px solid var(--line)", background: a.sev === "Medium" ? "var(--warn-tint)" : "var(--surface)" }}>
                   <span style={{ width: 34, height: 34, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0, color: a.sev === "Medium" ? "var(--warn)" : "var(--ink-2)", background: a.sev === "Medium" ? "var(--surface)" : "var(--surface-2)" }}><Icon name={a.icon} size={17} /></span>
                   <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{a.t}</div><div style={{ fontSize: 11.5, color: "var(--ink-3)" }}>{a.detail}</div></div>
-                  <Pill tone={a.sev === "Medium" ? "var(--warn)" : "var(--ink-3)"} bg="transparent">{a.sev}</Pill>
+                  <Pill tone={a.sev === "Medium" ? "var(--warn)" : "var(--ink-3)"} bg="transparent">{toTitleCase(a.sev)}</Pill>
                   <Btn variant="soft" size="sm">Resolve</Btn>
                 </div>
               ))}
@@ -56,6 +58,7 @@ const driftMeta: Record<string, [string, string]> = { stable: ["var(--ok)", "var
 
 export function AiOpsScreen({ data, onManagePrompts, onInvestigate }: { data: AiOpsData; onManagePrompts?: () => void; onInvestigate?: () => void }) {
   const a = data;
+  const { sorted: sortedAgents, sort, toggle } = useTableSort(a.agents, { key: "cost", dir: "desc" });
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -71,16 +74,16 @@ export function AiOpsScreen({ data, onManagePrompts, onInvestigate }: { data: Ai
 
         <Reveal i={4}><SectionCard title="Agent fleet" icon="cpu" action="Deploy agent" headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)">violet = AI</Pill>}>
           <div style={{ display: "grid", gridTemplateColumns: "1.6fr 110px 90px 90px 100px 90px", gap: 12, padding: "0 4px 9px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", borderBottom: "1px solid var(--line)" }}>
-            <span>Agent</span><span>Status</span><span style={{ textAlign: "right" }}>Accuracy</span><span style={{ textAlign: "right" }}>Drift</span><span style={{ textAlign: "right" }}>Cost/mo</span><span style={{ textAlign: "right" }}>Latency</span>
+            <SortHead label="Agent" sortKey="n" sort={sort} onSort={toggle} /><SortHead label="Status" sortKey="status" sort={sort} onSort={toggle} /><SortHead label="Accuracy" sortKey="acc" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Drift" sortKey="drift" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Cost/mo" sortKey="cost" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Latency" sortKey="lat" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} />
           </div>
-          {a.agents.map((ag, i) => {
+          {sortedAgents.map((ag, i) => {
             const [dc, db] = driftMeta[ag.drift] || driftMeta.stable;
             return (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "1.6fr 110px 90px 90px 100px 90px", gap: 12, alignItems: "center", padding: "11px 4px", borderTop: i ? "1px solid var(--line)" : "none" }}>
                 <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><span style={{ width: 26, height: 26, borderRadius: 7, display: "grid", placeItems: "center", background: "var(--ai-tint)", color: "var(--ai)", flexShrink: 0 }}><Icon name="cpu" size={14} /></span><span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ai-ink)" }}>{ag.n}</span></span>
-                <Pill tone={ag.status === "healthy" ? "var(--ok)" : "var(--warn)"} bg={ag.status === "healthy" ? "var(--ok-tint)" : "var(--warn-tint)"} icon={ag.status === "healthy" ? "check" : "eye"}>{ag.status}</Pill>
+                <Pill tone={ag.status === "healthy" ? "var(--ok)" : "var(--warn)"} bg={ag.status === "healthy" ? "var(--ok-tint)" : "var(--warn-tint)"} icon={ag.status === "healthy" ? "check" : "eye"}>{toTitleCase(ag.status)}</Pill>
                 <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>{ag.acc.toFixed(2)}</span>
-                <span style={{ textAlign: "right" }}><Pill tone={dc} bg={db} style={{ fontSize: 10 }}>{ag.drift}</Pill></span>
+                <span style={{ textAlign: "right" }}><Pill tone={dc} bg={db} style={{ fontSize: 10 }}>{toTitleCase(ag.drift)}</Pill></span>
                 <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>${ag.cost}</span>
                 <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--ink-3)" }}>{ag.lat}s</span>
               </div>

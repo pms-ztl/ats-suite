@@ -8,6 +8,8 @@ import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { IconName } from "./icon";
 import type { KPI, TenantsData, PlatformAgentsData, PromptsData, PlanRequestsData, PlatformAuditData } from "./types";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 
 const PLAN_T: Record<string, string> = { FREE: "var(--ink-3)", STARTER: "var(--info)", PROFESSIONAL: "var(--brand)", ENTERPRISE: "var(--ai)" };
 const HEALTH: Record<string, [string, string]> = { healthy: ["var(--ok)", "var(--ok-tint)"], watch: ["var(--warn)", "var(--warn-tint)"], over: ["var(--danger)", "var(--danger-tint)"], degraded: ["var(--warn)", "var(--warn-tint)"], paused: ["var(--ink-3)", "var(--surface-3)"], deployed: ["var(--ok)", "var(--ok-tint)"] };
@@ -18,15 +20,27 @@ function OpHead({ title, sub, right }: { title: string; sub: string; right?: Rea
       <p style={{ margin: "4px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-sm)" }}>{sub}</p></div>{right}</div>;
 }
 
-export function TenantsScreen({ data, onImpersonate, onExport }: { data: TenantsData; onImpersonate?: (name: string) => void; onExport?: () => void }) {
+export function TenantsScreen({ data, onImpersonate, onExport, charts, hero }: { data: TenantsData; onImpersonate?: (name: string) => void; onExport?: () => void; charts?: React.ReactNode; hero?: React.ReactNode }) {
   const [q, setQ] = useState("");
   const [imp, setImp] = useState<string | null>(null);
-  const rows = data.tenants.filter(t => !q || (t.name + t.plan).toLowerCase().includes(q.toLowerCase()));
+  const filtered = data.tenants.filter(t => !q || (t.name + t.plan).toLowerCase().includes(q.toLowerCase()));
+  const { sorted: rows, sort, toggle } = useTableSort(filtered, { key: "mrr", dir: "desc" });
   const cols = "1.8fr 110px 80px 90px 90px 90px 100px 110px";
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
       <OpHead title="Tenants" sub={data.summary} right={<Btn variant="soft" icon="arrowUpRight" onClick={onExport}>Export</Btn>} />
+      {hero && (
+        <section style={{ marginBottom: 18, borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)", overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
+            <Icon name="building" size={15} style={{ color: "var(--ai)" }} />
+            <h2 style={{ margin: 0, fontSize: "var(--fs-md)", fontWeight: 700 }}>Tenant spend landscape</h2>
+            <span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>drag to rotate</span>
+          </div>
+          <div style={{ padding: 14 }}>{hero}</div>
+        </section>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }} className="plat-kpis">{data.kpis.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}</div>
+      {charts}
       {imp && <div style={{ marginBottom: 14, padding: "12px 16px", borderRadius: "var(--r-lg)", background: "var(--ai-tint)", border: "1px solid color-mix(in oklab, var(--ai) 28%, transparent)", display: "flex", gap: 10, alignItems: "center" }}>
         <Icon name="bolt" size={17} style={{ color: "var(--ai)" }} /><span style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>Impersonation started for <b>{imp}</b>, a persistent safety banner now appears app-wide (switch role to Platform to see it). Auto-expires in 60:00.</span>
         <Btn variant="soft" size="sm" onClick={() => setImp(null)} style={{ marginLeft: "auto" }}>End</Btn>
@@ -36,17 +50,17 @@ export function TenantsScreen({ data, onImpersonate, onExport }: { data: Tenants
       </div>
       <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "auto", boxShadow: "var(--e1)" }}>
         <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "10px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", minWidth: 880 }}>
-          <span>Tenant</span><span>Plan</span><span style={{ textAlign: "right" }}>Users</span><span style={{ textAlign: "right" }}>MRR</span><span style={{ textAlign: "right" }}>Cost</span><span style={{ textAlign: "right" }}>Runs</span><span style={{ textAlign: "center" }}>Health</span><span></span>
+          <SortHead label="Tenant" sortKey="name" sort={sort} onSort={toggle} /><SortHead label="Plan" sortKey="plan" sort={sort} onSort={toggle} /><SortHead label="Users" sortKey="users" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="MRR" sortKey="mrr" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Cost" sortKey="cost" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Runs" sortKey="runs" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Health" sortKey="health" sort={sort} onSort={toggle} align="center" style={{ textAlign: "center" }} /><span></span>
         </div>
         {rows.map((t, i) => (
           <div key={t.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "11px 16px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", minWidth: 880 }}>
             <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}><span className="mono" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 10, background: "color-mix(in oklab," + PLAN_T[t.plan] + " 16%, var(--surface))", color: PLAN_T[t.plan] }}>{t.name.split(" ").map(w => w[0]).slice(0, 2).join("")}</span><div style={{ minWidth: 0 }}><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div><div className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)" }}>/{t.slug} · {t.created}</div></div></div>
-            <span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[t.plan], background: "color-mix(in oklab," + PLAN_T[t.plan] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5, justifySelf: "start" }}>{t.plan}</span>
+            <span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[t.plan], background: "color-mix(in oklab," + PLAN_T[t.plan] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5, justifySelf: "start" }}>{toTitleCase(t.plan)}</span>
             <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right" }}>{t.users}</span>
             <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>${t.mrr.toLocaleString()}</span>
             <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", color: t.health === "over" ? "var(--danger)" : "var(--ink-2)" }}>${t.cost}</span>
             <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--ink-3)" }}>{t.runs}</span>
-            <span style={{ justifySelf: "center" }}><Pill tone={(HEALTH[t.health] || HEALTH.healthy)[0]} bg={(HEALTH[t.health] || HEALTH.healthy)[1]} icon={t.health === "healthy" ? "check" : t.health === "over" ? "flag" : "eye"} style={{ fontSize: 10 }}>{t.health}</Pill></span>
+            <span style={{ justifySelf: "center" }}><Pill tone={(HEALTH[t.health] || HEALTH.healthy)[0]} bg={(HEALTH[t.health] || HEALTH.healthy)[1]} icon={t.health === "healthy" ? "check" : t.health === "over" ? "flag" : "eye"} style={{ fontSize: 10 }}>{toTitleCase(t.health)}</Pill></span>
             <Btn variant="outlineAi" size="sm" icon="eye" onClick={() => { setImp(t.name); onImpersonate?.(t.name); }} style={{ justifySelf: "end" }}>Impersonate</Btn>
           </div>
         ))}
@@ -57,7 +71,8 @@ export function TenantsScreen({ data, onImpersonate, onExport }: { data: Tenants
 
 export function PlatformAgentsScreen({ data }: { data: PlatformAgentsData }) {
   const [agents, setAgents] = useState(data.agents.map(a => ({ ...a })));
-  const toggle = (n: string) => setAgents(agents.map(a => a.n === n ? { ...a, status: a.status === "paused" ? "deployed" : "paused" } : a));
+  const toggleKill = (n: string) => setAgents(agents.map(a => a.n === n ? { ...a, status: a.status === "paused" ? "deployed" : "paused" } : a));
+  const { sorted: sortedAgents, sort, toggle } = useTableSort(agents, { key: "cost", dir: "desc" });
   const cols = "1.5fr 90px 90px 100px 80px 120px 130px";
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -67,17 +82,17 @@ export function PlatformAgentsScreen({ data }: { data: PlatformAgentsData }) {
       </div>
       <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "auto", boxShadow: "var(--e1)" }}>
         <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "10px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", minWidth: 760 }}>
-          <span>Agent</span><span style={{ textAlign: "right" }}>Tenants</span><span style={{ textAlign: "right" }}>Runs</span><span style={{ textAlign: "right" }}>Cost/mo</span><span style={{ textAlign: "right" }}>Err %</span><span style={{ textAlign: "center" }}>Status</span><span style={{ textAlign: "right" }}>Kill-switch</span>
+          <SortHead label="Agent" sortKey="n" sort={sort} onSort={toggle} /><SortHead label="Tenants" sortKey="tenants" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Runs" sortKey="runs" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Cost/mo" sortKey="cost" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Err %" sortKey="err" sort={sort} onSort={toggle} align="right" style={{ textAlign: "right" }} /><SortHead label="Status" sortKey="status" sort={sort} onSort={toggle} align="center" style={{ textAlign: "center" }} /><span style={{ textAlign: "right" }}>Kill-switch</span>
         </div>
-        {agents.map((a, i) => (
+        {sortedAgents.map((a, i) => (
           <div key={a.n} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "12px 16px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", opacity: a.status === "paused" ? 0.6 : 1, minWidth: 760 }}>
             <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><span style={{ width: 26, height: 26, borderRadius: 7, display: "grid", placeItems: "center", background: "var(--ai-tint)", color: "var(--ai)", flexShrink: 0 }}><Icon name="cpu" size={14} /></span><span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ai-ink)" }}>{a.n}</span></span>
             <span className="mono tnum" style={{ fontSize: 12, textAlign: "right" }}>{a.tenants}</span>
             <span className="mono tnum" style={{ fontSize: 12, textAlign: "right" }}>{a.runs}</span>
             <span className="mono tnum" style={{ fontSize: 12.5, textAlign: "right", fontWeight: 600 }}>${a.cost.toLocaleString()}</span>
             <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: a.err > 1.5 ? "var(--danger)" : "var(--ink-3)" }}>{a.err}</span>
-            <span style={{ justifySelf: "center" }}><Pill tone={(HEALTH[a.status] || HEALTH.deployed)[0]} bg={(HEALTH[a.status] || HEALTH.deployed)[1]} icon={a.status === "deployed" ? "check" : a.status === "degraded" ? "eye" : "x"} style={{ fontSize: 10 }}>{a.status}</Pill></span>
-            <button onClick={() => toggle(a.n)} style={{ justifySelf: "end", display: "inline-flex", gap: 6, alignItems: "center", padding: "5px 11px", borderRadius: "var(--r-pill)", border: "1px solid", borderColor: a.status === "paused" ? "var(--brand)" : "var(--danger)", background: a.status === "paused" ? "var(--brand-tint)" : "var(--danger-tint)", color: a.status === "paused" ? "var(--brand-ink)" : "var(--danger)", cursor: "pointer", fontSize: 11.5, fontWeight: 700 }}>
+            <span style={{ justifySelf: "center" }}><Pill tone={(HEALTH[a.status] || HEALTH.deployed)[0]} bg={(HEALTH[a.status] || HEALTH.deployed)[1]} icon={a.status === "deployed" ? "check" : a.status === "degraded" ? "eye" : "x"} style={{ fontSize: 10 }}>{toTitleCase(a.status)}</Pill></span>
+            <button onClick={() => toggleKill(a.n)} style={{ justifySelf: "end", display: "inline-flex", gap: 6, alignItems: "center", padding: "5px 11px", borderRadius: "var(--r-pill)", border: "1px solid", borderColor: a.status === "paused" ? "var(--brand)" : "var(--danger)", background: a.status === "paused" ? "var(--brand-tint)" : "var(--danger-tint)", color: a.status === "paused" ? "var(--brand-ink)" : "var(--danger)", cursor: "pointer", fontSize: 11.5, fontWeight: 700 }}>
               <Icon name={a.status === "paused" ? "check" : "x"} size={12} />{a.status === "paused" ? "Resume" : "Pause"}</button>
           </div>
         ))}
@@ -133,7 +148,7 @@ export function PlanRequestsScreen({ data, onApprove, onDeny }: { data: PlanRequ
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}><span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>{r.tenant}</span>
-                  <span style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 12 }}><span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[r.from], background: "color-mix(in oklab," + PLAN_T[r.from] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5 }}>{r.from}</span><Icon name="arrowUpRight" size={13} style={{ color: "var(--ink-3)" }} /><span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[r.to], background: "color-mix(in oklab," + PLAN_T[r.to] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5 }}>{r.to}</span></span>
+                  <span style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 12 }}><span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[r.from], background: "color-mix(in oklab," + PLAN_T[r.from] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5 }}>{toTitleCase(r.from)}</span><Icon name="arrowUpRight" size={13} style={{ color: "var(--ink-3)" }} /><span style={{ fontSize: 9.5, fontWeight: 800, color: PLAN_T[r.to], background: "color-mix(in oklab," + PLAN_T[r.to] + " 13%, transparent)", padding: "2px 7px", borderRadius: 5 }}>{toTitleCase(r.to)}</span></span>
                   <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{r.mrr} MRR</Pill></div>
                 <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 6 }}>{r.reason}</div>
                 <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 3 }}>{r.by} · {r.when} ago</div>

@@ -40,7 +40,9 @@ export function FairnessLive() {
     range: "Last 30 days",
     totals: [["Groups analyzed", String(metrics.length)], ["Flagged", String(metrics.filter((m) => m.flagged).length)]],
     attributes,
+    // No real intersectional grid is exposed by the gateway; the screen renders an
+    // honest EmptyChart for it, so these stay empty (never fabricated cells).
     heatmap: { subtitle: "", cols: [], rows: [], okThreshold: 0.18 },
   };
-  return <FairnessScreen data={data} />;
+  return <FairnessScreen data={data} metrics={metrics} />;
 }

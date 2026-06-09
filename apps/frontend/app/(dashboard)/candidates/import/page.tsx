@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { importCandidates } from "@/lib/api";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
 
 /* ---------------- Bulk import ---------------- */
 const IMPORT_COLS = [
@@ -33,6 +34,9 @@ const PREVIEW_ROWS: string[][] = [
   ["Leo Fontaine", ", ", "Security Eng", "Inbound"],
   ["Ben Carter", "ben.c@mail.com", "Marketer", "Job board"],
 ];
+// Object view-model over PREVIEW_ROWS so the preview table can be sorted by column
+// without changing what each cell renders (cells still read name/email/headline/source).
+const PREVIEW_OBJ = PREVIEW_ROWS.map(([name, email, headline, source]) => ({ name, email, headline, source }));
 
 export default function ImportScreen() {
   const onBack = () => { window.location.href = "/candidates"; };
@@ -71,6 +75,9 @@ export default function ImportScreen() {
   };
 
   const importedLabel = imported !== null ? imported.toLocaleString() : "409";
+
+  // Sort state for the step-3 preview table (default by candidate name, ascending).
+  const { sorted: previewSorted, sort: previewSort, toggle: togglePreview } = useTableSort(PREVIEW_OBJ, { key: "name", dir: "asc" });
 
   return (
     <div className="mx-auto w-full max-w-[1200px]">
@@ -136,11 +143,14 @@ export default function ImportScreen() {
               </div>
               <div style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", overflow: "hidden" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1.6fr 1fr 1fr", gap: 10, padding: "9px 13px", background: "var(--c-surface-2)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--c-ink-3)" }}>
-                  <span>Name</span><span>Email</span><span>Headline</span><span>Source</span>
+                  <SortHead label="Name" sortKey="name" sort={previewSort} onSort={togglePreview} />
+                  <SortHead label="Email" sortKey="email" sort={previewSort} onSort={togglePreview} />
+                  <SortHead label="Headline" sortKey="headline" sort={previewSort} onSort={togglePreview} />
+                  <SortHead label="Source" sortKey="source" sort={previewSort} onSort={togglePreview} />
                 </div>
-                {PREVIEW_ROWS.map((r, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1.6fr 1fr 1fr", gap: 10, padding: "9px 13px", borderTop: "1px solid var(--c-line)", fontSize: 12.5, background: r[1] === ", " ? "var(--c-warn-tint)" : "transparent" }}>
-                    <span style={{ fontWeight: 600 }}>{r[0]}</span><span className="mono" style={{ color: r[1] === ", " ? "var(--c-warn)" : "var(--c-ink-2)" }}>{r[1]}</span><span style={{ color: "var(--c-ink-2)" }}>{r[2]}</span><span style={{ color: "var(--c-ink-2)" }}>{r[3]}</span>
+                {previewSorted.map((r, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1.6fr 1fr 1fr", gap: 10, padding: "9px 13px", borderTop: "1px solid var(--c-line)", fontSize: 12.5, background: r.email === ", " ? "var(--c-warn-tint)" : "transparent" }}>
+                    <span style={{ fontWeight: 600 }}>{r.name}</span><span className="mono" style={{ color: r.email === ", " ? "var(--c-warn)" : "var(--c-ink-2)" }}>{r.email}</span><span style={{ color: "var(--c-ink-2)" }}>{r.headline}</span><span style={{ color: "var(--c-ink-2)" }}>{r.source}</span>
                   </div>
                 ))}
               </div>

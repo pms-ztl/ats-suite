@@ -194,6 +194,28 @@ export async function listPlatformTenants(): Promise<PlatformTenant[]> {
 export async function getTenantDetail(id: string): Promise<any> {
   try { return (await raw("GET", `/super-admin/tenants/${encodeURIComponent(id)}/detail`))?.data ?? null; } catch { return null; }
 }
+// Cross-tenant AI cost rollup (billing-service AgentRunCost, last `days`).
+// Returns real per-tenant / per-agent / per-day spend; empty if no AI usage yet.
+export interface PlatformCostRollup {
+  periodDays: number;
+  totals: { runs: number; costUsd: number; tokensIn: number; tokensOut: number };
+  byTenant: { tenantId: string; plan: string; runs: number; costUsd: number; tokensIn: number; tokensOut: number }[];
+  byAgent: { agentType: string; runs: number; costUsd: number }[];
+  byDay: { day: string; costUsd: number; runs: number }[];
+}
+export async function getPlatformCost(days = 30): Promise<PlatformCostRollup> {
+  const empty: PlatformCostRollup = { periodDays: days, totals: { runs: 0, costUsd: 0, tokensIn: 0, tokensOut: 0 }, byTenant: [], byAgent: [], byDay: [] };
+  try {
+    const r: any = (await raw("GET", `/super-admin/platform/cost?days=${days}`))?.data ?? {};
+    return {
+      periodDays: r.periodDays ?? days,
+      totals: r.totals ?? empty.totals,
+      byTenant: Array.isArray(r.byTenant) ? r.byTenant : [],
+      byAgent: Array.isArray(r.byAgent) ? r.byAgent : [],
+      byDay: Array.isArray(r.byDay) ? r.byDay : [],
+    };
+  } catch { return empty; }
+}
 export async function listPlanRequests(): Promise<any[]> {
   try { return arr(await raw("GET", "/super-admin/plan-change-requests")); } catch { return []; }
 }

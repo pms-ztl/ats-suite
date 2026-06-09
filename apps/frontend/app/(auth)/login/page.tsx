@@ -162,7 +162,10 @@ export default function LoginPage() {
       setError("No single sign-on is configured for that email domain.");
     } catch { setError("Could not reach the SSO service."); }
   }
-  const oauth = (provider: string) => { window.location.href = `${API_BASE}/auth/oauth/${provider}`; };
+  const oauth = (provider: string) => {
+    const name = provider === "google" ? "Google" : provider === "microsoft" ? "Microsoft" : provider;
+    setError(`${name} sign-in isn't enabled for this workspace yet. Please sign in with your work email and password below.`);
+  };
 
   return (
     <div className={"authx" + (settled ? " settled" : "")}>

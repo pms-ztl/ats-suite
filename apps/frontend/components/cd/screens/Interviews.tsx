@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Icon, type IconName } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill } from "../aurora-kit";
+import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { toTitleCase } from "@/lib/utils";
 import type { InterviewsData, InterviewDetail } from "../types";
 
 const recTone: Record<string, string> = { STRONG_YES: "var(--ok)", YES: "var(--ok)", NEUTRAL: "var(--warn)", NO: "var(--danger)", STRONG_NO: "var(--danger)" };
@@ -16,7 +18,9 @@ function Dots({ n }: { n: number }) { return <span style={{ display: "inline-fle
 function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (id: string) => void; onSchedule?: () => void }) {
   const [filter, setFilter] = useState("all");
   const all = data.interviews ?? [];
-  const rows = all.filter((r) => filter === "all" || r.status === filter);
+  const filtered = all.filter((r) => filter === "all" || r.status === filter);
+  const { sorted: rows, sort, toggle } = useTableSort(filtered, { key: "when", dir: "desc" });
+  const headCell: React.CSSProperties = { fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)" };
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -32,19 +36,26 @@ function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (i
         </div>
         {rows.length === 0 ? <EmptyHint icon="calendar" text="No interviews in this view." /> : (
           <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1fr 130px 120px", gap: 12, padding: "11px 18px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", alignItems: "center" }}>
+              <SortHead label="Candidate" sortKey="name" sort={sort} onSort={toggle} className="" style={headCell} />
+              <SortHead label="Round" sortKey="round" sort={sort} onSort={toggle} className="" style={headCell} />
+              <SortHead label="When" sortKey="when" sort={sort} onSort={toggle} className="" style={headCell} />
+              <span style={headCell}>Panel</span>
+              <SortHead label="Status" sortKey="status" sort={sort} onSort={toggle} className="" style={headCell} align="right" />
+            </div>
             {rows.map((r, i) => {
               const t = data.types[r.type], st = data.statusMeta[r.status];
               return (
-                <div key={r.id} onClick={() => onOpen(r.id)} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1fr 130px 120px", gap: 12, padding: "13px 18px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", transition: "background var(--t-fast)" }}
+                <div key={r.id} onClick={() => onOpen(r.id)} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1fr 130px 120px", gap: 12, padding: "13px 18px", alignItems: "center", borderTop: "1px solid var(--line)", cursor: "pointer", transition: "background var(--t-fast)" }}
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", gap: 11, alignItems: "center", minWidth: 0 }}>
                     <span className="mono" style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{r.ini}</span>
                     <div style={{ minWidth: 0 }}><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{r.role} · <span className="mono">{r.reqId}</span></div></div>
                   </div>
-                  <div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{r.round}</div><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"} style={{ fontSize: 10, marginTop: 2 }}>{t.label}</Pill></div>
-                  <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>{r.when}<div style={{ fontSize: 11, color: "var(--ink-3)" }}>{r.dur}m · {r.mode}</div></div>
+                  <div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{r.round}</div><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"} style={{ fontSize: 10, marginTop: 2 }}>{toTitleCase(t.label)}</Pill></div>
+                  <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>{r.when}<div style={{ fontSize: 11, color: "var(--ink-3)" }}>{r.dur}m · {toTitleCase(r.mode)}</div></div>
                   <div style={{ display: "flex", marginLeft: 2 }}>{r.panel.slice(0, 3).map((p, j) => <span key={j} title={p} className="mono" style={{ width: 26, height: 26, borderRadius: 99, marginLeft: j ? -8 : 0, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, background: "var(--surface-3)", color: "var(--ink-2)", border: "2px solid var(--surface)" }}>{p.split(" ").map((w) => w[0]).join("")}</span>)}</div>
-                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center", justifySelf: "end", fontSize: 11, fontWeight: 700, color: st.tone, background: st.bg, padding: "3px 10px", borderRadius: 99 }}><Icon name={st.icon} size={11} />{st.label}</span>
+                  <span style={{ display: "inline-flex", gap: 6, alignItems: "center", justifySelf: "end", fontSize: 11, fontWeight: 700, color: st.tone, background: st.bg, padding: "3px 10px", borderRadius: 99 }}><Icon name={st.icon} size={11} />{toTitleCase(st.label)}</span>
                 </div>
               );
             })}
@@ -64,7 +75,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
           <span className="mono" style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white", fontWeight: 700, fontSize: 16 }}>{d.ini}</span>
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>{d.name}</h1><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"}>{t.label}</Pill></div>
+            <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>{d.name}</h1><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"}>{toTitleCase(t.label)}</Pill></div>
             <div style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>{d.round} · {d.role} · <span className="mono">{d.reqId}</span></div>
           </div>
           <Btn variant="soft" icon="calendar">Reschedule</Btn>
@@ -76,7 +87,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
             <div style={{ borderRadius: "var(--r-xl)", border: "1px solid color-mix(in oklab, var(--ai) 22%, var(--line))", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "linear-gradient(110deg, var(--ai-tint), transparent 65%)", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ display: "flex", gap: 9, alignItems: "center" }}><Icon name="sparkles" size={16} style={{ color: "var(--ai)" }} /><span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Interview intelligence</span><Pill mono tone="var(--ai-ink)" bg="var(--ai-tint-2)">interview-intelligence</Pill></div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}><Pill tone="var(--ok)" bg="var(--ok-tint)" icon="check">{d.ai.rec}</Pill><Pill mono tone="var(--ai-ink)" bg="var(--ai-tint)">conf {d.ai.confidence.toFixed(2)}</Pill></div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}><Pill tone="var(--ok)" bg="var(--ok-tint)" icon="check">{toTitleCase(d.ai.rec)}</Pill><Pill mono tone="var(--ai-ink)" bg="var(--ai-tint)">conf {d.ai.confidence.toFixed(2)}</Pill></div>
               </div>
               <div style={{ padding: 18 }}>
                 <p style={{ margin: "0 0 16px", fontSize: "var(--fs-sm)", color: "var(--ink-2)", lineHeight: 1.6 }}>{d.ai.summary}</p>
@@ -86,7 +97,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
                     const rt = s.rating === "strong" ? "var(--ok)" : s.rating === "adequate" ? "var(--warn)" : "var(--danger)";
                     return (
                       <div key={i} style={{ padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ fontWeight: 600, fontSize: 12.5 }}>{s.skill}</span><Pill tone={rt} bg={"color-mix(in oklab," + rt + " 13%, transparent)"} style={{ fontSize: 10 }}>{s.rating}</Pill></div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ fontWeight: 600, fontSize: 12.5 }}>{s.skill}</span><Pill tone={rt} bg={"color-mix(in oklab," + rt + " 13%, transparent)"} style={{ fontSize: 10 }}>{toTitleCase(s.rating)}</Pill></div>
                         <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 5, fontStyle: "italic", lineHeight: 1.45 }}>{s.quote}{s.note && <span style={{ fontStyle: "normal", color: "var(--ink-3)" }}>, {s.note}</span>}</div>
                       </div>
                     );
@@ -106,8 +117,8 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
                   <div key={i} style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--line)", padding: 14, background: p.status === "pending" ? "var(--surface-2)" : "var(--surface)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", gap: 9, alignItems: "center" }}><span className="mono" style={{ width: 28, height: 28, borderRadius: 99, background: "var(--surface-3)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, color: "var(--ink-2)" }}>{p.who.split(" ").map((w) => w[0]).join("")}</span><div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{p.who}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{p.role}</div></div></div>
-                      {p.status === "submitted" ? <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>{p.overall}</span><Pill tone={recTone[p.rec]} bg={"color-mix(in oklab," + recTone[p.rec] + " 13%, transparent)"}>{p.rec.replace("_", " ")}</Pill></div>
-                        : <Pill icon="clock" tone="var(--warn)" bg="var(--warn-tint)">pending</Pill>}
+                      {p.status === "submitted" ? <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>{p.overall}</span><Pill tone={recTone[p.rec]} bg={"color-mix(in oklab," + recTone[p.rec] + " 13%, transparent)"}>{toTitleCase(p.rec)}</Pill></div>
+                        : <Pill icon="clock" tone="var(--warn)" bg="var(--warn-tint)">Pending</Pill>}
                     </div>
                     {p.status === "submitted" && <>
                       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", margin: "10px 0 8px" }}>{p.dims.map((dm) => <div key={dm.d} style={{ display: "flex", gap: 7, alignItems: "center" }}><span style={{ fontSize: 11.5, color: "var(--ink-2)" }}>{dm.d}</span><Dots n={dm.s} /></div>)}</div>
@@ -122,7 +133,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
               <div style={{ ...LABEL, marginBottom: 4 }}>Details</div>
-              {([["When", d.when], ["Duration", d.dur + " min"], ["Mode", d.mode], ["Round", d.round]] as [string, string][]).map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderTop: "1px solid var(--line)", fontSize: 12.5 }}><span style={{ color: "var(--ink-3)" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span></div>)}
+              {([["When", d.when], ["Duration", d.dur + " min"], ["Mode", toTitleCase(d.mode)], ["Round", d.round]] as [string, string][]).map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderTop: "1px solid var(--line)", fontSize: 12.5 }}><span style={{ color: "var(--ink-3)" }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span></div>)}
               <a style={{ display: "flex", gap: 7, alignItems: "center", marginTop: 12, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--brand-tint)", color: "var(--brand-ink)", fontWeight: 600, fontSize: 12.5, textDecoration: "none", cursor: "pointer" }}><Icon name="enter" size={15} />Join video call</a>
             </div>
             <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>

@@ -9,6 +9,12 @@
       "autoPort": true
     },
     {
+      "name": "frontend-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start", "--workspace=@cdc-ats/frontend"],
+      "port": 3000
+    },
+    {
       "name": "ats-frontend",
       "runtimeExecutable": "node",
       "runtimeArgs": ["-e", "console.log('already running via npm run dev')"],

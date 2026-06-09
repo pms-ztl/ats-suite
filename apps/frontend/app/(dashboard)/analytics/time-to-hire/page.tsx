@@ -7,14 +7,16 @@
 // HONEST WIRING: the allowed data layer exposes GET /analytics/time-to-hire, which
 // today returns avg/median/p90 = null and empty byDepartment / trendByMonth until a
 // per-application timestamp-history endpoint lands (see api-gateway aggregators). So
-// the rich layout is preserved verbatim, but the TrendArea and the by-department
-// breakdown render an EmptyState when their series is empty - never a fabricated
-// number. The KPI strip (avg / median / fastest dept) is derived ONLY from whatever
-// the endpoint actually returns; absent values read as a dash, not an invented day.
+// the rich layout is preserved verbatim, but the kit TrendChart and the by-department
+// BarsChart render the real series when present and an EmptyChart ("awaiting analytics
+// aggregator") when empty - never a fabricated number. The KPI strip (avg / median /
+// fastest dept) is derived ONLY from whatever the endpoint actually returns; absent
+// values read as a dash, not an invented day.
 import { useEffect, useState } from "react";
-import { KpiRow, SectionCard, TrendArea, Reveal, Pill, Btn, type Kpi } from "@/components/aurora-kit";
+import { KpiRow, SectionCard, Reveal, Pill, Btn, type Kpi } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
+import { TrendChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 /* ----------------------------- local data layer ----------------------------- */
 // Local raw() (per task rules: do NOT edit lib/api.ts). Mirrors lib/api.ts: bearer
@@ -36,6 +38,7 @@ async function raw(method: string, path: string, body?: unknown): Promise<any> {
 }
 
 type DeptRow = { dept: string; days: number };
+type TrendRow = { label: string; avgDays: number; medianDays: number; p90Days: number; hires: number };
 type TthData = {
   avgDays: number | null;
   medianDays: number | null;
@@ -43,6 +46,7 @@ type TthData = {
   byDept: DeptRow[];
   trend: number[];
   trendLabels: string[];
+  trendRows: TrendRow[];
   hiredCount: number;
   note?: string;
 };
@@ -64,8 +68,15 @@ function normalize(out: any): TthData {
 
   const trendRaw: any[] = Array.isArray(out?.trendByMonth) ? out.trendByMonth
     : Array.isArray(out?.trend) ? out.trend : [];
-  const trend = trendRaw.map((p) => Number(p?.days ?? p?.value ?? p?.avgDays ?? p?.medianDays ?? p) || 0);
-  const trendLabels = trendRaw.map((p, i) => String(p?.month ?? p?.label ?? p?.period ?? p?.date ?? `M${i + 1}`));
+  const trend = trendRaw.map((p) => Number(p?.avgDays ?? p?.days ?? p?.value ?? p?.medianDays ?? p) || 0);
+  const trendLabels = trendRaw.map((p, i) => String(p?.label ?? p?.month ?? p?.period ?? p?.date ?? `M${i + 1}`));
+  const trendRows: TrendRow[] = trendRaw.map((p, i) => ({
+    label: String(p?.label ?? p?.month ?? p?.period ?? `M${i + 1}`),
+    avgDays: Number(p?.avgDays ?? p?.days ?? p?.value ?? 0) || 0,
+    medianDays: Number(p?.medianDays ?? p?.avgDays ?? p?.days ?? 0) || 0,
+    p90Days: Number(p?.p90Days ?? p?.avgDays ?? p?.days ?? 0) || 0,
+    hires: Number(p?.hires ?? 0) || 0,
+  }));
 
   return {
     avgDays: num(out?.avgDays ?? out?.average ?? out?.mean),
@@ -74,6 +85,7 @@ function normalize(out: any): TthData {
     byDept,
     trend,
     trendLabels,
+    trendRows,
     hiredCount: Number(out?.hiredCount ?? out?.hiredApplications ?? 0),
     note: typeof out?.note === "string" ? out.note : undefined,
   };
@@ -112,9 +124,13 @@ export default function TimeToHirePage() {
   const d = tth.data;
 
   const byDept = d?.byDept ?? [];
-  const maxDept = byDept.reduce((m, x) => Math.max(m, x.days), 0) || 1;
   const fastest = byDept.length ? byDept.reduce((a, b) => (b.days < a.days ? b : a)) : null;
   const trendReady = !!d && d.trend.length > 1;
+  // Real monthly trend rows (avg + median + p90) from /api/analytics/time-to-hire.
+  const trendData = (d?.trendRows ?? []).map((r, i) => ({
+    period: r.label || d?.trendLabels[i] || `M${i + 1}`,
+    avgDays: r.avgDays, medianDays: r.medianDays, p90Days: r.p90Days,
+  }));
 
   // KPI strip - avg / median / fastest dept - derived ONLY from the real payload.
   const kpis: Kpi[] = [
@@ -173,12 +189,24 @@ export default function TimeToHirePage() {
           <SectionCard title="Time-to-hire trend" icon="chart" headRight={trendReady ? <Pill mono tone="var(--c-ink-2)" bg="var(--c-surface-2)" icon="clock">{d!.trend.length} periods</Pill> : undefined}>
             {tth.loading && <Skeleton className="h-48 rounded-lg" />}
             {tth.error && <ErrorState title="Trend unavailable" body="Could not load the time-to-hire trend." code="GET /api/analytics/time-to-hire" onRetry={tth.reload} />}
-            {!tth.loading && !tth.error && trendReady && <TrendArea data={d!.trend} labels={d!.trendLabels} />}
+            {!tth.loading && !tth.error && trendReady && (
+              <div style={{ height: 220 }}>
+                <TrendChart
+                  data={trendData}
+                  xKey="period"
+                  series={[
+                    { key: "avgDays", name: "Avg days", color: CHART_COLORS.brand, type: "area" },
+                    { key: "medianDays", name: "Median", color: CHART_COLORS.info, type: "line", dashed: true },
+                    { key: "p90Days", name: "P90", color: CHART_COLORS.violet, type: "line", dashed: true },
+                  ]}
+                  valueFormatter={(v) => `${Math.round(Number(v))}d`}
+                />
+              </div>
+            )}
             {!tth.loading && !tth.error && !trendReady && (
-              <EmptyState
-                title="No trend yet"
-                body={d?.note ?? "The monthly time-to-hire series is not available from the current analytics endpoint. It fills in once hires accumulate a dated timeline."}
-              />
+              <div style={{ height: 220 }}>
+                <EmptyChart label="Time-to-hire trend - awaiting analytics aggregator" />
+              </div>
             )}
           </SectionCard>
         </Reveal>
@@ -187,19 +215,20 @@ export default function TimeToHirePage() {
             {tth.loading && <Skeleton className="h-40 rounded-lg" />}
             {tth.error && <ErrorState title="Breakdown unavailable" body="Could not load per-department time-to-hire." code="GET /api/analytics/time-to-hire" onRetry={tth.reload} />}
             {!tth.loading && !tth.error && byDept.length === 0 && (
-              <EmptyState title="No department breakdown" body="Per-department time-to-hire appears once enough roles have completed a full hire cycle." />
+              <div style={{ height: 200 }}>
+                <EmptyChart label="By department - awaiting analytics aggregator" />
+              </div>
             )}
             {!tth.loading && !tth.error && byDept.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                {byDept.map((row, i) => (
-                  <div key={row.dept} style={{ display: "grid", gridTemplateColumns: "92px 1fr 56px", gap: 10, alignItems: "center" }}>
-                    <span style={{ fontSize: 12, color: "var(--c-ink-2)", fontWeight: 500 }}>{row.dept}</span>
-                    <div style={{ height: 16, borderRadius: 6, background: "var(--c-surface-2)", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: ((row.days / maxDept) * 100) + "%", borderRadius: 6, background: row.days > 28 ? "var(--c-warn)" : "var(--c-brand)", animation: "growx 1s var(--ease-out) both", animationDelay: (i * 80) + "ms" }} />
-                    </div>
-                    <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: "right" }}>{fmtDays(row.days)}d</span>
-                  </div>
-                ))}
+              <div style={{ height: Math.max(180, byDept.length * 36 + 36) }}>
+                <BarsChart
+                  data={byDept.slice().sort((a, b) => b.days - a.days)}
+                  categoryKey="dept"
+                  layout="horizontal"
+                  series={[{ key: "days", name: "Days to hire" }]}
+                  valueFormatter={(v) => `${fmtDays(Number(v))}d`}
+                  colorFn={(row) => (row.days > 28 ? CHART_COLORS.warn : CHART_COLORS.brand)}
+                />
               </div>
             )}
           </SectionCard>

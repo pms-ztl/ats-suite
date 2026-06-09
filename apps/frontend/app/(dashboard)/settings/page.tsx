@@ -27,6 +27,7 @@ import { useState } from "react";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon, Logo } from "@/components/aurora-icon";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { toTitleCase } from "@/lib/utils";
 
 type CSS = React.CSSProperties;
 
@@ -136,7 +137,7 @@ function PTeam() {
         <div key={i} style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 110px 70px 36px", gap: 12, alignItems: "center", padding: "12px 18px", borderTop: i ? "1px solid var(--c-line)" : "none" }}>
           <div style={{ display: "flex", gap: 11, alignItems: "center" }}><span className="mono" style={{ width: 32, height: 32, borderRadius: 8, background: m.status === "invited" ? "var(--c-surface-3)" : "linear-gradient(135deg, var(--c-brand), var(--c-ai))", color: m.status === "invited" ? "var(--c-ink-3)" : "white", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11 }}>{m.ini}</span><div><div style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>{m.name}</div><div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{m.email}</div></div></div>
           <select defaultValue={m.role} style={{ ...inp, padding: "6px 8px", cursor: "pointer", width: "auto" }}>{ROLE_NAMES.map(r => <option key={r}>{r}</option>)}<option>Compliance Officer</option></select>
-          <Pill tone={m.status === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg={m.status === "active" ? "var(--c-ok-tint)" : "var(--c-warn-tint)"} icon={m.status === "active" ? "check" : "clock"}>{m.status}</Pill>
+          <Pill tone={m.status === "active" ? "var(--c-ok)" : "var(--c-warn)"} bg={m.status === "active" ? "var(--c-ok-tint)" : "var(--c-warn-tint)"} icon={m.status === "active" ? "check" : "clock"}>{toTitleCase(m.status)}</Pill>
           <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{m.last}</span>
           <button style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", color: "var(--c-ink-3)", cursor: "pointer" }}><Icon name="settings" size={15} /></button>
         </div>

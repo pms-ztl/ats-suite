@@ -159,7 +159,7 @@ export default function WelcomePage() {
             <h1 className="fu" style={{ animationDelay: ".1s" }}>Hire with <em>clarity</em>, not guesswork.</h1>
             <p className="sub fu" style={{ animationDelay: ".2s" }}>Evidence-backed AI agents screen, draft, and audit your hiring, so your team moves faster and a human always makes the final call.</p>
             <div className="ctas fu" style={{ animationDelay: ".3s" }}>
-              <a href="/contact"><button className="btn-primary" style={{ padding: "12px 24px" }}>Book a demo</button></a>
+              <a href="/login"><button className="btn-primary" style={{ padding: "12px 24px" }}>Sign in</button></a>
               <button className="play" aria-label="Watch overview"><svg width="15" height="15" viewBox="0 0 24 24" fill="hsl(var(--foreground))"><path d="M8 5v14l11-7z" /></svg></button>
             </div>
 

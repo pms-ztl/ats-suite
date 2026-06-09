@@ -380,8 +380,8 @@ export default function LandingDarkPage() {
             <h1>Your hiring.<br /><span className="shiny">Reinvented</span></h1>
             <p>TalentFlow is the applicant-tracking platform for the AI era. It screens, drafts, and audits with cited evidence, so every decision is faster, fairer, and made by a human.</p>
             <div className="cta">
-              <a href="/get-started"><button className="pill">Start hiring free <svg className="ch" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg></button></a>
-              <span className="note">Free forever for your first role · no card required</span>
+              <a href="/login"><button className="pill">Sign in <svg className="ch" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg></button></a>
+              <span className="note">Sign in to your TalentFlow workspace</span>
             </div>
           </section>
         </div>
