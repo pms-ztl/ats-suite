@@ -252,6 +252,9 @@ services:
       S3_ACCESS_KEY_ID: minioadmin
       S3_SECRET_ACCESS_KEY: minioadmin
       S3_FORCE_PATH_STYLE: "true"
+      # OCR fallback for scanned-image PDFs + image resume uploads (tesseract.js).
+      # Slow (~1-3s/page) and downloads a ~12MB model on first use, so it is opt-in.
+      ENABLE_OCR: "true"
 
   screening-service:
     <<: *svc-defaults

@@ -97,6 +97,27 @@ export async function importCandidates(file: FormData): Promise<{ imported: numb
   const res: any = await r.json();
   return { imported: Number(res?.imported ?? res?.data?.imported ?? 0), flagged: Number(res?.flagged ?? res?.data?.flagged ?? 0) };
 }
+// Bulk resume-file upload -> POST /api/resume/bulk (multipart, field "resumes").
+// The backend extracts text (PDF/DOCX/DOC/TXT, plus images via OCR), creates a
+// candidate per file, and the AI resume-parser backfills name/email/skills.
+export async function bulkUploadResumes(
+  form: FormData,
+): Promise<{ bulkUploadId?: string; totalFiles: number; enqueued: number; failed: number }> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/resume/bulk`, {
+    method: "POST", credentials: "include",
+    headers: { ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: form,
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /resume/bulk -> ${r.status}`);
+  const d = res?.data ?? res;
+  return {
+    bulkUploadId: d?.bulkUploadId,
+    totalFiles: Number(d?.totalFiles ?? 0),
+    enqueued: Number(d?.enqueued ?? 0),
+    failed: Number(d?.failed ?? 0),
+  };
+}
 export async function getCandidate(id: string): Promise<Candidate> {
   const res: any = await api.candidates.getCandidate(id);
   return toCandidate(res?.data ?? res);

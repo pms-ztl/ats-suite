@@ -37,6 +37,11 @@ const singleUpload = multer({
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "application/msword",
       "text/plain",
+      // Image resumes (extracted via OCR when ENABLE_OCR=true)
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+      "image/tiff",
     ];
     cb(null, allowed.includes(file.mimetype));
   },

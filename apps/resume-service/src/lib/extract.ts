@@ -12,7 +12,7 @@
  * resumes are < 4000 chars; the cap is generous.
  */
 import { createLogger } from "@cdc-ats/common";
-import { isOcrEnabled, ocrPdf } from "./ocr.js";
+import { isOcrEnabled, ocrPdf, ocrImage } from "./ocr.js";
 
 const logger = createLogger({ serviceName: "resume-service:extract" });
 
@@ -22,6 +22,8 @@ const MIME_PDF  = "application/pdf";
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const MIME_DOC  = "application/msword";
 const MIME_TXT  = "text/plain";
+// Image resumes (scans / phone photos) have no text layer — extracted via OCR.
+const IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/tiff"]);
 
 export interface ExtractionResult {
   text: string;
@@ -115,6 +117,18 @@ export async function extractResumeText(
     } else if (mimeType === MIME_TXT) {
       // Plain text — utf-8 with bom-strip
       text = buffer.toString("utf-8").replace(/^﻿/, "");
+    } else if (IMAGE_MIMES.has(mimeType)) {
+      // Image resume — OCR is the only path (no embedded text layer). Opt-in
+      // via ENABLE_OCR=true (same gate + tesseract worker as scanned PDFs).
+      if (isOcrEnabled()) {
+        logger.info({ fileName, mimeType }, "image resume; running OCR");
+        const ocr = await ocrImage(buffer);
+        text = ocr.text;
+        if (ocr.text) warnings.push("Used OCR on the image — accuracy may be lower than text documents.");
+        for (const w of ocr.warnings) warnings.push(w);
+      } else {
+        warnings.push("Image resume uploaded but OCR is disabled. Set ENABLE_OCR=true on resume-service to extract text from images.");
+      }
     } else {
       warnings.push(`Unsupported MIME type: ${mimeType} (file: ${fileName})`);
     }

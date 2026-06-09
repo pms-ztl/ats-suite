@@ -155,6 +155,34 @@ export async function ocrPdf(pdfBuffer: Buffer): Promise<OcrResult> {
   }
 }
 
+/**
+ * OCR a raw image buffer (PNG / JPEG / WEBP / TIFF) directly via tesseract.
+ * Image resumes (scans, phone photos) have no text layer, so OCR is the only
+ * extraction path — there is no PDF to render, we recognise the image as-is.
+ * Caller should only invoke this when ENABLE_OCR=true.
+ */
+export async function ocrImage(imageBuffer: Buffer): Promise<OcrResult> {
+  try {
+    const worker = await getTesseractWorker();
+    const { data } = await worker.recognize(imageBuffer);
+    const text = (data?.text ?? "").trim();
+    return {
+      text,
+      pagesOcred: text ? 1 : 0,
+      truncated: false,
+      warnings: text ? [] : ["OCR produced no text from the image."],
+    };
+  } catch (err) {
+    logger.warn({ err }, "Image OCR failed");
+    return {
+      text: "",
+      pagesOcred: 0,
+      truncated: false,
+      warnings: [`Image OCR failed: ${err instanceof Error ? err.message : String(err)}`],
+    };
+  }
+}
+
 /** Graceful shutdown — release the tesseract worker. Call from index.ts. */
 export async function shutdownOcr(): Promise<void> {
   if (_tesseractWorker) {
