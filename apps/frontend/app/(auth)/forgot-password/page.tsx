@@ -45,13 +45,31 @@ html:has(.nf-root) { zoom: 1; }
   position: fixed; inset: 0; height: 100vh; width: 100vw; overflow: hidden;
   display: flex; flex-direction: column;
   font-family: 'DM Sans', system-ui, sans-serif; color: var(--text-main);
-  background-image:
-    url('https://pub-e68758f43067417dba612b2371819aa1.r2.dev/viktor-components/alien-spaceship.png'),
-    linear-gradient(150deg, #EFF1F8, #F6F7FB 55%, #F2F3FA);
-  background-repeat: no-repeat, no-repeat;
-  background-position: 42% 46%, center;
-  background-size: cover, cover;
-  background-attachment: fixed, fixed;
+  background: linear-gradient(135deg, #e7ebf7 0%, #eef1fb 46%, #f4eefb 100%);
+}
+/* Deep layer: the spaceship + ambient colour blobs, heavily blurred so the whole
+   viewport melts into one soft sheet of frosted glass. Oversized + clipped by the
+   root's overflow:hidden so the blurred edges stay full-bleed (no fade at the rim),
+   and given a slow drift for the "liquid" feel. z-index:-1 keeps it under content. */
+.nf-root::before {
+  content: ""; position: absolute; inset: -14%; z-index: -1; pointer-events: none;
+  background:
+    url('https://pub-e68758f43067417dba612b2371819aa1.r2.dev/viktor-components/alien-spaceship.png') 50% 47% / 54% auto no-repeat,
+    radial-gradient(38% 48% at 20% 26%, rgba(124,92,255,0.36), transparent 70%),
+    radial-gradient(46% 56% at 84% 76%, rgba(85,136,251,0.32), transparent 72%),
+    radial-gradient(42% 48% at 66% 14%, rgba(247,178,251,0.32), transparent 70%);
+  filter: blur(40px) saturate(1.5) brightness(1.05);
+  transform: scale(1.06);
+  animation: nfBgDrift 26s ease-in-out infinite alternate;
+}
+/* Frosted veil over the entire viewport: a milky, faintly tinted translucency plus
+   a backdrop blur, so even the gradient base reads as glass and the cards sit on a
+   single continuous frosted surface. */
+.nf-root::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.50), rgba(234,238,255,0.32) 52%, rgba(245,238,252,0.44));
+  backdrop-filter: blur(7px) saturate(1.3);
+  -webkit-backdrop-filter: blur(7px) saturate(1.3);
 }
 .nf-root .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; }
 
@@ -112,7 +130,7 @@ html:has(.nf-root) { zoom: 1; }
 
 /* ---- bottom card stack (form + nav) ---- */
 .nf-stack { display: flex; flex-direction: column; gap: 12px; max-width: 460px; width: 100%; margin-top: auto; }
-.nf-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.26), rgba(236,240,255,0.10)); backdrop-filter: blur(18px) saturate(165%); -webkit-backdrop-filter: blur(18px) saturate(165%); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 18px 22px; box-shadow: 0 12px 34px rgba(60,70,130,0.11), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.16); text-decoration: none; color: inherit; transition: transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .3s, background .3s; cursor: pointer; }
+.nf-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.40), rgba(236,240,255,0.18)); backdrop-filter: blur(18px) saturate(165%); -webkit-backdrop-filter: blur(18px) saturate(165%); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 18px 22px; box-shadow: 0 12px 34px rgba(60,70,130,0.11), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.16); text-decoration: none; color: inherit; transition: transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .3s, background .3s; cursor: pointer; }
 .nf-card:hover { transform: translateY(-3px); background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(238,242,255,0.2)); box-shadow: 0 18px 46px rgba(60,70,130,0.16), inset 0 1px 1.5px rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,0.24); }
 .nf-card .nf-cl { display: flex; align-items: center; gap: 14px; text-align: left; min-width: 0; }
 .nf-cicon { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(228,231,238,0.5)); border: 1px solid rgba(255,255,255,0.75); box-shadow: inset 0 1px 1px rgba(255,255,255,0.95), 0 3px 10px rgba(70,80,150,0.10); display: flex; align-items: center; justify-content: center; transition: transform .25s; }
@@ -125,7 +143,7 @@ html:has(.nf-root) { zoom: 1; }
 .nf-card:hover .nf-chev { transform: translateX(6px); }
 
 /* ---- form card ---- */
-.nf-form { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(236,240,255,0.12)); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border: 1px solid rgba(255,255,255,0.65); border-radius: 22px; padding: 20px; box-shadow: 0 14px 42px rgba(60,70,130,0.13), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.18); text-align: left; }
+.nf-form { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(255,255,255,0.44), rgba(236,240,255,0.20)); backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%); border: 1px solid rgba(255,255,255,0.65); border-radius: 22px; padding: 20px; box-shadow: 0 14px 42px rgba(60,70,130,0.13), inset 0 1px 1.5px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(255,255,255,0.18); text-align: left; }
 .nf-form::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 55%; border-radius: 22px 22px 60% 60% / 22px 22px 24px 24px; background: linear-gradient(180deg, rgba(255,255,255,0.45), transparent); pointer-events: none; z-index: 0; }
 .nf-form > * { position: relative; z-index: 1; }
 .nf-form::after { content: ""; position: absolute; top: 0; bottom: 0; left: -70%; width: 42%; z-index: 3; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.32) 50%, transparent); transform: skewX(-16deg); animation: nfSheen 7s ease-in-out 2.4s infinite; }
@@ -155,6 +173,7 @@ html:has(.nf-root) { zoom: 1; }
 
 @keyframes nfFloat { 0%,100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
 @keyframes nfSheen { 0% { left: -70%; } 16%, 100% { left: 140%; } }
+@keyframes nfBgDrift { 0% { transform: scale(1.06) translate(0, 0); } 100% { transform: scale(1.13) translate(-2.5%, 1.8%); } }
 
 /* ---- responsive ---- */
 @media (max-width: 900px) {
@@ -162,12 +181,10 @@ html:has(.nf-root) { zoom: 1; }
   .nf-left-col { align-items: center; text-align: center; padding: 6px 0 0; }
   .nf-right-col { padding: 0; align-items: stretch; }
   .nf-right-inner { max-width: 460px; margin: 0 auto; }
-  .nf-root { background-position: center 42%, center; background-size: cover, cover; }
   .nf-steps { align-items: center; }
   .nf-foot { flex-direction: column; gap: 6px; text-align: center; padding: 10px 24px 16px; }
 }
 @media (max-width: 768px) {
-  .nf-root { background-size: cover, cover; background-position: center 40%, center; }
   .nf-links, .nf-nav > .nf-cta { display: none; }
   .nf-burger { display: flex; }
   .nf-nav { padding: 20px; }
@@ -179,7 +196,6 @@ html:has(.nf-root) { zoom: 1; }
   .nf-cicon { width: 42px; height: 42px; }
 }
 @media (max-width: 480px) {
-  .nf-root { background-size: cover, cover; }
   .nf-title { font-size: 26px; }
   .nf-deco.cloud { font-size: 30px; }
   .nf-deco.heart { font-size: 22px; }
