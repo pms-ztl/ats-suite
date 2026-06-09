@@ -52,14 +52,14 @@ html:has(.nf-root) { zoom: 1; }
    root's overflow:hidden so the blurred edges stay full-bleed (no fade at the rim),
    and given a slow drift for the "liquid" feel. z-index:-1 keeps it under content. */
 .nf-root::before {
-  content: ""; position: absolute; inset: -14%; z-index: -1; pointer-events: none;
+  content: ""; position: absolute; inset: -4%; z-index: -1; pointer-events: none;
   background:
     url('https://pub-e68758f43067417dba612b2371819aa1.r2.dev/viktor-components/alien-spaceship.png') 50% 47% / 54% auto no-repeat,
-    radial-gradient(38% 48% at 20% 26%, rgba(124,92,255,0.36), transparent 70%),
-    radial-gradient(46% 56% at 84% 76%, rgba(85,136,251,0.32), transparent 72%),
-    radial-gradient(42% 48% at 66% 14%, rgba(247,178,251,0.32), transparent 70%);
-  filter: blur(40px) saturate(1.5) brightness(1.05);
-  transform: scale(1.06);
+    radial-gradient(38% 48% at 20% 26%, rgba(124,92,255,0.15), transparent 70%),
+    radial-gradient(46% 56% at 84% 76%, rgba(85,136,251,0.13), transparent 72%),
+    radial-gradient(42% 48% at 66% 14%, rgba(247,178,251,0.13), transparent 70%);
+  filter: blur(4px) saturate(1.2) brightness(1.02);
+  transform: scale(1.02);
   animation: nfBgDrift 26s ease-in-out infinite alternate;
 }
 /* Frosted veil over the entire viewport: a milky, faintly tinted translucency plus
@@ -67,9 +67,9 @@ html:has(.nf-root) { zoom: 1; }
    single continuous frosted surface. */
 .nf-root::after {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(135deg, rgba(255,255,255,0.50), rgba(234,238,255,0.32) 52%, rgba(245,238,252,0.44));
-  backdrop-filter: blur(7px) saturate(1.3);
-  -webkit-backdrop-filter: blur(7px) saturate(1.3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(234,238,255,0.07) 52%, rgba(245,238,252,0.10));
+  backdrop-filter: blur(1px) saturate(1.05);
+  -webkit-backdrop-filter: blur(1px) saturate(1.05);
 }
 .nf-root .material-symbols-rounded { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; }
 
@@ -154,6 +154,10 @@ html:has(.nf-root) { zoom: 1; }
 .nf-field.err { border-color: #e5484d; }
 .nf-field .material-symbols-rounded { font-size: 20px; color: var(--text-secondary); flex-shrink: 0; }
 .nf-field input { flex: 1; min-width: 0; border: none; background: none; outline: none; padding: 13px 0; font-family: inherit; font-size: 14px; color: var(--text-main); }
+/* The global ":focus-visible { box-shadow: var(--ring) }" (globals.css) puts a
+   green ring on the input ON TOP of the field's own purple focus-within ring,
+   reading as a doubled box. Suppress the input ring; the field shows the ring. */
+.nf-field input:focus, .nf-field input:focus-visible { outline: none; box-shadow: none; }
 .nf-field input::placeholder { color: #aab0bb; }
 .nf-eye { background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex; padding: 4px; }
 .nf-field + .nf-field { margin-top: 10px; }
@@ -173,7 +177,7 @@ html:has(.nf-root) { zoom: 1; }
 
 @keyframes nfFloat { 0%,100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
 @keyframes nfSheen { 0% { left: -70%; } 16%, 100% { left: 140%; } }
-@keyframes nfBgDrift { 0% { transform: scale(1.06) translate(0, 0); } 100% { transform: scale(1.13) translate(-2.5%, 1.8%); } }
+@keyframes nfBgDrift { 0% { transform: scale(1.04) translate(0, 0); } 100% { transform: scale(1.08) translate(-1.6%, 1.2%); } }
 
 /* ---- responsive ---- */
 @media (max-width: 900px) {
