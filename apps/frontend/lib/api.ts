@@ -362,12 +362,23 @@ export async function recordDecision(b: Partial<Decision>): Promise<Decision> {
 }
 
 /* ---------- HITL review queue ---------- */
+// notification HitlCheckpoint.type (lowercase enum) -> frontend ReviewReasonCode,
+// so the queue shows a real label ("Low-confidence verdict") instead of the generic
+// fallback. Unmapped values (a human "manual" flag, or an already-uppercase code)
+// pass through uppercased; the UI label map falls back to "Review needed" for those.
+const HITL_REASON: Record<string, ReviewReasonCode> = {
+  low_confidence: "LOW_CONFIDENCE",
+  bias_flag: "ADVERSE_IMPACT_FLAG",
+  policy_review: "POLICY_OVERRIDE",
+  sensitive_decision: "POLICY_OVERRIDE",
+};
 function toReviewItem(r: any): ReviewItem {
   const slaDueAt = r?.slaDueAt
     ?? (r?.createdAt && r?.slaMinutes ? new Date(new Date(r.createdAt).getTime() + r.slaMinutes * 60000).toISOString() : new Date().toISOString());
+  const rawReason = String(r?.type ?? r?.action ?? "LOW_CONFIDENCE");
   return {
     id: r?.id, candidateId: r?.payload?.candidateId ?? r?.subjectId ?? "", requisitionId: r?.payload?.requisitionId ?? "",
-    reasonCode: (r?.type ?? r?.action ?? "LOW_CONFIDENCE") as ReviewReasonCode,
+    reasonCode: (HITL_REASON[rawReason.toLowerCase()] ?? rawReason.toUpperCase()) as ReviewReasonCode,
     slaDueAt, verdict: toVerdict(r?.payload?.screening ?? r?.payload?.verdict ?? r?.payload ?? {}), assignedTo: r?.assignedTo ?? undefined,
   };
 }

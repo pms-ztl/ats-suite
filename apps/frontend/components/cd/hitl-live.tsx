@@ -5,6 +5,7 @@
 // from the review item's reason code + SLA; the evidence "why" is the verdict summary.
 // The structured reason-code chips are the configured review vocabulary.
 import { HITL } from "./screens/HITL";
+import { Icon } from "./icon";
 import { useData } from "@/lib/use-data";
 import { listReviewQueue, listRequisitions } from "@/lib/api";
 import type { ReviewItem, Requisition, ReviewReasonCode } from "@/lib/types";
@@ -45,6 +46,25 @@ export function HitlLive() {
   // HITL seeds its selected-item state from the first item on mount, so render only
   // once both fetches settle (else `sel` stays null and the detail pane is empty).
   if (q.loading || reqs.loading) return null;
+
+  // Empty queue: the byte-exact HITL screen returns null when it has no item to
+  // select (it seeds the detail pane from items[0]), which would paint a blank
+  // page. Render an explicit "all caught up" state instead.
+  if ((q.data ?? []).length === 0) {
+    return (
+      <div style={{ height: "100%", display: "grid", placeItems: "center", padding: 24 }}>
+        <div style={{ maxWidth: 440, textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, margin: "0 auto 16px", display: "grid", placeItems: "center", background: "var(--ok-tint)", color: "var(--ok)" }}>
+            <Icon name="check" size={30} stroke={2.4} />
+          </div>
+          <h1 style={{ margin: 0, fontSize: "var(--fs-xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>You are all caught up</h1>
+          <p style={{ margin: "8px auto 0", maxWidth: "36ch", fontSize: "var(--fs-sm)", color: "var(--ink-2)", lineHeight: 1.6 }}>
+            No candidates are waiting for human review. When the AI is not confident about a verdict, or flags a fairness or policy concern, the candidate appears here for a person to decide.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const items: HitlItem[] = (q.data ?? []).map((it) => {
     const s = sla(it.slaDueAt);
