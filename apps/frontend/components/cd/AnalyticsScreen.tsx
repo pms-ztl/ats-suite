@@ -2,10 +2,11 @@
 // AnalyticsScreen.tsx, Analytics dashboard (funnel, time-to-hire, source-effectiveness,
 // diversity, AI insights). Ported byte-faithful from screen-analytics.jsx. Data via props only.
 import React from "react";
-import dynamic from "next/dynamic";
 import { Pill, Reveal, KPICard, SectionCard } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
+import { FlowRibbon, ArcMeter, OrbitField, CometTrail } from "@/components/shared/ribbon";
+import { StreamGraph } from "@/components/shared/ribbon-ext";
 import {
   FunnelViz, BarsChart, TrendChart, EmptyChart, CHART_COLORS,
 } from "@/components/shared/charts";
@@ -15,18 +16,12 @@ import type { FairnessMetric } from "@/lib/types";
 // One real monthly time-to-hire row (from /api/analytics/time-to-hire).
 export interface TthRow { label: string; avgDays: number; medianDays: number; p90Days: number; hires: number; }
 
-// Live 3D pipeline funnel. The three.js stack must never run during SSR.
-const PipelineFlow = dynamic(() => import("@/components/shared/hero3d").then((m) => m.PipelineFlow), {
-  ssr: false,
-  loading: () => <div className="h-[360px] animate-pulse rounded-xl border border-border bg-card/60" />,
-});
-
 function SevDot({ sev }: { sev: AnalyticsInsight["sev"] }) {
   const c = sev === "critical" ? "var(--danger)" : sev === "warning" ? "var(--warn)" : "var(--info)";
   return <span style={{ width: 8, height: 8, borderRadius: 99, background: c, flexShrink: 0 }} />;
 }
 
-export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; onExport?: () => void }) {
+export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflowWeekly, inflowBySource, onExport }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; conversionPct?: number | null; inflowWeekly?: { label: string; n: number }[]; inflowBySource?: { buckets: { label: string }[]; series: { label: string; values: number[] }[] }; onExport?: () => void }) {
   const a = data;
 
   // Real time-to-hire trend (avg line + dashed median + dashed p90) from the
@@ -39,9 +34,6 @@ export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: A
   // Pipeline funnel - real stage counts from getFunnel (pipelineData aggregate).
   const funnelData = a.funnel.map((s) => ({ name: s.stage, value: s.n, fill: s.color }));
 
-  // 3D pipeline funnel - same real per-stage candidate counts (stage -> name, n -> value).
-  // When funnel is empty the hero renders its own no-data state.
-  const flowStages = a.funnel.map((s) => ({ name: s.stage, value: s.n }));
 
   // Diversity / four-fifths - real per-group impact ratio from getAdverseImpact.
   // The 0.80 line is the legal four-fifths threshold; a flagged group renders danger.
@@ -51,11 +43,14 @@ export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: A
     flagged: !!m.flagged || (m.impactRatio ?? 1) < 0.8,
   }));
 
-  // Source effectiveness - real hires per source ranked desc (sources from props).
+  // Source effectiveness - ranked by real hires per source when any exist; until the
+  // first hires land it ranks by real application volume instead (labelled in-chart).
+  const sourcesHaveHires = a.sources.some((s) => s.hires > 0);
   const sourceBars = a.sources
     .slice()
-    .sort((x, y) => y.hires - x.hires)
-    .map((s) => ({ src: s.src, hires: s.hires, color: s.color }));
+    .sort((x, y) => (sourcesHaveHires ? y.hires - x.hires : y.apps - x.apps))
+    .map((s) => ({ src: s.src, n: sourcesHaveHires ? s.hires : s.apps, color: s.color }));
+  const sourceMetric = sourcesHaveHires ? "Hires" : "Applications";
   return (
     <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto" }}>
@@ -68,10 +63,48 @@ export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: A
           </div>
         </div>
 
-        {/* Live 3D pipeline funnel - drag to rotate. Same real stage counts as the funnel chart. */}
+        {/* Pipeline flow ribbon - real stage counts as a full-width, theme-adaptive stream. */}
         <Reveal i={3}>
-          <SectionCard title="Pipeline flow - drag to rotate" icon="radar">
-            <PipelineFlow stages={flowStages} />
+          <SectionCard title="Pipeline flow" icon="radar"
+            headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>ribbon thickness = live candidates per stage</Pill>}>
+            <FlowRibbon points={a.funnel.map((s) => ({ label: s.stage, n: s.n }))} />
+          </SectionCard>
+        </Reveal>
+        <div style={{ height: 16 }} />
+
+        {/* conversion gauge + channel orbit - the same real funnel/source data the
+            cards below use (conversion = applied->hired, dots = applications per channel) */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
+          <Reveal i={4}><SectionCard title="Pipeline conversion" icon="check">
+            <ArcMeter value={conversionPct ?? null} sub="applied to hired" emptyLabel="Conversion appears once candidates flow." />
+          </SectionCard></Reveal>
+          <Reveal i={5}><SectionCard title="Channel orbit" icon="radar"
+            headRight={<Pill tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>dot size = applications per channel</Pill>}>
+            <OrbitField items={a.sources.map((s) => ({ label: s.src, n: s.apps }))} centerSub="applications" />
+          </SectionCard></Reveal>
+        </div>
+
+        {/* Inflow trail - real weekly candidate-arrival counts (appliedAt, createdAt
+            fallback) over the trailing 8 calendar weeks; the comet head is this week. */}
+        <Reveal i={6}>
+          <SectionCard title="Inflow trail" icon="motion"
+            headRight={<Pill tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>comet head = this week</Pill>}>
+            <CometTrail points={inflowWeekly ?? []} emptyLabel="The inflow trail appears once candidates start arriving." />
+          </SectionCard>
+        </Reveal>
+        <div style={{ height: 16 }} />
+
+        {/* Sources over time - the same real weekly candidate arrivals as the comet
+            trail above, but SPLIT BY SOURCE: a stacked river of the top channels over
+            the trailing 8 weeks (the rest folded into "Other"). */}
+        <Reveal i={7}>
+          <SectionCard title="Sources over time" icon="motion"
+            headRight={<Pill tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>weekly arrivals by channel</Pill>}>
+            <StreamGraph
+              buckets={inflowBySource?.buckets ?? []}
+              series={inflowBySource?.series ?? []}
+              emptyLabel="Per-source inflow appears once candidates start arriving."
+            />
           </SectionCard>
         </Reveal>
         <div style={{ height: 16 }} />
@@ -152,15 +185,17 @@ export function AnalyticsScreen({ data, fairness, tthRows, onExport }: { data: A
           </SectionCard></Reveal>
         </div>
 
-        {/* source effectiveness - real hires per source, ranked desc */}
-        <Reveal i={9}><SectionCard title="Source effectiveness" icon="radar" action="Details">
+        {/* source effectiveness - real hires per source (falls back to real application
+            volume, labelled, until the first hires land) */}
+        <Reveal i={9}><SectionCard title="Source effectiveness" icon="radar" action="Details"
+          headRight={sourceBars.length ? <Pill tone="var(--ink-2)" bg="var(--surface-2)">{sourceMetric.toLowerCase()} per channel</Pill> : undefined}>
           <div style={{ height: Math.max(180, sourceBars.length * 34 + 40) }}>
             {sourceBars.length
               ? <BarsChart
                   data={sourceBars}
                   categoryKey="src"
                   layout="horizontal"
-                  series={[{ key: "hires", name: "Hires" }]}
+                  series={[{ key: "n", name: sourceMetric }]}
                   valueFormatter={(v) => Number(v).toLocaleString()}
                   colorFn={(row) => row.color || CHART_COLORS.brand}
                 />

@@ -85,10 +85,9 @@ export function CandidateProfileLive() {
         band: BAND[kind].band,
         summary: v.summary || `Recommends ${BAND[kind].rec}. AI is advisory; a human decides.`,
         confidence: v.confidence ?? 0,
-        requirements: (v.requirements ?? []).map((r, i, arr): ReqBreakdown => {
-          const st = reqState(r.met);
-          return { id: String(i), label: r.requirement, custom: false, weight: Math.round(100 / Math.max(arr.length, 1)), sub: st === "pass" ? "met" : st === "review" ? "partial" : "not met", state: st, note: "" };
-        }),
+        requirements: (v.requirements ?? []).map((r, i): ReqBreakdown => ({
+          id: String(i), label: r.requirement, custom: false, state: reqState(r.met), note: r.evidence || "",
+        })),
       }
     : { score: 0, band: "Not screened yet", summary: "This candidate has not been screened yet. Open screening to produce an AI verdict.", confidence: 0, requirements: [] };
 

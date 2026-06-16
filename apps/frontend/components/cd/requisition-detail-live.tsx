@@ -15,7 +15,7 @@ import { FormBuilderLive } from "./form-builder-live";
 import { Icon } from "./icon";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getRequisition, getFunnel, createJobPosting, findPostingForRequisition } from "@/lib/api";
+import { getRequisition, getFunnel, createJobPosting, findPostingForRequisition, listRounds, type RoundLite } from "@/lib/api";
 import type { Requisition, ApplicationStage } from "@/lib/types";
 import type { ReqDetailData, ReqStatusMeta, ReqStatusKey, ReqCustomField, RoundsData, TimelineItem } from "./types";
 
@@ -47,36 +47,23 @@ const STAGE_BUCKET: Partial<Record<ApplicationStage, number>> = {
   APPLIED: 0, SCREENED: 1, PHONE_SCREEN: 1, ASSESSMENT: 1, INTERVIEW: 2, FINAL_REVIEW: 2, OFFER: 3, HIRED: 4,
 };
 
-// interview rounds + application form: the gateway exposes no resource for these,
-// so the design's example structure stands in (the tabs stay interactive locally).
-const ROUNDS_DATA: RoundsData = {
-  rounds: [
-    { id: "rd1", name: "Recruiter phone screen", type: "PHONE_SCREEN", dur: 30, panel: "Recruiter", auto: true, instr: "Motivation, comp expectations, role fit." },
-    { id: "rd2", name: "Technical screen", type: "TECHNICAL", dur: 60, panel: "Senior Engineer", auto: true, instr: "Coding + systems fundamentals." },
-    { id: "rd3", name: "System design", type: "TECHNICAL", dur: 60, panel: "Staff Engineer", auto: false, instr: "Design a payments ledger service." },
-    { id: "rd4", name: "Behavioral and values", type: "BEHAVIORAL", dur: 45, panel: "Hiring Manager", auto: false, instr: "Ownership, collaboration, conflict." },
-    { id: "rd5", name: "Final panel", type: "PANEL", dur: 90, panel: "Cross-functional", auto: false, instr: "Bar-raiser plus 2 panelists." },
-  ],
-  roundTypes: {
-    PHONE_SCREEN: { label: "Phone screen", tone: "var(--info)" },
-    TECHNICAL: { label: "Technical", tone: "var(--ai)" },
-    BEHAVIORAL: { label: "Behavioral", tone: "var(--brand)" },
-    PANEL: { label: "Panel", tone: "var(--warn)" },
-    FINAL: { label: "Final", tone: "var(--ok)" },
-  },
+// Interview-round chrome (labels + tones per type). The round ROWS themselves are
+// fetched live from GET /api/rounds?requisitionId=... below - no example rounds.
+const ROUND_TYPES: RoundsData["roundTypes"] = {
+  PHONE_SCREEN: { label: "Phone screen", tone: "var(--info)" },
+  TECHNICAL: { label: "Technical", tone: "var(--ai)" },
+  BEHAVIORAL: { label: "Behavioral", tone: "var(--brand)" },
+  PANEL: { label: "Panel", tone: "var(--warn)" },
+  FINAL: { label: "Final", tone: "var(--ok)" },
 };
-const EXAMPLE_ACTIVITY: TimelineItem[] = [
-  { ic: "sparkles", ai: true, who: "candidate-screener", what: "screened new applicants", t: "12m" },
-  { ic: "users", who: "Avery Chen", what: "moved a candidate to Interview", t: "1h" },
-  { ic: "fileText", who: "Jordan Lee", what: "approved the job description", t: "2d" },
-  { ic: "briefcase", who: "Avery Chen", what: "posted the requisition", t: "6d" },
-];
 
 export function RequisitionDetailLive() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user } = useCurrentUser();
   const req = useData<Requisition>(() => getRequisition(id), [id]);
+  // Real configured interview loop for THIS requisition (empty when none is set up).
+  const rounds = useData<RoundLite[]>(() => listRounds(id), [id]);
   const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
   const [publish, setPublish] = useState<{ open: boolean; busy: boolean; slug: string | null; error: string | null }>({ open: false, busy: false, slug: null, error: null });
 
@@ -155,7 +142,19 @@ export function RequisitionDetailLive() {
       { label: "Interviewing", n: String(pipeline[2].n), icon: "calendar", color: "var(--ai)", sub: "in interview rounds" },
       { label: "At offer", n: String(pipeline[3].n), icon: "fileText", color: "var(--brand)", sub: "at the offer stage" },
     ],
-    activity: EXAMPLE_ACTIVITY,
+    // Honest empty: the gateway exposes no per-requisition activity feed yet, so
+    // the Activity tab shows its empty state instead of invented events.
+    activity: [] as TimelineItem[],
+  };
+
+  // Live rounds -> the RoundsConfig shape. Unconfigured loops render the
+  // builder's empty state rather than a fabricated 5-round example.
+  const roundsData: RoundsData = {
+    rounds: (rounds.data ?? []).slice().sort((a, b) => a.order - b.order).map((r) => ({
+      id: r.id, name: r.name, type: r.interviewType || "TECHNICAL", dur: r.durationMinutes || 60,
+      panel: "Round panel", auto: Boolean(r.autoAdvanceOnPass), instr: "",
+    })),
+    roundTypes: ROUND_TYPES,
   };
 
   return (
@@ -163,7 +162,7 @@ export function RequisitionDetailLive() {
       <RequisitionDetail
         data={data}
         statusMeta={statusMeta}
-        roundsSlot={<RoundsConfig data={ROUNDS_DATA} jobTitle={d.title} />}
+        roundsSlot={<RoundsConfig data={roundsData} jobTitle={d.title} />}
         formSlot={<FormBuilderLive requisitionId={d.id} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
         onBack={() => router.push("/requisitions")}
         onCandidates={() => router.push("/candidates")}

@@ -47,7 +47,12 @@ export function startResumeParseWorker(logger: Logger) {
         throw err;
       }
     },
-    { concurrency: 3, limiter: { max: 10, duration: 60_000 } }
+    {
+      // Throughput knobs (env-driven, higher defaults for archive ingest at
+      // scale). RESUME_PARSE_CONCURRENCY=8, RESUME_PARSE_RATE_MAX=60/min.
+      concurrency: Number(process.env["RESUME_PARSE_CONCURRENCY"]) || 8,
+      limiter: { max: Number(process.env["RESUME_PARSE_RATE_MAX"]) || 60, duration: 60_000 },
+    }
   );
 
   worker.on("completed", (job) => logger.info({ jobId: job.id }, "resume parse done"));

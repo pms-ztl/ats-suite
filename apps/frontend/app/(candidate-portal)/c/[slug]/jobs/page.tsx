@@ -85,9 +85,9 @@ async function fetchTenantName(slug: string): Promise<string | null> {
 
 // The design's static example cards, used verbatim as the graceful fallback.
 const FALLBACK_ROLES: { meta: string; title: string; tags: string[] }[] = [
-  { meta: "Engineering · Remote", title: "Senior Backend Engineer", tags: ["Full-time", "$160k, 200k"] },
+  { meta: "Engineering · Remote", title: "Senior Backend Engineer", tags: ["Full-time", "₹160k to 200k"] },
   { meta: "Design · Austin, TX", title: "Staff Product Designer", tags: ["Full-time", "Hybrid"] },
-  { meta: "Data · Remote", title: "Machine Learning Engineer", tags: ["Full-time", "$170k, 220k"] },
+  { meta: "Data · Remote", title: "Machine Learning Engineer", tags: ["Full-time", "₹170k to 220k"] },
 ];
 
 const CSS = `

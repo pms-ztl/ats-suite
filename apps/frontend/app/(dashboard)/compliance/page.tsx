@@ -11,8 +11,9 @@
 // 0.80 is a signal for human review, never an automated decision.
 import { useState } from "react";
 import {
-  Btn, Pill, StatusBadge, ScoreRing, SectionCard, Timeline, Reveal,
+  Btn, Pill, StatusBadge, SectionCard, Timeline,
 } from "@/components/aurora-kit";
+import { ArcMeter } from "@/components/shared/ribbon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
 import { BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
@@ -136,7 +137,7 @@ export default function ComplianceHubScreen() {
       <div style={{ padding: "0 0 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ display: "flex", gap: 9, alignItems: "center" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Compliance &amp; governance</h1><Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">bias-auditor</Pill></div>
+            <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Compliance &amp; governance</h1><Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">bias-auditor</Pill><Pill icon="eye" tone="var(--c-warn)" bg="var(--c-warn-tint)">Overview &amp; audit log show reference framework data · Adverse impact is live</Pill></div>
             <p style={{ margin: "4px 0 0", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>EEOC · GDPR · model oversight · {c.range}</p>
           </div>
           <div style={{ display: "flex", gap: 9 }}><Btn variant="soft" icon="scroll" onClick={onMethodology}>Methodology</Btn><Btn variant="primary" icon="arrowUpRight" onClick={onDownloadEEOC}>Download EEOC report</Btn></div>
@@ -154,7 +155,7 @@ export default function ComplianceHubScreen() {
           <div style={{ maxWidth: 1100, margin: "0 auto", animation: "rise .3s var(--ease-out)" }}>
             {/* score banner */}
             <div style={{ display: "flex", gap: 18, alignItems: "center", padding: "20px 24px", borderRadius: "var(--r-xl)", background: "linear-gradient(110deg, var(--c-brand-tint-2), transparent 65%)", border: "1px solid color-mix(in oklab, var(--c-brand) 22%, var(--c-line))", marginBottom: 18, flexWrap: "wrap" }}>
-              <ScoreRing value={c.score} size={84} band="var(--c-brand)" label="score" />
+              <div style={{ width: 210, maxWidth: "100%", flexShrink: 0 }}><ArcMeter value={c.score} label="score" sub="compliance" height={190} /></div>
               <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>Compliance score {c.score} / 100</div><div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 2 }}>{failing} open adverse-impact finding{failing !== 1 ? "s" : ""} · 1 model on watch · all policies active.</div></div>
               <div style={{ display: "flex", gap: 16 }}>{([["Certs valid", "4 / 4"], ["Audit events", "1,240"], ["DPAs signed", "3 / 3"]] as [string, string][]).map(([k, v]) => <div key={k} style={{ textAlign: "center" }}><div className="mono tnum" style={{ fontSize: 20, fontWeight: 700 }}>{v}</div><div style={{ fontSize: 10, color: "var(--c-ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>{k}</div></div>)}</div>
             </div>
@@ -208,7 +209,7 @@ export default function ComplianceHubScreen() {
             {fairness.data && metrics.length > 0 && (
               <>
                 <div style={{ borderRadius: "var(--r-xl)", padding: "16px 20px", marginBottom: 18, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", background: failing ? "linear-gradient(110deg, var(--c-danger-tint), transparent 70%)" : "linear-gradient(110deg, var(--c-ok-tint), transparent 70%)", border: "1px solid " + (failing ? "color-mix(in oklab, var(--c-danger) 28%, transparent)" : "color-mix(in oklab, var(--c-ok) 28%, transparent)") }}>
-                  <span style={{ width: 46, height: 46, borderRadius: 13, display: "grid", placeItems: "center", background: failing ? "var(--c-danger)" : "var(--c-ok)", color: "white", flexShrink: 0 }}><Icon name={failing ? "flag" : "check"} size={24} /></span>
+                  <span style={{ width: 46, height: 46, borderRadius: 13, display: "grid", placeItems: "center", background: failing ? "var(--c-danger)" : "var(--c-ok)", color: "var(--c-ink-inv)", flexShrink: 0 }}><Icon name={failing ? "flag" : "check"} size={24} /></span>
                   <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>{failing} of {metrics.length} group{metrics.length === 1 ? "" : "s"} show potential adverse impact</div><div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", marginTop: 2 }}>Any ratio below 0.80 warrants review. The threshold and groupings are legal facts, not choices.</div></div>
                 </div>
                 {/* real four-fifths impact-ratio bars (per group), with the 0.80 line */}

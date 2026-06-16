@@ -7,9 +7,9 @@
 import { AnalyticsScreen, type TthRow } from "./AnalyticsScreen";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getDashboardKpis, getFunnel, getAdverseImpact, type DashKpi } from "@/lib/api";
+import { getDashboardKpis, getFunnel, getAdverseImpact, getSourceOfHire, listCandidates, weeklyCounts, prettySource, type DashKpi, type SourceStat } from "@/lib/api";
 import type { ApplicationStage, FairnessMetric } from "@/lib/types";
-import { CHART_COLORS } from "@/components/shared/charts";
+import { CHART_COLORS, colorAt } from "@/components/shared/charts";
 import type { AnalyticsData, FunnelStage } from "./types";
 
 // Local gateway fetch mirroring lib/api's raw(): bearer from sessionStorage,
@@ -39,6 +39,53 @@ async function getTimeToHire(): Promise<TthRow[]> {
   }));
 }
 
+// Weekly candidate arrivals SPLIT BY SOURCE for the StreamGraph. Mirrors weeklyCounts'
+// trailing-N-week boundaries (Sunday-start, "May 12" labels) so the per-source river
+// lines up week-for-week with the total-inflow CometTrail above it. Sources are humanized
+// (prettySource) and capped to the top `top` channels by total arrivals; the remainder is
+// folded into a single "Other" series so the river stays readable. Empty in -> empty out
+// (StreamGraph renders its own honest empty state).
+function inflowBySourceWeekly(
+  rows: { appliedAt?: string | null; source?: string | null }[],
+  weeks = 8,
+  top = 6,
+): { buckets: { label: string }[]; series: { label: string; values: number[] }[] } {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // back to Sunday
+  const buckets: { label: string; from: number; to: number }[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const from = new Date(weekStart); from.setDate(from.getDate() - i * 7);
+    const to = new Date(from); to.setDate(to.getDate() + 7);
+    buckets.push({ label: from.toLocaleDateString(undefined, { month: "short", day: "numeric" }), from: from.getTime(), to: to.getTime() });
+  }
+  // counts[source][weekIndex]
+  const counts = new Map<string, number[]>();
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    if (!r?.appliedAt) continue;
+    const t = new Date(r.appliedAt).getTime();
+    if (!isFinite(t)) continue;
+    const j = buckets.findIndex((w) => t >= w.from && t < w.to);
+    if (j < 0) continue;
+    const src = prettySource(String(r.source || "").trim() || "Unknown");
+    if (!counts.has(src)) counts.set(src, new Array(weeks).fill(0));
+    counts.get(src)![j]++;
+    totals.set(src, (totals.get(src) ?? 0) + 1);
+  }
+  const ranked = [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([s]) => s);
+  const keep = ranked.slice(0, top);
+  const rest = ranked.slice(top);
+  const series: { label: string; values: number[] }[] = keep.map((s) => ({ label: s, values: counts.get(s)! }));
+  if (rest.length) {
+    const other = new Array(weeks).fill(0);
+    for (const s of rest) { const v = counts.get(s)!; for (let j = 0; j < weeks; j++) other[j] += v[j]; }
+    series.push({ label: "Other", values: other });
+  }
+  return { buckets: buckets.map(({ label }) => ({ label })), series };
+}
+
 const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen", ASSESSMENT: "Assessment",
   INTERVIEW: "Interview", FINAL_REVIEW: "Final review", OFFER: "Offer", HIRED: "Hired",
@@ -53,10 +100,12 @@ export function AnalyticsLive() {
   const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
   const fairness = useData<FairnessMetric[]>(getAdverseImpact);
   const tth = useData<TthRow[]>(getTimeToHire);
+  const sourceStats = useData<SourceStat[]>(getSourceOfHire);
+  const inflow = useData(() => listCandidates());
 
   // AnalyticsScreen renders the Funnel/charts unguarded and crashes on empty data
   // (Funnel reads stages[0].n), so render only after the fetches settle.
-  if (kpis.loading || funnel.loading || fairness.loading || tth.loading) return null;
+  if (kpis.loading || funnel.loading || fairness.loading || tth.loading || sourceStats.loading || inflow.loading) return null;
 
   const stages = (funnel.data ?? []).slice().sort((a, b) => {
     const ia = STAGE_ORDER.indexOf(a.stage), ib = STAGE_ORDER.indexOf(b.stage);
@@ -82,6 +131,17 @@ export function AnalyticsLive() {
         })()
       : "";
 
+  // Real weekly candidate-arrival counts for the comet trail: each candidate's
+  // appliedAt (createdAt fallback, mapped in lib/api toCandidate) bucketed into the
+  // trailing 8 calendar weeks. No candidates -> [] keeps the honest empty state.
+  const inflowCands = inflow.data ?? [];
+  const inflowWeekly = inflowCands.length ? weeklyCounts(inflowCands.map((c) => c.appliedAt), 8) : [];
+  // Same real arrivals as the comet trail, split by humanized source (top ~6 channels,
+  // the rest folded into "Other") for the Sources-over-time stream graph.
+  const inflowBySource = inflowCands.length
+    ? inflowBySourceWeekly(inflowCands.map((c) => ({ appliedAt: c.appliedAt, source: c.source })), 8, 6)
+    : { buckets: [], series: [] };
+
   const data: AnalyticsData = {
     orgName: user?.tenant?.name ?? "your workspace",
     range: "Last 30 days",
@@ -97,9 +157,15 @@ export function AnalyticsLive() {
     tthLabels: tthRows.map((r) => r.label),
     tthDelta,
     tthByDept: [],
-    // Source effectiveness lives on its own wired page; the overview shows an
-    // empty-state pointer rather than fabricated rows.
-    sources: [],
+    // Real per-channel stats from GET /analytics/source-of-hire (Candidate.source ×
+    // Application outcomes). hires/apps are real counts; cost-per-hire is not tracked
+    // per source, so it stays 0 and the screen does not render it.
+    sources: (sourceStats.data ?? []).map((s, i) => ({
+      src: s.source, color: colorAt(i),
+      hires: s.hired, quality: 0, apps: s.applied, cost: 0,
+    })),
   };
-  return <AnalyticsScreen data={data} fairness={fairness.data ?? []} tthRows={tthRows} />;
+  // Real applied->hired conversion for the ArcMeter gauge; null (honest empty)
+  // until the first application lands.
+  return <AnalyticsScreen data={data} fairness={fairness.data ?? []} tthRows={tthRows} conversionPct={applied > 0 ? conv : null} inflowWeekly={inflowWeekly} inflowBySource={inflowBySource} />;
 }

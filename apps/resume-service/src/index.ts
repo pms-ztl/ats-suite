@@ -5,6 +5,7 @@ initSentry({ serviceName: "resume-service" });
 import { createApp } from "./app.js";
 import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
 import { startResumeParseWorker } from "./workers/resume-parse.worker.js";
+import { startBulkArchiveExtractWorker } from "./workers/bulk-archive-extract.worker.js";
 import { isStorageConfigured } from "./lib/storage.js";
 import { shutdownOcr } from "./lib/ocr.js";
 
@@ -12,6 +13,7 @@ const logger = createLogger({ serviceName: "resume-service" });
 const PORT = Number(process.env["PORT"] ?? 4007);
 
 let parseWorker: ReturnType<typeof startResumeParseWorker> | null = null;
+let archiveWorker: ReturnType<typeof startBulkArchiveExtractWorker> | null = null;
 
 async function main() {
   // Phase 36c — hard-fail at boot if S3 isn't configured in production.
@@ -39,6 +41,7 @@ async function main() {
   if (process.env["REDIS_URL"]) {
     try {
       parseWorker = startResumeParseWorker(logger);
+      archiveWorker = startBulkArchiveExtractWorker(logger);
     } catch (err) {
       logger.warn({ err }, "BullMQ worker startup failed");
     }
@@ -51,6 +54,7 @@ async function main() {
     server,
     onShutdown: [
       async () => { if (parseWorker) await parseWorker.close().catch(() => {}); },
+      async () => { if (archiveWorker) await archiveWorker.close().catch(() => {}); },
       // Phase 36a — release the tesseract WASM worker (~12MB of memory).
       async () => { await shutdownOcr().catch(() => {}); },
       async () => { await closeNats().catch(() => {}); },

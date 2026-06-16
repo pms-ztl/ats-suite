@@ -2,7 +2,8 @@
 // SecAiScreens.tsx, Security dashboard + AI operations. Ported byte-faithful from
 // screen-secai.jsx. Data via props only.
 import React from "react";
-import { Pill, ScoreRing, Reveal, KPICard, SectionCard } from "./aurora-kit";
+import { Pill, Reveal, KPICard, SectionCard } from "./aurora-kit";
+import { ArcMeter } from "@/components/shared/ribbon";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { SecurityData, AiOpsData } from "./types";
@@ -22,8 +23,13 @@ export function SecurityScreen({ data, onReport }: { data: SecurityData; onRepor
         </div>
 
         <div style={{ display: "flex", gap: 18, alignItems: "center", padding: "20px 24px", borderRadius: "var(--r-xl)", background: "linear-gradient(110deg, var(--brand-tint-2), transparent 65%)", border: "1px solid color-mix(in oklab, var(--brand) 22%, var(--line))", marginBottom: 18, flexWrap: "wrap" }}>
-          <ScoreRing value={s.score} size={84} band="var(--brand)" label="score" />
-          <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>Security score {s.score} / 100</div><div style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)", marginTop: 2 }}>{s.alerts.length} open risk items · strong encryption &amp; MFA coverage.</div></div>
+          <div style={{ width: 210, maxWidth: "100%", flexShrink: 0 }}><ArcMeter value={s.posture.length || s.alerts.length || s.checklist.length ? s.score : null} label="score" height={190} emptyLabel="Score appears once telemetry connects." /></div>
+          <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>Security score {s.score} / 100</div><div style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)", marginTop: 2 }}>{
+            // Honest subtitle: only claim coverage that the loaded telemetry shows.
+            s.posture.length || s.alerts.length || s.checklist.length
+              ? `${s.alerts.length} open risk item${s.alerts.length === 1 ? "" : "s"} · ${s.checklist.filter(c => c.done).length}/${s.checklist.length || 0} hardening checks complete.`
+              : "Live posture telemetry appears here once the security service is connected."
+          }</div></div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>{s.posture.map(p => <div key={p.k} style={{ textAlign: "center", minWidth: 80 }}><div className="mono tnum" style={{ fontSize: 20, fontWeight: 700, color: p.v >= 90 ? "var(--ok)" : "var(--ink)" }}>{p.v}{p.unit}</div><div style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 600 }}>{p.k}</div></div>)}</div>
         </div>
 

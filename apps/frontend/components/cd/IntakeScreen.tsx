@@ -88,7 +88,7 @@ function CFRow({ cf, importance, onChange, onRemove }: { cf: IntakeCustomField; 
 
 function Preview({ st, orgName }: { st: IntakeState; orgName: string }) {
   const [mode, setMode] = useState<"candidate" | "screener">("candidate");
-  const salary = st.min && st.max ? `$${(st.min / 1000)}k to $${(st.max / 1000)}k` : null;
+  const salary = st.min && st.max ? `₹${(st.min / 1000)}k to ₹${(st.max / 1000)}k` : null;
   const reqs: string[] = st.generated ? st.required : (st.skills.length ? st.skills : []);
   return (
     <div style={{ position: "sticky", top: 0, display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
@@ -135,14 +135,14 @@ function Preview({ st, orgName }: { st: IntakeState; orgName: string }) {
         ) : (
           <div style={{ padding: 18 }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}><Pill icon="sparkles" tone="var(--on-ai)" bg="var(--ai)">candidate-screener</Pill><span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>how the AI will score applicants</span></div>
-            <p style={{ fontSize: 12, color: "var(--ink-2)", margin: "8px 0 14px", lineHeight: 1.5 }}>Every requirement below, including your custom fields, becomes a weighted row in each candidate&apos;s screening verdict.</p>
-            {[...reqs.map(r => ({ label: r, imp: "required", custom: false })), ...st.customFields.filter(c => c.label).map(c => ({ label: c.label, imp: c.importance, custom: true }))].map((r, i, arr) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 84px", gap: 10, alignItems: "center", padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+            <p style={{ fontSize: 12, color: "var(--ink-2)", margin: "8px 0 14px", lineHeight: 1.5 }}>Every requirement below, including your custom fields, becomes a scored line in each candidate&apos;s screening verdict, ranked by the importance you set.</p>
+            {[...reqs.map(r => ({ label: r, imp: "required", custom: false })), ...st.customFields.filter(c => c.label).map(c => ({ label: c.label, imp: c.importance, custom: true }))].map((r, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 104px", gap: 10, alignItems: "center", padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                 <span style={{ fontSize: 12.5, fontWeight: 500, display: "flex", gap: 7, alignItems: "center" }}>{r.custom && <Icon name="sparkles" size={12} style={{ color: "var(--ai)" }} />}{r.label}</span>
-                <span className="mono" style={{ fontSize: 10.5, textAlign: "right", color: r.imp === "must-have" ? "var(--ai-ink)" : "var(--ink-3)", fontWeight: 600 }}>{Math.round(100 / Math.max(arr.length, 1))}% wt</span>
+                <span className="mono" style={{ fontSize: 10.5, textAlign: "right", color: r.imp === "must-have" ? "var(--ai-ink)" : "var(--ink-3)", fontWeight: 600, textTransform: "capitalize" }}>{r.imp.replace("-", " ")}</span>
               </div>
             ))}
-            {reqs.length === 0 && <div style={{ textAlign: "center", color: "var(--ink-3)", fontSize: 12.5, padding: "20px 0" }}>Add requirements to see how screening will weight them.</div>}
+            {reqs.length === 0 && <div style={{ textAlign: "center", color: "var(--ink-3)", fontSize: 12.5, padding: "20px 0" }}>Add requirements to see how screening will assess them.</div>}
           </div>
         )}
       </div>
@@ -215,7 +215,7 @@ export function IntakeScreen({ data, orgName = "Northwind Talent", onBack, onPos
             </div>
             <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
               <Field label="Location"><input value={st.location} onChange={e => set({ location: e.target.value })} style={inputStyle} /></Field>
-              <Field label="Salary range" hint="USD / year">
+              <Field label="Salary range" hint="INR / year">
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <input type="number" value={st.min || ""} onChange={e => set({ min: +e.target.value })} placeholder="min" className="mono" style={{ ...inputStyle, width: 100 }} />
                   <span style={{ color: "var(--ink-3)" }}>, </span>

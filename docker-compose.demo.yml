@@ -260,6 +260,10 @@ services:
       # OCR fallback for scanned-image PDFs + image resume uploads (tesseract.js).
       # Slow (~1-3s/page) and downloads a ~12MB model on first use, so it is opt-in.
       ENABLE_OCR: "true"
+      # Bulk-archive ingest throughput (parse worker). Higher than the safe
+      # single-upload defaults so a 1k-10k file ZIP drains in reasonable time.
+      RESUME_PARSE_CONCURRENCY: "8"
+      RESUME_PARSE_RATE_MAX: "60"
 
   screening-service:
     <<: *svc-defaults
@@ -268,6 +272,10 @@ services:
       <<: *svc-env
       PORT: "4008"
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/screening_db
+      # Bulk-screening throughput (screening worker). Plan-gating + cost-cap
+      # logic is unchanged; this only raises BullMQ concurrency + rate limiter.
+      SCREENING_CONCURRENCY: "6"
+      SCREENING_RATE_MAX: "30"
 
   notification-service:
     <<: *svc-defaults

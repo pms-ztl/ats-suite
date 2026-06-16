@@ -2,49 +2,50 @@
 // BillingScreen.tsx, Billing & subscription (plan card, usage meters, payment, invoices,
 // upgrade modal). Ported byte-faithful from screen-billing.jsx. Data via props only.
 import React, { useState } from "react";
-import { Pill, fStyles } from "./aurora-kit";
+import { Pill, fStyles, SectionCard } from "./aurora-kit";
+import { FlowRibbon, CometTrail, type RibbonPoint } from "@/components/shared/ribbon";
+import { WaffleField } from "@/components/shared/ribbon-ext";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
 import type { BillingData, BillingUsage, BillingSpendMonth } from "./types";
 import { toTitleCase } from "@/lib/utils";
-import { TrendChart, ChartCard, EmptyChart, CHART_COLORS, colorAt } from "@/components/shared/charts";
+import { ChartCard } from "@/components/shared/charts";
 
-const m$ = (n: number) => "$" + n.toLocaleString();
+const m$ = (n: number) => "₹" + n.toLocaleString("en-IN");
 
-// Stable, recognizable color per provider; falls back to the rotating palette.
-const PROVIDER_COLOR: Record<string, string> = {
-  Anthropic: CHART_COLORS.ai,
-  Groq: CHART_COLORS.brand,
-  OpenAI: CHART_COLORS.info,
-  Stub: CHART_COLORS.ink3,
-  Other: CHART_COLORS.warn,
-};
-const fmtUsd = (v: number) => "$" + Number(v ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+// Mirrors the backend's spend-trend month labels (UTC "YYYY-MM" keys -> short names).
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// ₹ with 2 decimals only when nonzero, matching the screen's en-IN formatting.
+const fmtSpend = (n: number) =>
+  n ? "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "₹0";
 
-// Flatten the per-month spend into rows with one numeric column per provider so
-// the providers stack as areas. Honest: only providers that actually have spend
-// in the window become series.
+// The tenant's real monthly AI spend (metered AgentRunCost rows, bucketed by the
+// API per calendar month) drawn as a comet trail: the glowing head is the current
+// month, earlier months fade off as particles. Months inside the API's 12-month
+// window with no metered runs are honest ₹0 points; with no spend ever recorded
+// the trail keeps its honest empty-state.
 function SpendTrendChart({ spendTrend }: { spendTrend: BillingSpendMonth[] }) {
-  const providers = Array.from(
-    new Set(spendTrend.flatMap((m) => Object.keys(m.byProvider))),
-  ).sort();
-  const rows = spendTrend.map((m) => {
-    const row: Record<string, number | string> = { label: m.label };
-    for (const p of providers) row[p] = Number(m.byProvider[p] ?? 0);
-    return row;
-  });
-  const series = providers.map((p, i) => ({
-    key: p,
-    name: p,
-    color: PROVIDER_COLOR[p] ?? colorAt(i),
-    type: "area" as const,
-  }));
+  let points: RibbonPoint[] = [];
+  if (spendTrend.length > 0) {
+    // Rebuild the backend's 12-calendar-month UTC window so months it returned
+    // no bucket for render as the real ₹0 they are; API months win.
+    const frame = new Map<string, BillingSpendMonth | undefined>();
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      frame.set(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`, undefined);
+    }
+    for (const m of spendTrend) frame.set(m.month, m);
+    points = Array.from(frame.keys()).sort().slice(-12).map((key) => {
+      const m = frame.get(key);
+      return { label: m?.label ?? MONTH_SHORT[Number(key.slice(5, 7)) - 1] ?? key, n: m?.total ?? 0 };
+    });
+  }
   return (
     <div style={{ marginBottom: 18 }}>
-      <ChartCard title="AI spend trend" subtitle="Monthly AI agent cost by provider (last 12 months)" height={220}>
-        {spendTrend.length > 0
-          ? <TrendChart data={rows} xKey="label" series={series} valueFormatter={fmtUsd} />
-          : <EmptyChart label="No AI spend recorded yet" />}
+      <ChartCard title="AI spend trend" subtitle="Monthly AI agent cost, metered per run (last 12 months)" height={240}
+        right={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>glowing head = this month&apos;s spend</Pill>}>
+        <CometTrail points={points} valueLabel={fmtSpend} height={230} emptyLabel="No AI spend recorded yet" />
       </ChartCard>
     </div>
   );
@@ -67,7 +68,23 @@ function UsageMeter({ k, used, limit }: BillingUsage) {
   );
 }
 
-export function BillingScreen({ data, onUpgrade, onChangePlan, onSelectPlan, onUpdateCard, charts, spendTrend }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onSelectPlan?: (plan: string) => void; onUpdateCard?: () => void; charts?: React.ReactNode; spendTrend?: BillingSpendMonth[] }) {
+// Part-to-whole AI spend split by LLM provider (Anthropic/Groq/OpenAI/Stub/Other),
+// summed across the loaded spend window from real per-provider AgentRunCost. Honest
+// empty-state (WaffleField's own) when nothing has been spent. The valueLabel reuses
+// the screen's ₹ en-IN currency formatting so the legend reads like every other amount.
+function ProviderSpendShare({ providerSpend }: { providerSpend: RibbonPoint[] }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <SectionCard title="Spend share by provider" icon="cpu"
+        headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>cells = each provider&apos;s share of metered ai spend</Pill>}>
+        <WaffleField segments={providerSpend.map((p) => ({ label: p.label, n: p.n }))} valueLabel={fmtSpend}
+          emptyLabel="Provider spend appears once agents run." />
+      </SectionCard>
+    </div>
+  );
+}
+
+export function BillingScreen({ data, onUpgrade, onChangePlan, onSelectPlan, onUpdateCard, charts, spendTrend, agentWorkload, providerSpend }: { data: BillingData; onUpgrade?: () => void; onChangePlan?: () => void; onSelectPlan?: (plan: string) => void; onUpdateCard?: () => void; charts?: React.ReactNode; spendTrend?: BillingSpendMonth[]; agentWorkload?: RibbonPoint[]; providerSpend?: RibbonPoint[] }) {
   const b = data;
   const [showUpgrade, setShowUpgrade] = useState(false);
   const PLAN_RANK: Record<string, number> = { FREE: 0, STARTER: 1, PROFESSIONAL: 2, ENTERPRISE: 3 };
@@ -90,7 +107,7 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onSelectPlan, onU
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}><span className="mono" style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-0.02em" }}>{m$(b.price)}</span><span style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>/ {b.cycle}</span></div>
                 <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 4 }}>Renews {b.renews}</div>
               </div>
-              <span style={{ width: 48, height: 48, borderRadius: 14, background: "var(--brand)", color: "white", display: "grid", placeItems: "center", boxShadow: "var(--e1)" }}><Icon name="rocket" size={24} /></span>
+              <span style={{ width: 48, height: 48, borderRadius: 14, background: "var(--brand)", color: "var(--on-brand)", display: "grid", placeItems: "center", boxShadow: "var(--e1)" }}><Icon name="rocket" size={24} /></span>
             </div>
             <div style={{ display: "flex", gap: 9, marginTop: 20 }}>
               <Btn variant="primary" icon="arrowUpRight" onClick={() => { setShowUpgrade(true); onUpgrade?.(); }}>Upgrade to Enterprise</Btn>
@@ -107,12 +124,26 @@ export function BillingScreen({ data, onUpgrade, onChangePlan, onSelectPlan, onU
         {/* spend trend / usage charts (real data only; honest empty-state otherwise) */}
         {spendTrend !== undefined ? <SpendTrendChart spendTrend={spendTrend} /> : charts}
 
+        {/* spend split by provider - real per-provider AgentRunCost, honest empty otherwise */}
+        {providerSpend !== undefined && <ProviderSpendShare providerSpend={providerSpend} />}
+
+        {/* AI workload ribbon - real metered runs per agent (30d), cost underneath. */}
+        {agentWorkload !== undefined && (
+          <div style={{ marginBottom: 18 }}>
+            <SectionCard title="AI workload" icon="cpu"
+              headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>ribbon thickness = metered runs (30d)</Pill>}>
+              <FlowRibbon points={agentWorkload} showShare={false} height={210}
+                emptyLabel="Workload appears once agents run." />
+            </SectionCard>
+          </div>
+        )}
+
         {/* payment + invoices */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18, alignItems: "start" }} className="billing-row">
           <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 20, boxShadow: "var(--e1)" }}>
             <div style={{ ...fStyles.label, marginBottom: 12 }}>Payment method</div>
             <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: "var(--r-lg)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
-              <span style={{ width: 38, height: 26, borderRadius: 6, background: "linear-gradient(135deg, var(--ink), var(--ink-2))", color: "white", display: "grid", placeItems: "center" }}><Icon name="card" size={15} /></span>
+              <span style={{ width: 38, height: 26, borderRadius: 6, background: "linear-gradient(135deg, var(--ink), var(--ink-2))", color: "var(--ink-inv)", display: "grid", placeItems: "center" }}><Icon name="card" size={15} /></span>
               <div style={{ flex: 1 }}><div className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>&bull;&bull;&bull;&bull; {b.card.last4}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>Expires {b.card.exp}</div></div>
             </div>
             <Btn variant="soft" size="sm" icon="copy" style={{ marginTop: 12, width: "100%", justifyContent: "center" }} onClick={onUpdateCard}>Update card</Btn>

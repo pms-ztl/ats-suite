@@ -92,7 +92,7 @@ export function FairnessScreen({ data, metrics, onMethodology, onPublish }: { da
         <div style={{ borderRadius: "var(--r-xl)", padding: "18px 22px", marginBottom: 22, display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap",
           background: failing ? "linear-gradient(110deg, var(--danger-tint), transparent 70%)" : "linear-gradient(110deg, var(--ok-tint), transparent 70%)",
           border: "1px solid " + (failing ? "color-mix(in oklab, var(--danger) 30%, transparent)" : "color-mix(in oklab, var(--ok) 30%, transparent)") }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: failing ? "var(--danger)" : "var(--ok)", color: "white", flexShrink: 0 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: failing ? "var(--danger)" : "var(--ok)", color: "var(--ink-inv)", flexShrink: 0 }}>
             <Icon name={failing ? "flag" : "check"} size={26} />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>

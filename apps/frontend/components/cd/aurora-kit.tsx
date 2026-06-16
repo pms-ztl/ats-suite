@@ -285,7 +285,7 @@ export function Funnel({ stages }: { stages: FunnelStage[] }) {
             <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)" }}>{s.stage}</span>
             <div style={{ height: 30, borderRadius: 8, background: "var(--surface-2)", overflow: "hidden", position: "relative" }}>
               <div style={{ height: "100%", width: pct + "%", background: `color-mix(in oklab, ${s.color} 80%, transparent)`, borderRadius: 8, animation: "growx 1s var(--ease-out) both", animationDelay: i * 90 + "ms", display: "flex", alignItems: "center", paddingLeft: 12 }}>
-                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: i < 1 ? "var(--ink)" : "white" }}>{s.n.toLocaleString()}</span>
+                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, color: i < 1 ? "var(--ink)" : "var(--c-ink-inv, var(--ink-inv, #fff))" }}>{s.n.toLocaleString()}</span>
               </div>
             </div>
             <span style={{ textAlign: "right", fontSize: 11.5, color: "var(--ink-3)" }} className="mono">{i > 0 ? conv + "% conv" : ""}</span>

@@ -117,12 +117,36 @@ exports.Prisma.BulkUploadScalarFieldEnum = {
   userId: 'userId',
   requisitionId: 'requisitionId',
   status: 'status',
+  phase: 'phase',
+  archiveName: 'archiveName',
   totalFiles: 'totalFiles',
   processedFiles: 'processedFiles',
   failedFiles: 'failedFiles',
+  extractedCount: 'extractedCount',
+  pendingCount: 'pendingCount',
+  approvedCount: 'approvedCount',
+  rejectedCount: 'rejectedCount',
+  committedCount: 'committedCount',
   errors: 'errors',
   createdAt: 'createdAt',
   completedAt: 'completedAt'
+};
+
+exports.Prisma.BulkImportItemScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  bulkUploadId: 'bulkUploadId',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  sizeBytes: 'sizeBytes',
+  detectedName: 'detectedName',
+  detectedEmail: 'detectedEmail',
+  textSnippet: 'textSnippet',
+  extractedText: 'extractedText',
+  extractStatus: 'extractStatus',
+  reviewStatus: 'reviewStatus',
+  candidateId: 'candidateId',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.AgentRunScalarFieldEnum = {
@@ -181,6 +205,7 @@ exports.BulkUploadStatus = exports.$Enums.BulkUploadStatus = {
 exports.Prisma.ModelName = {
   Resume: 'Resume',
   BulkUpload: 'BulkUpload',
+  BulkImportItem: 'BulkImportItem',
   AgentRun: 'AgentRun'
 };
 /**
@@ -194,7 +219,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\CDC\\ATS-microservices\\apps\\resume-service\\src\\generated\\prisma",
+      "value": "D:\\CDC\\ATS\\apps\\resume-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -208,11 +233,12 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\CDC\\ATS-microservices\\apps\\resume-service\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\CDC\\ATS\\apps\\resume-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../../../.env"
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.19.3",
@@ -221,6 +247,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -229,13 +256,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"RESUME_DATABASE_URL\")\n}\n\nenum BulkUploadStatus {\n  QUEUED\n  PROCESSING\n  COMPLETED\n  FAILED\n  PARTIAL\n}\n\nmodel Resume {\n  id               String    @id @default(cuid())\n  tenantId         String\n  candidateId      String    @unique // FK to candidate-service (no Prisma relation)\n  fileName         String\n  originalFilename String?\n  fileSize         Int\n  mimeType         String\n  storageKey       String    @default(\"\")\n  extractedText    String?   @db.Text\n  parsedData       Json?\n  parseStatus      String    @default(\"PENDING\")\n  parsedAt         DateTime?\n  bulkUploadId     String?\n  createdAt        DateTime  @default(now())\n  updatedAt        DateTime  @updatedAt\n\n  @@index([tenantId])\n  @@index([bulkUploadId])\n}\n\nmodel BulkUpload {\n  id             String           @id @default(uuid())\n  tenantId       String\n  userId         String\n  requisitionId  String?\n  status         BulkUploadStatus @default(QUEUED)\n  totalFiles     Int\n  processedFiles Int              @default(0)\n  failedFiles    Int              @default(0)\n  errors         Json             @default(\"[]\")\n  createdAt      DateTime         @default(now())\n  completedAt    DateTime?\n\n  @@index([tenantId, status])\n}\n\n// Local AgentRun projection — populated from runtime persistRun hook\nmodel AgentRun {\n  id                String   @id\n  tenantId          String\n  agentType         String\n  status            String\n  inputHash         String\n  tokensIn          Int\n  tokensOut         Int\n  costUsd           Decimal  @db.Decimal(10, 6)\n  latencyMs         Int\n  modelName         String\n  triggeredByUserId String?\n  errorMessage      String?\n  createdAt         DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n}\n",
-  "inlineSchemaHash": "c17eb341aca9eca3c964898241e749ae82009b814d1abd8feb5be3837e97f476",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"RESUME_DATABASE_URL\")\n}\n\nenum BulkUploadStatus {\n  QUEUED\n  PROCESSING\n  COMPLETED\n  FAILED\n  PARTIAL\n}\n\nmodel Resume {\n  id               String    @id @default(cuid())\n  tenantId         String\n  candidateId      String    @unique // FK to candidate-service (no Prisma relation)\n  fileName         String\n  originalFilename String?\n  fileSize         Int\n  mimeType         String\n  storageKey       String    @default(\"\")\n  extractedText    String?   @db.Text\n  parsedData       Json?\n  parseStatus      String    @default(\"PENDING\")\n  parsedAt         DateTime?\n  bulkUploadId     String?\n  createdAt        DateTime  @default(now())\n  updatedAt        DateTime  @updatedAt\n\n  @@index([tenantId])\n  @@index([bulkUploadId])\n}\n\nmodel BulkUpload {\n  id             String           @id @default(uuid())\n  tenantId       String\n  userId         String\n  requisitionId  String?\n  status         BulkUploadStatus @default(QUEUED)\n  // Archive-ingest lifecycle (loose-file bulk leaves phase at its default):\n  //   extracting → review → committing → done | failed\n  phase          String           @default(\"extracting\")\n  archiveName    String?\n  totalFiles     Int\n  processedFiles Int              @default(0)\n  failedFiles    Int              @default(0)\n  // Archive staging counters (per BulkImportItem lifecycle)\n  extractedCount Int              @default(0)\n  pendingCount   Int              @default(0)\n  approvedCount  Int              @default(0)\n  rejectedCount  Int              @default(0)\n  committedCount Int              @default(0)\n  errors         Json             @default(\"[]\")\n  createdAt      DateTime         @default(now())\n  completedAt    DateTime?\n\n  @@index([tenantId, status])\n}\n\n// Archive-ingest staging row. One per file extracted from an uploaded .zip.\n// Holds the full extracted text so commit does NOT re-extract; a recruiter\n// reviews/edits/approves these before any real Candidate/Resume is created.\nmodel BulkImportItem {\n  id            String   @id @default(uuid())\n  tenantId      String\n  bulkUploadId  String\n  fileName      String\n  mimeType      String\n  sizeBytes     Int      @default(0)\n  detectedName  String?\n  detectedEmail String?\n  textSnippet   String?\n  extractedText String?  @db.Text\n  // extracted | ocr_empty | failed | unsupported\n  extractStatus String   @default(\"extracted\")\n  // pending | approved | rejected\n  reviewStatus  String   @default(\"pending\")\n  candidateId   String?\n  createdAt     DateTime @default(now())\n\n  @@index([bulkUploadId])\n  @@index([tenantId])\n}\n\n// Local AgentRun projection — populated from runtime persistRun hook\nmodel AgentRun {\n  id                String   @id\n  tenantId          String\n  agentType         String\n  status            String\n  inputHash         String\n  tokensIn          Int\n  tokensOut         Int\n  costUsd           Decimal  @db.Decimal(10, 6)\n  latencyMs         Int\n  modelName         String\n  triggeredByUserId String?\n  errorMessage      String?\n  createdAt         DateTime @default(now())\n\n  @@index([tenantId, createdAt])\n}\n",
+  "inlineSchemaHash": "590f940723fc5ab8a35cb9d0c3f4d094ac420cabdf2b2d82ee596c314eaf9fef",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Resume\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"candidateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"originalFilename\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"storageKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extractedText\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"parsedData\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"parseStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"parsedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"bulkUploadId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"BulkUpload\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requisitionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"BulkUploadStatus\"},{\"name\":\"totalFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"processedFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"failedFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"errors\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"completedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AgentRun\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inputHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokensIn\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"tokensOut\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"costUsd\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"latencyMs\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"modelName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"triggeredByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"errorMessage\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Resume\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"candidateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"originalFilename\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"storageKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extractedText\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"parsedData\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"parseStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"parsedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"bulkUploadId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"BulkUpload\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"requisitionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"BulkUploadStatus\"},{\"name\":\"phase\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"archiveName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"totalFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"processedFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"failedFiles\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"extractedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"pendingCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"approvedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"rejectedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"committedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"errors\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"completedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"BulkImportItem\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bulkUploadId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sizeBytes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"detectedName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"detectedEmail\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"textSnippet\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extractedText\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extractStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"reviewStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"candidateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AgentRun\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"agentType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inputHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokensIn\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"tokensOut\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"costUsd\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"latencyMs\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"modelName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"triggeredByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"errorMessage\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

@@ -123,7 +123,7 @@ PASS / REVIEW / FAIL. AI is advisory; the human's click is the deciding action.
 | rows[].status | "approved" \| "pending" (human decision state before any in-session action) |
 | rows[].requirements? | optional per-row requirement breakdown; else uses data.requirements |
 | rows[].trace? | optional per-row reasoning trace; else uses data.trace |
-| requirements[] | default ReqBreakdown for the open verdict: { id, label, custom?, state: verdict, weight: %, sub: e.g. "9/10", note: AI evidence } |
+| requirements[] | default ReqBreakdown for the open verdict: { id, label, custom?, state: met/partial/unmet, note: AI-cited evidence }. Real fields only — no weight% or x/10 sub-score (the screener does not produce those) |
 | trace[] | default reasoning trace: { t: step text, tool: function name, status } rendered as tool() |
 
 Handlers: onDecide(id, decision) where decision is "advance"\|"decline"\|"review";

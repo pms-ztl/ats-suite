@@ -6,6 +6,8 @@
 // "Unassigned"; everything else (title, dept, status, salary band, counts) is live.
 import { useRouter } from "next/navigation";
 import { Requisitions } from "./screens/Requisitions";
+import { Pill, SectionCard } from "./aurora-kit";
+import { HoneyComb } from "@/components/shared/ribbon-ext";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { listRequisitions } from "@/lib/api";
@@ -19,6 +21,14 @@ const STATUS_META: Record<ReqStatusKey, ReqStatusMeta> = {
   FILLED: { label: "Filled", tone: "var(--brand)", bg: "var(--brand-tint)", icon: "check" },
   CLOSED: { label: "Closed", tone: "var(--ink-2)", bg: "var(--surface-3)", icon: "x" },
   CANCELLED: { label: "Cancelled", tone: "var(--danger)", bg: "var(--danger-tint)", icon: "x" },
+};
+
+// Comb order keeps the lifecycle reading open -> draft -> on hold -> filled ->
+// closed -> cancelled; the bead tone reuses each status' table-badge color.
+const STATUS_ORDER: ReqStatusKey[] = ["OPEN", "DRAFT", "ON_HOLD", "FILLED", "CLOSED", "CANCELLED"];
+const STATUS_COMB_COLOR: Record<ReqStatusKey, string> = {
+  OPEN: "var(--ok)", DRAFT: "var(--ink-3)", ON_HOLD: "var(--warn)",
+  FILLED: "var(--brand)", CLOSED: "var(--ink-2)", CANCELLED: "var(--danger)",
 };
 
 function fmtDate(iso?: string): string {
@@ -50,11 +60,28 @@ export function RequisitionsLive() {
   const reqs = useData<Requisition[]>(listRequisitions);
   const rows = (reqs.data ?? []).map(toRow);
 
+  // "Requisition mix" comb: one hex per real requisition, grouped by status in
+  // lifecycle order, colored with the same tone the status badge uses in the
+  // table. Empty statuses drop out; HoneyComb renders its own empty state when
+  // there are no requisitions at all.
+  const statusComb = STATUS_ORDER
+    .map((s) => ({ label: STATUS_META[s].label, n: rows.filter((r) => r.status === s).length, color: STATUS_COMB_COLOR[s] }))
+    .filter((g) => g.n > 0);
+
   return (
     <Requisitions
       data={{ rows, statusMeta: STATUS_META, workspaceName: user?.tenant?.name ?? "your workspace" }}
       onCreate={() => router.push("/requisitions/new")}
       onOpen={(id) => router.push(`/requisitions/${id}`)}
+      ribbonSlot={
+        <SectionCard title="Requisition mix" icon="grid"
+          headRight={<Pill icon="briefcase" style={{ textTransform: "none" }}>every hex = one requisition</Pill>}>
+          <HoneyComb
+            groups={statusComb}
+            valueLabel={(n) => `${n}`}
+            emptyLabel="The comb fills in once requisitions are opened." />
+        </SectionCard>
+      }
     />
   );
 }

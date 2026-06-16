@@ -75,7 +75,7 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
             </div>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 7, fontSize: 12.5, color: "var(--ink-2)" }}>
               <span className="mono">{d.id}</span><span>·</span><span>{d.dept}</span><span>·</span><span>{d.loc}</span><span>·</span>
-              <span className="mono" style={{ color: "var(--brand)", fontWeight: 600 }}>${d.min / 1000}k to ${d.max / 1000}k</span>
+              <span className="mono" style={{ color: "var(--brand)", fontWeight: 600 }}>₹{d.min / 1000}k to ₹{d.max / 1000}k</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: 9 }}>
@@ -128,7 +128,7 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
               <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
                 <div style={{ ...LABEL, marginBottom: 4 }}>Details</div>
                 <Fact k="Level" v={d.level} /><Fact k="Job family" v={d.family} /><Fact k="Location" v={d.loc} />
-                <Fact k="Salary" v={`$${d.min / 1000}k to $${d.max / 1000}k`} mono /><Fact k="Headcount" v={`${d.filled} / ${d.head} filled`} mono />
+                <Fact k="Salary" v={`₹${d.min / 1000}k to ₹${d.max / 1000}k`} mono /><Fact k="Headcount" v={`${d.filled} / ${d.head} filled`} mono />
                 <Fact k="Target start" v={d.target} /><Fact k="Posted" v={d.posted} />
               </div>
               <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>

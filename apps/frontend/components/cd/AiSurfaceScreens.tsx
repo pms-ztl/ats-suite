@@ -19,7 +19,7 @@ export function PlatformCostScreen({ data }: { data: PlatformCostData }) {
   const tenantTree = tenants
     .filter((t) => t.cost > 0)
     .map((t) => ({ name: t.name, size: Math.round(t.cost * 100) / 100, fill: t.health === "over" ? CHART_COLORS.danger : undefined }));
-  const usd = (v: any) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const usd = (v: any) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1240, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
@@ -91,7 +91,7 @@ export function MobilityScreen({ data }: { data: MobilityData }) {
         {data.matches.map((m, i) => (
           <div key={i} style={{ display: "flex", gap: 16, alignItems: "center", padding: 16, borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)", flexWrap: "wrap" }}>
             <ScoreRing value={m.match} size={52} band="var(--ai)" label="match" />
-            <span className="mono" style={{ width: 42, height: 42, borderRadius: 11, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 14, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{m.ini}</span>
+            <span className="mono" style={{ width: 42, height: 42, borderRadius: 11, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 14, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{m.ini}</span>
             <div style={{ flex: 1, minWidth: 180 }}>
               <div style={{ fontWeight: 700, fontSize: "var(--fs-sm)" }}>{m.name}</div>
               <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{m.cur} · {m.tenure} tenure</div>

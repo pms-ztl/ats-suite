@@ -8,6 +8,8 @@
 import { SecurityScreen } from "./SecAiScreens";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { exportToCSV } from "@/lib/export";
+import { toast } from "sonner";
 import type { SecurityData, SecurityAlert } from "./types";
 import type { IconName } from "./icon";
 
@@ -97,5 +99,23 @@ export function SecurityLive() {
     alerts: list,
     checklist,
   };
-  return <SecurityScreen data={data} />;
+
+  // Functional report export: writes whatever telemetry actually loaded; with
+  // nothing wired yet it says so instead of downloading an empty file.
+  const onReport = () => {
+    const rows: string[][] = [
+      ...posture.map((p) => ["Posture", p.k, `${p.v}${p.unit}`]),
+      ...checklist.map((c) => ["Hardening", c.c, c.done ? "Done" : "To do"]),
+      ...list.map((a) => ["Risk alert", `${a.t} - ${a.detail}`, a.sev]),
+    ];
+    if (!rows.length) { toast.info("No security telemetry to export yet - it appears once the security service is connected."); return; }
+    exportToCSV(
+      `security-report-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Section", "Item", "Value"],
+      [["Score", "Security score", `${score} / 100`], ...rows],
+    );
+    toast.success("Security report exported.");
+  };
+
+  return <SecurityScreen data={data} onReport={onReport} />;
 }

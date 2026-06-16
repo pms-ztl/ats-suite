@@ -176,7 +176,7 @@ export default function ApplyPage() {
 
   if (done) return <Confirm title={job.title} reference={reference} />;
 
-  const salary = job.min != null && job.max != null ? `$${job.min}k to $${job.max}k` : null;
+  const salary = job.min != null && job.max != null ? `₹${job.min}k to ₹${job.max}k` : null;
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 20px", animation: "rise .4s var(--ease-out)" }}>

@@ -268,7 +268,16 @@ export function startScreeningWorker(logger: Logger) {
         throw err;
       }
     },
-    { concurrency: 2, limiter: { max: 5, duration: 60_000 } }
+    {
+      // Throughput is env-driven so bulk-archive imports can scale; the defaults
+      // are much higher than the original 2 / 5-per-min, but still bounded to
+      // respect the plan-gating + per-tenant cost caps applied inside the job.
+      concurrency: Number(process.env["SCREENING_CONCURRENCY"] || 6),
+      limiter: {
+        max: Number(process.env["SCREENING_RATE_MAX"] || 30),
+        duration: 60_000,
+      },
+    }
   );
 
   worker.on("completed", (job, ret) => logger.info({ jobId: job.id, ret }, "screening done"));

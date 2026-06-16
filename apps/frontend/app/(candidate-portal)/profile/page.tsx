@@ -311,6 +311,9 @@ export default function CandidateProfilePage() {
               <div className="eyebrow"><span className="d" /> Your candidate space</div>
               <h1 className="big">Welcome back, <br />{firstName}<span className="gdot">.</span></h1>
               <p className="lede2">Track your applications, interviews, and offer in one place, with full transparency into how every decision was made.</p>
+              <div style={{ display: "inline-flex", gap: 8, alignItems: "center", marginTop: 10, padding: "7px 13px", borderRadius: 999, background: "rgba(240,180,41,0.14)", border: "1px solid rgba(240,180,41,0.4)", color: "#e8b33b", fontSize: 12, fontWeight: 700 }}>
+                <span aria-hidden>⚠</span> Sample preview — the applications, interviews and offer below are illustrative, not your live records.
+              </div>
               <div className="ctas">
                 <button className="cta-g" id="toApps" onClick={toApps}>View my applications <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></button>
                 <a className="cta-ghost" href="/jobs">Browse jobs</a>
@@ -382,8 +385,8 @@ export default function CandidateProfilePage() {
                   <div className="offer-banner">
                     <div style={{ fontWeight: 700, fontSize: "14.5px" }}>Platform Engineer</div>
                     <div style={{ fontSize: "12px", color: "var(--ink-2)", marginBottom: 8 }}>Sent May 30 · expires in 10 days</div>
-                    <div className="kv"><span style={{ color: "var(--ink-2)" }}>Base salary</span><b className="mono">$182, 000</b></div>
-                    <div className="kv"><span style={{ color: "var(--ink-2)" }}>Signing bonus</span><b className="mono">$20, 000</b></div>
+                    <div className="kv"><span style={{ color: "var(--ink-2)" }}>Base salary</span><b className="mono">₹1,82,000</b></div>
+                    <div className="kv"><span style={{ color: "var(--ink-2)" }}>Signing bonus</span><b className="mono">₹20,000</b></div>
                     <div className="kv"><span style={{ color: "var(--ink-2)" }}>Start date</span><b>Jul 14, 2026</b></div>
                   </div>
                   <div style={{ display: "flex", gap: 9, marginTop: 13 }}><button className="btn btn-soft btn-sm" style={{ flex: 1 }}>Decline</button><button className="btn btn-primary btn-sm" style={{ flex: 1.4 }}>Review &amp; accept</button></div>

@@ -37,11 +37,11 @@ function mrrDelta(from: string, to: string): string {
 }
 
 const TENANTS_DATA: TenantsData = {
-  summary: "9 active workspaces across 4 plans. $52.4k MRR, up 12 percent this month.",
+  summary: "9 active workspaces across 4 plans. ₹52.4k MRR, up 12 percent this month.",
   kpis: [
     { label: "Active tenants", value: 9, icon: "building", spark: [6, 6, 7, 7, 8, 8, 9, 9], delta: 2, good: true },
-    { label: "MRR", value: 52400, prefix: "$", icon: "card", spark: [44000, 46000, 47500, 49000, 50200, 51000, 51800, 52400], delta: 8, good: true },
-    { label: "AI cost (mo)", value: 9120, prefix: "$", icon: "cpu", ai: true, spark: [7600, 7900, 8200, 8500, 8700, 8900, 9000, 9120], delta: 6, good: false },
+    { label: "MRR", value: 52400, prefix: "₹", icon: "card", spark: [44000, 46000, 47500, 49000, 50200, 51000, 51800, 52400], delta: 8, good: true },
+    { label: "AI cost (mo)", value: 9120, prefix: "₹", icon: "cpu", ai: true, spark: [7600, 7900, 8200, 8500, 8700, 8900, 9000, 9120], delta: 6, good: false },
     { label: "Avg tenant health", value: 92, suffix: "%", icon: "check", spark: [88, 89, 90, 90, 91, 91, 92, 92], delta: 1, good: true },
   ],
   tenants: [
@@ -85,9 +85,9 @@ const PROMPTS_DATA: PromptsData = {
 
 const PLAN_REQUESTS_DATA: PlanRequestsData = {
   requests: [
-    { id: "pr1", tenant: "Vela Logistics", from: "PROFESSIONAL", to: "ENTERPRISE", mrr: "+$3,201", reason: "Needs SSO and unlimited seats", by: "ops@vela.co", when: "2h ago" },
-    { id: "pr2", tenant: "Cedar Finance", from: "STARTER", to: "PROFESSIONAL", mrr: "+$700", reason: "Hit the 500 resumes/mo cap", by: "talent@cedar.fin", when: "1d ago" },
-    { id: "pr3", tenant: "Bright Labs", from: "STARTER", to: "PROFESSIONAL", mrr: "+$700", reason: "Wants all 12 AI agents", by: "hr@bright.io", when: "3d ago" },
+    { id: "pr1", tenant: "Vela Logistics", from: "PROFESSIONAL", to: "ENTERPRISE", mrr: "+₹3,201", reason: "Needs SSO and unlimited seats", by: "ops@vela.co", when: "2h ago" },
+    { id: "pr2", tenant: "Cedar Finance", from: "STARTER", to: "PROFESSIONAL", mrr: "+₹700", reason: "Hit the 500 resumes/mo cap", by: "talent@cedar.fin", when: "1d ago" },
+    { id: "pr3", tenant: "Bright Labs", from: "STARTER", to: "PROFESSIONAL", mrr: "+₹700", reason: "Wants all 12 AI agents", by: "hr@bright.io", when: "3d ago" },
   ],
 };
 
@@ -119,7 +119,7 @@ export function TenantsLive() {
     kpis: [
       { label: "Active tenants", value: s.activeTenants ?? rows.length, icon: "building", spark: flat(s.activeTenants ?? rows.length), delta: 0, good: true } as KPI,
       { label: "Total users", value: s.totalUsers ?? 0, icon: "users", spark: flat(s.totalUsers ?? 0), delta: 0, good: true } as KPI,
-      { label: "AI cost (30d)", value: Math.round(s.totalCostUsd30d ?? 0), prefix: "$", icon: "cpu", ai: true, spark: flat(Math.round(s.totalCostUsd30d ?? 0)), delta: 0, good: false } as KPI,
+      { label: "AI cost (30d)", value: Math.round(s.totalCostUsd30d ?? 0), prefix: "₹", icon: "cpu", ai: true, spark: flat(Math.round(s.totalCostUsd30d ?? 0)), delta: 0, good: false } as KPI,
       { label: "Candidates", value: s.totalCandidates ?? 0, icon: "users", spark: flat(s.totalCandidates ?? 0), delta: 0, good: true } as KPI,
     ],
     tenants: rows,
@@ -164,8 +164,8 @@ export function TenantsLive() {
           data={scatterData}
           xKey="mrr" yKey="cost" zKey="users"
           xName="MRR" yName="AI cost 30d"
-          xFormatter={(v) => `$${v}`} yFormatter={(v) => `$${v}`}
-          valueFormatter={(v) => `$${Number(v).toLocaleString()}`}
+          xFormatter={(v) => `₹${v}`} yFormatter={(v) => `₹${v}`}
+          valueFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
           colorFn={(row) => (row.over ? CHART_COLORS.danger : CHART_COLORS.ai)}
         />
       </ChartCard>
@@ -220,7 +220,7 @@ export function PlatformCostLive() {
   const data: PlatformCostData = {
     period,
     kpis: [
-      { label: "Total AI spend (30d)", value: totalCost, prefix: "$", icon: "cpu", ai: true, spark: flat(totalCost), delta: 0, good: false } as KPI,
+      { label: "Total AI spend (30d)", value: totalCost, prefix: "₹", icon: "cpu", ai: true, spark: flat(totalCost), delta: 0, good: false } as KPI,
       { label: "Agent runs (30d)", value: c.totals.runs ?? 0, icon: "server", spark: flat(c.totals.runs ?? 0), delta: 0, good: true } as KPI,
       { label: "Tokens (30d)", value: totalTokens, icon: "chart", spark: flat(totalTokens), delta: 0, good: false } as KPI,
       { label: "Agents w/ spend", value: (c.byAgent ?? []).length, icon: "sparkles", ai: true, spark: flat((c.byAgent ?? []).length), delta: 0, good: true } as KPI,

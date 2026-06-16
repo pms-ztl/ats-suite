@@ -11,6 +11,9 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { bulkUploadResumes, previewCandidateImport, commitCandidateImport, type ImportPreview } from "@/lib/api";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
+import ArchiveImport from "./ArchiveImport";
+
+type Mode = "csv" | "resume" | "archive";
 
 const RESUME_ACCEPT = ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.tiff,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/png,image/jpeg,image/webp,image/tiff";
 
@@ -45,7 +48,7 @@ const cand = (r: ImportPreview["preview"][number]) => ({
 
 export default function ImportScreen() {
   const onBack = () => { window.location.href = "/candidates"; };
-  const [mode, setMode] = useState<"csv" | "resume">("csv");
+  const [mode, setMode] = useState<Mode>("csv");
   const [step, setStep] = useState(1);
   const steps = mode === "resume" ? ["Upload", "Done"] : ["Upload", "Map columns", "Preview", "Done"];
 
@@ -62,7 +65,7 @@ export default function ImportScreen() {
   const [resumeImporting, setResumeImporting] = useState(false);
   const [resumeResult, setResumeResult] = useState<{ totalFiles: number; enqueued: number; failed: number } | null>(null);
 
-  const switchMode = (m: "csv" | "resume") => {
+  const switchMode = (m: Mode) => {
     setMode(m); setStep(1); setPreview(null); setCommitResult(null); setCsvError(null); setResumeResult(null);
   };
 
@@ -114,17 +117,23 @@ export default function ImportScreen() {
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
         <button onClick={onBack} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-2)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, marginBottom: 14 }}><Icon name="chevsL" size={14} /> Candidates</button>
         <h1 style={{ margin: "0 0 4px", fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>Bulk import candidates</h1>
-        <p style={{ margin: "0 0 18px", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Import a CSV of candidate records, or upload resume files (PDF, DOCX, DOC, TXT, or images) - the AI résumé-parser extracts and enriches each candidate.</p>
+        <p style={{ margin: "0 0 18px", color: "var(--c-ink-2)", fontSize: "var(--fs-md)" }}>Import a CSV of candidate records, upload resume files, or drop a single .zip archive of up to 10,000 mixed files - the AI résumé-parser extracts and enriches each candidate.</p>
 
         {/* mode toggle */}
         <div style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: "var(--r)", background: "var(--c-surface-2)", border: "1px solid var(--c-line)", marginBottom: 22 }}>
-          {([["csv", "CSV spreadsheet", "fileText"], ["resume", "Resume files", "sparkles"]] as const).map(([m, label, icon]) => (
+          {([["csv", "CSV spreadsheet", "fileText"], ["resume", "Resume files", "sparkles"], ["archive", "Archive (ZIP)", "layers"]] as const).map(([m, label, icon]) => (
             <button key={m} onClick={() => switchMode(m)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 15px", borderRadius: "var(--r-sm)", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "var(--font-sans)", background: mode === m ? "var(--c-surface)" : "transparent", color: mode === m ? "var(--c-ink)" : "var(--c-ink-3)", boxShadow: mode === m ? "var(--e1)" : "none", transition: "background .15s, color .15s" }}>
               <Icon name={icon} size={14} /> {label}
             </button>
           ))}
         </div>
 
+        {/* Archive (ZIP) mode owns its full lifecycle (extract -> review -> commit),
+            so it renders its own card + footer and skips the generic stepper. */}
+        {mode === "archive" ? (
+          <ArchiveImport onBack={onBack} />
+        ) : (
+        <>
         {/* stepper */}
         <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
           {steps.map((s, i) => (
@@ -262,6 +271,8 @@ export default function ImportScreen() {
             <Btn variant="primary" icon="users" onClick={onBack}>View candidates</Btn>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

@@ -37,12 +37,13 @@ export interface CandidatesData {
   sources: string[];                 // source filter options; first is the "All sources" default
 }
 
-export function Candidates({ data, onMove, onOpenProfile, onImport, onSource }: {
+export function Candidates({ data, onMove, onOpenProfile, onImport, onSource, ribbonSlot }: {
   data: CandidatesData;
   onMove?: (id: string, stage: string) => void;   // persist a stage move (kanban drag)
   onOpenProfile?: (id: string) => void;            // navigate to /candidates/[id]
   onImport?: () => void;                           // navigate to /candidates/import
   onSource?: () => void;                           // navigate to /sourcing
+  ribbonSlot?: React.ReactNode;                    // optional hero viz rendered above the board/table
 }) {
   const { candidates = [], stages = [], savedViews = [], sources = ["All sources"] } = data;
   const [cands, setCands] = useState<Candidate[]>(candidates);
@@ -104,6 +105,8 @@ export function Candidates({ data, onMove, onOpenProfile, onImport, onSource }: 
           {view === "table" && <button onClick={() => setDense((d) => !d)} title="Density" style={{ width: 34, height: 34, borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: dense ? "var(--surface-2)" : "var(--surface)", color: "var(--ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="listChecks" size={15} /></button>}
         </div>
       </div>
+
+      {ribbonSlot && <div style={{ padding: "0 28px 14px" }}>{ribbonSlot}</div>}
 
       <div key={view} style={{ flex: 1, minHeight: 0, padding: view === "board" ? "0 28px 16px" : "0 28px 20px", animation: "fadein .25s var(--ease-out)" }}>
         {view === "board"

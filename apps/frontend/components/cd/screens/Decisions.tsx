@@ -99,7 +99,7 @@ export function Decisions({ data, onDecision }: { data: DecisionsData; onDecisio
               onMouseEnter={(e) => { if (selId !== d.id) e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { if (selId !== d.id) e.currentTarget.style.background = "transparent"; }}>
               {selId === d.id && <span style={{ position: "absolute", left: 0, top: 12, bottom: 12, width: 3, background: "var(--brand)", borderRadius: "0 3px 3px 0" }} />}
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span className="mono" style={{ width: 32, height: 32, borderRadius: "var(--r-sm)", flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{d.ini}</span>
+                <span className="mono" style={{ width: 32, height: 32, borderRadius: "var(--r-sm)", flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{d.ini}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{d.name}</div>
                   <div style={{ fontSize: 11, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{d.role}</div>
@@ -120,7 +120,7 @@ export function Decisions({ data, onDecision }: { data: DecisionsData; onDecisio
         {cur && (
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 18 }}>
-              <span className="mono" style={{ width: 48, height: 48, borderRadius: "var(--r)", display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white", fontWeight: 700, fontSize: 16 }}>{cur.ini}</span>
+              <span className="mono" style={{ width: 48, height: 48, borderRadius: "var(--r)", display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)", fontWeight: 700, fontSize: 16 }}>{cur.ini}</span>
               <div style={{ flex: 1 }}>
                 <h2 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>{cur.name}</h2>
                 <div style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>{cur.role} · <span className="mono">{cur.reqId}</span></div>

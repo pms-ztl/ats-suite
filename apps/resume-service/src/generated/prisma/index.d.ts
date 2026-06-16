@@ -24,6 +24,11 @@ export type Resume = $Result.DefaultSelection<Prisma.$ResumePayload>
  */
 export type BulkUpload = $Result.DefaultSelection<Prisma.$BulkUploadPayload>
 /**
+ * Model BulkImportItem
+ * 
+ */
+export type BulkImportItem = $Result.DefaultSelection<Prisma.$BulkImportItemPayload>
+/**
  * Model AgentRun
  * 
  */
@@ -186,6 +191,16 @@ export class PrismaClient<
     * ```
     */
   get bulkUpload(): Prisma.BulkUploadDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bulkImportItem`: Exposes CRUD operations for the **BulkImportItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BulkImportItems
+    * const bulkImportItems = await prisma.bulkImportItem.findMany()
+    * ```
+    */
+  get bulkImportItem(): Prisma.BulkImportItemDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.agentRun`: Exposes CRUD operations for the **AgentRun** model.
@@ -639,6 +654,7 @@ export namespace Prisma {
   export const ModelName: {
     Resume: 'Resume',
     BulkUpload: 'BulkUpload',
+    BulkImportItem: 'BulkImportItem',
     AgentRun: 'AgentRun'
   };
 
@@ -658,7 +674,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "resume" | "bulkUpload" | "agentRun"
+      modelProps: "resume" | "bulkUpload" | "bulkImportItem" | "agentRun"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -807,6 +823,80 @@ export namespace Prisma {
           count: {
             args: Prisma.BulkUploadCountArgs<ExtArgs>
             result: $Utils.Optional<BulkUploadCountAggregateOutputType> | number
+          }
+        }
+      }
+      BulkImportItem: {
+        payload: Prisma.$BulkImportItemPayload<ExtArgs>
+        fields: Prisma.BulkImportItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BulkImportItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BulkImportItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          findFirst: {
+            args: Prisma.BulkImportItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BulkImportItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          findMany: {
+            args: Prisma.BulkImportItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>[]
+          }
+          create: {
+            args: Prisma.BulkImportItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          createMany: {
+            args: Prisma.BulkImportItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BulkImportItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>[]
+          }
+          delete: {
+            args: Prisma.BulkImportItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          update: {
+            args: Prisma.BulkImportItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.BulkImportItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BulkImportItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BulkImportItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.BulkImportItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BulkImportItemPayload>
+          }
+          aggregate: {
+            args: Prisma.BulkImportItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBulkImportItem>
+          }
+          groupBy: {
+            args: Prisma.BulkImportItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BulkImportItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BulkImportItemCountArgs<ExtArgs>
+            result: $Utils.Optional<BulkImportItemCountAggregateOutputType> | number
           }
         }
       }
@@ -982,6 +1072,7 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     resume?: ResumeOmit
     bulkUpload?: BulkUploadOmit
+    bulkImportItem?: BulkImportItemOmit
     agentRun?: AgentRunOmit
   }
 
@@ -2234,12 +2325,22 @@ export namespace Prisma {
     totalFiles: number | null
     processedFiles: number | null
     failedFiles: number | null
+    extractedCount: number | null
+    pendingCount: number | null
+    approvedCount: number | null
+    rejectedCount: number | null
+    committedCount: number | null
   }
 
   export type BulkUploadSumAggregateOutputType = {
     totalFiles: number | null
     processedFiles: number | null
     failedFiles: number | null
+    extractedCount: number | null
+    pendingCount: number | null
+    approvedCount: number | null
+    rejectedCount: number | null
+    committedCount: number | null
   }
 
   export type BulkUploadMinAggregateOutputType = {
@@ -2248,9 +2349,16 @@ export namespace Prisma {
     userId: string | null
     requisitionId: string | null
     status: $Enums.BulkUploadStatus | null
+    phase: string | null
+    archiveName: string | null
     totalFiles: number | null
     processedFiles: number | null
     failedFiles: number | null
+    extractedCount: number | null
+    pendingCount: number | null
+    approvedCount: number | null
+    rejectedCount: number | null
+    committedCount: number | null
     createdAt: Date | null
     completedAt: Date | null
   }
@@ -2261,9 +2369,16 @@ export namespace Prisma {
     userId: string | null
     requisitionId: string | null
     status: $Enums.BulkUploadStatus | null
+    phase: string | null
+    archiveName: string | null
     totalFiles: number | null
     processedFiles: number | null
     failedFiles: number | null
+    extractedCount: number | null
+    pendingCount: number | null
+    approvedCount: number | null
+    rejectedCount: number | null
+    committedCount: number | null
     createdAt: Date | null
     completedAt: Date | null
   }
@@ -2274,9 +2389,16 @@ export namespace Prisma {
     userId: number
     requisitionId: number
     status: number
+    phase: number
+    archiveName: number
     totalFiles: number
     processedFiles: number
     failedFiles: number
+    extractedCount: number
+    pendingCount: number
+    approvedCount: number
+    rejectedCount: number
+    committedCount: number
     errors: number
     createdAt: number
     completedAt: number
@@ -2288,12 +2410,22 @@ export namespace Prisma {
     totalFiles?: true
     processedFiles?: true
     failedFiles?: true
+    extractedCount?: true
+    pendingCount?: true
+    approvedCount?: true
+    rejectedCount?: true
+    committedCount?: true
   }
 
   export type BulkUploadSumAggregateInputType = {
     totalFiles?: true
     processedFiles?: true
     failedFiles?: true
+    extractedCount?: true
+    pendingCount?: true
+    approvedCount?: true
+    rejectedCount?: true
+    committedCount?: true
   }
 
   export type BulkUploadMinAggregateInputType = {
@@ -2302,9 +2434,16 @@ export namespace Prisma {
     userId?: true
     requisitionId?: true
     status?: true
+    phase?: true
+    archiveName?: true
     totalFiles?: true
     processedFiles?: true
     failedFiles?: true
+    extractedCount?: true
+    pendingCount?: true
+    approvedCount?: true
+    rejectedCount?: true
+    committedCount?: true
     createdAt?: true
     completedAt?: true
   }
@@ -2315,9 +2454,16 @@ export namespace Prisma {
     userId?: true
     requisitionId?: true
     status?: true
+    phase?: true
+    archiveName?: true
     totalFiles?: true
     processedFiles?: true
     failedFiles?: true
+    extractedCount?: true
+    pendingCount?: true
+    approvedCount?: true
+    rejectedCount?: true
+    committedCount?: true
     createdAt?: true
     completedAt?: true
   }
@@ -2328,9 +2474,16 @@ export namespace Prisma {
     userId?: true
     requisitionId?: true
     status?: true
+    phase?: true
+    archiveName?: true
     totalFiles?: true
     processedFiles?: true
     failedFiles?: true
+    extractedCount?: true
+    pendingCount?: true
+    approvedCount?: true
+    rejectedCount?: true
+    committedCount?: true
     errors?: true
     createdAt?: true
     completedAt?: true
@@ -2429,9 +2582,16 @@ export namespace Prisma {
     userId: string
     requisitionId: string | null
     status: $Enums.BulkUploadStatus
+    phase: string
+    archiveName: string | null
     totalFiles: number
     processedFiles: number
     failedFiles: number
+    extractedCount: number
+    pendingCount: number
+    approvedCount: number
+    rejectedCount: number
+    committedCount: number
     errors: JsonValue
     createdAt: Date
     completedAt: Date | null
@@ -2462,9 +2622,16 @@ export namespace Prisma {
     userId?: boolean
     requisitionId?: boolean
     status?: boolean
+    phase?: boolean
+    archiveName?: boolean
     totalFiles?: boolean
     processedFiles?: boolean
     failedFiles?: boolean
+    extractedCount?: boolean
+    pendingCount?: boolean
+    approvedCount?: boolean
+    rejectedCount?: boolean
+    committedCount?: boolean
     errors?: boolean
     createdAt?: boolean
     completedAt?: boolean
@@ -2476,9 +2643,16 @@ export namespace Prisma {
     userId?: boolean
     requisitionId?: boolean
     status?: boolean
+    phase?: boolean
+    archiveName?: boolean
     totalFiles?: boolean
     processedFiles?: boolean
     failedFiles?: boolean
+    extractedCount?: boolean
+    pendingCount?: boolean
+    approvedCount?: boolean
+    rejectedCount?: boolean
+    committedCount?: boolean
     errors?: boolean
     createdAt?: boolean
     completedAt?: boolean
@@ -2490,9 +2664,16 @@ export namespace Prisma {
     userId?: boolean
     requisitionId?: boolean
     status?: boolean
+    phase?: boolean
+    archiveName?: boolean
     totalFiles?: boolean
     processedFiles?: boolean
     failedFiles?: boolean
+    extractedCount?: boolean
+    pendingCount?: boolean
+    approvedCount?: boolean
+    rejectedCount?: boolean
+    committedCount?: boolean
     errors?: boolean
     createdAt?: boolean
     completedAt?: boolean
@@ -2504,15 +2685,22 @@ export namespace Prisma {
     userId?: boolean
     requisitionId?: boolean
     status?: boolean
+    phase?: boolean
+    archiveName?: boolean
     totalFiles?: boolean
     processedFiles?: boolean
     failedFiles?: boolean
+    extractedCount?: boolean
+    pendingCount?: boolean
+    approvedCount?: boolean
+    rejectedCount?: boolean
+    committedCount?: boolean
     errors?: boolean
     createdAt?: boolean
     completedAt?: boolean
   }
 
-  export type BulkUploadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "userId" | "requisitionId" | "status" | "totalFiles" | "processedFiles" | "failedFiles" | "errors" | "createdAt" | "completedAt", ExtArgs["result"]["bulkUpload"]>
+  export type BulkUploadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "userId" | "requisitionId" | "status" | "phase" | "archiveName" | "totalFiles" | "processedFiles" | "failedFiles" | "extractedCount" | "pendingCount" | "approvedCount" | "rejectedCount" | "committedCount" | "errors" | "createdAt" | "completedAt", ExtArgs["result"]["bulkUpload"]>
 
   export type $BulkUploadPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BulkUpload"
@@ -2523,9 +2711,16 @@ export namespace Prisma {
       userId: string
       requisitionId: string | null
       status: $Enums.BulkUploadStatus
+      phase: string
+      archiveName: string | null
       totalFiles: number
       processedFiles: number
       failedFiles: number
+      extractedCount: number
+      pendingCount: number
+      approvedCount: number
+      rejectedCount: number
+      committedCount: number
       errors: Prisma.JsonValue
       createdAt: Date
       completedAt: Date | null
@@ -2957,9 +3152,16 @@ export namespace Prisma {
     readonly userId: FieldRef<"BulkUpload", 'String'>
     readonly requisitionId: FieldRef<"BulkUpload", 'String'>
     readonly status: FieldRef<"BulkUpload", 'BulkUploadStatus'>
+    readonly phase: FieldRef<"BulkUpload", 'String'>
+    readonly archiveName: FieldRef<"BulkUpload", 'String'>
     readonly totalFiles: FieldRef<"BulkUpload", 'Int'>
     readonly processedFiles: FieldRef<"BulkUpload", 'Int'>
     readonly failedFiles: FieldRef<"BulkUpload", 'Int'>
+    readonly extractedCount: FieldRef<"BulkUpload", 'Int'>
+    readonly pendingCount: FieldRef<"BulkUpload", 'Int'>
+    readonly approvedCount: FieldRef<"BulkUpload", 'Int'>
+    readonly rejectedCount: FieldRef<"BulkUpload", 'Int'>
+    readonly committedCount: FieldRef<"BulkUpload", 'Int'>
     readonly errors: FieldRef<"BulkUpload", 'Json'>
     readonly createdAt: FieldRef<"BulkUpload", 'DateTime'>
     readonly completedAt: FieldRef<"BulkUpload", 'DateTime'>
@@ -3326,6 +3528,1152 @@ export namespace Prisma {
      * Omit specific fields from the BulkUpload
      */
     omit?: BulkUploadOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BulkImportItem
+   */
+
+  export type AggregateBulkImportItem = {
+    _count: BulkImportItemCountAggregateOutputType | null
+    _avg: BulkImportItemAvgAggregateOutputType | null
+    _sum: BulkImportItemSumAggregateOutputType | null
+    _min: BulkImportItemMinAggregateOutputType | null
+    _max: BulkImportItemMaxAggregateOutputType | null
+  }
+
+  export type BulkImportItemAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type BulkImportItemSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type BulkImportItemMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    bulkUploadId: string | null
+    fileName: string | null
+    mimeType: string | null
+    sizeBytes: number | null
+    detectedName: string | null
+    detectedEmail: string | null
+    textSnippet: string | null
+    extractedText: string | null
+    extractStatus: string | null
+    reviewStatus: string | null
+    candidateId: string | null
+    createdAt: Date | null
+  }
+
+  export type BulkImportItemMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    bulkUploadId: string | null
+    fileName: string | null
+    mimeType: string | null
+    sizeBytes: number | null
+    detectedName: string | null
+    detectedEmail: string | null
+    textSnippet: string | null
+    extractedText: string | null
+    extractStatus: string | null
+    reviewStatus: string | null
+    candidateId: string | null
+    createdAt: Date | null
+  }
+
+  export type BulkImportItemCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    bulkUploadId: number
+    fileName: number
+    mimeType: number
+    sizeBytes: number
+    detectedName: number
+    detectedEmail: number
+    textSnippet: number
+    extractedText: number
+    extractStatus: number
+    reviewStatus: number
+    candidateId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BulkImportItemAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type BulkImportItemSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type BulkImportItemMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    bulkUploadId?: true
+    fileName?: true
+    mimeType?: true
+    sizeBytes?: true
+    detectedName?: true
+    detectedEmail?: true
+    textSnippet?: true
+    extractedText?: true
+    extractStatus?: true
+    reviewStatus?: true
+    candidateId?: true
+    createdAt?: true
+  }
+
+  export type BulkImportItemMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    bulkUploadId?: true
+    fileName?: true
+    mimeType?: true
+    sizeBytes?: true
+    detectedName?: true
+    detectedEmail?: true
+    textSnippet?: true
+    extractedText?: true
+    extractStatus?: true
+    reviewStatus?: true
+    candidateId?: true
+    createdAt?: true
+  }
+
+  export type BulkImportItemCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    bulkUploadId?: true
+    fileName?: true
+    mimeType?: true
+    sizeBytes?: true
+    detectedName?: true
+    detectedEmail?: true
+    textSnippet?: true
+    extractedText?: true
+    extractStatus?: true
+    reviewStatus?: true
+    candidateId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BulkImportItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BulkImportItem to aggregate.
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BulkImportItems to fetch.
+     */
+    orderBy?: BulkImportItemOrderByWithRelationInput | BulkImportItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BulkImportItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BulkImportItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BulkImportItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BulkImportItems
+    **/
+    _count?: true | BulkImportItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BulkImportItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BulkImportItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BulkImportItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BulkImportItemMaxAggregateInputType
+  }
+
+  export type GetBulkImportItemAggregateType<T extends BulkImportItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateBulkImportItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBulkImportItem[P]>
+      : GetScalarType<T[P], AggregateBulkImportItem[P]>
+  }
+
+
+
+
+  export type BulkImportItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BulkImportItemWhereInput
+    orderBy?: BulkImportItemOrderByWithAggregationInput | BulkImportItemOrderByWithAggregationInput[]
+    by: BulkImportItemScalarFieldEnum[] | BulkImportItemScalarFieldEnum
+    having?: BulkImportItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BulkImportItemCountAggregateInputType | true
+    _avg?: BulkImportItemAvgAggregateInputType
+    _sum?: BulkImportItemSumAggregateInputType
+    _min?: BulkImportItemMinAggregateInputType
+    _max?: BulkImportItemMaxAggregateInputType
+  }
+
+  export type BulkImportItemGroupByOutputType = {
+    id: string
+    tenantId: string
+    bulkUploadId: string
+    fileName: string
+    mimeType: string
+    sizeBytes: number
+    detectedName: string | null
+    detectedEmail: string | null
+    textSnippet: string | null
+    extractedText: string | null
+    extractStatus: string
+    reviewStatus: string
+    candidateId: string | null
+    createdAt: Date
+    _count: BulkImportItemCountAggregateOutputType | null
+    _avg: BulkImportItemAvgAggregateOutputType | null
+    _sum: BulkImportItemSumAggregateOutputType | null
+    _min: BulkImportItemMinAggregateOutputType | null
+    _max: BulkImportItemMaxAggregateOutputType | null
+  }
+
+  type GetBulkImportItemGroupByPayload<T extends BulkImportItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BulkImportItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BulkImportItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BulkImportItemGroupByOutputType[P]>
+            : GetScalarType<T[P], BulkImportItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BulkImportItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    bulkUploadId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    detectedName?: boolean
+    detectedEmail?: boolean
+    textSnippet?: boolean
+    extractedText?: boolean
+    extractStatus?: boolean
+    reviewStatus?: boolean
+    candidateId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["bulkImportItem"]>
+
+  export type BulkImportItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    bulkUploadId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    detectedName?: boolean
+    detectedEmail?: boolean
+    textSnippet?: boolean
+    extractedText?: boolean
+    extractStatus?: boolean
+    reviewStatus?: boolean
+    candidateId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["bulkImportItem"]>
+
+  export type BulkImportItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    bulkUploadId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    detectedName?: boolean
+    detectedEmail?: boolean
+    textSnippet?: boolean
+    extractedText?: boolean
+    extractStatus?: boolean
+    reviewStatus?: boolean
+    candidateId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["bulkImportItem"]>
+
+  export type BulkImportItemSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    bulkUploadId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    sizeBytes?: boolean
+    detectedName?: boolean
+    detectedEmail?: boolean
+    textSnippet?: boolean
+    extractedText?: boolean
+    extractStatus?: boolean
+    reviewStatus?: boolean
+    candidateId?: boolean
+    createdAt?: boolean
+  }
+
+  export type BulkImportItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "bulkUploadId" | "fileName" | "mimeType" | "sizeBytes" | "detectedName" | "detectedEmail" | "textSnippet" | "extractedText" | "extractStatus" | "reviewStatus" | "candidateId" | "createdAt", ExtArgs["result"]["bulkImportItem"]>
+
+  export type $BulkImportItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BulkImportItem"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      bulkUploadId: string
+      fileName: string
+      mimeType: string
+      sizeBytes: number
+      detectedName: string | null
+      detectedEmail: string | null
+      textSnippet: string | null
+      extractedText: string | null
+      extractStatus: string
+      reviewStatus: string
+      candidateId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["bulkImportItem"]>
+    composites: {}
+  }
+
+  type BulkImportItemGetPayload<S extends boolean | null | undefined | BulkImportItemDefaultArgs> = $Result.GetResult<Prisma.$BulkImportItemPayload, S>
+
+  type BulkImportItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BulkImportItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BulkImportItemCountAggregateInputType | true
+    }
+
+  export interface BulkImportItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BulkImportItem'], meta: { name: 'BulkImportItem' } }
+    /**
+     * Find zero or one BulkImportItem that matches the filter.
+     * @param {BulkImportItemFindUniqueArgs} args - Arguments to find a BulkImportItem
+     * @example
+     * // Get one BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BulkImportItemFindUniqueArgs>(args: SelectSubset<T, BulkImportItemFindUniqueArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BulkImportItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BulkImportItemFindUniqueOrThrowArgs} args - Arguments to find a BulkImportItem
+     * @example
+     * // Get one BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BulkImportItemFindUniqueOrThrowArgs>(args: SelectSubset<T, BulkImportItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BulkImportItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemFindFirstArgs} args - Arguments to find a BulkImportItem
+     * @example
+     * // Get one BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BulkImportItemFindFirstArgs>(args?: SelectSubset<T, BulkImportItemFindFirstArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BulkImportItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemFindFirstOrThrowArgs} args - Arguments to find a BulkImportItem
+     * @example
+     * // Get one BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BulkImportItemFindFirstOrThrowArgs>(args?: SelectSubset<T, BulkImportItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BulkImportItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BulkImportItems
+     * const bulkImportItems = await prisma.bulkImportItem.findMany()
+     * 
+     * // Get first 10 BulkImportItems
+     * const bulkImportItems = await prisma.bulkImportItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bulkImportItemWithIdOnly = await prisma.bulkImportItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BulkImportItemFindManyArgs>(args?: SelectSubset<T, BulkImportItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BulkImportItem.
+     * @param {BulkImportItemCreateArgs} args - Arguments to create a BulkImportItem.
+     * @example
+     * // Create one BulkImportItem
+     * const BulkImportItem = await prisma.bulkImportItem.create({
+     *   data: {
+     *     // ... data to create a BulkImportItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends BulkImportItemCreateArgs>(args: SelectSubset<T, BulkImportItemCreateArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BulkImportItems.
+     * @param {BulkImportItemCreateManyArgs} args - Arguments to create many BulkImportItems.
+     * @example
+     * // Create many BulkImportItems
+     * const bulkImportItem = await prisma.bulkImportItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BulkImportItemCreateManyArgs>(args?: SelectSubset<T, BulkImportItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BulkImportItems and returns the data saved in the database.
+     * @param {BulkImportItemCreateManyAndReturnArgs} args - Arguments to create many BulkImportItems.
+     * @example
+     * // Create many BulkImportItems
+     * const bulkImportItem = await prisma.bulkImportItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BulkImportItems and only return the `id`
+     * const bulkImportItemWithIdOnly = await prisma.bulkImportItem.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BulkImportItemCreateManyAndReturnArgs>(args?: SelectSubset<T, BulkImportItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BulkImportItem.
+     * @param {BulkImportItemDeleteArgs} args - Arguments to delete one BulkImportItem.
+     * @example
+     * // Delete one BulkImportItem
+     * const BulkImportItem = await prisma.bulkImportItem.delete({
+     *   where: {
+     *     // ... filter to delete one BulkImportItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BulkImportItemDeleteArgs>(args: SelectSubset<T, BulkImportItemDeleteArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BulkImportItem.
+     * @param {BulkImportItemUpdateArgs} args - Arguments to update one BulkImportItem.
+     * @example
+     * // Update one BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BulkImportItemUpdateArgs>(args: SelectSubset<T, BulkImportItemUpdateArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BulkImportItems.
+     * @param {BulkImportItemDeleteManyArgs} args - Arguments to filter BulkImportItems to delete.
+     * @example
+     * // Delete a few BulkImportItems
+     * const { count } = await prisma.bulkImportItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BulkImportItemDeleteManyArgs>(args?: SelectSubset<T, BulkImportItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BulkImportItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BulkImportItems
+     * const bulkImportItem = await prisma.bulkImportItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BulkImportItemUpdateManyArgs>(args: SelectSubset<T, BulkImportItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BulkImportItems and returns the data updated in the database.
+     * @param {BulkImportItemUpdateManyAndReturnArgs} args - Arguments to update many BulkImportItems.
+     * @example
+     * // Update many BulkImportItems
+     * const bulkImportItem = await prisma.bulkImportItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BulkImportItems and only return the `id`
+     * const bulkImportItemWithIdOnly = await prisma.bulkImportItem.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BulkImportItemUpdateManyAndReturnArgs>(args: SelectSubset<T, BulkImportItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BulkImportItem.
+     * @param {BulkImportItemUpsertArgs} args - Arguments to update or create a BulkImportItem.
+     * @example
+     * // Update or create a BulkImportItem
+     * const bulkImportItem = await prisma.bulkImportItem.upsert({
+     *   create: {
+     *     // ... data to create a BulkImportItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BulkImportItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BulkImportItemUpsertArgs>(args: SelectSubset<T, BulkImportItemUpsertArgs<ExtArgs>>): Prisma__BulkImportItemClient<$Result.GetResult<Prisma.$BulkImportItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BulkImportItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemCountArgs} args - Arguments to filter BulkImportItems to count.
+     * @example
+     * // Count the number of BulkImportItems
+     * const count = await prisma.bulkImportItem.count({
+     *   where: {
+     *     // ... the filter for the BulkImportItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends BulkImportItemCountArgs>(
+      args?: Subset<T, BulkImportItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BulkImportItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BulkImportItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BulkImportItemAggregateArgs>(args: Subset<T, BulkImportItemAggregateArgs>): Prisma.PrismaPromise<GetBulkImportItemAggregateType<T>>
+
+    /**
+     * Group by BulkImportItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BulkImportItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BulkImportItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BulkImportItemGroupByArgs['orderBy'] }
+        : { orderBy?: BulkImportItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BulkImportItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBulkImportItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BulkImportItem model
+   */
+  readonly fields: BulkImportItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BulkImportItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BulkImportItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BulkImportItem model
+   */
+  interface BulkImportItemFieldRefs {
+    readonly id: FieldRef<"BulkImportItem", 'String'>
+    readonly tenantId: FieldRef<"BulkImportItem", 'String'>
+    readonly bulkUploadId: FieldRef<"BulkImportItem", 'String'>
+    readonly fileName: FieldRef<"BulkImportItem", 'String'>
+    readonly mimeType: FieldRef<"BulkImportItem", 'String'>
+    readonly sizeBytes: FieldRef<"BulkImportItem", 'Int'>
+    readonly detectedName: FieldRef<"BulkImportItem", 'String'>
+    readonly detectedEmail: FieldRef<"BulkImportItem", 'String'>
+    readonly textSnippet: FieldRef<"BulkImportItem", 'String'>
+    readonly extractedText: FieldRef<"BulkImportItem", 'String'>
+    readonly extractStatus: FieldRef<"BulkImportItem", 'String'>
+    readonly reviewStatus: FieldRef<"BulkImportItem", 'String'>
+    readonly candidateId: FieldRef<"BulkImportItem", 'String'>
+    readonly createdAt: FieldRef<"BulkImportItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BulkImportItem findUnique
+   */
+  export type BulkImportItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter, which BulkImportItem to fetch.
+     */
+    where: BulkImportItemWhereUniqueInput
+  }
+
+  /**
+   * BulkImportItem findUniqueOrThrow
+   */
+  export type BulkImportItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter, which BulkImportItem to fetch.
+     */
+    where: BulkImportItemWhereUniqueInput
+  }
+
+  /**
+   * BulkImportItem findFirst
+   */
+  export type BulkImportItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter, which BulkImportItem to fetch.
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BulkImportItems to fetch.
+     */
+    orderBy?: BulkImportItemOrderByWithRelationInput | BulkImportItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BulkImportItems.
+     */
+    cursor?: BulkImportItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BulkImportItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BulkImportItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BulkImportItems.
+     */
+    distinct?: BulkImportItemScalarFieldEnum | BulkImportItemScalarFieldEnum[]
+  }
+
+  /**
+   * BulkImportItem findFirstOrThrow
+   */
+  export type BulkImportItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter, which BulkImportItem to fetch.
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BulkImportItems to fetch.
+     */
+    orderBy?: BulkImportItemOrderByWithRelationInput | BulkImportItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BulkImportItems.
+     */
+    cursor?: BulkImportItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BulkImportItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BulkImportItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BulkImportItems.
+     */
+    distinct?: BulkImportItemScalarFieldEnum | BulkImportItemScalarFieldEnum[]
+  }
+
+  /**
+   * BulkImportItem findMany
+   */
+  export type BulkImportItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter, which BulkImportItems to fetch.
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BulkImportItems to fetch.
+     */
+    orderBy?: BulkImportItemOrderByWithRelationInput | BulkImportItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BulkImportItems.
+     */
+    cursor?: BulkImportItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BulkImportItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BulkImportItems.
+     */
+    skip?: number
+    distinct?: BulkImportItemScalarFieldEnum | BulkImportItemScalarFieldEnum[]
+  }
+
+  /**
+   * BulkImportItem create
+   */
+  export type BulkImportItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BulkImportItem.
+     */
+    data: XOR<BulkImportItemCreateInput, BulkImportItemUncheckedCreateInput>
+  }
+
+  /**
+   * BulkImportItem createMany
+   */
+  export type BulkImportItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BulkImportItems.
+     */
+    data: BulkImportItemCreateManyInput | BulkImportItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BulkImportItem createManyAndReturn
+   */
+  export type BulkImportItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many BulkImportItems.
+     */
+    data: BulkImportItemCreateManyInput | BulkImportItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BulkImportItem update
+   */
+  export type BulkImportItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BulkImportItem.
+     */
+    data: XOR<BulkImportItemUpdateInput, BulkImportItemUncheckedUpdateInput>
+    /**
+     * Choose, which BulkImportItem to update.
+     */
+    where: BulkImportItemWhereUniqueInput
+  }
+
+  /**
+   * BulkImportItem updateMany
+   */
+  export type BulkImportItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BulkImportItems.
+     */
+    data: XOR<BulkImportItemUpdateManyMutationInput, BulkImportItemUncheckedUpdateManyInput>
+    /**
+     * Filter which BulkImportItems to update
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * Limit how many BulkImportItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BulkImportItem updateManyAndReturn
+   */
+  export type BulkImportItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * The data used to update BulkImportItems.
+     */
+    data: XOR<BulkImportItemUpdateManyMutationInput, BulkImportItemUncheckedUpdateManyInput>
+    /**
+     * Filter which BulkImportItems to update
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * Limit how many BulkImportItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BulkImportItem upsert
+   */
+  export type BulkImportItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BulkImportItem to update in case it exists.
+     */
+    where: BulkImportItemWhereUniqueInput
+    /**
+     * In case the BulkImportItem found by the `where` argument doesn't exist, create a new BulkImportItem with this data.
+     */
+    create: XOR<BulkImportItemCreateInput, BulkImportItemUncheckedCreateInput>
+    /**
+     * In case the BulkImportItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BulkImportItemUpdateInput, BulkImportItemUncheckedUpdateInput>
+  }
+
+  /**
+   * BulkImportItem delete
+   */
+  export type BulkImportItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
+    /**
+     * Filter which BulkImportItem to delete.
+     */
+    where: BulkImportItemWhereUniqueInput
+  }
+
+  /**
+   * BulkImportItem deleteMany
+   */
+  export type BulkImportItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BulkImportItems to delete
+     */
+    where?: BulkImportItemWhereInput
+    /**
+     * Limit how many BulkImportItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BulkImportItem without action
+   */
+  export type BulkImportItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BulkImportItem
+     */
+    select?: BulkImportItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BulkImportItem
+     */
+    omit?: BulkImportItemOmit<ExtArgs> | null
   }
 
 
@@ -4515,15 +5863,42 @@ export namespace Prisma {
     userId: 'userId',
     requisitionId: 'requisitionId',
     status: 'status',
+    phase: 'phase',
+    archiveName: 'archiveName',
     totalFiles: 'totalFiles',
     processedFiles: 'processedFiles',
     failedFiles: 'failedFiles',
+    extractedCount: 'extractedCount',
+    pendingCount: 'pendingCount',
+    approvedCount: 'approvedCount',
+    rejectedCount: 'rejectedCount',
+    committedCount: 'committedCount',
     errors: 'errors',
     createdAt: 'createdAt',
     completedAt: 'completedAt'
   };
 
   export type BulkUploadScalarFieldEnum = (typeof BulkUploadScalarFieldEnum)[keyof typeof BulkUploadScalarFieldEnum]
+
+
+  export const BulkImportItemScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    bulkUploadId: 'bulkUploadId',
+    fileName: 'fileName',
+    mimeType: 'mimeType',
+    sizeBytes: 'sizeBytes',
+    detectedName: 'detectedName',
+    detectedEmail: 'detectedEmail',
+    textSnippet: 'textSnippet',
+    extractedText: 'extractedText',
+    extractStatus: 'extractStatus',
+    reviewStatus: 'reviewStatus',
+    candidateId: 'candidateId',
+    createdAt: 'createdAt'
+  };
+
+  export type BulkImportItemScalarFieldEnum = (typeof BulkImportItemScalarFieldEnum)[keyof typeof BulkImportItemScalarFieldEnum]
 
 
   export const AgentRunScalarFieldEnum: {
@@ -4812,9 +6187,16 @@ export namespace Prisma {
     userId?: StringFilter<"BulkUpload"> | string
     requisitionId?: StringNullableFilter<"BulkUpload"> | string | null
     status?: EnumBulkUploadStatusFilter<"BulkUpload"> | $Enums.BulkUploadStatus
+    phase?: StringFilter<"BulkUpload"> | string
+    archiveName?: StringNullableFilter<"BulkUpload"> | string | null
     totalFiles?: IntFilter<"BulkUpload"> | number
     processedFiles?: IntFilter<"BulkUpload"> | number
     failedFiles?: IntFilter<"BulkUpload"> | number
+    extractedCount?: IntFilter<"BulkUpload"> | number
+    pendingCount?: IntFilter<"BulkUpload"> | number
+    approvedCount?: IntFilter<"BulkUpload"> | number
+    rejectedCount?: IntFilter<"BulkUpload"> | number
+    committedCount?: IntFilter<"BulkUpload"> | number
     errors?: JsonFilter<"BulkUpload">
     createdAt?: DateTimeFilter<"BulkUpload"> | Date | string
     completedAt?: DateTimeNullableFilter<"BulkUpload"> | Date | string | null
@@ -4826,9 +6208,16 @@ export namespace Prisma {
     userId?: SortOrder
     requisitionId?: SortOrderInput | SortOrder
     status?: SortOrder
+    phase?: SortOrder
+    archiveName?: SortOrderInput | SortOrder
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
     errors?: SortOrder
     createdAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
@@ -4843,9 +6232,16 @@ export namespace Prisma {
     userId?: StringFilter<"BulkUpload"> | string
     requisitionId?: StringNullableFilter<"BulkUpload"> | string | null
     status?: EnumBulkUploadStatusFilter<"BulkUpload"> | $Enums.BulkUploadStatus
+    phase?: StringFilter<"BulkUpload"> | string
+    archiveName?: StringNullableFilter<"BulkUpload"> | string | null
     totalFiles?: IntFilter<"BulkUpload"> | number
     processedFiles?: IntFilter<"BulkUpload"> | number
     failedFiles?: IntFilter<"BulkUpload"> | number
+    extractedCount?: IntFilter<"BulkUpload"> | number
+    pendingCount?: IntFilter<"BulkUpload"> | number
+    approvedCount?: IntFilter<"BulkUpload"> | number
+    rejectedCount?: IntFilter<"BulkUpload"> | number
+    committedCount?: IntFilter<"BulkUpload"> | number
     errors?: JsonFilter<"BulkUpload">
     createdAt?: DateTimeFilter<"BulkUpload"> | Date | string
     completedAt?: DateTimeNullableFilter<"BulkUpload"> | Date | string | null
@@ -4857,9 +6253,16 @@ export namespace Prisma {
     userId?: SortOrder
     requisitionId?: SortOrderInput | SortOrder
     status?: SortOrder
+    phase?: SortOrder
+    archiveName?: SortOrderInput | SortOrder
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
     errors?: SortOrder
     createdAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
@@ -4879,12 +6282,118 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"BulkUpload"> | string
     requisitionId?: StringNullableWithAggregatesFilter<"BulkUpload"> | string | null
     status?: EnumBulkUploadStatusWithAggregatesFilter<"BulkUpload"> | $Enums.BulkUploadStatus
+    phase?: StringWithAggregatesFilter<"BulkUpload"> | string
+    archiveName?: StringNullableWithAggregatesFilter<"BulkUpload"> | string | null
     totalFiles?: IntWithAggregatesFilter<"BulkUpload"> | number
     processedFiles?: IntWithAggregatesFilter<"BulkUpload"> | number
     failedFiles?: IntWithAggregatesFilter<"BulkUpload"> | number
+    extractedCount?: IntWithAggregatesFilter<"BulkUpload"> | number
+    pendingCount?: IntWithAggregatesFilter<"BulkUpload"> | number
+    approvedCount?: IntWithAggregatesFilter<"BulkUpload"> | number
+    rejectedCount?: IntWithAggregatesFilter<"BulkUpload"> | number
+    committedCount?: IntWithAggregatesFilter<"BulkUpload"> | number
     errors?: JsonWithAggregatesFilter<"BulkUpload">
     createdAt?: DateTimeWithAggregatesFilter<"BulkUpload"> | Date | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"BulkUpload"> | Date | string | null
+  }
+
+  export type BulkImportItemWhereInput = {
+    AND?: BulkImportItemWhereInput | BulkImportItemWhereInput[]
+    OR?: BulkImportItemWhereInput[]
+    NOT?: BulkImportItemWhereInput | BulkImportItemWhereInput[]
+    id?: StringFilter<"BulkImportItem"> | string
+    tenantId?: StringFilter<"BulkImportItem"> | string
+    bulkUploadId?: StringFilter<"BulkImportItem"> | string
+    fileName?: StringFilter<"BulkImportItem"> | string
+    mimeType?: StringFilter<"BulkImportItem"> | string
+    sizeBytes?: IntFilter<"BulkImportItem"> | number
+    detectedName?: StringNullableFilter<"BulkImportItem"> | string | null
+    detectedEmail?: StringNullableFilter<"BulkImportItem"> | string | null
+    textSnippet?: StringNullableFilter<"BulkImportItem"> | string | null
+    extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
+    extractStatus?: StringFilter<"BulkImportItem"> | string
+    reviewStatus?: StringFilter<"BulkImportItem"> | string
+    candidateId?: StringNullableFilter<"BulkImportItem"> | string | null
+    createdAt?: DateTimeFilter<"BulkImportItem"> | Date | string
+  }
+
+  export type BulkImportItemOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    bulkUploadId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    detectedName?: SortOrderInput | SortOrder
+    detectedEmail?: SortOrderInput | SortOrder
+    textSnippet?: SortOrderInput | SortOrder
+    extractedText?: SortOrderInput | SortOrder
+    extractStatus?: SortOrder
+    reviewStatus?: SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BulkImportItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BulkImportItemWhereInput | BulkImportItemWhereInput[]
+    OR?: BulkImportItemWhereInput[]
+    NOT?: BulkImportItemWhereInput | BulkImportItemWhereInput[]
+    tenantId?: StringFilter<"BulkImportItem"> | string
+    bulkUploadId?: StringFilter<"BulkImportItem"> | string
+    fileName?: StringFilter<"BulkImportItem"> | string
+    mimeType?: StringFilter<"BulkImportItem"> | string
+    sizeBytes?: IntFilter<"BulkImportItem"> | number
+    detectedName?: StringNullableFilter<"BulkImportItem"> | string | null
+    detectedEmail?: StringNullableFilter<"BulkImportItem"> | string | null
+    textSnippet?: StringNullableFilter<"BulkImportItem"> | string | null
+    extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
+    extractStatus?: StringFilter<"BulkImportItem"> | string
+    reviewStatus?: StringFilter<"BulkImportItem"> | string
+    candidateId?: StringNullableFilter<"BulkImportItem"> | string | null
+    createdAt?: DateTimeFilter<"BulkImportItem"> | Date | string
+  }, "id">
+
+  export type BulkImportItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    bulkUploadId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    detectedName?: SortOrderInput | SortOrder
+    detectedEmail?: SortOrderInput | SortOrder
+    textSnippet?: SortOrderInput | SortOrder
+    extractedText?: SortOrderInput | SortOrder
+    extractStatus?: SortOrder
+    reviewStatus?: SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: BulkImportItemCountOrderByAggregateInput
+    _avg?: BulkImportItemAvgOrderByAggregateInput
+    _max?: BulkImportItemMaxOrderByAggregateInput
+    _min?: BulkImportItemMinOrderByAggregateInput
+    _sum?: BulkImportItemSumOrderByAggregateInput
+  }
+
+  export type BulkImportItemScalarWhereWithAggregatesInput = {
+    AND?: BulkImportItemScalarWhereWithAggregatesInput | BulkImportItemScalarWhereWithAggregatesInput[]
+    OR?: BulkImportItemScalarWhereWithAggregatesInput[]
+    NOT?: BulkImportItemScalarWhereWithAggregatesInput | BulkImportItemScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    tenantId?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    bulkUploadId?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    fileName?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    mimeType?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    sizeBytes?: IntWithAggregatesFilter<"BulkImportItem"> | number
+    detectedName?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
+    detectedEmail?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
+    textSnippet?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
+    extractedText?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
+    extractStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    reviewStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    candidateId?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"BulkImportItem"> | Date | string
   }
 
   export type AgentRunWhereInput = {
@@ -5113,9 +6622,16 @@ export namespace Prisma {
     userId: string
     requisitionId?: string | null
     status?: $Enums.BulkUploadStatus
+    phase?: string
+    archiveName?: string | null
     totalFiles: number
     processedFiles?: number
     failedFiles?: number
+    extractedCount?: number
+    pendingCount?: number
+    approvedCount?: number
+    rejectedCount?: number
+    committedCount?: number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     completedAt?: Date | string | null
@@ -5127,9 +6643,16 @@ export namespace Prisma {
     userId: string
     requisitionId?: string | null
     status?: $Enums.BulkUploadStatus
+    phase?: string
+    archiveName?: string | null
     totalFiles: number
     processedFiles?: number
     failedFiles?: number
+    extractedCount?: number
+    pendingCount?: number
+    approvedCount?: number
+    rejectedCount?: number
+    committedCount?: number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     completedAt?: Date | string | null
@@ -5141,9 +6664,16 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumBulkUploadStatusFieldUpdateOperationsInput | $Enums.BulkUploadStatus
+    phase?: StringFieldUpdateOperationsInput | string
+    archiveName?: NullableStringFieldUpdateOperationsInput | string | null
     totalFiles?: IntFieldUpdateOperationsInput | number
     processedFiles?: IntFieldUpdateOperationsInput | number
     failedFiles?: IntFieldUpdateOperationsInput | number
+    extractedCount?: IntFieldUpdateOperationsInput | number
+    pendingCount?: IntFieldUpdateOperationsInput | number
+    approvedCount?: IntFieldUpdateOperationsInput | number
+    rejectedCount?: IntFieldUpdateOperationsInput | number
+    committedCount?: IntFieldUpdateOperationsInput | number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5155,9 +6685,16 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumBulkUploadStatusFieldUpdateOperationsInput | $Enums.BulkUploadStatus
+    phase?: StringFieldUpdateOperationsInput | string
+    archiveName?: NullableStringFieldUpdateOperationsInput | string | null
     totalFiles?: IntFieldUpdateOperationsInput | number
     processedFiles?: IntFieldUpdateOperationsInput | number
     failedFiles?: IntFieldUpdateOperationsInput | number
+    extractedCount?: IntFieldUpdateOperationsInput | number
+    pendingCount?: IntFieldUpdateOperationsInput | number
+    approvedCount?: IntFieldUpdateOperationsInput | number
+    rejectedCount?: IntFieldUpdateOperationsInput | number
+    committedCount?: IntFieldUpdateOperationsInput | number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5169,9 +6706,16 @@ export namespace Prisma {
     userId: string
     requisitionId?: string | null
     status?: $Enums.BulkUploadStatus
+    phase?: string
+    archiveName?: string | null
     totalFiles: number
     processedFiles?: number
     failedFiles?: number
+    extractedCount?: number
+    pendingCount?: number
+    approvedCount?: number
+    rejectedCount?: number
+    committedCount?: number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     completedAt?: Date | string | null
@@ -5183,9 +6727,16 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumBulkUploadStatusFieldUpdateOperationsInput | $Enums.BulkUploadStatus
+    phase?: StringFieldUpdateOperationsInput | string
+    archiveName?: NullableStringFieldUpdateOperationsInput | string | null
     totalFiles?: IntFieldUpdateOperationsInput | number
     processedFiles?: IntFieldUpdateOperationsInput | number
     failedFiles?: IntFieldUpdateOperationsInput | number
+    extractedCount?: IntFieldUpdateOperationsInput | number
+    pendingCount?: IntFieldUpdateOperationsInput | number
+    approvedCount?: IntFieldUpdateOperationsInput | number
+    rejectedCount?: IntFieldUpdateOperationsInput | number
+    committedCount?: IntFieldUpdateOperationsInput | number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -5197,12 +6748,138 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumBulkUploadStatusFieldUpdateOperationsInput | $Enums.BulkUploadStatus
+    phase?: StringFieldUpdateOperationsInput | string
+    archiveName?: NullableStringFieldUpdateOperationsInput | string | null
     totalFiles?: IntFieldUpdateOperationsInput | number
     processedFiles?: IntFieldUpdateOperationsInput | number
     failedFiles?: IntFieldUpdateOperationsInput | number
+    extractedCount?: IntFieldUpdateOperationsInput | number
+    pendingCount?: IntFieldUpdateOperationsInput | number
+    approvedCount?: IntFieldUpdateOperationsInput | number
+    rejectedCount?: IntFieldUpdateOperationsInput | number
+    committedCount?: IntFieldUpdateOperationsInput | number
     errors?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BulkImportItemCreateInput = {
+    id?: string
+    tenantId: string
+    bulkUploadId: string
+    fileName: string
+    mimeType: string
+    sizeBytes?: number
+    detectedName?: string | null
+    detectedEmail?: string | null
+    textSnippet?: string | null
+    extractedText?: string | null
+    extractStatus?: string
+    reviewStatus?: string
+    candidateId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BulkImportItemUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    bulkUploadId: string
+    fileName: string
+    mimeType: string
+    sizeBytes?: number
+    detectedName?: string | null
+    detectedEmail?: string | null
+    textSnippet?: string | null
+    extractedText?: string | null
+    extractStatus?: string
+    reviewStatus?: string
+    candidateId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BulkImportItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    bulkUploadId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    detectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    detectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    extractStatus?: StringFieldUpdateOperationsInput | string
+    reviewStatus?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BulkImportItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    bulkUploadId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    detectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    detectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    extractStatus?: StringFieldUpdateOperationsInput | string
+    reviewStatus?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BulkImportItemCreateManyInput = {
+    id?: string
+    tenantId: string
+    bulkUploadId: string
+    fileName: string
+    mimeType: string
+    sizeBytes?: number
+    detectedName?: string | null
+    detectedEmail?: string | null
+    textSnippet?: string | null
+    extractedText?: string | null
+    extractStatus?: string
+    reviewStatus?: string
+    candidateId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BulkImportItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    bulkUploadId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    detectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    detectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    extractStatus?: StringFieldUpdateOperationsInput | string
+    reviewStatus?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BulkImportItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    bulkUploadId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    detectedName?: NullableStringFieldUpdateOperationsInput | string | null
+    detectedEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
+    extractedText?: NullableStringFieldUpdateOperationsInput | string | null
+    extractStatus?: StringFieldUpdateOperationsInput | string
+    reviewStatus?: StringFieldUpdateOperationsInput | string
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AgentRunCreateInput = {
@@ -5610,9 +7287,16 @@ export namespace Prisma {
     userId?: SortOrder
     requisitionId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
+    archiveName?: SortOrder
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
     errors?: SortOrder
     createdAt?: SortOrder
     completedAt?: SortOrder
@@ -5622,6 +7306,11 @@ export namespace Prisma {
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
   }
 
   export type BulkUploadMaxOrderByAggregateInput = {
@@ -5630,9 +7319,16 @@ export namespace Prisma {
     userId?: SortOrder
     requisitionId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
+    archiveName?: SortOrder
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
     createdAt?: SortOrder
     completedAt?: SortOrder
   }
@@ -5643,9 +7339,16 @@ export namespace Prisma {
     userId?: SortOrder
     requisitionId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
+    archiveName?: SortOrder
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
     createdAt?: SortOrder
     completedAt?: SortOrder
   }
@@ -5654,6 +7357,11 @@ export namespace Prisma {
     totalFiles?: SortOrder
     processedFiles?: SortOrder
     failedFiles?: SortOrder
+    extractedCount?: SortOrder
+    pendingCount?: SortOrder
+    approvedCount?: SortOrder
+    rejectedCount?: SortOrder
+    committedCount?: SortOrder
   }
 
   export type EnumBulkUploadStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -5690,6 +7398,65 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type BulkImportItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    bulkUploadId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    detectedName?: SortOrder
+    detectedEmail?: SortOrder
+    textSnippet?: SortOrder
+    extractedText?: SortOrder
+    extractStatus?: SortOrder
+    reviewStatus?: SortOrder
+    candidateId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BulkImportItemAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type BulkImportItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    bulkUploadId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    detectedName?: SortOrder
+    detectedEmail?: SortOrder
+    textSnippet?: SortOrder
+    extractedText?: SortOrder
+    extractStatus?: SortOrder
+    reviewStatus?: SortOrder
+    candidateId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BulkImportItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    bulkUploadId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    sizeBytes?: SortOrder
+    detectedName?: SortOrder
+    detectedEmail?: SortOrder
+    textSnippet?: SortOrder
+    extractedText?: SortOrder
+    extractStatus?: SortOrder
+    reviewStatus?: SortOrder
+    candidateId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BulkImportItemSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
   }
 
   export type DecimalFilter<$PrismaModel = never> = {

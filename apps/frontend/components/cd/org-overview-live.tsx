@@ -8,8 +8,12 @@
 import { OrgOverview } from "./screens/OrgOverview";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getDashboardKpis, getFunnel, getAdverseImpact, type DashKpi } from "@/lib/api";
-import type { ApplicationStage, FairnessMetric } from "@/lib/types";
+import {
+  getDashboardKpis, getFunnel, getAdverseImpact, getBillingUsage, getSpendTrend, getSourceOfHire, getOversight,
+  listCandidates, listRequisitions, listInterviews, weeklyCounts,
+  type DashKpi, type BillingUsage, type SpendMonth, type SourceStat, type OversightStats,
+} from "@/lib/api";
+import type { ApplicationStage, FairnessMetric, Candidate, Requisition, Interview } from "@/lib/types";
 import type { OrgOverviewData, TimelineItem, PendingItem } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -54,14 +58,19 @@ export function OrgOverviewLive() {
   const kpis = useData<DashKpi[]>(getDashboardKpis);
   const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
   const fairness = useData<FairnessMetric[]>(getAdverseImpact);
-  const activity = useData<TimelineItem[]>(() =>
-    rawList("/platform/tenants").then((rows) => rows.slice(0, 6).map((t: any): TimelineItem => ({
-      ic: "building",
-      who: String(t?.name ?? t?.tenantName ?? t?.companyName ?? "A tenant"),
-      what: `· ${String(t?.plan ?? t?.tier ?? "FREE").toUpperCase()} · ${t?.users ?? t?.userCount ?? t?.seats ?? 0} seats`,
-      t: ago(t?.createdAt ?? t?.updatedAt),
-    }))),
-  );
+  // Live intelligence row: metered AI workload + spend (billing AgentRunCost),
+  // channel mix (Candidate.source) and HITL oversight - all real, tenant-scoped.
+  const usage = useData<BillingUsage>(() => getBillingUsage(30));
+  const spend = useData<{ trend: SpendMonth[]; totalSpend: number }>(getSpendTrend);
+  const sources = useData<SourceStat[]>(getSourceOfHire);
+  const oversight = useData<OversightStats>(getOversight);
+  const cands = useData<Candidate[]>(() => listCandidates());
+  const reqs = useData<Requisition[]>(listRequisitions);
+  const interviews = useData<Interview[]>(listInterviews);
+  // Activity feed: there is no tenant-scoped activity endpoint yet, so this stays
+  // an honest empty feed rather than calling a non-existent route. (The old
+  // /platform/tenants call was a super-admin-only endpoint that 404'd here.)
+  const activity = useData<TimelineItem[]>(() => Promise.resolve([] as TimelineItem[]));
 
   const allKpis = kpis.data ?? [];
 
@@ -99,10 +108,48 @@ export function OrgOverviewLive() {
     activity: activity.data ?? [],
     pending,
     pendingCountLabel: pending.length ? `${pending.length} need attention` : undefined,
-    // No real per-agent run-count series is exposed yet -> empty; the screen renders an
-    // honest EmptyChart for the agent-activity sparkline. (Was a fabricated AGENT_BARS array.)
     agentBars: [],
-    agents: AGENTS.map((n) => ({ name: n, stat: "advisory" })),
+    // Real per-agent workload: runs + metered cost from billing AgentRunCost. The tiles
+    // fall back to the static advisory roster only while the usage call is pending/empty.
+    agents: (usage.data?.byAgent?.length
+      ? usage.data.byAgent.map((a) => ({ name: a.agentType, stat: `${a.runs} runs · ₹${a.costUsd.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` }))
+      : AGENTS.map((n) => ({ name: n, stat: "advisory" }))),
+    agentUsage: usage.data?.byAgent?.map((a) => ({ agent: a.agentType, runs: a.runs, costUsd: a.costUsd })) ?? [],
+    sources: (sources.data ?? []).map((s) => ({ source: s.source, applied: s.applied })),
+    spendTrend: (spend.data?.trend ?? []).map((m) => ({ label: m.label, byProvider: m.byProvider })),
+    oversight: oversight.data,
+    // Real division: metered 30d AI spend over candidates reaching HIRED. Omitted (no
+    // fabrication) when either side is zero.
+    costPerHireLabel: (() => {
+      const cost = usage.data?.totalCostUsd ?? 0;
+      if (cost > 0 && hired > 0) return `₹${(cost / hired).toLocaleString("en-IN", { maximumFractionDigits: 2 })} AI cost per hire`;
+      return undefined;
+    })(),
+    // Hiring-activity row: weekly inflow (Candidate.createdAt), open roles per
+    // department, and the live interview status mix - straight counts, no modeling.
+    inflow: weeklyCounts((cands.data ?? []).map((c: any) => c.appliedAt || c.createdAt), 8),
+    departments: (() => {
+      const by = new Map<string, number>();
+      for (const r of reqs.data ?? []) {
+        // The backend enum also carries INTERVIEWING, which the frontend union lacks.
+        const st = String(r.status ?? "OPEN");
+        if (st !== "OPEN" && st !== "INTERVIEWING") continue;
+        const d = r.department || "Other";
+        by.set(d, (by.get(d) ?? 0) + 1);
+      }
+      return Array.from(by, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    })(),
+    interviewMix: (() => {
+      const order: [string, string, string][] = [
+        ["SCHEDULED", "Scheduled", "var(--info)"], ["CONFIRMED", "Confirmed", "var(--brand)"],
+        ["IN_PROGRESS", "In progress", "var(--ai)"], ["COMPLETED", "Completed", "var(--ok)"],
+        ["RESCHEDULED", "Rescheduled", "var(--warn)"], ["CANCELLED", "Cancelled", "var(--ink-3)"],
+        ["NO_SHOW", "No-show", "var(--danger)"],
+      ];
+      return order
+        .map(([st, name, color]) => ({ name, color, value: (interviews.data ?? []).filter((iv) => iv.status === st).length }))
+        .filter((d) => d.value > 0);
+    })(),
   };
 
   return <OrgOverview data={data} />;

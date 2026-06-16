@@ -129,7 +129,7 @@ export function OrgOverview() {
             </SectionCard>
           </Reveal>
           <Reveal i={12}>
-            <SectionCard title="Activity" icon="bolt" action="Full log" onAction={() => { window.location.href = "/admin/audit"; }}>
+            <SectionCard title="Activity" icon="bolt" action="Full log" onAction={() => { window.location.href = "/audit"; }}>
               {activity.loading && <div style={{ display: "grid", gap: 10 }}>{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
               {!activity.loading && (!activity.data || activity.data.length === 0) && <EmptyState title="No recent activity" body="Org-wide events appear here as your team and the agents work. View the full audit log for the complete trail." />}
               {!activity.loading && activity.data && activity.data.length > 0 && <Timeline items={activity.data} />}

@@ -33,9 +33,14 @@
 // When it succeeds we use those numbers for the "Members" KPI value and the
 // "Seats used" health bar; if it fails or is missing we keep the prototype's
 // exact "12 / 15" / 80%. Every card, row, and bar from the prototype is always
-// rendered.
+// rendered. The same payload (plus its real plan name + unlimited flag) feeds
+// a REAL-only "Seats" FillGauge card in the right column: used = active
+// members counted by identity, total = the plan's seat cap from PLAN_LIMITS.
+// No fallback there - unlimited plans and failed fetches render the gauge's
+// honest empty note instead of invented numbers.
 import { useEffect, useMemo, useState } from "react";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
+import { FillGauge } from "@/components/shared/ribbon";
 import { toTitleCase } from "@/lib/utils";
 
 /* ----------------------------- inline raw() ----------------------------- */
@@ -185,7 +190,7 @@ const CSS = `
 .wsadminx .btn-soft { background: var(--surface-2); color: var(--ink); border-color: var(--line-2); } .wsadminx .btn-soft:hover { border-color: var(--line-strong); }
 .wsadminx .btn-ghost { background: transparent; color: var(--ink-2); } .wsadminx .btn-ghost:hover { background: var(--surface-2); }
 .wsadminx .btn-sm { padding: 6px 12px; font-size: 12.5px; }
-.wsadminx .av { width: 32px; height: 32px; border-radius: 99px; background: linear-gradient(135deg, var(--brand), var(--ai)); color: white; display: grid; place-items: center; font-weight: 700; font-size: 11px; }
+.wsadminx .av { width: 32px; height: 32px; border-radius: 99px; background: linear-gradient(135deg, var(--brand), var(--ai)); color: var(--on-brand); display: grid; place-items: center; font-weight: 700; font-size: 11px; }
 
 /* tabs */
 .wsadminx .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
@@ -263,14 +268,25 @@ export default function WorkspaceAdminPage() {
   // Light wiring: best-effort real seat counts. Falls back to the prototype's
   // numbers so the layout never changes.
   const [seats, setSeats] = useState<{ used: number; limit: number } | null>(null);
+  // Full /users/seats payload for the Seats gauge: the real plan name plus the
+  // unlimited flag (identity counts active users; the gateway injects the
+  // tenant's REAL plan and the cap comes from PLAN_LIMITS). Unlike `seats`
+  // above (prototype fallback), this is REAL-only - if the fetch fails the
+  // gauge renders its honest empty state instead of invented numbers.
+  const [seatInfo, setSeatInfo] = useState<{ used: number; limit: number; unlimited: boolean; plan: string } | null>(null);
   useEffect(() => {
     let alive = true;
     raw("/users/seats")
       .then((d) => {
         const used = Number(d?.used);
         const limit = Number(d?.limit);
-        if (alive && Number.isFinite(used) && Number.isFinite(limit) && limit > 0) {
+        const unlimited = d?.unlimited === true;
+        if (!alive) return;
+        if (Number.isFinite(used) && Number.isFinite(limit) && limit > 0) {
           setSeats({ used, limit });
+        }
+        if (Number.isFinite(used) && (unlimited || (Number.isFinite(limit) && limit > 0))) {
+          setSeatInfo({ used, limit, unlimited, plan: typeof d?.plan === "string" ? d.plan : "" });
         }
       })
       .catch(() => {});
@@ -301,6 +317,10 @@ export default function WorkspaceAdminPage() {
   return (
     <div className="wsadminx mx-auto w-full max-w-[1200px]">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div style={{ display: "flex", gap: 9, alignItems: "center", margin: "14px 0 4px", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-warn-tint)", color: "var(--c-warn)", border: "1px solid color-mix(in oklab, var(--c-warn) 32%, transparent)", fontSize: 12.5, fontWeight: 600 }}>
+        <span aria-hidden>⚠</span>
+        <span><b>Sample preview</b>: this workspace-admin view shows design data. The live roster is at Settings → Team &amp; roles; live billing at Billing &amp; Plan.</span>
+      </div>
 
       {/* Tab strip (the prototype's #admin / #admin/audit hash routes) */}
       <nav className="tabs">
@@ -396,6 +416,27 @@ export default function WorkspaceAdminPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-h">
+                    <span className="t"><I d={<path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11.5A3.25 3.25 0 1 0 10 5a3.25 3.25 0 0 0 0 6.5" />} s={16} /> Seats</span>
+                    <a href="/settings/billing">Plan <I d={<path d="M9 6l6 6-6 6" />} s={13} /></a>
+                  </div>
+                  <div className="card-b" style={{ paddingTop: 14 }}>
+                    <FillGauge
+                      used={seatInfo && !seatInfo.unlimited ? seatInfo.used : null}
+                      total={seatInfo && !seatInfo.unlimited ? seatInfo.limit : null}
+                      label="Seats"
+                      sub={seatInfo && !seatInfo.unlimited && seatInfo.plan ? `${toTitleCase(seatInfo.plan)} plan` : undefined}
+                      height={210}
+                      emptyLabel={
+                        seatInfo?.unlimited
+                          ? `${seatInfo.used} active member${seatInfo.used === 1 ? "" : "s"} · unlimited seats${seatInfo.plan ? ` on the ${toTitleCase(seatInfo.plan)} plan` : ""}`
+                          : "The gauge appears once live seat counts load."
+                      }
+                    />
                   </div>
                 </div>
               </div>

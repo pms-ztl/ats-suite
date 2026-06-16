@@ -8,7 +8,7 @@ import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const TENANT_TABLES = ["Resume", "BulkUpload", "AgentRun"];
+const TENANT_TABLES = ["Resume", "BulkUpload", "AgentRun", "BulkImportItem"];
 
 const run = (sql: string) => prisma.$executeRawUnsafe(sql);
 

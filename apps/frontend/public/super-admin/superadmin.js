@@ -163,7 +163,7 @@ function makeAllSortable(){
   if(!screenEl) return;
   Array.prototype.forEach.call(screenEl.querySelectorAll("table"),function(t){ makeSortable(t); });
 }
-function money(n){return "$"+n.toLocaleString();}
+function money(n){return "₹"+n.toLocaleString("en-IN");}
 function k(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"k":""+n;}
 function planClass(p){return "plan-"+p.toLowerCase();}
 function planLabel(p){return titleCase(p);}
@@ -174,6 +174,231 @@ function sparkline(data,color,w,h){
   var pts=data.map(function(v,i){var x=(i/(data.length-1))*w;var y=h-2-((v-mn)/rng)*(h-4);return x.toFixed(1)+","+y.toFixed(1);}).join(" ");
   var last=pts.split(" ").pop().split(",");
   return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+last[0]+'" cy="'+last[1]+'" r="2.2" fill="'+color+'"/></svg>';
+}
+
+/* ---- chart helpers: pure SVG built on the theme tokens (light + dark adaptive),
+   viewBox-scaled so they stay responsive at any width. Used by the live AI Cost,
+   Billing and Models screens; all values come from the hydrated platform data. ---- */
+function chEsc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function donutSvg(segs,size,center,sub){
+  size=size||156; var r=(size/2)-11, c=size/2, circ=2*Math.PI*r;
+  var total=segs.reduce(function(a,s){return a+(s.v>0?s.v:0);},0); if(total<=0) return '';
+  // faint full track ring behind the segments, with rounded segment caps
+  var off=0, rings='<circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="none" stroke="color-mix(in oklab, var(--ink-3) 14%, transparent)" stroke-width="13"/>';
+  segs.forEach(function(s){ if(s.v<=0)return;
+    var len=(s.v/total)*circ;
+    rings+='<circle cx="'+c+'" cy="'+c+'" r="'+r+'" fill="none" stroke="'+s.color+'" stroke-width="13" stroke-dasharray="'+Math.max(0,len-2).toFixed(2)+' '+(circ-Math.max(0,len-2)).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+c+' '+c+')"/>';
+    off+=len;
+  });
+  return '<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">'
+    +'<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" style="flex-shrink:0">'+rings
+    +'<text x="'+c+'" y="'+(c-2)+'" text-anchor="middle" font-size="19" font-weight="800" fill="var(--ink)" font-family="var(--font-mono)">'+chEsc(center)+'</text>'
+    +'<text x="'+c+'" y="'+(c+15)+'" text-anchor="middle" font-size="10" fill="var(--ink-3)">'+chEsc(sub)+'</text></svg>'
+    +'<div style="display:flex;flex-direction:column;gap:7px;min-width:170px;flex:1">'
+    +segs.filter(function(s){return s.v>0;}).map(function(s){var pct=Math.round((s.v/total)*100);
+      return '<div style="display:flex;gap:8px;align-items:center;font-size:12.5px"><span style="width:9px;height:9px;border-radius:3px;background:'+s.color+';flex-shrink:0"></span><span style="flex:1;color:var(--ink-2)">'+chEsc(s.label)+'</span><span class="mono" style="font-weight:700">'+chEsc(s.fmt)+'</span><span class="mono" style="color:var(--ink-3);width:34px;text-align:right">'+pct+'%</span></div>';}).join("")
+    +'</div></div>';
+}
+function treemapSvg(items,w,h,fmt){
+  w=w||640;h=h||220;
+  var sorted=items.filter(function(x){return x.value>0;}).sort(function(a,b){return b.value-a.value;});
+  var remain=sorted.reduce(function(a,x){return a+x.value;},0);
+  if(remain<=0) return '';
+  var x=0,y=0,rw=w,rh=h,cells='';
+  sorted.forEach(function(it){
+    var frac=Math.min(1,Math.max(0.0001,it.value/remain));
+    var cw,ch,cx=x,cy=y;
+    if(rw>=rh){ cw=rw*frac; ch=rh; x+=cw; rw-=cw; } else { cw=rw; ch=rh*frac; y+=ch; rh-=ch; }
+    remain-=it.value;
+    var showName=cw>56&&ch>26, showVal=cw>56&&ch>46;
+    var maxChars=Math.max(3,Math.floor(cw/7)-1);
+    var nm=String(it.name); if(nm.length>maxChars) nm=nm.slice(0,maxChars)+"…";
+    cells+='<g><rect x="'+cx.toFixed(1)+'" y="'+cy.toFixed(1)+'" width="'+Math.max(0,cw-2).toFixed(1)+'" height="'+Math.max(0,ch-2).toFixed(1)+'" rx="6" fill="'+it.color+'" fill-opacity="0.85"><title>'+chEsc(it.name)+' · '+chEsc(fmt(it.value))+'</title></rect>'
+      +(showName?'<text x="'+(cx+7).toFixed(1)+'" y="'+(cy+17).toFixed(1)+'" font-size="11.5" font-weight="700" fill="#fff">'+chEsc(nm)+'</text>':'')
+      +(showVal?'<text x="'+(cx+7).toFixed(1)+'" y="'+(cy+32).toFixed(1)+'" font-size="10.5" fill="#fff" fill-opacity="0.85" font-family="var(--font-mono)">'+chEsc(fmt(it.value))+'</text>':'')
+      +'</g>';
+  });
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'+cells+'</svg>';
+}
+function burnSvg(points,fmt){
+  var w=640,h=170,padL=8,padR=8,padT=14,padB=22;
+  if(!points||!points.length) return '';
+  var mx=Math.max.apply(null,points.map(function(p){return p.value;}).concat([0.000001]));
+  var iw=w-padL-padR, ih=h-padT-padB;
+  var pts=points.map(function(p,i){var px=padL+(points.length>1?(i/(points.length-1))*iw:iw/2);var py=padT+ih-(p.value/mx)*ih;return [px,py];});
+  var line=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ");
+  var area=line+" L"+pts[pts.length-1][0].toFixed(1)+" "+(padT+ih)+" L"+pts[0][0].toFixed(1)+" "+(padT+ih)+" Z";
+  var last=pts[pts.length-1];
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'
+    +'<defs><linearGradient id="burng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ai)" stop-opacity="0.30"/><stop offset="1" stop-color="var(--ai)" stop-opacity="0.02"/></linearGradient></defs>'
+    +'<line x1="'+padL+'" y1="'+(padT+ih)+'" x2="'+(w-padR)+'" y2="'+(padT+ih)+'" stroke="var(--line)"/>'
+    +'<path d="'+area+'" fill="url(#burng)"/>'
+    +'<path d="'+line+'" fill="none" stroke="var(--ai)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+    +'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="3" fill="var(--ai)"/>'
+    +'<text x="'+padL+'" y="'+(h-6)+'" font-size="10" fill="var(--ink-3)">'+chEsc(points[0].label)+'</text>'
+    +'<text x="'+(w-padR)+'" y="'+(h-6)+'" text-anchor="end" font-size="10" fill="var(--ink-3)">'+chEsc(points[points.length-1].label)+'</text>'
+    +'<text x="'+padL+'" y="'+(padT-3)+'" font-size="10" fill="var(--ink-3)" font-family="var(--font-mono)">peak '+chEsc(fmt(mx))+'</text>'
+    +'</svg>';
+}
+/* ribbonSvg: the house hero "flow ribbon", a vanilla port of
+   components/shared/ribbon.tsx (FlowRibbon). points=[{label,n,sub}] where n is a
+   REAL count/amount; the stream's thickness at each point is proportional to n.
+   Same bezier math as the React version (control points at the midpoint x between
+   neighbors), gradient brand -> info -> ai, soft ground-shadow ellipse, dotted
+   vertical marker + circle per point, mono fmt(n) above, uppercase label below,
+   optional sub line under the label. Gradient ids are unique per call (RIBBON_SEQ)
+   so several ribbons can coexist on one screen; the drifting "current" animation
+   is injected once and respects prefers-reduced-motion. Returns '' when there is
+   nothing real to draw - callers guard the surrounding card. */
+var RIBBON_SEQ=0, RIBBON_CSS=false;
+function ribbonSvg(points,w,h,fmt){
+  points=(points||[]).filter(function(p){return !!p;});
+  var total=points.reduce(function(a,p){return a+(p.n>0?p.n:0);},0);
+  if(!points.length||total<=0) return '';
+  w=w||1000; h=h||250; fmt=fmt||function(n){return String(n);};
+  if(!RIBBON_CSS&&typeof document!=="undefined"&&document.head){
+    var st=document.createElement("style");
+    st.textContent="@media (prefers-reduced-motion: no-preference){.sa-ribbon-current{stroke-dasharray:3 14;animation:sa-ribbon-drift 2.6s linear infinite;}@keyframes sa-ribbon-drift{to{stroke-dashoffset:-34;}}}";
+    document.head.appendChild(st); RIBBON_CSS=true;
+  }
+  var uid=++RIBBON_SEQ, gid="sa-ribbon-g-"+uid, sid="sa-ribbon-soft-"+uid;
+  var padX=46, midY=Math.round(h*0.47), maxHalf=Math.round(h*0.3), minHalf=4;
+  var maxN=Math.max.apply(null,points.map(function(p){return p.n>0?p.n:0;}).concat([1]));
+  var step=points.length>1?(w-padX*2)/(points.length-1):0;
+  var pts=points.map(function(p,i){
+    return {x:padX+i*step, half:minHalf+((p.n>0?p.n:0)/maxN)*(maxHalf-minHalf), n:p.n, label:p.label, sub:p.sub};
+  });
+  function f(v){return (+v).toFixed(1);}
+  function edge(sign){
+    var d="M "+f(pts[0].x)+" "+f(midY-sign*pts[0].half);
+    for(var i=1;i<pts.length;i++){
+      var a=pts[i-1], b=pts[i], cx=(a.x+b.x)/2;
+      d+=" C "+f(cx)+" "+f(midY-sign*a.half)+", "+f(cx)+" "+f(midY-sign*b.half)+", "+f(b.x)+" "+f(midY-sign*b.half);
+    }
+    return d;
+  }
+  var top=edge(1), back="";
+  for(var bi=pts.length-1;bi>0;bi--){
+    var ba=pts[bi], bb=pts[bi-1], bcx=(ba.x+bb.x)/2;
+    back+=" C "+f(bcx)+" "+f(midY+ba.half)+", "+f(bcx)+" "+f(midY+bb.half)+", "+f(bb.x)+" "+f(midY+bb.half);
+  }
+  var ribbon=top+" L "+f(pts[pts.length-1].x)+" "+f(midY+pts[pts.length-1].half)+back+" Z";
+  var current=pts.map(function(p,i){return (i===0?"M ":"L ")+f(p.x)+" "+midY;}).join(" ");
+  var dense=pts.length>8;
+  // long series (e.g. 30 daily points): thin the text rows so counts stay readable;
+  // every point keeps its marker so the thickness stays honest.
+  var lblEvery=pts.length>12?Math.ceil(pts.length/10):1;
+  var out='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block;overflow:visible" role="img" aria-label="Flow ribbon">'
+    +'<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="0">'
+    +'<stop offset="0%" stop-color="var(--brand)" stop-opacity="0.88"/>'
+    +'<stop offset="50%" stop-color="var(--info)" stop-opacity="0.88"/>'
+    +'<stop offset="100%" stop-color="var(--ai)" stop-opacity="0.88"/></linearGradient>'
+    +'<linearGradient id="'+sid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--ink)" stop-opacity="0.06"/><stop offset="100%" stop-color="var(--ink)" stop-opacity="0"/></linearGradient></defs>'
+    +'<ellipse cx="'+(w/2)+'" cy="'+(midY+maxHalf+26)+'" rx="'+(w/2-padX)+'" ry="14" fill="url(#'+sid+')"/>'
+    +'<path d="'+ribbon+'" fill="url(#'+gid+')" stroke="none"/>'
+    +'<path d="'+ribbon+'" fill="none" stroke="var(--surface)" stroke-opacity="0.5" stroke-width="1.5"/>'
+    +'<path class="sa-ribbon-current" d="'+current+'" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round"/>';
+  pts.forEach(function(p,i){
+    out+='<line x1="'+f(p.x)+'" y1="'+f(midY-p.half-10)+'" x2="'+f(p.x)+'" y2="'+f(midY+p.half+10)+'" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>'
+      +'<circle cx="'+f(p.x)+'" cy="'+midY+'" r="4" fill="var(--surface)" stroke="var(--ai)" stroke-width="2"/>';
+    if(i%lblEvery!==0&&i!==pts.length-1) return;
+    out+='<text x="'+f(p.x)+'" y="'+f(midY-p.half-20)+'" text-anchor="middle" font-size="'+(dense?14:17)+'" font-weight="800" fill="var(--ink)" font-family="var(--font-mono)">'+chEsc(fmt(p.n))+'</text>'
+      +'<text x="'+f(p.x)+'" y="'+(midY+maxHalf+30)+'" text-anchor="middle" font-size="'+(dense?9.5:10.5)+'" font-weight="700" fill="var(--ink-2)" style="text-transform:uppercase;letter-spacing:.05em">'+chEsc(p.label)+'</text>'
+      +(p.sub?'<text x="'+f(p.x)+'" y="'+(midY+maxHalf+44)+'" text-anchor="middle" font-size="10" fill="var(--ink-3)" font-family="var(--font-mono)">'+chEsc(p.sub)+'</text>':'');
+  });
+  return out+'</svg>';
+}
+/* cometSvg: a time series drawn as a comet - vanilla port of
+   components/shared/ribbon.tsx (CometTrail). points=[{label,n}] CHRONOLOGICAL,
+   oldest first, where n is a REAL amount. Smooth bezier line over the
+   brand -> info -> ai gradient, faint area fill under it, earlier points trail
+   off as small fading particles (brighter/bigger toward the present), and the
+   LAST point is the glowing head: a radial-gradient halo, a pulse ring and the
+   value in mono above it. Long series thin their text rows the same way the
+   React version does; every point keeps its particle so the shape stays honest.
+   Gradient ids are unique per call (COMET_SEQ) so several comets can coexist;
+   the head pulse is injected once and respects prefers-reduced-motion. Returns
+   '' when there are fewer than 2 real points or the series sums to zero -
+   callers guard the surrounding card / show their own honest empty text. */
+var COMET_SEQ=0, COMET_CSS=false;
+function cometSvg(points,w,h,fmt){
+  points=(points||[]).filter(function(p){return !!p;});
+  var total=points.reduce(function(a,p){return a+(p.n>0?p.n:0);},0);
+  if(points.length<2||total<=0) return '';
+  w=w||1000; h=h||230; fmt=fmt||function(n){return String(n);};
+  if(!COMET_CSS&&typeof document!=="undefined"&&document.head){
+    var st=document.createElement("style");
+    st.textContent="@media (prefers-reduced-motion: no-preference){.sa-comet-ring{transform-box:fill-box;transform-origin:center;animation:sa-comet-ping 2.4s cubic-bezier(.2,.6,.36,1) infinite;}@keyframes sa-comet-ping{0%{transform:scale(.35);opacity:.55;}80%{transform:scale(1.9);opacity:0;}100%{transform:scale(1.9);opacity:0;}}}";
+    document.head.appendChild(st); COMET_CSS=true;
+  }
+  var uid=++COMET_SEQ, lid="sa-comet-l-"+uid, aid="sa-comet-a-"+uid, hid="sa-comet-h-"+uid;
+  var padX=46, padT=40, padB=46, base=h-padB;
+  var maxN=Math.max.apply(null,points.map(function(p){return p.n>0?p.n:0;}).concat([1]));
+  var step=(w-padX*2)/(points.length-1);
+  var pts=points.map(function(p,i){
+    return {x:padX+i*step, y:padT+(1-(p.n>0?p.n:0)/maxN)*(h-padT-padB), n:p.n, label:p.label};
+  });
+  function f(v){return (+v).toFixed(1);}
+  var line="M "+f(pts[0].x)+" "+f(pts[0].y);
+  for(var i=1;i<pts.length;i++){
+    var a=pts[i-1], b=pts[i], cx=(a.x+b.x)/2;
+    line+=" C "+f(cx)+" "+f(a.y)+", "+f(cx)+" "+f(b.y)+", "+f(b.x)+" "+f(b.y);
+  }
+  var area=line+" L "+f(pts[pts.length-1].x)+" "+base+" L "+f(pts[0].x)+" "+base+" Z";
+  var head=pts[pts.length-1];
+  var dense=pts.length>9;
+  var out='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block;overflow:visible" role="img" aria-label="Trend trail">'
+    +'<defs><linearGradient id="'+lid+'" x1="0" y1="0" x2="1" y2="0">'
+    +'<stop offset="0%" stop-color="var(--brand)"/>'
+    +'<stop offset="50%" stop-color="var(--info)"/>'
+    +'<stop offset="100%" stop-color="var(--ai)"/></linearGradient>'
+    +'<linearGradient id="'+aid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--ai)" stop-opacity="0.22"/><stop offset="100%" stop-color="var(--brand)" stop-opacity="0.02"/></linearGradient>'
+    +'<radialGradient id="'+hid+'"><stop offset="0%" stop-color="var(--ai)" stop-opacity="0.5"/><stop offset="100%" stop-color="var(--ai)" stop-opacity="0"/></radialGradient></defs>'
+    +'<line x1="'+padX+'" y1="'+base+'" x2="'+(w-padX)+'" y2="'+base+'" stroke="var(--line)" stroke-width="1"/>'
+    +'<path d="'+area+'" fill="url(#'+aid+')"/>'
+    +'<path d="'+line+'" fill="none" stroke="url(#'+lid+')" stroke-width="3.5" stroke-linecap="round"/>';
+  // trail particles: every point but the head fades toward the past
+  pts.slice(0,-1).forEach(function(p,i){
+    var kf=pts.length>1?i/(pts.length-1):0;
+    out+='<circle cx="'+f(p.x)+'" cy="'+f(p.y)+'" r="'+(2.4+kf*3.4).toFixed(1)+'" fill="url(#'+lid+')" opacity="'+(0.3+kf*0.55).toFixed(2)+'"/>';
+  });
+  out+='<circle cx="'+f(head.x)+'" cy="'+f(head.y)+'" r="26" fill="url(#'+hid+')"/>'
+    +'<circle class="sa-comet-ring" cx="'+f(head.x)+'" cy="'+f(head.y)+'" r="13" fill="none" stroke="var(--ai)" stroke-width="1.6" opacity="0.5"/>'
+    +'<circle cx="'+f(head.x)+'" cy="'+f(head.y)+'" r="7" fill="var(--ai)" stroke="var(--surface)" stroke-width="2.5"/>';
+  pts.forEach(function(p,i){
+    var isHead=i===pts.length-1;
+    if(dense&&i%2!==pts.length%2&&!isHead) return;
+    if(p.n>0) out+='<text x="'+f(p.x)+'" y="'+f(p.y-(isHead?20:11))+'" text-anchor="middle" font-size="'+(isHead?17:12)+'" font-weight="'+(isHead?800:600)+'" fill="'+(isHead?"var(--ink)":"var(--ink-2)")+'" font-family="var(--font-mono)">'+chEsc(fmt(p.n))+'</text>';
+    out+='<text x="'+f(p.x)+'" y="'+(h-14)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink-3)" style="text-transform:uppercase;letter-spacing:.05em">'+chEsc(p.label)+'</text>';
+  });
+  return out+'</svg>';
+}
+function flowSvg(routes,fmt){
+  var rows=(routes||[]).filter(function(r){return r&&r.a;});
+  if(!rows.length) return '';
+  var models=[];rows.forEach(function(r){if(models.indexOf(r.p)===-1)models.push(r.p);});
+  var w=640, rowH=36;
+  var mRowH=Math.max(36,(rows.length*rowH)/Math.max(1,models.length));
+  var h=Math.max(rows.length*rowH, models.length*mRowH)+18;
+  var totC=rows.reduce(function(a,r){return a+(r.cost||0);},0)||1;
+  var leftX=178, rightX=w-188;
+  var COLS=["var(--ai)","var(--brand)","var(--info)","var(--warn)","var(--danger)"];
+  var paths='',labels='';
+  rows.forEach(function(r,i){
+    var y1=9+i*rowH+rowH/2;
+    var mi=models.indexOf(r.p);
+    var y2=9+mi*mRowH+mRowH/2;
+    var sw=Math.max(2.5,(r.cost/totC)*26);
+    var col=COLS[mi%COLS.length];
+    paths+='<path d="M'+leftX+' '+y1.toFixed(1)+' C '+(leftX+95)+' '+y1.toFixed(1)+', '+(rightX-95)+' '+y2.toFixed(1)+', '+rightX+' '+y2.toFixed(1)+'" fill="none" stroke="'+col+'" stroke-opacity="0.45" stroke-width="'+sw.toFixed(1)+'" stroke-linecap="round"><title>'+chEsc(r.a)+' → '+chEsc(r.p)+' · '+chEsc(fmt(r.cost||0))+'</title></path>';
+    labels+='<text x="'+(leftX-9)+'" y="'+(y1+4).toFixed(1)+'" text-anchor="end" font-size="11.5" font-weight="600" fill="var(--ai-ink)" font-family="var(--font-mono)">'+chEsc(r.a)+'</text>';
+  });
+  models.forEach(function(m,i){
+    var y2=9+i*mRowH+mRowH/2;
+    labels+='<circle cx="'+rightX+'" cy="'+y2.toFixed(1)+'" r="4" fill="'+COLS[i%COLS.length]+'"/>'
+      +'<text x="'+(rightX+11)+'" y="'+(y2+4).toFixed(1)+'" font-size="11.5" font-weight="600" fill="var(--ink)">'+chEsc(m)+'</text>';
+  });
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'+paths+labels+'</svg>';
 }
 function toast(msg,tone){
   var t=$("#toast");tone=tone||"ok";
@@ -259,7 +484,10 @@ document.addEventListener("click",closeMenus);
 /* Screens wired to live platform data. Anything NOT in here renders a
    "Sample data" banner so designed placeholder content is never mistaken
    for real platform data. */
-var WIRED={tenants:1,agents:1,audit:1,requests:1,health:1,detail:1,usage:1};
+/* Every flag is set ONLY by its hydrator's success path below - if a fetch
+   fails (no session, gateway down) the screen keeps its designed data AND the
+   amber banner, so static seeds are never mistaken for live numbers. */
+var WIRED={};
 function render(){
   if(active==="tenants")renderTenants();
   else if(active==="detail")renderDetail();
@@ -353,6 +581,36 @@ function renderTenants(){
     +kpi({label:"Healthy tenants",value:healthy+"/"+activeTenants,icon:IC.heart})
     +'</div>';
   html+='<div class="summary">'+svg(IC.heart,15,1.9)+'<span><b>'+healthy+' healthy</b>, <b>'+watch+' on watch</b>, and <b>'+over+' over budget</b> across '+activeTenants+' organizations. Combined run volume this month: <b>'+k(TENANTS.reduce(function(a,t){return a+t.runs;},0))+'</b>.</span></div>';
+  // Platform pulse hero: the cost-flow ribbon. Each tenant's real cost30 sets the
+  // stream's thickness (heaviest spender first), with its share of the platform's
+  // 30-day spend underneath. Hidden until at least one tenant has metered spend.
+  (function(){
+    var flow=TENANTS.slice().sort(function(a,b){return (b.cost30||0)-(a.cost30||0);});
+    var totalC=flow.reduce(function(a,t){return a+(t.cost30>0?t.cost30:0);},0);
+    if(totalC<=0) return;
+    var pts=flow.map(function(t){return {label:t.name,n:t.cost30||0,sub:Math.round(((t.cost30>0?t.cost30:0)/totalC)*100)+"%"};});
+    var rib=ribbonSvg(pts,1000,240,money);
+    if(!rib) return;
+    html+='<div class="card"><div class="ch"><div><h3>Cost flow by tenant</h3><div class="sub">30-day metered AI spend per tenant · heaviest stream first</div></div><span class="pill" style="background:var(--ai-tint);color:var(--ai-ink)">'+svg(IC.spark,11,2)+' Thickness = 30-day AI spend</span></div><div style="padding:14px 18px 10px">'+rib+'</div></div>';
+  })();
+  // Platform pulse: plan mix across hydrated tenants + the live daily burn (when the
+  // /platform/cost rollup has landed). Both straight from real platform data.
+  (function(){
+    var planCols={FREE:"var(--ink-3)",STARTER:"var(--info)",PROFESSIONAL:"var(--brand)",ENTERPRISE:"var(--ai)"};
+    var agg={};TENANTS.forEach(function(t){var p=t.plan||"FREE";if(!agg[p])agg[p]=0;agg[p]++;});
+    var segs=Object.keys(agg).map(function(p){return {label:planLabel(p),v:agg[p],color:planCols[p]||"var(--ai)",fmt:agg[p]+" tenant"+(agg[p]===1?"":"s")};});
+    var hasBurn=typeof COST_ROLLUP!=="undefined"&&COST_ROLLUP&&COST_ROLLUP.byDay&&COST_ROLLUP.byDay.length;
+    if(!segs.length&&!hasBurn) return;
+    html+='<div class="cols">';
+    if(segs.length){
+      html+='<div><div class="card"><div class="ch"><div><h3>Plan mix</h3><div class="sub">Tenants per plan tier</div></div></div><div style="padding:16px 18px">'+donutSvg(segs,140,String(TENANTS.length),"tenants")+'</div></div></div>';
+    }
+    if(hasBurn){
+      var pts=COST_ROLLUP.byDay.map(function(d){var dt=new Date(d.day);return {label:isNaN(dt.getTime())?String(d.day):((dt.getMonth()+1)+"/"+dt.getDate()),value:Number(d.costUsd)||0};});
+      html+='<div><div class="card"><div class="ch"><div><h3>Platform daily burn</h3><div class="sub">Metered AI spend per day · last 30 days</div></div><span class="ai-chip">'+svg(IC.spark,11)+' Live</span></div><div style="padding:12px 18px 14px">'+burnSvg(pts,function(v){return "₹"+(+v).toFixed(2);})+'</div></div></div>';
+    }
+    html+='</div>';
+  })();
   html+='<div class="card"><div class="ch"><div><h3>All organizations</h3><div class="sub">Sorted by monthly recurring revenue</div></div></div>'
     +'<div class="tbl-wrap"><table><thead><tr><th>Organization</th><th>Created</th><th>Plan</th><th class="num">Users</th><th class="num">MRR</th><th class="num">AI cost 30d</th><th class="num">Agent runs</th><th>Health</th><th></th></tr></thead><tbody>';
   TENANTS.slice().sort(function(a,b){return b.mrr-a.mrr;}).forEach(function(t){
@@ -501,6 +759,22 @@ function renderCost(){
     +kpi({label:"Active agents",value:String(AGENTS.length),icon:IC.cost})
     +kpi({label:"Tracked tenants",value:String(TENANTS.length),icon:IC.heart})
     +'</div>';
+  // Daily cost flow + tenant cost concentration: drawn only from the live cost
+  // rollup (/super-admin/platform/cost) - hidden entirely until that hydration
+  // lands. The comet trail replaces the flow ribbon here (same byDay series;
+  // the compact line still lives on the Tenants pulse row).
+  if(COST_ROLLUP&&COST_ROLLUP.byDay){
+    var burnPts=COST_ROLLUP.byDay.map(function(d){var dt=new Date(d.day);return {label:isNaN(dt.getTime())?String(d.day):((dt.getMonth()+1)+"/"+dt.getDate()),n:Number(d.costUsd)||0};});
+    var burnComet=cometSvg(burnPts,1000,230,function(v){return "₹"+(+v).toFixed(2);});
+    html+='<div class="card"><div class="ch"><div><h3>Daily cost flow</h3><div class="sub">Metered platform spend per day · last 30 days</div></div><div style="display:flex;gap:8px;align-items:center"><span class="pill" style="background:var(--ai-tint);color:var(--ai-ink)">glowing head = latest day · height = spend</span><span class="ai-chip">'+svg(IC.spark,11)+' Live</span></div></div>'
+      +(burnComet?'<div style="padding:12px 18px 10px">'+burnComet+'</div>'
+        :'<div style="padding:18px;font-size:12.5px;color:var(--ink-3)">No metered spend in this window yet. The trail appears once at least two days of real cost land.</div>')
+      +'</div>';
+  }
+  if(COST_ROLLUP&&COST_ROLLUP.byTenant&&COST_ROLLUP.byTenant.length){
+    var tCells=COST_ROLLUP.byTenant.map(function(ct){var tt=TENANTS.filter(function(x){return x.id===ct.tenantId;})[0];return {name:tt?tt.name:String(ct.tenantId||"Tenant").slice(0,8),value:Number(ct.costUsd)||0,color:tt?tt.color:"#7c5cff"};}).filter(function(c){return c.value>0;});
+    if(tCells.length) html+='<div class="card"><div class="ch"><div><h3>Cost concentration</h3><div class="sub">Box size = 30-day AI spend per tenant</div></div></div><div style="padding:12px 18px 14px">'+treemapSvg(tCells,640,210,function(v){return "₹"+(+v).toFixed(2);})+'</div></div>';
+  }
   // bar breakdown
   var maxCost=Math.max.apply(null,AGENTS.map(function(a){return a.cost;}));
   html+='<div class="card"><div class="ch"><div><h3>Spend by agent</h3><div class="sub">This month · '+money(total)+' total</div></div><span class="ai-chip">'+svg(IC.spark,11)+' Model cost</span></div><div style="padding:10px 18px 16px">';
@@ -623,6 +897,13 @@ function renderBilling(){
     +kpi({label:"Paying tenants",value:TENANTS.filter(function(t){return t.mrr>0;}).length+"/"+TENANTS.length,icon:IC.users})
     +kpi({label:"Failed payments",value:money(failed.reduce(function(a,i){return a+i.amt;},0)),icon:IC.alert})
     +'</div>';
+  // MRR mix by plan: real list-price MRR per hydrated tenant plan.
+  (function(){
+    var agg={};TENANTS.forEach(function(t){var p=t.plan||"FREE";if(!agg[p])agg[p]={mrr:0,n:0};agg[p].mrr+=t.mrr||0;agg[p].n++;});
+    var planCols={FREE:"var(--ink-3)",STARTER:"var(--info)",PROFESSIONAL:"var(--brand)",ENTERPRISE:"var(--ai)"};
+    var segs=Object.keys(agg).filter(function(p){return agg[p].mrr>0;}).map(function(p){return {label:planLabel(p)+" · "+agg[p].n+" tenant"+(agg[p].n===1?"":"s"),v:agg[p].mrr,color:planCols[p]||"var(--ai)",fmt:money(agg[p].mrr)};});
+    if(segs.length) html+='<div class="card"><div class="ch"><div><h3>MRR by plan</h3><div class="sub">List-price monthly revenue mix</div></div></div><div style="padding:16px 18px">'+donutSvg(segs,150,money(mrr),"MRR")+'</div></div>';
+  })();
   html+='<div class="card"><div class="ch"><h3>Recent invoices</h3><div class="sub">Last 7 days</div></div><div class="tbl-wrap"><table style="min-width:560px"><thead><tr><th>Organization</th><th>Plan</th><th class="num">Amount</th><th>Status</th><th class="num">Date</th></tr></thead><tbody>';
   INVOICES.forEach(function(i){var t=ten(i.tid);html+='<tr><td><div class="org"><span class="av" style="width:30px;height:30px;font-size:11px;background:'+t.color+'">'+avatarInit(t.name)+'</span><div class="nm" style="font-size:13px">'+t.name+'</div></div></td><td><span class="pill '+planClass(t.plan)+'">'+planLabel(t.plan)+'</span></td><td class="num mono" style="font-weight:700">'+money(i.amt)+'</td><td>'+ipill(i.status)+'</td><td class="num mono" style="color:var(--ink-3)">'+i.date+'</td></tr>';});
   html+='</tbody></table></div></div>';
@@ -718,6 +999,10 @@ function renderModels(){
   html+='<div class="card"><div class="ch"><div><h3>Model routing</h3><div class="sub">Primary → fallback per agent</div></div></div><div class="tbl-wrap"><table style="min-width:640px"><thead><tr><th>Agent</th><th>Primary model</th><th>Fallback</th><th class="num">Cost 30d</th><th></th></tr></thead><tbody>';
   ROUTING.forEach(function(r){html+='<tr><td class="mono" style="font-weight:600;color:var(--ai-ink)">'+r.a+'</td><td><span class="pill" style="background:var(--ai-tint);color:var(--ai-ink)">'+r.p+'</span></td><td style="color:var(--ink-2)">'+r.f+'</td><td class="num mono">'+money(r.cost)+'</td><td><button class="btn btn-soft btn-sm" data-route="'+r.a+'">Override</button></td></tr>';});
   html+='</tbody></table></div></div>';
+  // Routing flow: agent → primary model, ribbon width = real 30-day spend share.
+  if(ROUTING.length){
+    html+='<div class="card"><div class="ch"><div><h3>Routing flow</h3><div class="sub">Agent → primary model · ribbon width = 30-day spend share</div></div><span class="ai-chip">'+svg(IC.spark,11)+' Live routing</span></div><div style="padding:14px 18px 16px">'+flowSvg(ROUTING,function(v){return "₹"+(+v).toFixed(2);})+'</div></div>';
+  }
   html+='<div class="cols"><div><div class="card"><div class="ch"><h3>API keys</h3><div class="sub">Per provider</div></div><div style="padding:6px 18px 12px">';
   if(!PROVIDERS.length)html+='<div style="padding:10px 2px;color:var(--ink-3);font-size:13px">No providers configured.</div>';
   PROVIDERS.forEach(function(p){html+='<div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)"><div style="flex:1"><div style="font-weight:600;font-size:13px">'+p.n+'</div><div class="mono" style="font-size:12px;color:var(--ink-3)">'+(p.s==="connected"?"Key configured":"Not connected")+'</div></div><span class="pill '+(p.s==="connected"?"h-healthy":"h-watch")+'"><span class="d"></span>'+titleCase(p.s==="connected"?"active":p.s)+'</span></div>';});
@@ -885,6 +1170,9 @@ renderNav();render();
         spark:[1,1,1,1,1,1,1,1]
       });
     });
+    /* Detail fetches live per visit and Usage derives from TENANTS, so all
+       three go live together once the real tenant list lands. */
+    WIRED.tenants=1; WIRED.detail=1; WIRED.usage=1;
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="tenants") it.ct=TENANTS.length; }); });
     renderNav(); render();
   }).catch(function(){ /* keep designed data on any failure */ });
@@ -913,7 +1201,7 @@ renderNav();render();
     });
     if(typeof agentState==="object"&&agentState){ AGENTS.forEach(function(a){ agentState[a.id]=a.on; }); }
     /* AI Cost reads the same real per-agent spend (costUsd30d) + per-tenant cost30, so it is live too. */
-    if(typeof WIRED==="object"&&WIRED){ WIRED.cost=1; }
+    if(typeof WIRED==="object"&&WIRED){ WIRED.cost=1; WIRED.agents=1; }
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="agents") it.ct=AGENTS.length; }); });
     renderNav(); render();
   }).catch(function(){});
@@ -939,6 +1227,7 @@ renderNav();render();
       var actor=meta.actorName||meta.actorEmail||ev.actorUserId||"Platform operator";
       var action=meta.summary||(esc(ev.action||"performed an action")+(ev.resourceType?(" on <b>"+esc(ev.resourceType)+"</b>"):""));
       AUDIT.push({ actor:esc(actor), action:action, kind:kindOf(ev), ts:rel(ev.createdAt) }); });
+    WIRED.audit=1;
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="audit") it.ct=AUDIT.length; }); });
     renderNav(); render();
   }).catch(function(){});
@@ -960,6 +1249,7 @@ renderNav();render();
       }
       var from=r.fromPlan||"FREE", to=r.toPlan||"FREE";
       requests.push({ id:r.id, tid:tid, from:from, to:to, mrrDelta:Math.max(0,(PLAN_MRR[to]||0)-(PLAN_MRR[from]||0)), reason:r.reason||"No reason provided.", requester:r.requestedByUserId?("User "+String(r.requestedByUserId).slice(0,8)):"Tenant admin", ago:ago(r.requestedAt) }); });
+    WIRED.requests=1;
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="requests") it.ct=requests.length; }); });
     renderNav(); render();
   }).catch(function(){});
@@ -974,6 +1264,7 @@ renderNav();render();
     if(!Array.isArray(list)||!list.length) return;
     SERVICES.length=0;
     list.forEach(function(s){ SERVICES.push({n:s.n,s:s.s,lat:s.lat||0,err:s.err||0}); });
+    WIRED.health=1;
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="health") it.ct=SERVICES.length; }); });
     renderNav(); render();
   }).catch(function(){});
@@ -1314,7 +1605,7 @@ renderNav();render();
       if(typeof TENANTS!=="undefined"&&TENANTS.length&&pcv.length>=3){
         var mrr=TENANTS.reduce(function(a,t){return a+(t.mrr||0);},0);
         pcv[0].textContent=String(TENANTS.length);
-        pcv[1].textContent=(mrr>=1000?("$"+(mrr/1000).toFixed(1)+"k"):("$"+mrr));
+        pcv[1].textContent=(mrr>=1000?("₹"+(mrr/1000).toFixed(1)+"k"):("₹"+mrr));
         if(typeof AGENTS!=="undefined"&&AGENTS.length){ var err=AGENTS.reduce(function(a,x){return a+(x.err||0);},0)/AGENTS.length; pcv[2].textContent=err.toFixed(1)+"%"; }
       }
       var al=document.querySelector(".pc-alert");
@@ -1326,4 +1617,21 @@ renderNav();render();
   }
   refreshStats(); setTimeout(refreshStats,1200); setTimeout(refreshStats,3000); setTimeout(refreshStats,5200);
 })();
+})();
+
+/* ---- live hydration: platform cost rollup (Daily burn + Cost concentration on AI Cost).
+   COST_ROLLUP is a hoisted global; renderCost guards on it, so the cards appear only
+   once real /super-admin/platform/cost data lands. ---- */
+var COST_ROLLUP=null;
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/platform/cost?days=30").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var byDay=Array.isArray(body.byDay)?body.byDay:[];
+    var byTenant=Array.isArray(body.byTenant)?body.byTenant:[];
+    var byAgent=Array.isArray(body.byAgent)?body.byAgent:[];
+    if(!byDay.length&&!byTenant.length) return;
+    COST_ROLLUP={ byDay:byDay, byTenant:byTenant, byAgent:byAgent, totals:body.totals||{} };
+    render();
+  }).catch(function(){});
 })();

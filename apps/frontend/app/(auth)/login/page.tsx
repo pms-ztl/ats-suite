@@ -22,14 +22,25 @@ const CSS = `
 .authx a{color:inherit;text-decoration:none;}.authx button{font-family:inherit;cursor:pointer;}
 .authx :focus-visible{outline:none;box-shadow:0 0 0 3px rgba(139,92,246,.45);border-radius:10px;}
 .authx .up{text-transform:uppercase;letter-spacing:.14em;}
-.authx .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:radial-gradient(55% 50% at 16% 18%, rgba(139,92,246,.28), transparent 70%),radial-gradient(55% 50% at 88% 82%, oklch(0.34 0.09 162/.4), transparent 70%),#06070d;}
+/* The background must look finished WITHOUT the external video (it is a remote
+   asset that can fail on tunnels/offline): a layered self-contained aurora -
+   base gradients + three drifting blobs + a slow conic sheen + a faint dot grid.
+   The video, when it loads, simply enriches this. */
+.authx .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:
+  radial-gradient(60% 55% at 14% 16%, rgba(139,92,246,.4), transparent 70%),
+  radial-gradient(58% 52% at 88% 84%, oklch(0.42 0.11 162/.5), transparent 72%),
+  radial-gradient(40% 40% at 70% 18%, rgba(56,130,246,.22), transparent 70%),
+  #06070d;}
 .authx .aurora i{position:absolute;border-radius:50%;filter:blur(90px);}
-.authx .aurora .a{width:46vw;height:46vw;left:-12vw;top:-16vw;background:radial-gradient(circle, var(--ac), transparent 66%);opacity:.16;animation:auth-drift 26s var(--ease) infinite;}
-.authx .aurora .b{width:42vw;height:42vw;right:-12vw;bottom:-16vw;background:radial-gradient(circle, var(--br), transparent 66%);opacity:.14;animation:auth-drift 32s var(--ease) infinite reverse;}
+.authx .aurora .a{width:52vw;height:52vw;left:-14vw;top:-18vw;background:radial-gradient(circle, var(--ac), transparent 66%);opacity:.34;animation:auth-drift 26s var(--ease) infinite;}
+.authx .aurora .b{width:48vw;height:48vw;right:-14vw;bottom:-18vw;background:radial-gradient(circle, var(--br), transparent 66%);opacity:.3;animation:auth-drift 32s var(--ease) infinite reverse;}
+.authx .aurora::before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(139,92,246,.10) 80deg, transparent 160deg, oklch(0.55 0.12 162/.10) 260deg, transparent 340deg);animation:auth-sheen 48s linear infinite;}
+.authx .aurora::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px);background-size:26px 26px;mask-image:radial-gradient(75% 70% at 50% 45%, black 30%, transparent 100%);}
 @keyframes auth-drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(4%,-5%) scale(1.12);}}
+@keyframes auth-sheen{to{transform:rotate(360deg);}}
 .authx .bgv{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 1.1s var(--ease);}
 .authx .bgv.in{opacity:.52;}
-.authx .veil{position:fixed;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg, rgba(6,7,13,.78) 0%, rgba(6,7,13,.5) 40%, rgba(6,7,13,.32) 70%),linear-gradient(0deg, rgba(6,7,13,.7), transparent 45%);}
+.authx .veil{position:fixed;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg, rgba(6,7,13,.66) 0%, rgba(6,7,13,.42) 40%, rgba(6,7,13,.26) 70%),linear-gradient(0deg, rgba(6,7,13,.6), transparent 45%);}
 .authx .page{position:relative;z-index:10;display:flex;flex-direction:column;min-height:100vh;}
 .authx nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px clamp(20px,4vw,48px) 0;}
 .authx .logo{display:flex;align-items:center;gap:11px;}

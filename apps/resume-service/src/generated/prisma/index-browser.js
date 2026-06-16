@@ -145,12 +145,36 @@ exports.Prisma.BulkUploadScalarFieldEnum = {
   userId: 'userId',
   requisitionId: 'requisitionId',
   status: 'status',
+  phase: 'phase',
+  archiveName: 'archiveName',
   totalFiles: 'totalFiles',
   processedFiles: 'processedFiles',
   failedFiles: 'failedFiles',
+  extractedCount: 'extractedCount',
+  pendingCount: 'pendingCount',
+  approvedCount: 'approvedCount',
+  rejectedCount: 'rejectedCount',
+  committedCount: 'committedCount',
   errors: 'errors',
   createdAt: 'createdAt',
   completedAt: 'completedAt'
+};
+
+exports.Prisma.BulkImportItemScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  bulkUploadId: 'bulkUploadId',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  sizeBytes: 'sizeBytes',
+  detectedName: 'detectedName',
+  detectedEmail: 'detectedEmail',
+  textSnippet: 'textSnippet',
+  extractedText: 'extractedText',
+  extractStatus: 'extractStatus',
+  reviewStatus: 'reviewStatus',
+  candidateId: 'candidateId',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.AgentRunScalarFieldEnum = {
@@ -209,6 +233,7 @@ exports.BulkUploadStatus = exports.$Enums.BulkUploadStatus = {
 exports.Prisma.ModelName = {
   Resume: 'Resume',
   BulkUpload: 'BulkUpload',
+  BulkImportItem: 'BulkImportItem',
   AgentRun: 'AgentRun'
 };
 

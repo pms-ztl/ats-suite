@@ -156,6 +156,15 @@ export interface OrgOverviewData {
   pendingCountLabel?: string;    // e.g. "4 need attention"
   agentBars: number[];           // bar heights for the agent-activity sparkbars (relative)
   agents: AgentStat[];           // agent summary tiles (name + stat, e.g. "1,284 scored")
+  /* ---- live intelligence row (optional; each section renders only with real data) ---- */
+  agentUsage?: { agent: string; runs: number; costUsd: number }[]; // metered per-agent workload (billing AgentRunCost)
+  sources?: { source: string; applied: number }[];                 // channel mix from Candidate.source
+  spendTrend?: { label: string; byProvider: Record<string, number> }[]; // monthly AI spend by provider
+  oversight?: { pending: number; approved: number; rejected: number };  // HITL checkpoint status mix
+  costPerHireLabel?: string;     // e.g. "$0.13 AI cost per hire" (real division, omitted when no hires)
+  inflow?: { label: string; n: number }[];                         // new candidates per week (Candidate.createdAt)
+  departments?: { name: string; value: number }[];                 // open roles by department (Requisition.department)
+  interviewMix?: { name: string; value: number; color: string }[]; // interviews by live status
 }
 
 /* --- RecruiterHome --- */
@@ -231,10 +240,8 @@ export interface ReqBreakdown {
   id: string;
   label: string;                 // requirement name
   custom?: boolean;              // a custom admin-defined criterion (violet tag)
-  state: VerdictKind;            // per-requirement verdict, drives icon + color
-  weight: number;                // weight percent toward the score (0..100)
-  sub: string;                   // sub-score label, e.g. "9/10"
-  note: string;                  // AI evidence note, shown italic under the row
+  state: VerdictKind;            // per-requirement met/partial/unmet status, drives icon + color + badge
+  note: string;                  // AI-cited evidence note, shown italic under the row
 }
 export interface TraceStep {
   t: string;                     // step description
@@ -634,7 +641,8 @@ export interface AnalyticsData {
   tthLabels: string[];           // trend x labels
   tthDelta: string;              // trend headRight pill, e.g. "-9 days YoY"
   tthByDept: { dept: string; days: number }[];
-  sources: AnalyticsSource[];    // source-effectiveness table
+  sources: AnalyticsSource[];    // source-effectiveness table (ranked by hires; falls
+                                 // back to apps, labelled, until hires land)
 }
 
 /* ----- Billing ----- */

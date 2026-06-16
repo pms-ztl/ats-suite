@@ -22,7 +22,11 @@ async function raw(path: string): Promise<unknown> {
   return (json as { data?: unknown })?.data ?? json;
 }
 
-type UsageSummary = { totalRuns: number; totalTokensIn: number; totalTokensOut: number; totalCostUsd: number };
+type UsageSummary = {
+  totalRuns: number; totalTokensIn: number; totalTokensOut: number; totalCostUsd: number;
+  // Real per-agent metering from AgentRunCost (last 30 days), already returned by /billing/usage.
+  byAgent?: { agentType: string; runs: number; costUsd: number }[];
+};
 const PLAN_PRICE: Record<string, number> = { FREE: 0, STARTER: 299, PROFESSIONAL: 999, ENTERPRISE: 0 };
 const TIERS: BillingTier[] = [
   { n: "STARTER", price: 299, feats: ["5 seats", "20 active jobs", "500 resumes / mo", "Core AI agents"] },
@@ -35,8 +39,9 @@ type SpendTrendResp = { trend: BillingSpendMonth[]; totalSpend: number };
 export function BillingLive() {
   const { user } = useCurrentUser();
   const usage = useData<UsageSummary>(() => raw("/billing/usage?days=30") as Promise<UsageSummary>);
-  // Real AI spend over the last ~12 months, by provider. Honest empty array
-  // when the tenant has recorded no AgentRunCost rows.
+  // Real AI spend over the last ~12 months (monthly buckets; the screen plots
+  // the per-month totals as a comet trail). Honest empty array when the tenant
+  // has recorded no AgentRunCost rows.
   const spend = useData<SpendTrendResp>(() => raw("/billing/spend-trend") as Promise<SpendTrendResp>);
   const spendTrend: BillingSpendMonth[] = spend.data?.trend ?? [];
 
@@ -50,6 +55,29 @@ export function BillingLive() {
         { k: "Tokens out", used: u.totalTokensOut ?? 0, limit: "unlimited" },
       ]
     : [];
+
+  // Per-agent workload for the flow ribbon: label = agentType, thickness = real
+  // metered runs, sub = the agent's actual 30d cost. No rows -> the ribbon's
+  // honest empty-state.
+  const agentWorkload = (u?.byAgent ?? []).map((a) => ({
+    label: a.agentType,
+    n: a.runs,
+    sub: "₹" + Number(a.costUsd ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 }),
+  }));
+
+  // Spend share by provider: sum each provider's real metered AgentRunCost spend
+  // (BillingSpendMonth.byProvider) across the whole loaded window. n = raw spend so
+  // the waffle's proportions are honest; empty array -> WaffleField's empty-state.
+  const providerTotals = new Map<string, number>();
+  for (const month of spendTrend) {
+    for (const [provider, amt] of Object.entries(month.byProvider ?? {})) {
+      providerTotals.set(provider, (providerTotals.get(provider) ?? 0) + Number(amt ?? 0));
+    }
+  }
+  const providerSpend = Array.from(providerTotals.entries())
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, n]) => ({ label, n }));
 
   const data: BillingData = {
     plan,
@@ -72,5 +100,5 @@ export function BillingLive() {
     }
   };
 
-  return <BillingScreen data={data} spendTrend={spendTrend} onSelectPlan={onSelectPlan} />;
+  return <BillingScreen data={data} spendTrend={spendTrend} agentWorkload={agentWorkload} providerSpend={providerSpend} onSelectPlan={onSelectPlan} />;
 }

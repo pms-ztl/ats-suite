@@ -212,7 +212,7 @@ function SmsPanel() {
         <div style={{ position: "relative", height: 8, borderRadius: 99, background: "var(--c-surface-3)", overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, width: "36.8%", borderRadius: 99, background: "var(--c-brand)" }} />
         </div>
-        <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 8 }}>Resets on the 1st. Overage billed at $0.012 per message.</div>
+        <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 8 }}>Resets on the 1st. Overage billed at ₹1 per message.</div>
       </Card>
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>

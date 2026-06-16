@@ -158,7 +158,7 @@ export default function BrandingSettingsPage() {
                 <b style={{ fontSize: 13 }}>{name}</b>
               </div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em" }}>Senior Backend Engineer</h3>
-              <div style={{ fontSize: 12, color: "var(--c-ink-3)", marginTop: 4 }}>Payments · Remote · $160k to $200k</div>
+              <div style={{ fontSize: 12, color: "var(--c-ink-3)", marginTop: 4 }}>Payments · Remote · ₹160k to ₹200k</div>
               {tagline && <Pill icon="sparkles" tone="var(--c-ink-2)" bg="var(--c-surface)" style={{ marginTop: 10 }}>{tagline}</Pill>}
             </div>
             <div style={{ padding: 18 }}>

@@ -165,8 +165,11 @@ export default function SuperAdminLoginPage() {
         }}
       />
 
-      {/* Ambient video, pushed right, scrimmed left for readable copy */}
+      {/* Ambient backdrop: a self-contained aurora renders FIRST so the page never
+          looks empty if the remote video fails (tunnels/offline); the video then
+          enriches it when it loads. */}
       <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute inset-0" style={{ background: "radial-gradient(56% 52% at 82% 30%, rgba(139,92,246,.34), transparent 70%), radial-gradient(50% 48% at 92% 80%, rgba(34,197,140,.26), transparent 72%), radial-gradient(36% 40% at 60% 12%, rgba(56,130,246,.18), transparent 70%)" }} />
         <video autoPlay loop muted playsInline className="h-full w-full object-cover opacity-95 sa-fade dark:opacity-60" style={{ objectPosition: "78% center" }} src={VIDEO_URL} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, var(--sa-bg), color-mix(in srgb, var(--sa-bg) 80%, transparent) 55%, transparent)" }} />
         <div className="absolute inset-x-0 top-0 h-40" style={{ background: "linear-gradient(180deg, var(--sa-bg), transparent)" }} />

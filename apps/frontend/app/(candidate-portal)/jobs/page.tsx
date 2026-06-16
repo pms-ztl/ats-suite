@@ -47,9 +47,9 @@ async function fetchJobs(): Promise<PortalJob[]> {
 
 // The design's static example cards, used verbatim as the graceful fallback.
 const FALLBACK_ROLES: { meta: string; title: string; tags: string[] }[] = [
-  { meta: "Engineering · Remote", title: "Senior Backend Engineer", tags: ["Full-time", "$160k, 200k"] },
+  { meta: "Engineering · Remote", title: "Senior Backend Engineer", tags: ["Full-time", "₹160k to 200k"] },
   { meta: "Design · Austin, TX", title: "Staff Product Designer", tags: ["Full-time", "Hybrid"] },
-  { meta: "Data · Remote", title: "Machine Learning Engineer", tags: ["Full-time", "$170k, 220k"] },
+  { meta: "Data · Remote", title: "Machine Learning Engineer", tags: ["Full-time", "₹170k to 220k"] },
 ];
 
 const CSS = `
@@ -350,7 +350,7 @@ export default function JobsPage() {
           </nav>
 
           <section className="hero">
-            <span className="eyebrow liquid-glass"><span className="dot" /> 24 open roles · hiring now</span>
+            <span className="eyebrow liquid-glass"><span className="dot" /> {jobs && jobs.length > 0 ? `${jobs.length} open role${jobs.length === 1 ? "" : "s"} · hiring now` : "We are hiring"}</span>
             <h1>Build what's <em>next</em> at Northwind.</h1>
             <p>Join a team reshaping how the world hires. Every application is reviewed with care, scored transparently, and decided by a human, never an algorithm alone.</p>
             <div className="search liquid-glass">

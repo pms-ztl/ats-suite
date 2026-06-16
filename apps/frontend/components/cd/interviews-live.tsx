@@ -54,9 +54,44 @@ export function InterviewsLive() {
     };
   });
 
+  // "Next 7 days" pulse cells from the raw startsAt/durationMins: one cell per
+  // day starting today, n = interviews that day, sub = total hours when > 0.
+  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const today = new Date();
+  const weekAhead = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const onDay = (ivs.data ?? []).filter((iv) => {
+      const d = new Date(iv.startsAt);
+      return !isNaN(d.getTime()) && dayKey(d) === dayKey(day);
+    });
+    const hours = onDay.reduce((s, iv) => s + (iv.durationMins || 0), 0) / 60;
+    return {
+      label: i === 0 ? "Today" : day.toLocaleDateString(undefined, { weekday: "short" }),
+      n: onDay.length,
+      sub: hours > 0 ? `${parseFloat(hours.toFixed(1))}h` : undefined,
+    };
+  });
+
+  // Interview density: one {date,n} per calendar day across the loaded interviews'
+  // span (clamped to the last ~8 weeks of that span), n = count that local day.
+  // CalendarHeat renders its own empty state if there is < 2 days of real data.
+  const isoDay = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const perDay = new Map<string, number>();
+  for (const iv of ivs.data ?? []) {
+    const d = new Date(iv.startsAt);
+    if (isNaN(d.getTime())) continue;
+    const key = isoDay(d);
+    perDay.set(key, (perDay.get(key) ?? 0) + 1);
+  }
+  const densityDays = Array.from(perDay.entries())
+    .map(([date, n]) => ({ date, n }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .slice(-56); // ~8 weeks of dated buckets, oldest-first
+
   return (
     <>
-      <Interviews data={{ interviews, types: TYPES, statusMeta: STATUS_META }} onSchedule={() => setScheduling(true)} />
+      <Interviews data={{ interviews, types: TYPES, statusMeta: STATUS_META }} weekAhead={weekAhead} densityDays={densityDays} onSchedule={() => setScheduling(true)} />
       {scheduling && (
         <ScheduleModal
           candidates={cands.data ?? []}
@@ -82,12 +117,14 @@ function ScheduleModal({ candidates, requisitions, onClose, onScheduled }: {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    let alive = true; // also guards out-of-order responses on quick requisition switches
     setRoundId(""); setRounds([]);
     if (requisitionId) {
       listRounds(requisitionId)
-        .then((r) => { setRounds(r); if (r[0]) { setRoundId(r[0].id); setDur(r[0].durationMinutes || 60); } })
-        .catch(() => setRounds([]));
+        .then((r) => { if (!alive) return; setRounds(r); if (r[0]) { setRoundId(r[0].id); setDur(r[0].durationMinutes || 60); } })
+        .catch(() => { if (alive) setRounds([]); });
     }
+    return () => { alive = false; };
   }, [requisitionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = async () => {

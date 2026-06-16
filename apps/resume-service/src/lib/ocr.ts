@@ -31,8 +31,10 @@ const MAX_PAGES_OCR = Math.max(1, Number(process.env["RESUME_OCR_MAX_PAGES"]) ||
 const MAX_OCR_MS = Math.max(10_000, Number(process.env["RESUME_OCR_MAX_MS"]) || 180_000);
 const PDF_RENDER_SCALE = 2.0;       // 2x for better OCR accuracy on small text
 
+// OCR now defaults ON (images + scanned PDFs are first-class in archive
+// ingest). Opt OUT explicitly with ENABLE_OCR=false.
 export function isOcrEnabled(): boolean {
-  return process.env["ENABLE_OCR"] === "true";
+  return process.env["ENABLE_OCR"] !== "false";
 }
 
 // Lazy-init the tesseract worker — first OCR call pays the cost, then

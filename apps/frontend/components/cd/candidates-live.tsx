@@ -6,8 +6,10 @@
 // delegated to the Next router.
 import { useRouter } from "next/navigation";
 import { Candidates } from "./screens/Candidates";
+import { Pill, SectionCard } from "./aurora-kit";
+import { FlowRibbon, HiveCells, PetalBloom } from "@/components/shared/ribbon";
 import { useData } from "@/lib/use-data";
-import { listCandidates, listRequisitions, listScreening } from "@/lib/api";
+import { listCandidates, listRequisitions, listScreening, prettySource } from "@/lib/api";
 import type { Candidate as GwCandidate, Requisition, ScreeningResult, ScreeningVerdict } from "@/lib/types";
 import type { Candidate, CandStage, SavedView } from "./types";
 import { initials, reqTitleMap } from "./wire-helpers";
@@ -60,7 +62,28 @@ export function CandidatesLive() {
     };
   });
 
+  // "Pipeline at a glance" ribbon: real candidates per stage, across the FULL
+  // pipeline so the funnel reads at a glance even when everyone is concentrated in
+  // one stage (the ribbon simply thins where a stage is empty). Showing all stages
+  // matches the Pipeline hive below and avoids a single-point collapse.
+  const stageCounts = STAGES.map((s) => ({ label: s.label, n: candidates.filter((c) => c.stage === s.id).length }));
+  const ribbonPoints = stageCounts;
+
   const sources = ["All sources", ...Array.from(new Set(candidates.map((c) => c.source).filter(Boolean)))];
+
+  // "Source bloom": real candidates per source, humanized the way the app
+  // displays sources elsewhere (prettySource; enum constants -> sentence case).
+  const sourceCounts = new Map<string, number>();
+  for (const c of candidates) {
+    if (!c.source) continue;
+    const label = prettySource(c.source);
+    sourceCounts.set(label, (sourceCounts.get(label) ?? 0) + 1);
+  }
+  const bloomItems = Array.from(sourceCounts, ([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
+
+  // "Pipeline hive": one hex per real candidate, grouped by stage in pipeline
+  // order, colored with the same stage colors the board columns use.
+  const hiveGroups = STAGES.map((s, i) => ({ label: s.label, n: stageCounts[i].n, color: s.color }));
   const savedViews: SavedView[] = [
     { id: "all", label: "All candidates", icon: "users", count: candidates.length },
     { id: "review", label: "Needs review", icon: "eye", ai: true, count: candidates.filter((c) => c.st === "review").length, predicate: (c) => c.st === "review" },
@@ -76,6 +99,33 @@ export function CandidatesLive() {
           onOpenProfile={(id) => router.push(`/candidates/${id}`)}
           onImport={() => router.push("/candidates/import")}
           onSource={() => router.push("/sourcing")}
+          ribbonSlot={
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="viz-2up">
+                <SectionCard title="Pipeline at a glance" icon="radar"
+                  headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>ribbon thickness = live candidates per stage</Pill>}>
+                  <div style={{ height: "100%", display: "grid", placeItems: "center" }}>
+                    <FlowRibbon points={ribbonPoints} height={360}
+                      emptyLabel="The pipeline ribbon appears once candidates start applying." />
+                  </div>
+                </SectionCard>
+                <SectionCard title="Source bloom" icon="shapes"
+                  headRight={<Pill icon="layers" style={{ textTransform: "none" }}>petal length = candidates from that source</Pill>}>
+                  <div style={{ height: "100%", display: "grid", placeItems: "center" }}>
+                    <div style={{ width: "100%", maxWidth: 460, margin: "0 auto" }}>
+                      <PetalBloom items={bloomItems} centerSub="candidates" height={200}
+                        emptyLabel="The bloom opens once candidates arrive with a source." />
+                    </div>
+                  </div>
+                </SectionCard>
+              </div>
+              <SectionCard title="Pipeline hive" icon="grid"
+                headRight={<Pill icon="users" style={{ textTransform: "none" }}>every hex = one real candidate</Pill>}>
+                <HiveCells groups={hiveGroups} maxCells={96}
+                  emptyLabel="The hive fills as candidates arrive." />
+              </SectionCard>
+            </div>
+          }
         />
       </div>
     </div>

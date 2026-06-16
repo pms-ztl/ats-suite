@@ -23,7 +23,8 @@
 // prototype's default panel (Account) and the panel-switch / toggles are React
 // useState. The prototype's React shim and window.SettingsScreen export are not
 // copied; normal React imports are used.
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon, Logo } from "@/components/aurora-icon";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -118,11 +119,27 @@ function PAccount() {
   const roleTitle = user?.role
     ? user.role.split("_").map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
     : "Head of Talent";
+  // Functional photo picker: previews the chosen image in the avatar slot.
+  // (No avatar endpoint exists yet, so this is an in-session preview - honest.)
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) { toast.error("Pick an image file (PNG or JPG)."); return; }
+    if (photo) URL.revokeObjectURL(photo);
+    setPhoto(URL.createObjectURL(f));
+    toast.success("Photo updated. It applies to this session; profile photo storage ships with the avatar service.");
+  };
   return <><PanelHead title="Account" desc="Your personal profile and preferences." action={<Btn variant="primary" icon="check">Save</Btn>} />
     <Card pad={20}>
       <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 18 }}>
-        <span className="mono" style={{ width: 56, height: 56, borderRadius: "var(--r-lg)", background: "linear-gradient(135deg, var(--c-brand), var(--c-ai))", color: "white", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 18 }}>{ini}</span>
-        <Btn variant="soft" icon="copy">Change photo</Btn>
+        {photo
+          ? <img src={photo} alt="Profile" style={{ width: 56, height: 56, borderRadius: "var(--r-lg)", objectFit: "cover", border: "1px solid var(--c-line)" }} />
+          : <span className="mono" style={{ width: 56, height: 56, borderRadius: "var(--r-lg)", background: "linear-gradient(135deg, var(--c-brand), var(--c-ai))", color: "white", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 18 }}>{ini}</span>}
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onPickPhoto} />
+        <Btn variant="soft" icon="copy" onClick={() => fileRef.current?.click()}>Change photo</Btn>
+        {photo && <Btn variant="ghost" onClick={() => { URL.revokeObjectURL(photo); setPhoto(null); }}>Remove</Btn>}
       </div>
       <div style={{ display: "flex", gap: 14 }}><Field label="Full name"><input defaultValue={name} style={inp} /></Field><Field label="Email"><input defaultValue={email} style={inp} /></Field></div>
       <Field label="Title"><input defaultValue={roleTitle} style={inp} /></Field>
@@ -203,7 +220,7 @@ function PBranding() {
           <div style={{ padding: "20px 22px", background: "color-mix(in oklab, " + color + " 12%, var(--c-surface))", borderBottom: "1px solid var(--c-line)" }}>
             <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 12 }}><span style={{ width: 28, height: 28, borderRadius: 8, background: color, display: "grid", placeItems: "center" }}><Logo size={18} /></span><b style={{ fontSize: 13 }}>{name}</b></div>
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em" }}>Senior Backend Engineer</h3>
-            <div style={{ fontSize: 12, color: "var(--c-ink-3)", marginTop: 4 }}>Payments · Remote · $160k to $200k</div>
+            <div style={{ fontSize: 12, color: "var(--c-ink-3)", marginTop: 4 }}>Payments · Remote · ₹160k to ₹200k</div>
           </div>
           <div style={{ padding: 18 }}><button style={{ width: "100%", padding: "10px", borderRadius: "var(--r)", border: "none", background: color, color: "white", fontWeight: 700, fontSize: "var(--fs-sm)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>Apply now</button></div>
         </Card>

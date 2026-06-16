@@ -46,7 +46,7 @@ const NAV: Group[] = [
   { section: "Governance", items: [
     { label: "Compliance", icon: "shield", href: "/compliance", roles: ["admin", "compliance_officer"] },
     { label: "Security", icon: "shield", href: "/security", roles: ["admin", "compliance_officer"] },
-    { label: "Audit Log", icon: "scroll", href: "/admin/audit", roles: ["admin", "compliance_officer"] },
+    { label: "Audit Log", icon: "scroll", href: "/audit", roles: ["admin", "compliance_officer"] },
   ] },
   { section: "Workspace", items: [
     { label: "Workspace admin", icon: "building", href: "/workspace", roles: ["admin"] },

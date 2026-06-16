@@ -7,8 +7,9 @@
 // :id/form. The public apply page renders exactly this schema. The system fields
 // the candidate record needs (first name, last name, email, resume) are locked
 // from removal so an application always has the essentials.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FormBuilder } from "./RequisitionBuilder";
+import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { getApplicationForm, saveApplicationForm, type FormFieldDef } from "@/lib/api";
 import type { FormBuilderData, FormField, FormPaletteItem } from "./types";
 
@@ -47,22 +48,39 @@ export function FormBuilderLive({ requisitionId, jobTitle, orgLine }: { requisit
   const [name] = useState("Application form");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  useEffect(() => {
-    let cancelled = false;
-    getApplicationForm(requisitionId).then((res) => {
-      if (cancelled) return;
-      const fields = (res.fields ?? []).map(toCdField).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      setData({ fields, palette: PALETTE });
-    });
-    return () => { cancelled = true; };
+  // Stable loader shared by the mount/requisition-change effect and the live
+  // background refresh. The seq guard makes the latest invocation win, so a
+  // stale response (previous requisition, or a slow background tick) can never
+  // overwrite fresher data. Errors leave the current view untouched. Note the
+  // refresh is inherently silent here: `data` is only ever replaced (never reset
+  // to null, so no loading flash), and FormBuilder snapshots `data.fields` into
+  // its own state on mount, so in-progress edits are never clobbered.
+  const seqRef = useRef(0);
+  const load = useCallback(async () => {
+    const seq = ++seqRef.current;
+    const res = await getApplicationForm(requisitionId);
+    if (seq !== seqRef.current) return; // superseded by a newer load
+    const fields = (res.fields ?? []).map(toCdField).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    setData({ fields, palette: PALETTE });
   }, [requisitionId]);
 
+  useEffect(() => {
+    load().catch(() => { /* keep the current view */ });
+    // Invalidate any in-flight load (initial or background tick) on unmount or
+    // requisition change so a late response can't setState afterwards.
+    return () => { seqRef.current++; };
+  }, [load]);
+  useLiveRefresh(load);
+
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
   const save = async (fields: FormField[]) => {
     setState("saving");
     try {
       await saveApplicationForm(requisitionId, name, fields.map(toServerField));
       setState("saved");
-      setTimeout(() => setState((s) => (s === "saved" ? "idle" : s)), 2200);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setState((s) => (s === "saved" ? "idle" : s)), 2200);
     } catch { setState("error"); }
   };
 

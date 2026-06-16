@@ -43,14 +43,49 @@ model BulkUpload {
   userId         String
   requisitionId  String?
   status         BulkUploadStatus @default(QUEUED)
+  // Archive-ingest lifecycle (loose-file bulk leaves phase at its default):
+  //   extracting → review → committing → done | failed
+  phase          String           @default("extracting")
+  archiveName    String?
   totalFiles     Int
   processedFiles Int              @default(0)
   failedFiles    Int              @default(0)
+  // Archive staging counters (per BulkImportItem lifecycle)
+  extractedCount Int              @default(0)
+  pendingCount   Int              @default(0)
+  approvedCount  Int              @default(0)
+  rejectedCount  Int              @default(0)
+  committedCount Int              @default(0)
   errors         Json             @default("[]")
   createdAt      DateTime         @default(now())
   completedAt    DateTime?
 
   @@index([tenantId, status])
+}
+
+// Archive-ingest staging row. One per file extracted from an uploaded .zip.
+// Holds the full extracted text so commit does NOT re-extract; a recruiter
+// reviews/edits/approves these before any real Candidate/Resume is created.
+model BulkImportItem {
+  id            String   @id @default(uuid())
+  tenantId      String
+  bulkUploadId  String
+  fileName      String
+  mimeType      String
+  sizeBytes     Int      @default(0)
+  detectedName  String?
+  detectedEmail String?
+  textSnippet   String?
+  extractedText String?  @db.Text
+  // extracted | ocr_empty | failed | unsupported
+  extractStatus String   @default("extracted")
+  // pending | approved | rejected
+  reviewStatus  String   @default("pending")
+  candidateId   String?
+  createdAt     DateTime @default(now())
+
+  @@index([bulkUploadId])
+  @@index([tenantId])
 }
 
 // Local AgentRun projection — populated from runtime persistRun hook

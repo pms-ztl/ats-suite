@@ -25,17 +25,15 @@ const reqState = (met: RequirementMatch["met"]): VerdictKind => (met === true ? 
 function toRow(v: ScreeningVerdict, name: string, roleTitle: string): ScreeningRow {
   const kind = KIND[v.result] ?? "review";
   const reqs = v.requirements ?? [];
-  const requirements: ReqBreakdown[] = reqs.map((req, i) => {
-    const state = reqState(req.met);
-    return {
-      id: `r${i + 1}`,
-      label: req.requirement,
-      state,
-      weight: Math.round(100 / Math.max(1, reqs.length)),
-      sub: state === "pass" ? "9/10" : state === "review" ? "6/10" : "3/10",
-      note: req.evidence || "",
-    };
-  });
+  // Only real, measured fields: the requirement label, its met/partial/unmet status
+  // (from the screener's `met`), and the AI-cited evidence text. No invented weight%
+  // or x/10 sub-score — the screener does not produce those.
+  const requirements: ReqBreakdown[] = reqs.map((req, i) => ({
+    id: `r${i + 1}`,
+    label: req.requirement,
+    state: reqState(req.met),
+    note: req.evidence || "",
+  }));
   return {
     id: v.id ?? v.candidateId,
     ini: initials(name),
@@ -64,6 +62,18 @@ export function ScreeningLive() {
   );
   const data: ScreeningData = { rows, requirements: [], trace: [] };
 
+  // Verdict-flow ribbon points: real PASS / REVIEW / FAIL counts from the rows in
+  // hand, with each bucket's real average AI match score as the sub-label. No rows
+  // in a bucket -> no sub (never an invented average).
+  const verdictFlow = (["pass", "review", "fail"] as VerdictKind[]).map((k) => {
+    const scores = rows.filter((r) => r.kind === k).map((r) => r.score);
+    return {
+      label: RESULT_LABEL[k].charAt(0) + RESULT_LABEL[k].slice(1).toLowerCase(),
+      n: scores.length,
+      sub: scores.length ? `avg ${Math.round(scores.reduce((s, x) => s + x, 0) / scores.length)}` : undefined,
+    };
+  });
+
   // Real CSV export of exactly the rows shown (no backend needed — data in hand).
   const onExport = () =>
     exportToCSV(
@@ -72,5 +82,5 @@ export function ScreeningLive() {
       rows.map((r) => [r.name, r.role, r.score, RESULT_LABEL[r.kind], r.conf.toFixed(2), r.band, r.reasoning ?? ""]),
     );
 
-  return <Screening data={data} onExport={onExport} />;
+  return <Screening data={data} onExport={onExport} verdictFlow={verdictFlow} />;
 }

@@ -81,8 +81,9 @@ const CSS = `
 .supportx .search .typed .ph{color:rgba(26, 26, 26, .42);}
 .supportx .search .typed input{flex:1;border:none;outline:none;background:transparent;color:var(--ink);font-size:15px;font-family:var(--sans);padding:0;}
 .supportx .search .typed input::placeholder{color:rgba(26, 26, 26, .42);}
-.supportx .search .cur{display:inline-block;width:2px;height:18px;background:var(--br);margin-left:1px;animation:sup-blink .9s steps(1) infinite;}
-@keyframes sup-blink{0%, 100%{opacity:1;}50%{opacity:0;}}
+.supportx .search .cur{display:inline-block;width:2px;height:18px;background:var(--br);margin-left:1px;opacity:.4;}
+.supportx .search .typed .ph{transition:opacity .8s var(--ease);animation:sup-phfade 6s var(--ease) infinite;}
+@keyframes sup-phfade{0%,8%{opacity:0;}16%,86%{opacity:1;}96%,100%{opacity:0;}}
 .supportx .search .go{background:var(--br);color:#fff;border:none;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:500;flex-shrink:0;}
 .supportx .hint{font-size:12.5px;color:rgba(26, 26, 26, .5);margin-top:14px;}
 /* help cards */
@@ -180,43 +181,20 @@ export default function SupportPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // Typewriter that cycles the popular questions as a placeholder. Pauses while
-  // the user has typed something or focused, and respects reduced motion.
+  // The design's char-by-char typewriter loop made the whole search area feel
+  // like it was vibrating, so it is retired: rotate the popular questions as a
+  // CALM placeholder instead - a gentle crossfade every 6 seconds, no per-letter
+  // churn, and a static hint under reduced motion.
   useEffect(() => {
     if (query) return;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion:reduce)").matches) {
-      setTyped(TYPED_QUESTIONS[0]);
-      return;
-    }
+    setTyped(TYPED_QUESTIONS[0]);
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
     let qi = 0;
-    let ci = 0;
-    let del = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      const q = TYPED_QUESTIONS[qi];
-      setTyped(q.slice(0, ci));
-      if (!del) {
-        ci++;
-        if (ci > q.length) {
-          del = true;
-          timer = setTimeout(tick, 1900);
-          return;
-        }
-        timer = setTimeout(tick, 70);
-        return;
-      }
-      ci--;
-      if (ci < 0) {
-        del = false;
-        qi = (qi + 1) % TYPED_QUESTIONS.length;
-        ci = 0;
-        timer = setTimeout(tick, 300);
-        return;
-      }
-      timer = setTimeout(tick, 38);
-    };
-    timer = setTimeout(tick, 800);
-    return () => clearTimeout(timer);
+    const timer = setInterval(() => {
+      qi = (qi + 1) % TYPED_QUESTIONS.length;
+      setTyped(TYPED_QUESTIONS[qi]);
+    }, 6000);
+    return () => clearInterval(timer);
   }, [query]);
 
   async function onSubmitTicket(e: React.MouseEvent) {

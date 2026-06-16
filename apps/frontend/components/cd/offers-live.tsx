@@ -5,7 +5,7 @@
 // (candidate + requisition + base salary) that POSTs to /api/offers (createOffer)
 // and reloads the list, so a genuine DRAFT offer is created server-side.
 import { useState, type CSSProperties } from "react";
-import { Offers } from "./screens/Offers";
+import { Offers, type OfferLifecycleCounts, type OfferLifecycleKey } from "./screens/Offers";
 import { useData } from "@/lib/use-data";
 import { listOffers, listRequisitions, listCandidates, createOffer } from "@/lib/api";
 import type { Offer as GwOffer, Requisition, Candidate, OfferStatus } from "@/lib/types";
@@ -15,6 +15,12 @@ import { initials, reqTitleMap } from "./wire-helpers";
 const STATUS: Record<OfferStatus, OfferStatusKey> = {
   DRAFT: "draft", PENDING_APPROVAL: "pending", APPROVED: "approved",
   SENT: "sent", ACCEPTED: "accepted", DECLINED: "declined", EXPIRED: "declined",
+};
+// Lifecycle counts for the ribbon keep EXPIRED distinct (the row STATUS map above
+// folds it into "declined" because the screen's row type has no "expired" key).
+const LIFECYCLE: Record<OfferStatus, OfferLifecycleKey> = {
+  DRAFT: "draft", PENDING_APPROVAL: "pending", APPROVED: "approved",
+  SENT: "sent", ACCEPTED: "accepted", DECLINED: "declined", EXPIRED: "expired",
 };
 
 const fieldStyle: CSSProperties = {
@@ -51,6 +57,10 @@ export function OffersLive() {
     };
   });
 
+  // Real per-raw-status counts for the "Offer lifecycle" ribbon (Declined vs Expired stay honest).
+  const lifecycle: OfferLifecycleCounts = { draft: 0, pending: 0, approved: 0, sent: 0, accepted: 0, declined: 0, expired: 0 };
+  for (const o of offersD.data ?? []) lifecycle[LIFECYCLE[o.status] ?? "draft"] += 1;
+
   const submit = async () => {
     if (!candId || !reqId || !salary || Number(salary) <= 0) { setErr("Pick a candidate and requisition, and enter a base salary."); return; }
     setSaving(true); setErr(null);
@@ -67,7 +77,7 @@ export function OffersLive() {
 
   return (
     <>
-      <Offers data={{ offers }} onCreate={() => { setErr(null); setOpen(true); }} />
+      <Offers data={{ offers }} lifecycle={lifecycle} onCreate={() => { setErr(null); setOpen(true); }} />
       {open && (
         <div onClick={() => !saving && setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(15,20,32,.45)", display: "grid", placeItems: "center", padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--c-surface)", border: "1px solid var(--c-line)", borderRadius: "var(--r-xl)", padding: 22, boxShadow: "var(--e3)" }}>
@@ -87,7 +97,7 @@ export function OffersLive() {
               </select>
             </label>
             <div style={{ height: 12 }} />
-            <label style={labelStyle}>Base salary (USD)
+            <label style={labelStyle}>Base salary (INR)
               <input type="number" min={1} value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="e.g. 180000" style={fieldStyle} />
             </label>
             {err && <div style={{ marginTop: 12, fontSize: 12.5, color: "var(--c-warn)" }}>{err}</div>}

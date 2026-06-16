@@ -281,7 +281,7 @@ export default function ApplyPage() {
 
   if (done) return <Confirm job={job} reference={reference} slug={slug} />;
 
-  const salary = job.min != null && job.max != null ? `$${job.min}k to $${job.max}k` : null;
+  const salary = job.min != null && job.max != null ? `₹${job.min}k to ₹${job.max}k` : null;
   const jobsHref = slug ? `/c/${slug}/jobs` : "/jobs";
 
   return (

@@ -14,6 +14,7 @@ import { useParams } from "next/navigation";
 import { Btn, Pill, Confidence, SectionCard } from "@/components/aurora-kit";
 import { Skeleton, ErrorState } from "@/components/aurora";
 import { Icon, Logo } from "@/components/aurora-icon";
+import { MilestoneSpine } from "@/components/shared/ribbon-ext";
 import { useData } from "@/lib/use-data";
 import { approveOffer } from "@/lib/api";
 import { toTitleCase } from "@/lib/utils";
@@ -36,9 +37,13 @@ async function raw(method: string, path: string, body?: unknown): Promise<any> {
   return json?.data ?? json;
 }
 
-/* ---- map the single-offer payload defensively into the Offer view-model ---- */
+/* ---- map the single-offer payload defensively into the Offer view-model ----
+   We also carry the raw `createdAt` (the only real per-stage timestamp the
+   contract exposes - the Draft moment) so the lifecycle spine can label that
+   one stage honestly without inventing dates for the others. ---- */
+type OfferVM = Offer & { createdAt?: string };
 const fullName = (o: any) => o?.name || [o?.firstName, o?.lastName].filter(Boolean).join(" ") || "";
-function toOffer(o: any): Offer {
+function toOffer(o: any): OfferVM {
   const chain = Array.isArray(o?.approvalChain) ? o.approvalChain : Array.isArray(o?.approvals) ? o.approvals : [];
   return {
     id: o?.id ?? "",
@@ -55,7 +60,36 @@ function toOffer(o: any): Offer {
       state: (a?.state ?? a?.status ?? "wait") as "done" | "current" | "wait",
     })),
     aiDrafted: Boolean(o?.aiDrafted ?? o?.aiGenerated ?? true),
+    createdAt: o?.createdAt ?? undefined,
   };
+}
+
+/* ---- Lifecycle spine: the linear happy path an offer travels. We mark each
+   stage done/current from the offer's REAL status; the only stage with a real
+   timestamp in the contract is Draft (createdAt), so it gets a sub - the rest
+   omit it rather than fabricate a date. DECLINED/EXPIRED leave the path, so we
+   light the stages they provably passed and show no "current" on the line. ---- */
+const LIFECYCLE_STAGES: { key: OfferStatus; label: string }[] = [
+  { key: "DRAFT", label: "Draft" },
+  { key: "PENDING_APPROVAL", label: "Pending approval" },
+  { key: "APPROVED", label: "Approved" },
+  { key: "SENT", label: "Sent" },
+  { key: "ACCEPTED", label: "Accepted" },
+];
+// How far along the linear path a given status has provably reached.
+const STAGE_REACHED: Record<OfferStatus, number> = {
+  DRAFT: 0, PENDING_APPROVAL: 1, APPROVED: 2, SENT: 3, ACCEPTED: 4,
+  DECLINED: 3, EXPIRED: 3, // a declined/expired offer was at least Sent
+};
+function lifecycleSteps(offer: OfferVM): { label: string; sub?: string; done?: boolean; current?: boolean }[] {
+  const reached = STAGE_REACHED[offer.status] ?? 0;
+  const offPath = offer.status === "DECLINED" || offer.status === "EXPIRED" || offer.status === "ACCEPTED";
+  return LIFECYCLE_STAGES.map((s, i) => ({
+    label: s.label,
+    sub: i === 0 && offer.createdAt ? fmtDate(offer.createdAt) : undefined,
+    done: i < reached || (offPath && i <= reached),
+    current: !offPath && i === reached,
+  }));
 }
 
 /* ---- presentation map, derived from the real OfferStatus contract ---- */
@@ -71,7 +105,7 @@ const OFFER_STATUS: Record<OfferStatus, { label: string; tone: string; bg: strin
 
 const LABEL = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" as const, color: "var(--c-ink-3)" };
 
-const money = (n: number) => "$" + n.toLocaleString();
+const money = (n: number) => "₹" + n.toLocaleString("en-IN");
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -102,7 +136,7 @@ type ActionState = { busy?: boolean; error?: string; done?: string };
 
 export default function OfferDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: offer, loading, error, reload } = useData<Offer>(async () => toOffer(await raw("GET", `/offers/${id}`)), [id]);
+  const { data: offer, loading, error, reload } = useData<OfferVM>(async () => toOffer(await raw("GET", `/offers/${id}`)), [id]);
   const [act, setAct] = useState<ActionState>({});
 
   // The human approve / send actions. The AI never calls these; only these buttons do.
@@ -201,6 +235,13 @@ export default function OfferDetailPage() {
           <Icon name="check" size={14} style={{ flexShrink: 0 }} /><span>{act.done}</span>
         </div>
       )}
+
+      {/* lifecycle journey - real status drives done/current; only the Draft
+          stage carries a real timestamp (createdAt), the rest omit it. */}
+      <SectionCard title="Offer lifecycle" icon="fileText" style={{ marginBottom: 18 }}
+        headRight={<Pill icon="sparkles" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" style={{ textTransform: "none" }}>stage from this offer&apos;s status</Pill>}>
+        <MilestoneSpine steps={lifecycleSteps(offer)} emptyLabel="The journey appears once the offer exists." />
+      </SectionCard>
 
       {/* two-column working surface; reflows to one column on small viewports */}
       <div className="grid grid-cols-1 items-start gap-[18px] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">

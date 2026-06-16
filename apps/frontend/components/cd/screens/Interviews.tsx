@@ -4,9 +4,11 @@
 // ported pixel-exact from screen-interviews.jsx. Data via props.
 import * as React from "react";
 import { useState } from "react";
-import { Icon, type IconName } from "../icon";
+import { Icon } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
-import { Pill } from "../aurora-kit";
+import { Pill, SectionCard } from "../aurora-kit";
+import { FlowRibbon, PulseGrid } from "@/components/shared/ribbon";
+import { CalendarHeat } from "@/components/shared/ribbon-ext";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
 import { SceneArt } from "@/components/shared/scene-art";
@@ -16,7 +18,7 @@ const recTone: Record<string, string> = { STRONG_YES: "var(--ok)", YES: "var(--o
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
 function Dots({ n }: { n: number }) { return <span style={{ display: "inline-flex", gap: 3 }}>{Array.from({ length: 5 }).map((_, i) => <span key={i} style={{ width: 7, height: 7, borderRadius: 99, background: i < Math.round(n) ? "var(--brand)" : "var(--surface-3)" }} />)}</span>; }
 
-function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (id: string) => void; onSchedule?: () => void }) {
+function IVList({ data, weekAhead, densityDays, onOpen, onSchedule }: { data: InterviewsData; weekAhead?: { label: string; n: number; sub?: string }[]; densityDays?: { date: string; n: number }[]; onOpen: (id: string) => void; onSchedule?: () => void }) {
   const [filter, setFilter] = useState("all");
   const all = data.interviews ?? [];
   const filtered = all.filter((r) => filter === "all" || r.status === filter);
@@ -35,6 +37,35 @@ function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (i
             <button key={k} onClick={() => setFilter(k)} style={{ fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: "var(--r-pill)", cursor: "pointer", border: "1px solid", borderColor: filter === k ? "transparent" : "var(--line-2)", background: filter === k ? "var(--brand-tint)" : "var(--surface)", color: filter === k ? "var(--brand-ink)" : "var(--ink-2)" }}>{l}</button>
           ))}
         </div>
+        {all.length > 0 && (
+          <SectionCard title="Interview flow" icon="calendar" style={{ marginBottom: 16 }}
+            headRight={<Pill icon="calendar" tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>ribbon thickness = live interviews by state</Pill>}>
+            <FlowRibbon
+              points={([["scheduled", "Scheduled"], ["awaiting", "Feedback due"], ["completed", "Completed"]] as const)
+                .map(([k, label]) => ({ label, n: all.filter((r) => r.status === k).length }))
+                .filter((p) => p.n > 0)}
+              showShare
+              height={190}
+              emptyLabel="The flow appears once interviews are on the calendar." />
+          </SectionCard>
+        )}
+        {/* Next-7-days pulse: per-day interview counts (+ real total hours), supplied
+            by interviews-live from the raw startsAt/durationMins data. */}
+        {weekAhead && all.length > 0 && (
+          <SectionCard title="Next 7 days" icon="clock" style={{ marginBottom: 16 }}
+            headRight={<Pill icon="calendar" tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>tile glow = interviews that day</Pill>}>
+            <PulseGrid cells={weekAhead} emptyLabel="Nothing scheduled in the coming week." />
+          </SectionCard>
+        )}
+        {/* Interview density: longer-range per-day heatmap from the loaded interviews'
+            startsAt span (PulseGrid above is the 7-day glance; this is the trend).
+            CalendarHeat renders its own empty state when there is too little data. */}
+        {densityDays && all.length > 0 && (
+          <SectionCard title="Interview density" icon="calendar" style={{ marginBottom: 16 }}
+            headRight={<Pill icon="calendar" tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>cell heat = interviews that day</Pill>}>
+            <CalendarHeat days={densityDays} emptyLabel="Density appears once interviews span a few days." />
+          </SectionCard>
+        )}
         {rows.length === 0 ? (
           all.length === 0 ? (
             <div style={{ padding: "24px 0 6px" }}>
@@ -58,7 +89,7 @@ function IVList({ data, onOpen, onSchedule }: { data: InterviewsData; onOpen: (i
                 <div key={r.id} onClick={() => onOpen(r.id)} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1fr 130px 120px", gap: 12, padding: "13px 18px", alignItems: "center", borderTop: "1px solid var(--line)", cursor: "pointer", transition: "background var(--t-fast)" }}
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", gap: 11, alignItems: "center", minWidth: 0 }}>
-                    <span className="mono" style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{r.ini}</span>
+                    <span className="mono" style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{r.ini}</span>
                     <div style={{ minWidth: 0 }}><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{r.role} · <span className="mono">{r.reqId}</span></div></div>
                   </div>
                   <div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{r.round}</div><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"} style={{ fontSize: 10, marginTop: 2 }}>{toTitleCase(t.label)}</Pill></div>
@@ -82,7 +113,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
         <button onClick={onBack} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--ink-2)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, marginBottom: 14 }}><Icon name="chevsL" size={14} /> Interviews</button>
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-          <span className="mono" style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white", fontWeight: 700, fontSize: 16 }}>{d.ini}</span>
+          <span className="mono" style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)", fontWeight: 700, fontSize: 16 }}>{d.ini}</span>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}><h1 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 800, letterSpacing: "-0.02em" }}>{d.name}</h1><Pill tone={t.tone} bg={"color-mix(in oklab," + t.tone + " 13%, transparent)"}>{toTitleCase(t.label)}</Pill></div>
             <div style={{ fontSize: "var(--fs-sm)", color: "var(--ink-2)" }}>{d.round} · {d.role} · <span className="mono">{d.reqId}</span></div>
@@ -159,8 +190,14 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
   );
 }
 
-export function Interviews({ data, onSchedule }: { data: InterviewsData; onSchedule?: () => void }) {
+export function Interviews({ data, onSchedule, weekAhead, densityDays }: {
+  data: InterviewsData; onSchedule?: () => void;
+  /** real per-day counts + total hours for the next-7-days pulse; supplied by interviews-live */
+  weekAhead?: { label: string; n: number; sub?: string }[];
+  /** real per-day interview counts over the loaded span, for the density heatmap; supplied by interviews-live */
+  densityDays?: { date: string; n: number }[];
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (openId && data.detail) return <IVDetail d={data.detail} types={data.types} onBack={() => setOpenId(null)} />;
-  return <IVList data={data} onOpen={(id) => setOpenId(id)} onSchedule={onSchedule} />;
+  return <IVList data={data} weekAhead={weekAhead} densityDays={densityDays} onOpen={(id) => setOpenId(id)} onSchedule={onSchedule} />;
 }

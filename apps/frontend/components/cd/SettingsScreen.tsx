@@ -107,7 +107,7 @@ function PBranding() {
           <div style={{ padding: "20px 22px", background: "color-mix(in oklab, " + color + " 12%, var(--surface))", borderBottom: "1px solid var(--line)" }}>
             <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 12 }}><span style={{ width: 28, height: 28, borderRadius: 8, background: color, display: "grid", placeItems: "center" }}><Logo size={18} /></span><b style={{ fontSize: 13 }}>{name}</b></div>
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em" }}>Senior Backend Engineer</h3>
-            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 4 }}>Payments · Remote · $160k to $200k</div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 4 }}>Payments · Remote · ₹160k to ₹200k</div>
           </div>
           <div style={{ padding: 18 }}><button style={{ width: "100%", padding: "10px", borderRadius: "var(--r)", border: "none", background: color, color: "white", fontWeight: 700, fontSize: "var(--fs-sm)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>Apply now</button></div>
         </Card>

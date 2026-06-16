@@ -118,6 +118,134 @@ export async function bulkUploadResumes(
     failed: Number(d?.failed ?? 0),
   };
 }
+
+/* ---------- Bulk archive (.zip) ingest ----------
+ * Scale path for 1k-10k mixed resume files in ONE upload. The server unzips +
+ * extracts text ASYNC in a worker (so the request isn't held open), creating
+ * STAGING rows the recruiter reviews/edits/approves before any candidate is
+ * created. Flow: upload archive -> poll status (extracting) -> review staging
+ * items -> commit approved -> poll status (parse/screen progress). Real data
+ * only; every helper throws on failure so the UI shows an honest error. */
+export interface BulkUploadStatus {
+  id: string;
+  phase: "extracting" | "review" | "committing" | "done" | "failed";
+  totalFiles: number;
+  extractedCount: number;
+  pendingCount: number;
+  approvedCount: number;
+  rejectedCount: number;
+  committedCount: number;
+  parsedFiles: number;
+  failedFiles: number;
+}
+export interface BulkImportItem {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  detectedName: string | null;
+  detectedEmail: string | null;
+  textSnippet: string | null;
+  extractStatus: "extracted" | "ocr_empty" | "failed" | "unsupported";
+  reviewStatus: "pending" | "approved" | "rejected";
+  candidateId: string | null;
+}
+function toBulkStatus(d: any): BulkUploadStatus {
+  return {
+    id: String(d?.id ?? ""),
+    phase: (["extracting", "review", "committing", "done", "failed"] as const).includes(d?.phase) ? d.phase : "extracting",
+    totalFiles: Number(d?.totalFiles ?? 0),
+    extractedCount: Number(d?.extractedCount ?? 0),
+    pendingCount: Number(d?.pendingCount ?? 0),
+    approvedCount: Number(d?.approvedCount ?? 0),
+    rejectedCount: Number(d?.rejectedCount ?? 0),
+    committedCount: Number(d?.committedCount ?? 0),
+    parsedFiles: Number(d?.parsedFiles ?? 0),
+    failedFiles: Number(d?.failedFiles ?? 0),
+  };
+}
+function toBulkItem(d: any): BulkImportItem {
+  return {
+    id: String(d?.id ?? ""),
+    fileName: String(d?.fileName ?? ""),
+    mimeType: String(d?.mimeType ?? ""),
+    sizeBytes: Number(d?.sizeBytes ?? 0),
+    detectedName: d?.detectedName ?? null,
+    detectedEmail: d?.detectedEmail ?? null,
+    textSnippet: d?.textSnippet ?? null,
+    extractStatus: (["extracted", "ocr_empty", "failed", "unsupported"] as const).includes(d?.extractStatus) ? d.extractStatus : "failed",
+    reviewStatus: (["pending", "approved", "rejected"] as const).includes(d?.reviewStatus) ? d.reviewStatus : "pending",
+    candidateId: d?.candidateId ?? null,
+  };
+}
+// POST /api/resume/bulk-archive (multipart, single field "archive"). Returns the
+// bulkUploadId once the zip is accepted; extraction continues in a worker.
+export async function uploadResumeArchive(
+  file: File,
+): Promise<{ bulkUploadId: string; statusUrl?: string }> {
+  const t = authToken();
+  const form = new FormData();
+  form.append("archive", file, file.name);
+  const r = await fetch(`${API_BASE}/resume/bulk-archive`, {
+    method: "POST", credentials: "include",
+    headers: { ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: form,
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /resume/bulk-archive -> ${r.status}`);
+  const d = res?.data ?? res;
+  return { bulkUploadId: String(d?.bulkUploadId ?? ""), statusUrl: d?.statusUrl };
+}
+// GET /api/resume/bulk/:id - current phase + counters.
+export async function getBulkUpload(id: string): Promise<BulkUploadStatus> {
+  const res: any = await raw("GET", `/resume/bulk/${id}`);
+  return toBulkStatus(res?.data ?? res);
+}
+// GET /api/resume/bulk/:id/items?cursor=&limit= - paginated staging rows.
+export async function getBulkItems(
+  id: string, cursor?: string, limit = 50,
+): Promise<{ items: BulkImportItem[]; nextCursor: string | null }> {
+  const qs = new URLSearchParams();
+  qs.set("limit", String(limit));
+  if (cursor) qs.set("cursor", cursor);
+  const res: any = await raw("GET", `/resume/bulk/${id}/items?${qs.toString()}`);
+  const d = res?.data ?? res;
+  return {
+    items: (Array.isArray(d?.items) ? d.items : []).map(toBulkItem),
+    nextCursor: d?.nextCursor ?? null,
+  };
+}
+// PATCH /api/resume/bulk/:id/items/:itemId - approve/reject + edit detected fields.
+export async function patchBulkItem(
+  id: string, itemId: string,
+  patch: { reviewStatus?: "approved" | "rejected"; detectedName?: string; detectedEmail?: string },
+): Promise<BulkImportItem> {
+  const res: any = await raw("PATCH", `/resume/bulk/${id}/items/${itemId}`, patch);
+  return toBulkItem(res?.data ?? res);
+}
+// POST /api/resume/bulk/:id/review-all - bulk approve/reject across all items.
+export async function reviewAllBulk(
+  id: string, action: "approve-nonempty" | "reject-empty" | "approve-all",
+): Promise<BulkUploadStatus> {
+  const res: any = await raw("POST", `/resume/bulk/${id}/review-all`, { action });
+  return toBulkStatus(res?.data ?? res);
+}
+// POST /api/resume/bulk/:id/commit - create candidates + Resume rows for every
+// approved item and enqueue parsing (which auto-screens). 402 PLAN_LIMIT if the
+// approved count exceeds the monthly resume quota; the server's message is
+// surfaced so the recruiter sees the real quota reason, not a bare status code.
+export async function commitBulkImport(
+  id: string,
+): Promise<{ committed: number; skipped: number }> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/resume/bulk/${id}/commit`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /resume/bulk/${id}/commit -> ${r.status}`);
+  const d = res?.data ?? res;
+  return { committed: Number(d?.committed ?? 0), skipped: Number(d?.skipped ?? 0) };
+}
 // Copilot — POST /api/copilot. Returns a grounded answer + cited sources from
 // the real agent (backed by the configured LLM). Throws on failure so the UI can
 // show an honest error instead of a fabricated answer.
@@ -490,6 +618,108 @@ export async function getAdverseImpact(): Promise<FairnessMetric[]> {
   });
 }
 
+/* ---------- Dashboard visualizations (all real, tenant-scoped series) ---------- */
+// Channel mix: GET /analytics/source-of-hire -> per-source applied/hired counts
+// computed from Candidate.source. Honest zeros for hired until hires land.
+export type SourceStat = { source: string; applied: number; hired: number; conversionRate: number };
+// System enum sources (PUBLIC_APPLY, BULK_UPLOAD) read as raw constants; humanize
+// for display while leaving free-text sources ("LinkedIn", "Job board") untouched.
+export function prettySource(s: string): string {
+  if (!/^[A-Z0-9_]+$/.test(s)) return s;
+  const t = s.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+export async function getSourceOfHire(): Promise<SourceStat[]> {
+  const res: any = await raw("GET", "/analytics/source-of-hire").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const rows: any[] = Array.isArray(d.sources) ? d.sources : [];
+  return rows
+    .map((s: any) => ({
+      source: prettySource(String(s.source ?? "Unknown")),
+      applied: Number(s.applied ?? 0),
+      hired: Number(s.hired ?? 0),
+      conversionRate: Number(s.conversionRate ?? 0),
+    }))
+    .filter((s) => s.applied > 0 || s.hired > 0);
+}
+
+// AI workload + spend: GET /billing/usage?days=N -> metered per-agent runs, tokens
+// and cost from AgentRunCost. Every number is a real metered value.
+export type AgentUsage = { agentType: string; runs: number; tokensIn: number; tokensOut: number; costUsd: number };
+export type BillingUsage = { totalRuns: number; totalTokensIn: number; totalTokensOut: number; totalCostUsd: number; byAgent: AgentUsage[] };
+export async function getBillingUsage(days = 30): Promise<BillingUsage> {
+  const res: any = await raw("GET", `/billing/usage?days=${days}`).catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const byAgent: any[] = Array.isArray(d.byAgent) ? d.byAgent : [];
+  return {
+    totalRuns: Number(d.totalRuns ?? 0),
+    totalTokensIn: Number(d.totalTokensIn ?? 0),
+    totalTokensOut: Number(d.totalTokensOut ?? 0),
+    totalCostUsd: Number(d.totalCostUsd ?? 0),
+    byAgent: byAgent.map((a: any) => ({
+      agentType: String(a.agentType ?? "agent"),
+      runs: Number(a.runs ?? 0),
+      tokensIn: Number(a.tokensIn ?? 0),
+      tokensOut: Number(a.tokensOut ?? 0),
+      costUsd: Number(a.costUsd ?? 0),
+    })),
+  };
+}
+
+// Monthly AI spend by provider: GET /billing/spend-trend (AgentRunCost grouped by
+// month + provider inferred from modelName).
+export type SpendMonth = { month: string; label: string; total: number; byProvider: Record<string, number> };
+export async function getSpendTrend(): Promise<{ trend: SpendMonth[]; totalSpend: number }> {
+  const res: any = await raw("GET", "/billing/spend-trend").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  const trend: any[] = Array.isArray(d.trend) ? d.trend : [];
+  return {
+    trend: trend.map((m: any) => ({
+      month: String(m.month ?? ""), label: String(m.label ?? m.month ?? ""),
+      total: Number(m.total ?? 0), byProvider: (m.byProvider && typeof m.byProvider === "object") ? m.byProvider : {},
+    })),
+    totalSpend: Number(d.totalSpend ?? 0),
+  };
+}
+
+// Bucket real ISO timestamps into trailing calendar weeks (oldest -> newest).
+// Used for inflow/activity trends; every count is a real row, zero weeks stay zero.
+export function weeklyCounts(isoDates: (string | undefined | null)[], weeks = 8): { label: string; n: number }[] {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // back to Sunday
+  const out: { label: string; n: number; from: number; to: number }[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const from = new Date(weekStart); from.setDate(from.getDate() - i * 7);
+    const to = new Date(from); to.setDate(to.getDate() + 7);
+    out.push({
+      label: from.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      n: 0, from: from.getTime(), to: to.getTime(),
+    });
+  }
+  for (const iso of isoDates) {
+    if (!iso) continue;
+    const t = new Date(iso).getTime();
+    if (!isFinite(t)) continue;
+    const b = out.find((w) => t >= w.from && t < w.to);
+    if (b) b.n++;
+  }
+  return out.map(({ label, n }) => ({ label, n }));
+}
+
+// Human oversight: GET /agents/hitl -> checkpoint status mix. The raw rows carry
+// status PENDING/APPROVED/REJECTED (toReviewItem drops it, so count here).
+export type OversightStats = { pending: number; approved: number; rejected: number; total: number };
+export async function getOversight(): Promise<OversightStats> {
+  const rows = arr(await raw("GET", "/agents/hitl").catch(() => []));
+  const norm = (s: any) => String(s ?? "").toUpperCase();
+  const pending = rows.filter((r: any) => norm(r.status) === "PENDING").length;
+  const approved = rows.filter((r: any) => norm(r.status) === "APPROVED").length;
+  const rejected = rows.filter((r: any) => norm(r.status) === "REJECTED").length;
+  return { pending, approved, rejected, total: rows.length };
+}
+
 /* ---------- Dashboard (home) ---------- */
 // Matches the aurora-kit `Kpi` shape so KpiRow/KPICard render directly.
 export type DashKpi = {
@@ -519,6 +749,6 @@ export async function getDashboardKpis(): Promise<DashKpi[]> {
     mk("ai", "AI decisions today", "sparkles", d.aiDecisionsToday, d.aiDecisionsTodayChange, d.aiDecisionsTodaySparkline, { ai: true, good: true }),
     mk("comp", "Compliance score", "shield", d.complianceScore, d.complianceScoreChange, d.complianceScoreSparkline, { suffix: "%", good: true }),
     mk("div", "Diversity index", "grid", d.diversityScore, d.diversityScoreChange, d.diversityScoreSparkline, { good: true }),
-    mk("cost", "Cost per hire", "card", d.costPerHire, d.costPerHireChange, d.costPerHireSparkline, { prefix: "$", good: false }),
+    mk("cost", "Cost per hire", "card", d.costPerHire, d.costPerHireChange, d.costPerHireSparkline, { prefix: "₹", good: false }),
   ];
 }

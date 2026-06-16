@@ -169,7 +169,7 @@ export default function SourceEffectivenessPage() {
                   </div>
                   <span className="mono tnum" style={{ textAlign: "right", fontSize: 12, fontWeight: 600, color: s.conversion >= 5 ? "var(--c-ok)" : s.conversion >= 2 ? "var(--c-warn)" : "var(--c-ink-2)" }}>{s.conversion}%</span>
                   <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", color: "var(--c-ink-3)" }}>{s.applied.toLocaleString()}</span>
-                  <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", fontWeight: 600, color: s.cost == null ? "var(--c-ink-3)" : s.cost > 4000 ? "var(--c-danger)" : "var(--c-ink)" }}>{s.cost == null ? "n/a" : "$" + s.cost.toLocaleString()}</span>
+                  <span className="mono tnum" style={{ fontSize: 12, textAlign: "right", fontWeight: 600, color: s.cost == null ? "var(--c-ink-3)" : s.cost > 4000 ? "var(--c-danger)" : "var(--c-ink)" }}>{s.cost == null ? "n/a" : "₹" + s.cost.toLocaleString("en-IN")}</span>
                 </div>
               );
             })}

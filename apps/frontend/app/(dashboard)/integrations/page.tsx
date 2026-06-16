@@ -132,6 +132,10 @@ export default function IntegrationsPage() {
           <Pill icon="plug" tone="var(--c-brand-ink)" bg="var(--c-brand-tint)">{connected.length} connected</Pill>
           <Btn variant="soft" icon="search">Browse marketplace</Btn>
         </Greeting>
+        <div style={{ display: "flex", gap: 9, alignItems: "center", margin: "0 0 16px", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-warn-tint)", color: "var(--c-warn)", border: "1px solid color-mix(in oklab, var(--c-warn) 32%, transparent)", fontSize: 12.5, fontWeight: 600 }}>
+          <span aria-hidden>⚠</span>
+          <span><b>Sample preview</b>: this marketplace catalog is illustrative; connection states are not yet wired to live tenant integrations.</span>
+        </div>
 
         {/* Connected */}
         <Reveal i={1}>

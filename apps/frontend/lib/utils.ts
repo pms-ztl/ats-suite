@@ -16,12 +16,12 @@ export function formatDateRelative(date: string | Date): string {
   return formatDistanceToNow(d, { addSuffix: true });
 }
 
-export function formatCurrency(amount: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+export function formatCurrency(amount: number, currency: string = "INR"): string {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 }
 
 export function formatNumber(num: number): string {
-  return new Intl.NumberFormat("en-US").format(num);
+  return new Intl.NumberFormat("en-IN").format(num);
 }
 
 export function formatPercentage(value: number, decimals: number = 1): string {

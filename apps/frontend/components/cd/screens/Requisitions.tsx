@@ -9,8 +9,9 @@ import { Btn } from "../aurora-ui";
 import type { ReqListData, ReqStatusKey } from "../types";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 
-export function Requisitions({ data, onCreate, onOpen, onExport }: {
+export function Requisitions({ data, onCreate, onOpen, onExport, ribbonSlot }: {
   data: ReqListData; onCreate?: () => void; onOpen?: (id: string) => void; onExport?: () => void;
+  ribbonSlot?: React.ReactNode;                    // optional composition viz rendered above the table
 }) {
   const { rows: allRows = [], statusMeta, workspaceName = "your workspace" } = data;
   const [q, setQ] = useState("");
@@ -48,6 +49,8 @@ export function Requisitions({ data, onCreate, onOpen, onExport }: {
           </div>
         </div>
 
+        {ribbonSlot && <div style={{ marginBottom: 18 }}>{ribbonSlot}</div>}
+
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "0 12px", height: 38, borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", flex: "1 1 240px", maxWidth: 320 }}>
             <Icon name="search" size={16} style={{ color: "var(--ink-3)" }} />
@@ -84,8 +87,8 @@ export function Requisitions({ data, onCreate, onOpen, onExport }: {
                   <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{r.id} · {r.dept} · {r.loc}</div>
                 </div>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 8px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: m.tone, background: m.bg, justifySelf: "start" }}><Icon name={m.icon} size={12} stroke={2.4} />{m.label}</span>
-                <span className="mono tnum" style={{ fontSize: 12.5, color: r.min ? "var(--ink)" : "var(--warn)" }}>{r.min ? `$${r.min / 1000}k to $${(r.max ?? 0) / 1000}k` : ", not set"}</span>
-                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, textAlign: "center" }}>{r.cands || ", "}</span>
+                <span className="mono tnum" style={{ fontSize: 12.5, color: r.min ? "var(--ink)" : "var(--warn)" }}>{r.min ? `₹${r.min / 1000}k to ₹${(r.max ?? 0) / 1000}k` : "not set"}</span>
+                <span className="mono tnum" style={{ fontSize: 13, fontWeight: 600, textAlign: "center" }}>{r.cands || 0}</span>
                 <span className="mono tnum" style={{ fontSize: 13, textAlign: "center", color: "var(--ink-2)" }}>{r.head}</span>
                 <span style={{ display: "inline-flex", gap: 7, alignItems: "center", minWidth: 0 }}>
                   <span className="mono" style={{ width: 24, height: 24, borderRadius: 99, background: "var(--surface-3)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", flexShrink: 0 }}>{r.recI}</span>

@@ -10,12 +10,14 @@ import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { OrgOverviewLive } from "@/components/cd/org-overview-live";
-import { EmptyChart } from "@/components/shared/charts";
+import { EmptyChart, TreemapChart, FunnelViz, DonutChart, BarsChart, SankeyFlow, CHART_COLORS, colorAt } from "@/components/shared/charts";
+import { FlowRibbon, ArcMeter, OrbitField, PulseGrid, BeadStream, SonarSweep, TideBands } from "@/components/shared/ribbon";
+import { ActivityRings } from "@/components/shared/ribbon-ext";
 import {
   getDashboardKpis, listScreening, listRequisitions, listReviewQueue, listInterviews, listCandidates,
-  type DashKpi,
+  listOffers, getSourceOfHire, getFunnel, prettySource, weeklyCounts, type DashKpi, type SourceStat,
 } from "@/lib/api";
-import type { ScreeningVerdict, Requisition, ReviewItem, Interview, ScreeningResult, Candidate, ApplicationStage } from "@/lib/types";
+import type { ScreeningVerdict, Requisition, ReviewItem, Interview, ScreeningResult, Candidate, ApplicationStage, Offer } from "@/lib/types";
 
 // Role-dispatched home (matches the design's DashboardHome): admins / compliance /
 // super-admins land on the org-overview command center; recruiters, hiring
@@ -42,6 +44,27 @@ function ago(iso?: string): string {
   const h = Math.floor(m / 60);
   return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
+function untilRel(hours: number): string {
+  if (hours < 1) return "<1h";
+  return hours < 24 ? `${Math.round(hours)}h` : `${Math.round(hours / 24)}d`;
+}
+/* Upcoming interviews within `windowH` hours as radar blips: each blip's
+   distance from the center is the REAL time until Interview.startsAt
+   (0 = now, 1 = the window edge). No positions are invented. */
+function radarBlips(rows: Interview[] | undefined, windowH: number): { label: string; at: number; sub: string }[] {
+  const now = Date.now();
+  return (rows ?? [])
+    .filter((iv) => iv.status !== "CANCELLED")
+    .map((iv) => ({ iv, h: iv.startsAt ? (new Date(iv.startsAt).getTime() - now) / 3600000 : NaN }))
+    .filter(({ h }) => isFinite(h) && h > 0 && h <= windowH)
+    .sort((x, y) => x.h - y.h)
+    .slice(0, 12)
+    .map(({ iv, h }) => ({
+      label: iv.candidateId || iv.round || "Interview",
+      at: Math.max(0, Math.min(1, h / windowH)),
+      sub: untilRel(h),
+    }));
+}
 function greetingFor(): string {
   const hour = new Date().getHours();
   return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -61,6 +84,10 @@ const FUNNEL_BUCKETS: { label: string; stages: ApplicationStage[]; color: string
   { label: "Interview", stages: ["INTERVIEW", "FINAL_REVIEW"], color: "var(--c-ai)" },
   { label: "Offer", stages: ["OFFER", "HIRED"], color: "var(--c-brand)" },
 ];
+// Canonical forward order of the pipeline for the hero ribbon (terminal
+// REJECTED / WITHDRAWN states are not part of the forward flow).
+const STAGE_FLOW: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED"];
+
 function reqFunnel(reqId: string | undefined, candidates: Candidate[] | undefined): { label: string; n: number; color: string }[] | null {
   if (!reqId || !candidates) return null;
   const mine = candidates.filter((c) => c.requisitionId === reqId);
@@ -101,18 +128,83 @@ function RecruiterDash() {
   const reqs = useData<Requisition[]>(listRequisitions);
   const interviews = useData<Interview[]>(listInterviews);
   const candidates = useData<Candidate[]>(() => listCandidates());
+  const sources = useData<SourceStat[]>(getSourceOfHire);
+  const funnel = useData<{ stage: ApplicationStage; count: number }[]>(getFunnel);
 
   const applications = (screening.data ?? []).slice(0, 5);
   const myReqs = (reqs.data ?? []).slice(0, 3);
   const scheduling = (interviews.data ?? []).filter((iv) => iv.status === "SCHEDULED" || iv.status === "RESCHEDULED").slice(0, 3);
 
+  // Weekly inflow from the candidate's real arrival timestamp (appliedAt, which the
+  // mapper falls back to createdAt) + live department mix (Requisition.department).
+  const inflow = (() => {
+    const weeks = weeklyCounts((candidates.data ?? []).map((c: any) => c.appliedAt || c.createdAt), 8);
+    return { weeks, total: weeks.reduce((s, w) => s + w.n, 0) };
+  })();
+  const deptMix = (() => {
+    const by = new Map<string, number>();
+    for (const r of reqs.data ?? []) {
+      // The backend enum also carries INTERVIEWING, which the frontend union lacks.
+      const st = String(r.status ?? "OPEN");
+      if (st !== "OPEN" && st !== "INTERVIEWING") continue;
+      const d = r.department || "Other";
+      by.set(d, (by.get(d) ?? 0) + 1);
+    }
+    return Array.from(by, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  })();
+
+  // Source -> stage-bucket links: every link value is a count of real candidates
+  // (Candidate.source x Candidate.stage). No transitions are inferred.
+  const sourceFlow = (() => {
+    const links: { from: string; to: string; value: number }[] = [];
+    const cands = candidates.data ?? [];
+    if (!cands.length) return links;
+    for (const b of FUNNEL_BUCKETS) {
+      const inBucket = cands.filter((c) => b.stages.includes(c.stage));
+      const bySource = new Map<string, number>();
+      for (const c of inBucket) {
+        const src = prettySource(String((c as any).source || "Direct"));
+        bySource.set(src, (bySource.get(src) ?? 0) + 1);
+      }
+      for (const [src, n] of bySource) links.push({ from: src, to: b.label, value: n });
+    }
+    return links;
+  })();
+
+  // Hero ribbon: the live pipeline as one stream. Each point's thickness is the
+  // real candidate count per stage from the same funnel aggregate FunnelViz reads,
+  // ordered by the canonical forward flow and humanized (APPLIED -> Applied).
+  const pipelinePoints = (funnel.data ?? [])
+    .filter((s) => STAGE_FLOW.includes(s.stage))
+    .sort((a, b) => STAGE_FLOW.indexOf(a.stage) - STAGE_FLOW.indexOf(b.stage))
+    .map((s) => ({
+      label: s.stage.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+      n: s.count,
+    }));
+
   return (
     <div className="mx-auto w-full max-w-[1200px]">
-      <Greeting title={`${greetingFor()}, ${firstName(user)}`} sub="47 new applications and 9 candidates waiting to be scheduled.">
+      <Greeting title={`${greetingFor()}, ${firstName(user)}`}
+        sub={`${(screening.data ?? []).length} screened application${(screening.data ?? []).length === 1 ? "" : "s"} and ${scheduling.length} candidate${scheduling.length === 1 ? "" : "s"} waiting to be scheduled.`}>
         <a href="/candidates/import"><Btn variant="soft" icon="users">Bulk upload</Btn></a>
         <a href="/sourcing"><Btn variant="ai" icon="radar">Source candidates</Btn></a>
       </Greeting>
       <KpiStrip kpis={kpis} />
+
+      {/* Hero: the whole pipeline as one flowing stream - thickness at each
+          stage is the live candidate count (same data as the funnel below). */}
+      <div style={{ marginBottom: 16 }}>
+        <Reveal i={3}><SectionCard title="Pipeline flow" icon="chart"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>ribbon thickness = live candidates per stage</Pill>}>
+          {funnel.loading && <Skeleton className="h-[220px] rounded-[11px]" />}
+          {funnel.error && <div style={{ height: 160 }}><EmptyChart label="Pipeline data unavailable right now." /></div>}
+          {funnel.data && (
+            <FlowRibbon points={pipelinePoints} valueLabel={(n) => n.toLocaleString()}
+              emptyLabel="The pipeline flow appears as applications move through stages." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Reveal i={4}><SectionCard title="Latest applications" icon="users" action="View all" onAction={() => { window.location.href = "/candidates"; }} pad={6}>
@@ -188,28 +280,240 @@ function RecruiterDash() {
           )}
         </SectionCard></Reveal>
       </div>
+
+      {/* Sourcing-intelligence row: every number traces to a real record. The treemap is
+          the per-channel application mix from Candidate.source; the funnel is the live
+          stage distribution, with the AI-screened stage tinted violet. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
+        <Reveal i={7}><SectionCard title="Where candidates come from" icon="radar"
+          headRight={sources.data && sources.data.length ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{sources.data.length} channels</Pill> : undefined}>
+          <div style={{ height: 230 }}>
+            {sources.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {sources.error && <EmptyChart label="Channel data unavailable right now." />}
+            {sources.data && (sources.data.length
+              ? <TreemapChart data={sources.data.map((s, i) => ({ name: s.source, size: s.applied, fill: colorAt(i) }))} valueFormatter={(v) => `${v} applied`} />
+              : <EmptyChart label="Channel mix appears once candidates carry a source." />)}
+          </div>
+          {sources.data && sources.data.length > 0 && (
+            <p style={{ margin: "10px 2px 0", fontSize: 11, color: "var(--c-ink-3)" }}>
+              Box size = applications per channel. Conversion appears alongside once hires land.
+            </p>
+          )}
+        </SectionCard></Reveal>
+
+        <Reveal i={8}><SectionCard title="Hiring pipeline" icon="chart"
+          headRight={<Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" icon="sparkles">violet = AI-screened</Pill>}>
+          <div style={{ height: 230 }}>
+            {funnel.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {funnel.error && <EmptyChart label="Pipeline data unavailable right now." />}
+            {funnel.data && (funnel.data.length
+              ? <FunnelViz data={funnel.data.map((s) => ({
+                  name: s.stage.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+                  value: s.count,
+                  fill: s.stage === "SCREENED" ? CHART_COLORS.ai : CHART_COLORS.brand,
+                }))} valueFormatter={(v) => v.toLocaleString()} />
+              : <EmptyChart label="The funnel fills as applications move through stages." />)}
+          </div>
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Source-to-stage flow: each ribbon is the count of real candidates from that
+          channel currently sitting in that stage bucket (Candidate.source x stage). */}
+      {sourceFlow.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Reveal i={9}><SectionCard title="Source-to-stage flow" icon="radar"
+            headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">live candidates</Pill>}>
+            <div style={{ height: Math.max(260, sourceFlow.reduce((s: Set<string>, l) => s.add(l.from), new Set<string>()).size * 40) }}>
+              <SankeyFlow links={sourceFlow} valueFormatter={(v) => `${v} candidate${v === 1 ? "" : "s"}`}
+                nodeColor={(name, i) => (FUNNEL_BUCKETS.some((b) => b.label === name) ? FUNNEL_BUCKETS.find((b) => b.label === name)!.color : colorAt(i))} />
+            </div>
+          </SectionCard></Reveal>
+        </div>
+      )}
+
+      {/* Momentum row: candidate inflow per week (Candidate.createdAt), the live
+          requisition mix by department, and the channel orbit (applications per
+          Candidate.source) - all straight counts of real rows. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
+        <Reveal i={10}><SectionCard title="Candidate inflow" icon="users"
+          headRight={inflow.total ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{inflow.total} in 8 weeks</Pill> : undefined}>
+          <div style={{ height: 200 }}>
+            {candidates.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {candidates.error && <EmptyChart label="Candidate data unavailable right now." />}
+            {candidates.data && (
+              <PulseGrid cells={inflow.weeks} height={200}
+                emptyLabel="Weekly inflow appears as candidates arrive." />
+            )}
+          </div>
+        </SectionCard></Reveal>
+
+        <Reveal i={11}><SectionCard title="Open roles by department" icon="briefcase">
+          <div style={{ height: 200 }}>
+            {reqs.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {reqs.error && <EmptyChart label="Requisition data unavailable right now." />}
+            {reqs.data && (deptMix.length
+              ? <DonutChart data={deptMix} centerLabel={String(deptMix.reduce((s, d) => s + d.value, 0))} centerSub="open roles"
+                  valueFormatter={(v) => `${v} role${Number(v) === 1 ? "" : "s"}`} />
+              : <EmptyChart label="Departments appear as requisitions open." />)}
+          </div>
+        </SectionCard></Reveal>
+
+        <Reveal i={12}><SectionCard title="Channel orbit" icon="radar">
+          {sources.loading && <Skeleton className="h-[200px] rounded-[11px]" />}
+          {sources.error && <div style={{ height: 200 }}><EmptyChart label="Channel data unavailable right now." /></div>}
+          {sources.data && (
+            <OrbitField items={sources.data.map((s) => ({ label: s.source, n: s.applied }))}
+              centerSub="applications" height={200}
+              emptyLabel="Channels appear here once applications arrive with a source." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Interview radar: every blip is a real upcoming interview (Interview.startsAt) -
+          its distance from the center is the actual time until it starts. */}
+      <div style={{ marginTop: 16 }}>
+        <Reveal i={13}><SectionCard title="Interview radar" icon="radar"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>blip distance = time until interview</Pill>}>
+          {interviews.loading && <Skeleton className="h-[340px] rounded-[11px]" />}
+          {interviews.error && <div style={{ height: 300 }}><EmptyChart label="Interview data unavailable right now." /></div>}
+          {interviews.data && (
+            <SonarSweep items={radarBlips(interviews.data, 14 * 24)}
+              centerSub="next 14 days" rangeLabel="outer ring = 14 days out"
+              emptyLabel="The radar lights up as interviews are booked in the next 14 days." />
+          )}
+        </SectionCard></Reveal>
+      </div>
     </div>
   );
 }
 
 /* ---------------- Hiring manager ---------------- */
+// Bead color per humanized Offer.status (DRAFT -> ACCEPTED lifecycle).
+const OFFER_BEAD_COLOR: Record<string, string> = {
+  Accepted: "var(--c-ok)",
+  Declined: "var(--c-danger)", Expired: "var(--c-danger)",
+  Sent: "var(--c-ai)", Approved: "var(--c-info)",
+  Draft: "var(--c-ink-3)", "Pending approval": "var(--c-warn)",
+};
+
 function HMDash() {
   const { user } = useCurrentUser();
   const kpis = useData<DashKpi[]>(getDashboardKpis);
   const review = useData<ReviewItem[]>(listReviewQueue);
   const reqs = useData<Requisition[]>(listRequisitions);
   const candidates = useData<Candidate[]>(() => listCandidates());
+  const screening = useData<ScreeningVerdict[]>(listScreening);
+  const offers = useData<Offer[]>(listOffers);
+  const interviews = useData<Interview[]>(listInterviews);
+
+  // Real verdict mix from the screener's PASS/REVIEW/FAIL results.
+  const verdictMix = (() => {
+    const rows = screening.data ?? [];
+    const c = (r: ScreeningResult) => rows.filter((v) => v.result === r).length;
+    const pass = c("PASS"), rev = c("REVIEW"), fail = c("FAIL");
+    const total = pass + rev + fail;
+    return { pass, rev, fail, total, passRate: total ? Math.round((pass / total) * 100) : 0 };
+  })();
+  // Real offer counts by status (DRAFT -> ACCEPTED lifecycle).
+  const offerBars = (() => {
+    const rows = offers.data ?? [];
+    const order = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "SENT", "ACCEPTED", "DECLINED", "EXPIRED"];
+    return order
+      .map((st) => ({ status: st.replace(/_/g, " ").toLowerCase().replace(/^\w/, (ch) => ch.toUpperCase()), n: rows.filter((o) => o.status === st).length }))
+      .filter((r) => r.n > 0);
+  })();
+  // Decision timeliness: pending checkpoints still inside their SLA window vs overdue,
+  // from the real slaDueAt timestamps.
+  const slaStats = (() => {
+    const rows = review.data ?? [];
+    const now = Date.now();
+    const overdue = rows.filter((r) => r.slaDueAt && new Date(r.slaDueAt).getTime() < now).length;
+    const total = rows.length;
+    return { total, overdue, onTimePct: total ? Math.round(((total - overdue) / total) * 100) : 100 };
+  })();
+  // Real offer-accept rate: accepted of the resolved-after-send pool (SENT counts as
+  // still-pending). accepted / (sent + accepted + declined). null when nothing is out.
+  const offerAccept = (() => {
+    const rows = offers.data ?? [];
+    const accepted = rows.filter((o) => o.status === "ACCEPTED").length;
+    const sent = rows.filter((o) => o.status === "SENT").length;
+    const declined = rows.filter((o) => o.status === "DECLINED").length;
+    const denom = sent + accepted + declined;
+    return { accepted, denom, pct: denom ? Math.round((accepted / denom) * 100) : null };
+  })();
+  // Real interview completion rate: COMPLETED of all non-cancelled interviews.
+  // Distinct from the tide bands (weekly counts) - this is a single health rate.
+  const interviewCompletion = (() => {
+    const rows = (interviews.data ?? []).filter((iv) => iv.status !== "CANCELLED");
+    const done = rows.filter((iv) => iv.status === "COMPLETED").length;
+    return { done, total: rows.length, pct: rows.length ? Math.round((done / rows.length) * 100) : null };
+  })();
+  // Advertised salary bands for open roles (Requisition.salaryMin/Max, $k). The
+  // transparent base series floats each bar to its real minimum.
+  const salaryBands = (reqs.data ?? [])
+    .map((r) => ({ role: r.title, min: Number((r as any).salaryMin), max: Number((r as any).salaryMax) }))
+    .filter((r) => isFinite(r.min) && isFinite(r.max) && r.max > r.min)
+    .sort((a, b) => b.max - a.max)
+    .slice(0, 6)
+    .map((r) => ({ role: r.role.length > 24 ? r.role.slice(0, 23) + "…" : r.role, base: Math.round(r.min / 1000), band: Math.round((r.max - r.min) / 1000), max: Math.round(r.max / 1000) }));
+
+  // Interview tides: real Interview rows bucketed by startsAt into the last 6
+  // ISO weeks (Monday start, local time) - a = everything booked into the week,
+  // b = the rows that actually reached COMPLETED. Straight counts, no inference.
+  const tideWeeks = (() => {
+    const monday = new Date(); monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const rows = interviews.data ?? [];
+    const weeks: { label: string; a: number; b: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(monday); start.setDate(start.getDate() - i * 7);
+      const end = new Date(start); end.setDate(end.getDate() + 7);
+      const inWeek = rows.filter((iv) => {
+        if (!iv.startsAt) return false;
+        const t = new Date(iv.startsAt).getTime();
+        return t >= start.getTime() && t < end.getTime();
+      });
+      weeks.push({
+        label: start.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        a: inWeek.length,
+        b: inWeek.filter((iv) => iv.status === "COMPLETED").length,
+      });
+    }
+    return weeks;
+  })();
 
   const decisions = (review.data ?? []).slice(0, 4);
   const myReqs = (reqs.data ?? []).slice(0, 3);
 
   return (
     <div className="mx-auto w-full max-w-[1200px]">
-      <Greeting title={`${greetingFor()}, ${firstName(user)}`} sub="4 decisions are waiting on you, 2 are time-sensitive.">
+      <Greeting title={`${greetingFor()}, ${firstName(user)}`}
+        sub={`${(review.data ?? []).length} decision${(review.data ?? []).length === 1 ? " is" : "s are"} waiting on you${slaStats.overdue > 0 ? `, ${slaStats.overdue} time-sensitive` : ""}.`}>
         <a href="/analytics"><Btn variant="soft" icon="chart">View analytics</Btn></a>
         <a href="/requisitions/new"><Btn variant="primary" icon="briefcase">New requisition</Btn></a>
       </Greeting>
       <KpiStrip kpis={kpis} />
+
+      {/* Hero: the screener's verdict stream - each band's thickness is the
+          real count of PASS / REVIEW / FAIL results (same rows as the donut). */}
+      <div style={{ marginBottom: 16 }}>
+        <Reveal i={3}><SectionCard title="Screening verdicts" icon="sparkles"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>ribbon thickness = verdicts per outcome</Pill>}>
+          {screening.loading && <Skeleton className="h-[220px] rounded-[11px]" />}
+          {screening.error && <div style={{ height: 160 }}><EmptyChart label="Screening data unavailable right now." /></div>}
+          {screening.data && (
+            <FlowRibbon
+              points={[
+                { label: "Pass", n: verdictMix.pass },
+                { label: "Review", n: verdictMix.rev },
+                { label: "Fail", n: verdictMix.fail },
+              ]}
+              gradient={["var(--c-ok, #16a34a)", "var(--c-warn, #f59e0b)", "var(--c-danger, #ef4444)"]}
+              emptyLabel="Verdicts flow in once the screener has scored candidates." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, alignItems: "start" }}>
         <Reveal i={4}><SectionCard title="Decisions awaiting you" icon="gavel" action="View queue" onAction={() => { window.location.href = "/hitl"; }} pad={10}>
           {review.loading && <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[58px] rounded-[11px]" />)}</div>}
@@ -283,6 +587,110 @@ function HMDash() {
           )}
         </SectionCard></Reveal>
       </div>
+
+      {/* Decision-quality row: the verdict mix is the screener's real PASS/REVIEW/FAIL
+          split; the offer board is the live Offer.status lifecycle. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
+        <Reveal i={6}><SectionCard title="AI screening quality" icon="sparkles"
+          headRight={verdictMix.total ? <Pill tone="var(--c-ok)" bg="var(--c-ok-tint)">{verdictMix.passRate}% pass</Pill> : undefined}>
+          <div style={{ height: 220 }}>
+            {screening.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {screening.error && <EmptyChart label="Screening data unavailable right now." />}
+            {screening.data && (verdictMix.total
+              ? <DonutChart
+                  data={[
+                    { name: "Pass", value: verdictMix.pass },
+                    { name: "Review", value: verdictMix.rev },
+                    { name: "Fail", value: verdictMix.fail },
+                  ].filter((d) => d.value > 0)}
+                  colors={[CHART_COLORS.ok, CHART_COLORS.warn, CHART_COLORS.danger]}
+                  centerLabel={`${verdictMix.passRate}%`} centerSub="pass rate"
+                  valueFormatter={(v) => `${v} verdict${Number(v) === 1 ? "" : "s"}`} />
+              : <EmptyChart label="Verdicts appear once the screener has scored candidates." />)}
+          </div>
+        </SectionCard></Reveal>
+
+        <Reveal i={7}><SectionCard title="Offer pipeline" icon="fileText" action="All offers" onAction={() => { window.location.href = "/offers"; }}>
+          {offers.loading && <Skeleton className="h-[220px] rounded-[11px]" />}
+          {offers.error && <div style={{ height: 220 }}><EmptyChart label="Offer data unavailable right now." /></div>}
+          {offers.data && (
+            <BeadStream groups={offerBars.map((r) => ({ label: r.status, n: r.n, color: OFFER_BEAD_COLOR[r.status] }))}
+              height={220}
+              emptyLabel="Offers appear here as they are drafted and sent." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Governance row: decision timeliness from real SLA timestamps, and the
+          advertised salary band of each open role (Requisition.salaryMin/Max). */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
+        <Reveal i={8}><SectionCard title="Decision timeliness" icon="clock"
+          headRight={slaStats.overdue > 0 ? <Pill tone="var(--c-danger)" bg="var(--c-danger-tint)" icon="flag">{slaStats.overdue} overdue</Pill> : undefined}>
+          {review.loading && <Skeleton className="h-[200px] rounded-[11px]" />}
+          {review.error && <div style={{ height: 200 }}><EmptyChart label="Queue data unavailable right now." /></div>}
+          {review.data && (
+            <ArcMeter value={slaStats.total ? slaStats.onTimePct : null} label="on time"
+              sub={slaStats.total ? `${slaStats.total - slaStats.overdue} of ${slaStats.total} inside SLA` : undefined}
+              height={200}
+              emptyLabel="Timeliness appears once decisions hit the queue." />
+          )}
+        </SectionCard></Reveal>
+
+        <Reveal i={9}><SectionCard title="Salary bands · open roles" icon="chart"
+          headRight={salaryBands.length ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">advertised range, ₹k</Pill> : undefined}>
+          <div style={{ height: Math.max(200, salaryBands.length * 38) }}>
+            {reqs.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {reqs.error && <EmptyChart label="Requisition data unavailable right now." />}
+            {reqs.data && (salaryBands.length
+              ? <BarsChart data={salaryBands} categoryKey="role" layout="horizontal"
+                  series={[
+                    { key: "base", name: "From", color: "transparent", stackId: "band" },
+                    { key: "band", name: "Range", color: CHART_COLORS.ai, stackId: "band" },
+                  ]}
+                  valueFormatter={(v) => `₹${v}k`} />
+              : <EmptyChart label="Bands appear for roles with a salary range." />)}
+          </div>
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Hiring health: several real rates at once, each ring drawn only when its
+          data is real (pass null otherwise so that ring self-empties). pass rate =
+          screener PASS share, offer accept = accepted of resolved-after-send offers,
+          interview completion = COMPLETED of non-cancelled interviews. Distinct from
+          the ArcMeter (timeliness) and the verdict donut (distribution). */}
+      <div style={{ marginTop: 16 }}>
+        <Reveal i={10}><SectionCard title="Hiring health" icon="shield"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>each ring is a live rate</Pill>}>
+          {(screening.loading || offers.loading || interviews.loading) && <Skeleton className="h-[250px] rounded-[11px]" />}
+          {(screening.error && offers.error && interviews.error) && <div style={{ height: 250 }}><EmptyChart label="Health data unavailable right now." /></div>}
+          {(screening.data || offers.data || interviews.data) && (
+            <ActivityRings
+              rings={[
+                { label: "Pass rate", value: verdictMix.total ? verdictMix.passRate : null, max: 100, color: "var(--c-ok)" },
+                { label: "Offer accept", value: offerAccept.pct, max: 100, color: "var(--c-brand)" },
+                { label: "Interview completion", value: interviewCompletion.pct, max: 100, color: "var(--c-ai)" },
+              ]}
+              centerLabel={verdictMix.total ? `${verdictMix.passRate}%` : undefined}
+              centerSub={verdictMix.total ? "pass rate" : undefined}
+              height={250}
+              emptyLabel="Rates appear once verdicts, offers, or interviews exist." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Interview tides: the last 6 ISO weeks of real Interview rows - everything
+          booked into the week rises above the midline, completions fall below. */}
+      <div style={{ marginTop: 16 }}>
+        <Reveal i={11}><SectionCard title="Interview tides" icon="calendar"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>last 6 weeks · bucketed by start date</Pill>}>
+          {interviews.loading && <Skeleton className="h-[250px] rounded-[11px]" />}
+          {interviews.error && <div style={{ height: 200 }}><EmptyChart label="Interview data unavailable right now." /></div>}
+          {interviews.data && (
+            <TideBands points={tideWeeks} aLabel="Scheduled" bLabel="Completed"
+              emptyLabel="The tides appear once interviews land on the calendar." />
+          )}
+        </SectionCard></Reveal>
+      </div>
     </div>
   );
 }
@@ -302,12 +710,62 @@ function InterviewerDash() {
   const hhmm = (iso?: string) => { if (!iso) return "--:--"; const d = new Date(iso); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   const modeLabel = (m: Interview["mode"]) => (m === "VIDEO" ? "Video" : m === "PHONE" ? "Phone" : "Onsite");
 
+  // Real per-day interview load for the coming 7 days from Interview.startsAt;
+  // hours are the summed real durations.
+  const weekLoad = (() => {
+    const days: { day: string; n: number; hours: number }[] = [];
+    let total = 0, totalHours = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfDay); d.setDate(d.getDate() + i);
+      const next = new Date(d); next.setDate(next.getDate() + 1);
+      const inDay = (interviews.data ?? []).filter((iv) => {
+        if (!iv.startsAt) return false;
+        const t = new Date(iv.startsAt).getTime();
+        return t >= d.getTime() && t < next.getTime();
+      });
+      const hours = +(inDay.reduce((s, iv) => s + (iv.durationMins || 0), 0) / 60).toFixed(1);
+      total += inDay.length; totalHours += hours;
+      days.push({ day: i === 0 ? "Today" : d.toLocaleDateString(undefined, { weekday: "short" }), n: inDay.length, hours });
+    }
+    return { days, total, totalHours: +totalHours.toFixed(1) };
+  })();
+  // Real status mix across this interviewer's visible interviews.
+  const statusMix = (() => {
+    const order: [Interview["status"], string, string][] = [
+      ["SCHEDULED", "Scheduled", CHART_COLORS.info], ["CONFIRMED", "Confirmed", CHART_COLORS.brand],
+      ["IN_PROGRESS", "In progress", CHART_COLORS.ai], ["COMPLETED", "Completed", CHART_COLORS.ok],
+      ["RESCHEDULED", "Rescheduled", CHART_COLORS.warn], ["CANCELLED", "Cancelled", CHART_COLORS.ink3],
+      ["NO_SHOW", "No-show", CHART_COLORS.danger],
+    ];
+    return order
+      .map(([st, name, color]) => ({ name, color, value: (interviews.data ?? []).filter((iv) => iv.status === st).length }))
+      .filter((d) => d.value > 0);
+  })();
+
   return (
     <div className="mx-auto w-full max-w-[980px]">
-      <Greeting title={`${greetingFor()}, ${firstName(user)}`} sub="You have 3 interviews today and 2 scorecards to write.">
+      <Greeting title={`${greetingFor()}, ${firstName(user)}`}
+        sub={`You have ${today.length} interview${today.length === 1 ? "" : "s"} today and ${feedback.length} scorecard${feedback.length === 1 ? "" : "s"} to write.`}>
         <a href="/interviews"><Btn variant="soft" icon="calendar">Full schedule</Btn></a>
       </Greeting>
       <KpiStrip kpis={kpis} />
+
+      {/* Hero: the coming week as one stream - thickness per day is the real
+          number of interviews (Interview.startsAt), sub = committed hours. */}
+      <div style={{ marginBottom: 16 }}>
+        <Reveal i={3}><SectionCard title="Your week's flow" icon="calendar"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>ribbon thickness = interviews per day</Pill>}>
+          {interviews.loading && <Skeleton className="h-[180px] rounded-[11px]" />}
+          {interviews.error && <div style={{ height: 150 }}><EmptyChart label="Interview data unavailable right now." /></div>}
+          {interviews.data && (
+            <FlowRibbon
+              points={weekLoad.days.map((d) => ({ label: d.day, n: d.n, sub: d.hours ? `${d.hours}h` : undefined }))}
+              showShare={false} height={200}
+              emptyLabel="No interviews scheduled in the coming week." />
+          )}
+        </SectionCard></Reveal>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, alignItems: "start" }}>
         <Reveal i={4}><SectionCard title="Today's interviews" icon="calendar">
           {interviews.loading && <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[66px] rounded-[14px]" />)}</div>}
@@ -362,6 +820,63 @@ function InterviewerDash() {
               })}
               <div style={{ textAlign: "center", padding: "8px 0", fontSize: 12, color: "var(--c-ink-3)" }}>You're all caught up after these. Nice work.</div>
             </div>
+          )}
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Load forecast row: interviews-per-day and committed hours for the coming week
+          (Interview.startsAt + real durations), plus the live status mix. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
+        <Reveal i={6}><SectionCard title="Your next 7 days" icon="chart"
+          headRight={weekLoad.total ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{weekLoad.total} scheduled</Pill> : undefined}>
+          <div style={{ height: 190 }}>
+            {interviews.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {interviews.error && <EmptyChart label="Interview data unavailable right now." />}
+            {interviews.data && (
+              <PulseGrid cells={weekLoad.days.map((d) => ({ label: d.day, n: d.n, sub: d.hours ? `${d.hours}h` : undefined }))}
+                height={190}
+                emptyLabel="No interviews scheduled in the coming week." />
+            )}
+          </div>
+        </SectionCard></Reveal>
+
+        <Reveal i={7}><SectionCard title="Hours in interviews" icon="clock"
+          headRight={weekLoad.totalHours ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{weekLoad.totalHours}h this week</Pill> : undefined}>
+          <div style={{ height: 190 }}>
+            {interviews.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {interviews.error && <EmptyChart label="Interview data unavailable right now." />}
+            {interviews.data && (weekLoad.totalHours
+              ? <BarsChart data={weekLoad.days} categoryKey="day"
+                  series={[{ key: "hours", name: "Hours", color: CHART_COLORS.brand }]}
+                  valueFormatter={(v) => `${v}h`} />
+              : <EmptyChart label="Committed hours appear with scheduled interviews." />)}
+          </div>
+        </SectionCard></Reveal>
+
+        <Reveal i={8}><SectionCard title="Interview status mix" icon="listChecks">
+          <div style={{ height: 190 }}>
+            {interviews.loading && <Skeleton className="h-full rounded-[11px]" />}
+            {interviews.error && <EmptyChart label="Interview data unavailable right now." />}
+            {interviews.data && (statusMix.length
+              ? <DonutChart data={statusMix} colors={statusMix.map((d) => d.color)}
+                  centerLabel={String(statusMix.reduce((s, d) => s + d.value, 0))} centerSub="interviews"
+                  valueFormatter={(v) => `${v} interview${Number(v) === 1 ? "" : "s"}`} />
+              : <EmptyChart label="The mix appears once interviews exist." />)}
+          </div>
+        </SectionCard></Reveal>
+      </div>
+
+      {/* Your radar: each blip is one of your real upcoming interviews - its
+          distance from the center is the actual time until it starts. */}
+      <div style={{ marginTop: 16 }}>
+        <Reveal i={9}><SectionCard title="Your radar" icon="radar"
+          headRight={<Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)" style={{ textTransform: "none" }}>blip distance = time until start</Pill>}>
+          {interviews.loading && <Skeleton className="h-[320px] rounded-[11px]" />}
+          {interviews.error && <div style={{ height: 280 }}><EmptyChart label="Interview data unavailable right now." /></div>}
+          {interviews.data && (
+            <SonarSweep items={radarBlips(interviews.data, 7 * 24)}
+              centerSub="next 7 days" rangeLabel="outer ring = 7 days out"
+              emptyLabel="The radar lights up as interviews land on your schedule." />
           )}
         </SectionCard></Reveal>
       </div>

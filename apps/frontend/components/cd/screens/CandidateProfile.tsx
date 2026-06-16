@@ -13,6 +13,10 @@ import type { CandidateProfileData, CandStage, TimelineItem } from "../types";
 
 const pStCol = (s: string) => (s === "pass" ? "var(--ok)" : s === "review" ? "var(--warn)" : "var(--danger)");
 const pStIc = (s: string): IconName => (s === "pass" ? "check" : s === "review" ? "eye" : "x");
+// Real per-requirement status text + tint, mapped from the screener's met/partial/unmet
+// verdict. No fabricated weight% or x/10 sub-score — those are not measured.
+const pStTxt = (s: string) => (s === "pass" ? "Met" : s === "review" ? "Partial" : "Not met");
+const pStBg = (s: string) => (s === "pass" ? "var(--ok-tint)" : s === "review" ? "var(--warn-tint)" : "var(--danger-tint)");
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
 
 function Zone({ title, icon, ai, action, children, onAction }: { title: string; icon: IconName; ai?: boolean; action?: string; children: React.ReactNode; onAction?: () => void }) {
@@ -103,10 +107,13 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
               </div>
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
                 {s.requirements.map((r) => (
-                  <div key={r.id} style={{ display: "grid", gridTemplateColumns: "20px 1fr 70px", gap: 10, alignItems: "center", padding: "7px 0", borderTop: "1px solid var(--line)" }}>
-                    <Icon name={pStIc(r.state)} size={14} stroke={2.3} style={{ color: pStCol(r.state) }} />
-                    <span style={{ fontSize: 12.5, fontWeight: 500, display: "flex", gap: 6, alignItems: "center" }}>{r.label}{r.custom && <Pill tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ fontSize: 9 }}>custom</Pill>}</span>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "right" }}>{r.weight}% · {r.sub}</span>
+                  <div key={r.id} style={{ padding: "7px 0", borderTop: "1px solid var(--line)" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "20px 1fr auto", gap: 10, alignItems: "center" }}>
+                      <Icon name={pStIc(r.state)} size={14} stroke={2.3} style={{ color: pStCol(r.state) }} />
+                      <span style={{ fontSize: 12.5, fontWeight: 500, display: "flex", gap: 6, alignItems: "center" }}>{r.label}{r.custom && <Pill tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ fontSize: 9 }}>custom</Pill>}</span>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: pStCol(r.state), background: pStBg(r.state), padding: "2px 8px", borderRadius: "var(--r-pill)", whiteSpace: "nowrap" }}>{pStTxt(r.state)}</span>
+                    </div>
+                    {r.note && <div style={{ marginLeft: 30, marginTop: 4, fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.45, fontStyle: "italic" }}>↳ {r.note}</div>}
                   </div>
                 ))}
               </div>

@@ -13,8 +13,26 @@ import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
 import type { OffersData, OfferDetail, OfferStatusKey } from "../types";
 import { ChartCard, FunnelViz, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { SectionCard, Reveal } from "../aurora-kit";
+import { FlowRibbon, BeadStream } from "@/components/shared/ribbon";
 
-const money = (n: number) => "$" + n.toLocaleString();
+// ----- Offer lifecycle (ribbon) -----
+// The screen's row type folds EXPIRED into "declined" (it has no "expired" key), so the
+// live wrapper threads real per-raw-status counts via the optional `lifecycle` prop.
+// Without it (sample-data callers) the counts fall back to the rows themselves.
+export type OfferLifecycleKey = OfferStatusKey | "expired";
+export type OfferLifecycleCounts = Record<OfferLifecycleKey, number>;
+const LIFECYCLE_ORDER: OfferLifecycleKey[] = ["draft", "pending", "approved", "sent", "accepted", "declined", "expired"];
+const LIFECYCLE_LABEL: Record<OfferLifecycleKey, string> = {
+  draft: "Draft", pending: "Pending approval", approved: "Approved", sent: "Sent",
+  accepted: "Accepted", declined: "Declined", expired: "Expired",
+};
+const LIFECYCLE_BEAD_COLOR: Record<OfferLifecycleKey, string> = {
+  draft: "var(--ink-3)", pending: "var(--warn)", approved: "var(--info)", sent: "var(--ai)",
+  accepted: "var(--ok)", declined: "var(--danger)", expired: "var(--danger)",
+};
+
+const money = (n: number) => "₹" + n.toLocaleString("en-IN");
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
 const OFFER_STATUS: Record<OfferStatusKey, { label: string; tone: string; bg: string; icon: IconName }> = {
   draft: { label: "Draft", tone: "var(--ink-3)", bg: "var(--surface-3)", icon: "dot" },
@@ -34,9 +52,22 @@ function CompRow({ k, v, sub, big }: { k: string; v: string; sub?: string; big?:
   );
 }
 
-function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id: string) => void; onCreate?: () => void }) {
+function OffersList({ data, lifecycle, onOpen, onCreate }: { data: OffersData; lifecycle?: OfferLifecycleCounts; onOpen: (id: string) => void; onCreate?: () => void }) {
   const offers = data.offers ?? [];
   const { sorted, sort, toggle } = useTableSort(offers, { key: "base", dir: "desc" });
+
+  // ----- Offer lifecycle ribbon: one point per status, in journey order, from real
+  // offer rows (or the threaded raw-status counts, which keep Declined and Expired
+  // honest). Every stage stays visible even at 0 so the journey reads left-to-right.
+  const lifecycleCounts: OfferLifecycleCounts = lifecycle ?? (() => {
+    const c: OfferLifecycleCounts = { draft: 0, pending: 0, approved: 0, sent: 0, accepted: 0, declined: 0, expired: 0 };
+    for (const o of offers) c[o.status] += 1;
+    return c;
+  })();
+  const lifecyclePoints = LIFECYCLE_ORDER.map((k) => ({ label: LIFECYCLE_LABEL[k], n: lifecycleCounts[k] }));
+  // ----- Bead stream: every bead is one real offer, grouped by the same lifecycle
+  // counts the ribbon uses, in the same journey order. -----
+  const beadGroups = LIFECYCLE_ORDER.map((k) => ({ label: LIFECYCLE_LABEL[k], n: lifecycleCounts[k], color: LIFECYCLE_BEAD_COLOR[k] }));
 
   // ----- Real-data funnel: offers by stage, from the real offer statuses -----
   // The offer lifecycle is linear (draft->pending->approved->sent->accepted); an offer
@@ -65,6 +96,16 @@ function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id:
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>{offers.filter((o) => o.status === "draft").length} drafts · {offers.filter((o) => o.status === "pending").length} awaiting approval · {offers.filter((o) => o.status === "sent").length} sent.</p></div>
           <Btn variant="primary" icon="plus" onClick={onCreate}>Create offer</Btn>
         </div>
+        {/* Offer lifecycle ribbon - real per-status counts as a full-width stream. */}
+        <Reveal i={1} style={{ marginBottom: 18 }}>
+          <SectionCard title="Offer lifecycle" icon="fileText"
+            headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>ribbon thickness = offers per status</Pill>}>
+            <FlowRibbon points={lifecyclePoints} emptyLabel="The lifecycle appears once offers are drafted." />
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+              <BeadStream groups={beadGroups} emptyLabel="Beads appear as offers are created." />
+            </div>
+          </SectionCard>
+        </Reveal>
         {offers.length > 0 && (
           <div style={{ marginBottom: 18 }}>
             <ChartCard title="Offers by stage" subtitle={`${linearOffers.length} active in the approval funnel`} height={190}>
@@ -89,7 +130,7 @@ function OffersList({ data, onOpen, onCreate }: { data: OffersData; onOpen: (id:
                 <div key={o.id} onClick={() => onOpen(o.id)} style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 130px 100px", gap: 12, padding: "13px 18px", alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", transition: "background var(--t-fast)" }}
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", gap: 11, alignItems: "center" }}>
-                    <span className="mono" style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{o.ini}</span>
+                    <span className="mono" style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{o.ini}</span>
                     <div><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{o.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{o.role}</div></div>
                   </div>
                   <span className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{o.reqId}</span>
@@ -197,10 +238,10 @@ function Composer({ d, onBack, onStatus }: { d: OfferDetail; onBack: () => void;
   );
 }
 
-export function Offers({ data, onStatus, onCreate }: { data: OffersData; onStatus?: (id: string, status: OfferStatusKey) => void; onCreate?: () => void }) {
+export function Offers({ data, lifecycle, onStatus, onCreate }: { data: OffersData; lifecycle?: OfferLifecycleCounts; onStatus?: (id: string, status: OfferStatusKey) => void; onCreate?: () => void }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (openId && data.detail) {
     return <Composer d={data.detail} onBack={() => setOpenId(null)} onStatus={(s) => onStatus?.(openId, s)} />;
   }
-  return <OffersList data={data} onOpen={(id) => setOpenId(id)} onCreate={onCreate} />;
+  return <OffersList data={data} lifecycle={lifecycle} onOpen={(id) => setOpenId(id)} onCreate={onCreate} />;
 }

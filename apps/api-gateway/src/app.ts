@@ -60,6 +60,16 @@ export function createApp(logger: Logger): Express {
   const metrics = createMetrics("api-gateway");
 
   app.use(requestId());
+  // Per-path timeout override — MUST run BEFORE the global requestTimeout
+  // middleware, because that middleware arms its setTimeout (reading
+  // req.timeoutMs) at the moment it executes. A 1k–10k-file / up-to-300MB ZIP
+  // upload + async-extract handoff on /api/resume streams far past the default
+  // 30s socket budget, so give the entire /api/resume path a 300s window. Other
+  // services keep the 30s default untouched.
+  app.use("/api/resume", (req: Request, _res: Response, next: NextFunction) => {
+    req.timeoutMs = 300_000;
+    next();
+  });
   app.use(requestTimeout({ defaultMs: 30_000 }));
   app.use(helmet());
   // CORS — accept a comma-separated list in CORS_ORIGIN, or fall back to all

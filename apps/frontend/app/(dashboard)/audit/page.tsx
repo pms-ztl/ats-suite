@@ -1,5 +1,5 @@
 "use client";
-// app/(dashboard)/admin/audit/page.tsx - EXACT Claude Design "Aurora"
+// app/(dashboard)/audit/page.tsx - EXACT Claude Design "Aurora"
 // tenant audit log (AuditScreen). A complete, tamper-evident record of every
 // action in this workspace, rendered as a filterable table where each row
 // carries an actor (human initials or an AI agent badge), an action, a target,
@@ -18,6 +18,8 @@ import { Icon } from "@/components/aurora-icon";
 import { useData } from "@/lib/use-data";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
+import { exportToCSV } from "@/lib/export";
+import { toast } from "sonner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -159,6 +161,18 @@ export default function AuditPage() {
   // Sortable columns (Actor / Action / Category / Timestamp). Default: newest first.
   const { sorted, sort, toggle } = useTableSort(filtered, { key: "ts", dir: "desc" });
 
+  // Export exactly what is on screen (current filters + sort). With zero entries
+  // there is nothing to write, so say so instead of downloading an empty file.
+  const onExport = () => {
+    if (!sorted.length) { toast.info("No audit entries to export yet."); return; }
+    exportToCSV(
+      `audit-log-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Actor", "Type", "Action", "Target", "Category", "Timestamp"],
+      sorted.map((r) => [r.actor, r.ai ? "AI agent" : "Human", r.action, r.target, r.cat, r.ts]),
+    );
+    toast.success(`Exported ${sorted.length} audit entr${sorted.length === 1 ? "y" : "ies"}.`);
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1280px]">
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
@@ -170,7 +184,7 @@ export default function AuditPage() {
           </div>
           <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
             <Pill icon="shield" tone="var(--c-ok)" bg="var(--c-ok-tint)">7-year retention</Pill>
-            <Btn variant="primary" icon="arrowUpRight">Export CSV</Btn>
+            <Btn variant="primary" icon="arrowUpRight" onClick={onExport}>Export CSV</Btn>
           </div>
         </div>
 

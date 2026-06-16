@@ -7,11 +7,12 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { Icon, type IconName } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
-import { Pill, ScoreRing, Confidence } from "../aurora-kit";
+import { Pill, ScoreRing, Confidence, SectionCard } from "../aurora-kit";
+import { FlowRibbon, ArcMeter } from "@/components/shared/ribbon";
 import type { ScreeningRow, ReqBreakdown, TraceStep, VerdictKind, ScreeningData } from "../types";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
-import { ChartCard, DonutChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { ChartCard, BarsChart, CHART_COLORS } from "@/components/shared/charts";
 
 // Display constants (presentational, not data).
 const RESULT: Record<VerdictKind, { code: string; tone: string; bg: string; rec: string }> = {
@@ -20,6 +21,13 @@ const RESULT: Record<VerdictKind, { code: string; tone: string; bg: string; rec:
   fail: { code: "FAIL", tone: "var(--danger)", bg: "var(--danger-tint)", rec: "Reject" },
 };
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
+// Real per-requirement status, mapped straight from the screener's met/partial/unmet
+// verdict. No fabricated weight% or x/10 sub-scores — those are not measured.
+const REQ_STATUS: Record<VerdictKind, { text: string; tone: string; bg: string }> = {
+  pass: { text: "Met", tone: "var(--ok)", bg: "var(--ok-tint)" },
+  review: { text: "Partial", tone: "var(--warn)", bg: "var(--warn-tint)" },
+  fail: { text: "Not met", tone: "var(--danger)", bg: "var(--danger-tint)" },
+};
 
 function ResultBadge({ kind }: { kind: VerdictKind }) {
   const r = RESULT[kind];
@@ -42,7 +50,7 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
     <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", justifyContent: "flex-end", background: "color-mix(in oklab, var(--bg-deep) 45%, transparent)", animation: "fadein .2s" }}>
       <div style={{ width: "min(580px, 94vw)", height: "100%", background: "var(--surface)", borderLeft: "1px solid var(--line)", boxShadow: "var(--e3)", display: "flex", flexDirection: "column", animation: "slidein .3s var(--ease-out)" }}>
         <div style={{ padding: "16px 22px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
-          <span className="mono" style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white", fontWeight: 700, fontSize: 14 }}>{row.ini}</span>
+          <span className="mono" style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)", fontWeight: 700, fontSize: 14 }}>{row.ini}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: "var(--fs-lg)", letterSpacing: "-0.01em" }}>{row.name}</div>
             <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{row.role} · <span className="mono">{row.reqId}</span></div>
@@ -77,16 +85,19 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
             <div style={{ ...LABEL, marginBottom: 8 }}>Requirement breakdown</div>
             {reqs.length ? (
               <div style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--line)", overflow: "hidden" }}>
-                {reqs.map((req, i) => (
-                  <div key={req.id} style={{ padding: "11px 14px", borderTop: i ? "1px solid var(--line)" : "none", background: "var(--surface)" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "20px 1fr 60px", gap: 10, alignItems: "center" }}>
-                      <Icon name={req.state === "pass" ? "check" : req.state === "review" ? "eye" : "x"} size={15} stroke={2.3} style={{ color: req.state === "pass" ? "var(--ok)" : req.state === "review" ? "var(--warn)" : "var(--danger)" }} />
-                      <span style={{ fontSize: 12.5, fontWeight: 600, display: "flex", gap: 6, alignItems: "center" }}>{req.label}{req.custom && <Pill tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ fontSize: 9 }}>custom</Pill>}</span>
-                      <span className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)", textAlign: "right" }}>{req.weight}%·{req.sub}</span>
+                {reqs.map((req, i) => {
+                  const st = REQ_STATUS[req.state];
+                  return (
+                    <div key={req.id} style={{ padding: "11px 14px", borderTop: i ? "1px solid var(--line)" : "none", background: "var(--surface)" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "20px 1fr auto", gap: 10, alignItems: "center" }}>
+                        <Icon name={req.state === "pass" ? "check" : req.state === "review" ? "eye" : "x"} size={15} stroke={2.3} style={{ color: st.tone }} />
+                        <span style={{ fontSize: 12.5, fontWeight: 600, display: "flex", gap: 6, alignItems: "center" }}>{req.label}{req.custom && <Pill tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ fontSize: 9 }}>custom</Pill>}</span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: st.tone, background: st.bg, padding: "2px 8px", borderRadius: "var(--r-pill)", whiteSpace: "nowrap" }}>{st.text}</span>
+                      </div>
+                      {req.note && <div style={{ marginLeft: 30, marginTop: 5, fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.45, fontStyle: "italic" }}>↳ {req.note}</div>}
                     </div>
-                    <div style={{ marginLeft: 30, marginTop: 5, fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.45, fontStyle: "italic" }}>↳ {req.note}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : <EmptyHint icon="listChecks" text="No requirement breakdown available." />}
           </div>
@@ -120,8 +131,10 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
   );
 }
 
-export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvance, onBulkReview }: {
+export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvance, onBulkReview, verdictFlow }: {
   data: ScreeningData; onExport?: () => void; onDecide?: (id: string, decision: string) => void; onBulkAdvance?: (ids: string[]) => void; onBulkReview?: (ids: string[]) => void;
+  /** real PASS / REVIEW / FAIL counts (+ avg score sub) for the verdict-flow ribbon; supplied by screening-live */
+  verdictFlow?: { label: string; n: number; sub?: string }[];
 }) {
   const { rows = [], requirements = [], trace = [] } = data;
   const [filter, setFilter] = useState<"all" | VerdictKind>("all");
@@ -136,12 +149,8 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
   const { sorted, sort, toggle: toggleSort } = useTableSort(filtered, { key: "score", dir: "desc" });
 
   // ----- Real-data summary charts (derived only from the rows already in props) -----
-  // Verdict split: count of PASS / REVIEW / FAIL across the real screening verdicts.
-  const verdictSplit = [
-    { name: "PASS", value: counts.pass, fill: CHART_COLORS.ok },
-    { name: "REVIEW", value: counts.review, fill: CHART_COLORS.warn },
-    { name: "FAIL", value: counts.fail, fill: CHART_COLORS.danger },
-  ].filter((d) => d.value > 0);
+  // Pass rate: real PASS count over the total screening verdicts (null = no verdicts yet).
+  const passRate = rows.length ? (counts.pass / rows.length) * 100 : null;
   // Match-score distribution: bucket each real AI match score (0..100) into deciles.
   const scoreBuckets = Array.from({ length: 10 }, (_, i) => ({
     band: `${i * 10}-${i * 10 + 9}`,
@@ -182,16 +191,16 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
 
       {rows.length > 0 && (
         <div style={{ padding: "0 28px 4px", display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) 1.2fr", gap: 16 }}>
-          <ChartCard title="Verdict split" subtitle={`${rows.length} screened`} height={180}>
-            {verdictSplit.length ? (
-              <DonutChart
-                data={verdictSplit}
-                colors={verdictSplit.map((d) => d.fill)}
-                centerLabel={rows.length}
-                centerSub="verdicts"
-                valueFormatter={(v) => `${v}`}
+          <ChartCard title="Pass rate" subtitle={`${rows.length} screened`} height={180}>
+            <div style={{ maxWidth: 282, margin: "0 auto" }}>
+              <ArcMeter
+                value={passRate}
+                label="pass rate"
+                sub={`${counts.pass} of ${rows.length} verdicts`}
+                height={180}
+                emptyLabel="No verdicts yet"
               />
-            ) : <EmptyChart label="No verdicts yet" />}
+            </div>
           </ChartCard>
           <ChartCard title="AI match-score distribution" subtitle="candidates per decile (0-100)" height={180}>
             <BarsChart
@@ -203,6 +212,22 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
               valueFormatter={(v) => `${v}`}
             />
           </ChartCard>
+        </div>
+      )}
+
+      {/* Verdict flow ribbon - real PASS / REVIEW / FAIL counts as a full-width stream;
+          thickness = candidates per verdict, sub = each bucket's real average score. */}
+      {verdictFlow && (
+        <div style={{ padding: "0 28px 12px" }}>
+          <SectionCard title="Verdict flow" icon="scan"
+            headRight={<Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)" style={{ textTransform: "none" }}>ribbon thickness = candidates per verdict</Pill>}>
+            <FlowRibbon
+              points={verdictFlow}
+              height={180}
+              gradient={["var(--ok, #16a34a)", "var(--warn, #f59e0b)", "var(--danger, #ef4444)"]}
+              emptyLabel="Verdicts appear as the screener processes candidates."
+            />
+          </SectionCard>
         </div>
       )}
 
@@ -225,7 +250,7 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
                 onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = "var(--surface-2)"; }} onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}>
                 <button onClick={(e) => { e.stopPropagation(); toggle(row.id); }} style={{ width: 18, height: 18, borderRadius: 5, border: "1.5px solid", borderColor: on ? "var(--brand)" : "var(--line-strong)", background: on ? "var(--brand)" : "transparent", display: "grid", placeItems: "center", cursor: "pointer", padding: 0 }}>{on && <Icon name="check" size={12} stroke={3} style={{ color: "var(--on-brand)" }} />}</button>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-                  <span className="mono" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white" }}>{row.ini}</span>
+                  <span className="mono" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{row.ini}</span>
                   <div style={{ minWidth: 0 }}><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{row.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{row.role}</div></div>
                 </div>
                 <span className="mono" style={{ fontSize: 11.5, color: "var(--ink-2)" }}>{row.reqId}</span>

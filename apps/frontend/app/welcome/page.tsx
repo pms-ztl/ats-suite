@@ -6,7 +6,7 @@
 // (logos, testimonials, pricing, final CTA), footer, and a mobile sheet menu.
 // Standalone public page (no shell). Script behavior (mobile menu open/close,
 // video fade-in) reproduced with React state. Links routed to real pages.
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
@@ -136,6 +136,16 @@ export default function WelcomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const vid = useRef<HTMLVideoElement>(null);
 
+  // This marketing page is designed light-only. If the app's dark mode is on
+  // (html.dark), inherited tokens half-invert sections into a dark/light mess,
+  // so suspend the dark class while this page is mounted and restore it on exit.
+  useEffect(() => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains("dark");
+    if (wasDark) root.classList.remove("dark");
+    return () => { if (wasDark) root.classList.add("dark"); };
+  }, []);
+
   return (
     <div className="lnlightx">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
@@ -239,9 +249,9 @@ export default function WelcomePage() {
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <h2 className="sh2">Simple, transparent <em>pricing</em>.</h2>
           <div className="pgrid">
-            <div className="pcard"><span className="pn">Free</span><div className="pp">$0</div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 1 requisition</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 50 candidates / mo</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> AI screening (10/mo)</li></ul><a href="/get-started"><div className="pbtn">Get started</div></a></div>
-            <div className="pcard"><span className="pn">Starter</span><div className="pp">$149<small>/mo</small></div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 5 requisitions</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Full AI + evidence</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Custom fields</li></ul><a href="/pricing"><div className="pbtn">Start trial</div></a></div>
-            <div className="pcard pop"><span className="pn">Professional</span><div className="pp">$399<small>/mo</small></div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Unlimited reqs</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Bias auditing</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Copilot + API</li></ul><a href="/pricing"><div className="pbtn">Start trial</div></a></div>
+            <div className="pcard"><span className="pn">Free</span><div className="pp">₹0</div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 1 requisition</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 50 candidates / mo</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> AI screening (10/mo)</li></ul><a href="/get-started"><div className="pbtn">Get started</div></a></div>
+            <div className="pcard"><span className="pn">Starter</span><div className="pp">₹149<small>/mo</small></div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> 5 requisitions</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Full AI + evidence</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Custom fields</li></ul><a href="/pricing"><div className="pbtn">Start trial</div></a></div>
+            <div className="pcard pop"><span className="pn">Professional</span><div className="pp">₹399<small>/mo</small></div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Unlimited reqs</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Bias auditing</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Copilot + API</li></ul><a href="/pricing"><div className="pbtn">Start trial</div></a></div>
             <div className="pcard"><span className="pn">Enterprise</span><div className="pp">Custom</div><ul><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> SSO / SAML</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Dedicated CSM</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> Custom SLA</li></ul><a href="/contact"><div className="pbtn">Contact sales</div></a></div>
           </div>
         </div>

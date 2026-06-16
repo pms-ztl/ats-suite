@@ -483,14 +483,14 @@ export default function LandingDarkPage() {
           <div className="pgrid">
             <div className="pcard">
               <div className="p-sm">Free</div>
-              <div className="p-lg">$0</div>
+              <div className="p-lg">₹0</div>
               <div className="p-desc">For teams hiring their first roles with AI they can trust.</div>
               <ul className="p-list">{FEATS[0].map((t) => (<li key={t}><span className="p-check"><Check /></span>{t}</li>))}</ul>
               <button className="p-btn" onClick={() => { window.location.href = "/get-started"; }}>Choose plan</button>
             </div>
             <div className="pcard">
               <div className="p-sm">Professional</div>
-              <div className="p-lg">{yearly ? "$319/mo" : "$399/mo"}</div>
+              <div className="p-lg">{yearly ? "₹319/mo" : "₹399/mo"}</div>
               <div className="p-desc">For scaling teams that need fairness, speed, and the full agent suite.</div>
               <ul className="p-list">{FEATS[1].map((t) => (<li key={t}><span className="p-check"><Check /></span>{t}</li>))}</ul>
               <button className="p-btn" onClick={() => { window.location.href = "/get-started"; }}>Choose plan</button>
