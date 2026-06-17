@@ -87,7 +87,11 @@ router.get("/conversations/:id/messages", async (req: Request, res: Response, ne
   try {
     const userId = getUserId(req);
     const id = req.params["id"] as string;
-    const member = await prisma.conversationParticipant.findUnique({ where: { conversationId_userId: { conversationId: id, userId } } });
+    // findFirst (not the compound-key findUnique) so the membership gate is not
+    // subject to Prisma's findUnique dataloader batching, which can collide with
+    // the per-op transaction-local set_config the RLS client uses — a batched
+    // gate could falsely miss and 404 a real member (silent empty thread panel).
+    const member = await prisma.conversationParticipant.findFirst({ where: { conversationId: id, userId }, select: { id: true } });
     if (!member) throw Errors.notFound("Conversation");
     const messages = await prisma.message.findMany({ where: { conversationId: id }, orderBy: { createdAt: "asc" }, take: 300 });
     ok(res, messages);
@@ -102,7 +106,11 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response, n
     const userId = getUserId(req);
     const id = req.params["id"] as string;
     const { body } = SendSchema.parse(req.body);
-    const convo = await prisma.conversation.findUnique({ where: { id }, include: { participants: { select: { userId: true } } } });
+    // findFirst (not findUnique) for the same reason as the thread-read gate:
+    // Prisma's findUnique dataloader can hoist the read out of the RLS client's
+    // per-op set_config transaction, making a real conversation look missing and
+    // 404-ing a legitimate send. findFirst stays inside the scoped transaction.
+    const convo = await prisma.conversation.findFirst({ where: { id }, include: { participants: { select: { userId: true } } } });
     if (!convo || !convo.participants.some((p) => p.userId === userId)) throw Errors.notFound("Conversation");
     const msg = await prisma.message.create({ data: { conversationId: id, tenantId, senderId: userId, body } });
     await prisma.conversation.update({ where: { id }, data: { updatedAt: new Date() } });

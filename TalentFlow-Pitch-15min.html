@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TalentFlow ATS - 15 Minute Pitch</title>
+<style>
+  :root{
+    --green:#0f9d76; --blue:#3f6fe0; --violet:#7c5cff;
+    --ink:#16203a; --ink2:#4a5468; --ink3:#8b93a7;
+    --line:#e4e8f0; --tint:#f5f7fb;
+  }
+  *{ box-sizing:border-box; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{
+    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    color:var(--ink); font-size:11.3pt; line-height:1.5; margin:0;
+  }
+  @page{ size:A4; margin:14mm 15mm 16mm; }
+
+  /* ---- cover ---- */
+  .cover{ page-break-after:always; padding-top:14mm; }
+  .kicker{ letter-spacing:.22em; text-transform:uppercase; font-size:9.5pt; font-weight:700; color:var(--green); }
+  h1{ font-size:30pt; line-height:1.08; letter-spacing:-0.02em; margin:8px 0 6px; }
+  .sub{ font-size:12.5pt; color:var(--ink2); max-width:31em; margin:0 0 18px; }
+  .meta{ font-size:10pt; color:var(--ink3); margin-bottom:18px; }
+  .legend{ border:1px solid var(--line); border-radius:12px; padding:15px 17px; background:var(--tint); max-width:37em; }
+  .legend h3{ margin:0 0 9px; font-size:10pt; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); }
+  .voice{ display:flex; gap:10px; align-items:baseline; margin:7px 0; }
+  .badge{ display:inline-grid; place-items:center; width:24px; height:24px; border-radius:6px; color:#fff; font-weight:800; font-size:10pt; flex-shrink:0; }
+  .badge.d{ background:var(--green); } .badge.s{ background:var(--blue); } .badge.p{ background:var(--violet); }
+  .voice b{ font-size:11pt; } .voice span{ color:var(--ink2); font-size:10.3pt; }
+  .rule{ height:3px; width:60px; background:var(--green); border-radius:3px; margin:0 0 16px; }
+  .drive-note{ margin:11px 0 0; font-size:9.6pt; color:var(--ink2); }
+  .drive-note b{ color:var(--ink); }
+  .creds{ margin-top:9px; font-size:9.3pt; color:var(--ink3); }
+  .creds code{ background:#fff; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:9pt; }
+
+  /* ---- scenes ---- */
+  .scene{ margin:0 0 11px; }
+  .scene-head{ display:flex; align-items:center; gap:10px; margin:16px 0 6px; break-after:avoid; flex-wrap:wrap; }
+  .scene-no{ font-weight:800; color:#fff; background:var(--ink); border-radius:6px; padding:2px 9px; font-size:10pt; }
+  .scene-title{ font-size:14pt; font-weight:800; letter-spacing:-0.01em; }
+  .time{ margin-left:auto; font-size:9.5pt; font-weight:700; color:var(--ink3); border:1px solid var(--line); border-radius:99px; padding:2px 10px; }
+  .scene-note{ font-size:9.8pt; color:var(--violet); font-weight:600; margin:-1px 0 7px; }
+
+  /* operator action cue with click steps */
+  .op{ margin:6px 0 10px; padding:9px 13px; border:1px solid var(--line); border-left:4px solid var(--ink3); border-radius:8px; background:#fbfcfe; break-inside:avoid; }
+  .op.d{ border-left-color:var(--green); } .op.s{ border-left-color:var(--blue); } .op.p{ border-left-color:var(--violet); }
+  .op .tag{ display:inline-block; font-size:8.5pt; font-weight:800; letter-spacing:.06em; color:#fff; background:var(--ink3); border-radius:4px; padding:3px 8px; margin-bottom:6px; }
+  .op.d .tag{ background:var(--green); } .op.s .tag{ background:var(--blue); } .op.p .tag{ background:var(--violet); }
+  ol.opsteps{ margin:2px 0 0; padding-left:20px; }
+  ol.opsteps li{ font-size:9.8pt; color:var(--ink2); margin:3px 0; line-height:1.4; }
+  ol.opsteps li b{ color:var(--ink); font-weight:700; }
+  .op .sublabel{ font-size:8.8pt; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.04em; margin:7px 0 1px; }
+
+  .line{ margin:6px 0; padding-left:62px; text-indent:-62px; break-inside:avoid; }
+  .nm{ display:inline-block; min-width:52px; font-weight:800; font-size:10pt; text-indent:0; margin-right:10px; vertical-align:top; }
+  .nm.d{ color:var(--green); } .nm.s{ color:var(--blue); } .nm.p{ color:var(--violet); }
+
+  .callout{ border:1px solid #f0e6c8; background:#fdf8e8; border-left:4px solid #e0a93a; border-radius:8px; padding:8px 13px; margin:9px 0; font-size:9.8pt; break-inside:avoid; }
+  .callout b{ color:#9a6a10; letter-spacing:.03em; }
+
+  /* ---- appendix ---- */
+  .appendix{ page-break-before:always; }
+  .ap-head{ font-size:16pt; font-weight:800; letter-spacing:-0.01em; margin:0 0 4px; }
+  .ap-sub{ color:var(--ink2); font-size:10.5pt; margin:0 0 14px; }
+  ol.killer{ counter-reset:k; list-style:none; padding:0; margin:0; }
+  ol.killer li{ counter-increment:k; position:relative; padding:10px 14px 10px 46px; border:1px solid var(--line); border-radius:10px; margin:8px 0; font-size:11.4pt; font-weight:600; break-inside:avoid; }
+  ol.killer li::before{ content:counter(k); position:absolute; left:12px; top:50%; transform:translateY(-50%); width:24px; height:24px; border-radius:50%; background:var(--violet); color:#fff; display:grid; place-items:center; font-weight:800; font-size:11pt; }
+  ol.killer li small{ display:block; font-weight:400; color:var(--ink3); font-size:9.5pt; margin-top:2px; }
+  .honest{ margin-top:16px; padding:12px 15px; border:1px dashed var(--line); border-radius:10px; background:var(--tint); font-size:9.8pt; color:var(--ink2); }
+  .honest b{ color:var(--ink); }
+  .foot{ margin-top:18px; font-size:9pt; color:var(--ink3); text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="kicker">Sales Pitch &middot; Live Demo &middot; Three Presenters</div>
+  <h1>TalentFlow ATS</h1>
+  <div class="rule"></div>
+  <p class="sub">The hiring tool that reads every applicant, scores them and shows its proof, sets up the interviews on its own, and hands you a clean record at the end.</p>
+  <p class="meta"><b>Format:</b> 15 minute live demo &nbsp;&bull;&nbsp; <b>Audience:</b> HR leaders and hiring managers &nbsp;&bull;&nbsp; <b>Language:</b> plain and simple, easy to follow</p>
+
+  <div class="legend">
+    <h3>The three presenters</h3>
+    <div class="voice"><span class="badge d">D</span><div><b>Danish &middot; the lead.</b> <span>Opens the room and lands the big moments.</span></div></div>
+    <div class="voice"><span class="badge s">S</span><div><b>Sanjay &middot; the engineer.</b> <span>Explains how it works, simply. The trust voice.</span></div></div>
+    <div class="voice"><span class="badge p">P</span><div><b>Preethi &middot; the people voice.</b> <span>The HR side. Owns fairness and the warm close.</span></div></div>
+    <p class="drive-note"><b>Who drives the screen rotates</b> so whoever is not talking is doing something live. Each scene starts with an <b>OPERATOR</b> box: the exact clicks to make, using the app's real labels. Read it, then do it.</p>
+    <p class="creds"><b>Demo login:</b> <code>priya@pinnacle.demo</code> / <code>PinnacleDemo123!</code> &nbsp;&bull;&nbsp; <b>Sidebar groups:</b> Hiring, Intelligence, Governance, Workspace.</p>
+  </div>
+</section>
+
+<!-- ===================== COLD OPEN ===================== -->
+<div class="scene-head"><span class="scene-no">0</span><span class="scene-title">Cold open</span><span class="time">0:00 &ndash; 1:15</span></div>
+<div class="op"><span class="tag">ON SCREEN</span><ol class="opsteps"><li>Nobody touches the keyboard. Keep the screen dark until Danish says "log us in."</li></ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"Quick question before any slides. The last job you hired for, how many resumes came in? Two hundred? Five hundred? Now the honest one. How many did a real person read, all the way through? The truth is, most resumes get about six seconds, and three out of every four are never really read. So you spend money to bring people in, and then quietly drop most of them. And if someone asked you why you dropped a name, you could not say."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And each of those is a real person who sat down one evening and applied, and nobody opened it. That always bothered me in HR. We do not just waste time. We lose good people, and we never even find out."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"And it is risky for the business too. These old tools are slow, and they cannot explain themselves. The day a law like New York's hiring rules, or the EU's new AI rules, asks you to prove your hiring was fair, 'the software did it' will not save you."</p>
+  <p class="line"><span class="nm d">Danish</span>"So we will not just talk at you. We will show you a tool that reads every applicant, scores them and shows its proof, sets up the interviews on its own, and hands you a clean record at the end. We built it. It is called TalentFlow. Preethi, log us in."</p>
+</div>
+
+<!-- ===================== SCENE 1 ===================== -->
+<div class="scene-head"><span class="scene-no">1</span><span class="scene-title">The four problems we fix</span><span class="time">1:15 &ndash; 2:30</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span><ol class="opsteps">
+  <li>On the login page, type the email in the <b>Work email</b> box and the password in the <b>Password</b> box.</li>
+  <li>Click the <b>Sign In</b> button (it reads "Sign In to" your workspace). It lands on <b>Home</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"While Preethi signs in, here is the problem in plain words. Every big tool you have seen, Workday, Greenhouse, Lever, and the rest, breaks in the same four ways. The AI is a black box, just a number with nothing behind it. You pay per person on your team, so growing costs you more. The forms are fixed, so any change means raising a ticket with IT. And fairness gets checked once a year, if ever."</p>
+  <p class="line"><span class="nm d">Danish</span>"Let me say that in money and risk. Black box means a lawsuit waiting to happen. Per person means your bill goes up just because you are winning. The IT ticket means your job goes live two weeks late, after your best candidate already said yes somewhere else. And 'once a year' is the news story about a company that looked just like yours. Watch us fix all four, one at a time."</p>
+</div>
+
+<!-- ===================== SCENE 2 ===================== -->
+<div class="scene-head"><span class="scene-no">2</span><span class="scene-title">The front door</span><span class="time">2:30 &ndash; 4:15</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span>
+  <div class="sublabel">Build a form field</div>
+  <ol class="opsteps">
+    <li>Click <b>Requisitions</b> in the sidebar, then click any job to open it.</li>
+    <li>Click the <b>Application form</b> tab.</li>
+    <li>Under <b>Add a field</b>, click <b>Dropdown</b>. Type two or three choices, then turn on <b>Required</b>.</li>
+    <li>Under <b>Add a field</b>, click <b>File upload</b>. Set <b>Accepted types</b> to <b>.pdf</b>.</li>
+    <li>Click <b>Publish</b> (top right). Wait for the green <b>Saved</b>.</li>
+  </ol>
+  <div class="sublabel">Bulk upload resumes</div>
+  <ol class="opsteps">
+    <li>Click <b>Candidates</b>, then the <b>Import</b> button (opens the <b>Bulk import candidates</b> page).</li>
+    <li>Choose <b>Resume files</b>, click <b>Choose files</b>, and pick the whole folder.</li>
+    <li>Click <b>Upload [N] resumes</b> (the button shows the count). Wait for the "resumes uploaded" message.</li>
+  </ol>
+</div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"We are in. I am on a real job's application form, and I will add a question with no developer and no waiting. I click Dropdown, type the choices, and mark it Required. Then File upload, and I tell it to accept only PDFs. Now I click Publish. There. Saved. The page your candidates see has already changed."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"Nine field types, all one click. And the basics, name, email, resume, are locked so nobody deletes them by mistake. And people can reach you four ways: a public link with no login, a single resume upload, a big bulk upload, and a spreadsheet that checks for duplicates before it saves anything."</p>
+  <p class="line"><span class="nm p">Preethi</span>"Now watch this. I pick the whole folder of resumes at once, and click Upload. And there, hundreds of resumes, taken in one go, all heading to the reader right now."</p>
+  <p class="line"><span class="nm d">Danish</span>"What Preethi just did in fifteen seconds is a two-week IT ticket in Workday. And it does not matter if one person applies online tonight or you drop in a thousand resumes from a job fair. It all lands in one place. Nothing retyped. Nobody lost in an inbox."</p>
+  <div class="callout"><b>DO IT LIVE.</b> Actually pick a real folder so the file count shows. The big number is what gets the first reaction.</div>
+</div>
+
+<!-- ===================== SCENE 3 ===================== -->
+<div class="scene-head"><span class="scene-no">3</span><span class="scene-title">It reads them. And it shows the cost.</span><span class="time">4:15 &ndash; 6:45</span></div>
+<div class="scene-note">Slow down here. This is the part HR and finance both remember.</div>
+<div class="op s"><span class="tag">OPERATOR &middot; SANJAY</span><ol class="opsteps">
+  <li>Click <b>Candidates</b>, then click one candidate to open their profile.</li>
+  <li>Scroll down to the <b>Parsed résumé</b> section (it has an AI icon, with Fields and Skills).</li>
+  <li>Click <b>Billing &amp; Plan</b> in the sidebar. Point to the <b>AI spend trend</b> chart (cost by provider).</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"Let me open one of the resumes that just came in. This one arrived thirty seconds ago, and look, the name, the contact details, years of experience, a clean list of skills, the whole work history, already filled in. Nobody typed that. The tool read it. Every piece even has a little confidence score, and it quietly flags anything that looks too good to be true, so your interviewer knows where to ask."</p>
+  <p class="line"><span class="nm d">Danish</span>"And finance always asks what this costs, so Sanjay, open Billing and Plan. This chart is our real AI bill for the month, split by provider. Now the simple math. Take that bill, divide it by the resumes we read, and it comes to about two rupees a resume. Two rupees to read and understand a resume that a person gives six seconds. A thousand applicants is roughly two thousand rupees to truly read every one. Ask Workday for that number. They cannot give it to you."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And for me, those two rupees are a recruiter's afternoon, handed back. Instead of skimming five hundred PDFs until their eyes hurt, they open a list that is already read and understood."</p>
+  <div class="callout"><b>STAY HONEST.</b> There is no per-resume price tag in the app; you are dividing the month's real bill by the resumes read, so say it as "about two rupees each." If the chart shows dollars in your build, convert out loud (roughly 83 rupees to a dollar) or switch the display to rupees before the demo.</div>
+</div>
+
+<!-- ===================== SCENE 4 ===================== -->
+<div class="scene-head"><span class="scene-no">4</span><span class="scene-title">Not a number. The sentence.</span><span class="time">6:45 &ndash; 9:15</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Screening</b> in the sidebar. Click the top candidate to open their scorecard.</li>
+  <li>Expand the requirement list, then turn on the <b>Reasoning trace</b> toggle.</li>
+  <li>Click <b>Review Queue</b> in the sidebar (under Intelligence) to show the flagged candidates.</li>
+  <li>Click <b>Compliance</b> (under Governance), then open the <b>Adverse impact</b> tab.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"This is my favorite part. The second a resume is read, it gets scored for this exact job. A number out of a hundred, and a clear call: pass, review, or decline. This one is a 78, a pass. But forget the number, and watch when I open it. For every requirement, it says met or not met, and it shows the exact line from the resume that proves it. 'Five years of React,' there is the line. 'AWS in production,' nothing found, so it says gap, out loud. That is the whole thing. Not a number. The sentence. When a manager, or a lawyer, or the candidate asks you why, you do not guess. You point at the proof."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"And it is not just matching words. It reads each requirement, hunts the resume for real proof of it, and even checks how it scored the earlier people for the same job, so the bar stays steady from Monday to Friday. And when it is not sure, it does not guess. It raises its hand for a human."</p>
+  <p class="line"><span class="nm p">Preethi</span>"Which shows up right here, in the Review Queue, and this is the part I care about most. The unsure ones wait for a person to decide, and the screen says it plainly: the AI advises, you decide, and your decision is what gets saved. And over in Compliance, this Adverse impact tab watches fairness as you hire. If any group falls below the line the law draws, it turns red, and it only ever uses counts, never anyone's name or gender or age. Everyone else checks fairness once a year, after the harm is done. We turned it into a live dial."</p>
+</div>
+
+<!-- ===================== SCENE 5 ===================== -->
+<div class="scene-head"><span class="scene-no">5</span><span class="scene-title">The interview gets booked</span><span class="time">9:15 &ndash; 10:45</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span><ol class="opsteps">
+  <li>Click <b>Interviews</b> in the sidebar, then click <b>Schedule interview</b> (top right).</li>
+  <li>Pick the <b>Candidate</b>, pick the <b>Requisition</b>, then pick the <b>Round</b> (it loads from the job's interview loop).</li>
+  <li>Set the <b>Date &amp; time</b> and the <b>Duration</b>, then click <b>Schedule</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"Our candidate passed, so I will set up the interview. I click Schedule interview, pick the candidate and the job, and look, it already knows this job's interview rounds, so I just choose one. I set a time, and click Schedule. Done. The interview is booked, and the whole panel can see it."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"And it spreads interviews around the team fairly, so the same senior person is not pulled into every single one. Afterwards it can turn the interview notes into a clean scorecard with proof, and even suggest questions based on this candidate's own resume. And once you connect your calendar, it picks conflict-free times for you."</p>
+  <p class="line"><span class="nm d">Danish</span>"So the endless 'does Tuesday work, no, how about Thursday' email chain is just gone. And the same proof that scored the candidate becomes the smart question your interviewer walks in and asks."</p>
+  <div class="callout"><b>STAY HONEST.</b> The live click books a real interview everyone can see. The automatic, calendar-aware time-picking switches on once a Google or Outlook calendar is connected, so say "once your calendar is connected," do not claim it read calendars just now.</div>
+</div>
+
+<!-- ===================== SCENE 6 ===================== -->
+<div class="scene-head"><span class="scene-no">6</span><span class="scene-title">Three levels, and a wall nothing crosses</span><span class="time">10:45 &ndash; 12:30</span></div>
+<div class="op s"><span class="tag">OPERATOR &middot; SANJAY</span><ol class="opsteps">
+  <li>Click <b>Settings</b> in the sidebar, then open <b>Team &amp; roles</b>.</li>
+  <li>Show the people list with their <b>roles</b> and the <b>Reports to</b> column.</li>
+  <li>Point to the <b>Invite member</b> button (do not send one).</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"Here is how access works, in three simple levels. At the very top, a platform admin can see every company's account. Next, the company admin, that is you, you run your own workspace, your people, your plan. And under you, your team: hiring managers, recruiters, interviewers. A manager can add their own recruiters, but can never give someone more power than they have. See, everyone shows who they report to. And here is the big one for your security team. One company can never see another company's data. That is not us being careful in code. The database itself blocks it, and it fails safe. If the company stamp is ever missing, the database shows nothing, not everything. So a data leak between companies simply cannot happen."</p>
+  <p class="line"><span class="nm d">Danish</span>"Hand your security team that one line, the database blocks it and fails safe, and you have saved them a month of review. On top of that, passwords are properly protected, you can turn on two-step login and single sign-on, and every time an admin steps into an account, it is logged."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And the nice part for HR, a hiring manager can grow their own team without raising a ticket and waiting three days. They invite their own people, and everyone only ever sees the team they actually manage."</p>
+</div>
+
+<!-- ===================== SCENE 7 ===================== -->
+<div class="scene-head"><span class="scene-no">7</span><span class="scene-title">You pay for use, not for heads</span><span class="time">12:30 &ndash; 13:30</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Billing &amp; Plan</b> in the sidebar (under Workspace).</li>
+  <li>Show <b>Usage this period</b>: <b>Agent runs</b>, <b>Tokens in</b>, <b>Tokens out</b>.</li>
+  <li>Click <b>Change plan</b> to open the options, then click the <b>X</b> to close it.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"Last screen, and it is the one that sets your budget. I open Billing and Plan. You do not pay us per person on your team. You pay for what you actually use. Here is your usage and spend for the month, live. If you hit a limit, you get a clean 'time to upgrade,' not a shock bill three weeks later. You can switch an expensive feature off in seconds, and set a monthly cap that simply stops and asks before spending more."</p>
+  <p class="line"><span class="nm p">Preethi</span>"Which means the better your team gets at hiring, the cheaper this runs, not the more expensive. That is the opposite of every contract we have ever signed."</p>
+</div>
+
+<!-- ===================== SCENE 8 ===================== -->
+<div class="scene-head"><span class="scene-no">8</span><span class="scene-title">The record keeps itself</span><span class="time">13:30 &ndash; 14:00</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Compliance</b>, then open the <b>Audit log</b> tab to show the timeline.</li>
+  <li>Click <b>Settings</b>, then <b>Data retention</b>. Point to <b>Honor erasure requests</b> and <b>Purge now</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"And underneath everything, every important action, a hire, a no, an interview, an offer, is written to a log you cannot edit, only add to. And here in settings, you choose how long to keep data, switch on 'honor erasure requests,' and 'purge now' clears anything past its date. That is the heart of GDPR, built in, not a promise for later."</p>
+</div>
+
+<!-- ===================== CLOSE ===================== -->
+<div class="scene-head"><span class="scene-no">&#9733;</span><span class="scene-title">The close</span><span class="time">14:00 &ndash; 15:00</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Go back to the candidate's profile so the full journey is on screen.</li>
+  <li>Step toward the audience and leave it there.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"So look at what just happened. One resume, start to finish. In through a form Preethi built in fifteen seconds. Read for about two rupees. Scored with its own proof. The interview booked. And every step written down, fair, and yours."</p>
+  <p class="line"><span class="nm p">Preethi</span>"So here is our ask. Give us one open job and one real stack of resumes, and run TalentFlow next to whatever you use today, for two weeks. You will feel the speed. You will see the proof behind every score. And you will know the cost, to the rupee. If we do not make your team faster and your decisions easier to defend, you have lost nothing. And if we do, you have found the tool that reads everyone, proves everything, and never loses a single person in the cracks."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"We would love to set up that first job with you. Honestly, today, if you are up for it."</p>
+  <p class="line"><span class="nm d">Danish</span>"Thank you. So, what can we answer for you?"</p>
+</div>
+
+<!-- ===================== APPENDIX ===================== -->
+<section class="appendix">
+  <div class="ap-head">The five lines that win the room</div>
+  <p class="ap-sub">Whoever says it, say it slowly, then stop talking. Let it land.</p>
+  <ol class="killer">
+    <li>"Not a number. The sentence."<small>Danish &middot; the proof behind every score (Scene 4)</small></li>
+    <li>"Two rupees to read a resume a person gives six seconds."<small>Danish &middot; the cost (Scene 3)</small></li>
+    <li>"The AI advises. You decide. And it is always saved."<small>Preethi &middot; a human stays in charge (Scene 4)</small></li>
+    <li>"Fairness as a live dial, not a once-a-year report."<small>Preethi &middot; the fairness check (Scene 4)</small></li>
+    <li>"A data leak between companies simply cannot happen."<small>Sanjay &middot; the database wall (Scene 6)</small></li>
+  </ol>
+
+  <div class="honest">
+    <b>What is real, so you stay safe under questions.</b> Everything you click is real: the form builder and Publish, the four ways candidates come in, the bulk resume upload, the auto-filled Parsed résumé, the pass / review / decline score with the exact proof line, the Review Queue, the live fairness (Adverse impact) tab, the Settings, Team page with roles and Reports-to, the Billing and Plan usage and plan change, the Compliance Audit log, and the Data retention controls. Two things are framed as "available," not demoed as magic: the AI picking interview times by itself (that needs your calendar connected) and deeper background checks of a candidate's claims (off by default). And the cost per resume is the month's real bill divided by resumes read, not a per-resume price tag in the app. Keep to that and the pitch stays jaw-dropping and survives every follow-up.
+  </div>
+
+  <p class="foot">TalentFlow ATS &middot; 15 minute pitch &middot; Danish, Sanjay &amp; Preethi &middot; for an HR and hiring-manager audience</p>
+</section>
+
+</body>
+</html>

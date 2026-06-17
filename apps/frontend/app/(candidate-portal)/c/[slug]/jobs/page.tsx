@@ -41,12 +41,17 @@ function coerceRows(res: unknown): any[] {
 }
 
 function mapJobs(rows: any[]): PortalJob[] {
-  return rows.map((j: any): PortalJob => ({
-    id: String(j.id ?? j.slug ?? ""),
-    title: j.title ?? "Role",
-    department: j.department ?? "",
-    location: j.location ?? "",
-  }));
+  // The apply route's [id] param is the posting SLUG (GET /public/jobs/:slug),
+  // so the card link MUST use the slug, not the posting UUID. Department and
+  // location live on the nested requisition, not the posting row.
+  return rows
+    .map((j: any): PortalJob => ({
+      id: String(j.slug ?? ""),
+      title: j.title ?? j.requisition?.title ?? "Role",
+      department: j.department ?? j.requisition?.department ?? "",
+      location: j.location ?? j.requisition?.location ?? "",
+    }))
+    .filter((j) => j.id);
 }
 
 // Tenant-scoped, with graceful fallbacks: the tenant endpoint first, then the
@@ -82,13 +87,6 @@ async function fetchTenantName(slug: string): Promise<string | null> {
     return null;
   }
 }
-
-// The design's static example cards, used verbatim as the graceful fallback.
-const FALLBACK_ROLES: { meta: string; title: string; tags: string[] }[] = [
-  { meta: "Engineering · Remote", title: "Senior Backend Engineer", tags: ["Full-time", "₹160k to 200k"] },
-  { meta: "Design · Austin, TX", title: "Staff Product Designer", tags: ["Full-time", "Hybrid"] },
-  { meta: "Data · Remote", title: "Machine Learning Engineer", tags: ["Full-time", "₹170k to 220k"] },
-];
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@500;600;700&display=swap');
@@ -158,6 +156,10 @@ const CSS = `
 .portalx .role .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px;}
 .portalx .role .tag{font-size:11px;color:rgba(255, 255, 255, .7);background:rgba(255, 255, 255, .08);border-radius:99px;padding:3px 10px;}
 .portalx .role .apply{margin-top:8px;display:inline-flex;align-items:center;gap:6px;color:var(--br);font-size:13px;font-weight:600;}
+/* honest empty / loading / error state for the roles area */
+.portalx .roles-empty{margin:36px 0 0;border-radius:20px;padding:clamp(28px, 5vw, 48px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.portalx .roles-empty-title{font-size:18px;font-weight:600;color:#fff;}
+.portalx .roles-empty-body{font-size:13.5px;color:rgba(255, 255, 255, .62);line-height:1.6;max-width:46ch;}
 /* footer */
 .portalx footer{width:100%;max-width:1200px;border-radius:28px;padding:clamp(24px, 4vw, 40px);color:rgba(255, 255, 255, .7);margin:clamp(80px, 16vw, 240px) auto 28px;opacity:0;animation:portal-rise 1s var(--ease) .4s forwards;}
 @keyframes portal-rise{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:none;}}
@@ -363,18 +365,34 @@ export default function TenantJobsPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // real tenant-scoped jobs, best-effort with graceful fallback to the cards
+  // Real tenant-scoped open roles only. `null` = still loading, `[]` = loaded
+  // but the board is genuinely empty (honest empty state), non-empty = the real
+  // published postings. Never fabricated cards. Re-fetches every 30s and on tab
+  // focus so a newly posted role appears without a reload; renders every role.
   const [jobs, setJobs] = useState<PortalJob[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
-    (async () => {
+    let loadedOnce = false;
+    async function load() {
       try {
         const rows = await fetchJobs(slug);
-        if (!cancelled && rows.length > 0) setJobs(rows);
-      } catch { /* keep the static fallback cards */ }
-    })();
-    return () => { cancelled = true; };
+        if (cancelled) return;
+        setJobs(rows);
+        setLoadError(false);
+      } catch {
+        if (cancelled) return;
+        if (!loadedOnce) { setJobs([]); setLoadError(true); }
+      } finally {
+        loadedOnce = true;
+      }
+    }
+    void load();
+    const interval = setInterval(load, 30_000);
+    const onFocus = () => { void load(); };
+    window.addEventListener("focus", onFocus);
+    return () => { cancelled = true; clearInterval(interval); window.removeEventListener("focus", onFocus); };
   }, [slug]);
 
   return (
@@ -408,7 +426,7 @@ export default function TenantJobsPage() {
           </nav>
 
           <section className="hero">
-            <span className="eyebrow liquid-glass"><span className="dot" /> Careers at {tenantLabel} · hiring now</span>
+            <span className="eyebrow liquid-glass"><span className="dot" /> {jobs && jobs.length > 0 ? `${jobs.length} open role${jobs.length === 1 ? "" : "s"} at ${tenantLabel}` : `Careers at ${tenantLabel}`}</span>
             <h1>Build what's <em>next</em> at {tenantLabel}.</h1>
             <p>Join a team reshaping how the world hires. Every application is reviewed with care, scored transparently, and decided by a human, never an algorithm alone.</p>
             <div className="search liquid-glass">
@@ -424,25 +442,38 @@ export default function TenantJobsPage() {
               AI is assistive here. A human always makes the final call, and you can ask how your application was reviewed.
             </div>
 
-            <div className="roles" id="roles">
-              {jobs && jobs.length > 0
-                ? jobs.map((j) => (
-                    <a className="role liquid-glass" key={j.id} href={`/c/${slug}/jobs/${j.id}/apply`}>
-                      <span className="meta up">{[j.department, j.location].filter(Boolean).join(" · ")}</span>
-                      <span className="rt">{j.title}</span>
-                      <div className="tags"><span className="tag">Full-time</span></div>
-                      <span className="apply">Apply <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
-                    </a>
-                  ))
-                : FALLBACK_ROLES.map((r) => (
-                    <a className="role liquid-glass" key={r.title} href="/status">
-                      <span className="meta up">{r.meta}</span>
-                      <span className="rt">{r.title}</span>
-                      <div className="tags">{r.tags.map((t) => <span className="tag" key={t}>{t}</span>)}</div>
-                      <span className="apply">Apply <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
-                    </a>
-                  ))}
-            </div>
+            {jobs && jobs.length > 0 ? (
+              <div className="roles" id="roles">
+                {jobs.map((j) => (
+                  <a className="role liquid-glass" key={j.id} href={`/c/${slug}/jobs/${j.id}/apply`}>
+                    <span className="meta up">{[j.department, j.location].filter(Boolean).join(" · ")}</span>
+                    <span className="rt">{j.title}</span>
+                    <div className="tags"><span className="tag">Full-time</span></div>
+                    <span className="apply">Apply <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              // Honest state — never fabricated example roles.
+              <div className="roles-empty liquid-glass" id="roles">
+                {jobs === null ? (
+                  <>
+                    <div className="roles-empty-title">Loading open roles…</div>
+                    <div className="roles-empty-body">Fetching {tenantLabel}'s latest openings.</div>
+                  </>
+                ) : loadError ? (
+                  <>
+                    <div className="roles-empty-title">Couldn't load roles right now</div>
+                    <div className="roles-empty-body">We'll keep trying — open roles refresh automatically every few seconds.</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="roles-empty-title">No open roles right now</div>
+                    <div className="roles-empty-body">{tenantLabel} has no published openings at the moment. New roles appear here the instant they go live — check back soon.</div>
+                  </>
+                )}
+              </div>
+            )}
           </section>
 
           {/* liquid-glass footer */}

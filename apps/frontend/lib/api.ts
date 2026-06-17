@@ -276,6 +276,53 @@ export async function askCopilot(query: string): Promise<CopilotResponse> {
     modelName: d?.modelName,
   };
 }
+// AI sourcing — POST /api/sourcing/search. Free-text "who I need" -> the
+// sourcing agent (real LLM) ranks the tenant's OWN candidate pool and returns
+// matches with grounded evidence. Falls back server-side to a real keyword/skill
+// score over the same rows if the LLM is unavailable (usedLLM=false); never
+// invents people. Honest empty when the pool is empty (matches=[]). Throws on a
+// transport/HTTP failure so the UI shows an error instead of fabricated results.
+export interface SourcingMatch {
+  candidateId: string;
+  name: string;
+  role: string;
+  score: number; // 0-100 fit
+  evidence: string;
+}
+export interface SourcingResult {
+  query: string;
+  scanned: number;
+  usedLLM: boolean;
+  matches: SourcingMatch[];
+  summary?: string;
+  modelName?: string;
+}
+export async function sourceCandidates(query: string, limit = 10): Promise<SourcingResult> {
+  const t = authToken();
+  const r = await fetch(`${API_BASE}/sourcing/search`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify({ query, limit }),
+  });
+  const res: any = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res?.error?.message || `POST /sourcing/search -> ${r.status}`);
+  const d = res?.data ?? res;
+  return {
+    query: String(d?.query ?? query),
+    scanned: Number(d?.scanned ?? 0),
+    usedLLM: Boolean(d?.usedLLM),
+    matches: (Array.isArray(d?.matches) ? d.matches : []).map((m: any) => ({
+      candidateId: String(m?.candidateId ?? ""),
+      name: String(m?.name ?? "Candidate"),
+      role: String(m?.role ?? ""),
+      score: Math.round(Number(m?.score ?? 0)),
+      evidence: String(m?.evidence ?? ""),
+    })),
+    summary: d?.summary ? String(d.summary) : undefined,
+    modelName: d?.modelName ? String(d.modelName) : undefined,
+  };
+}
+
 // Real two-step CSV import (candidate-service /import/preview + /commit).
 export interface ImportPreviewRow {
   row: number;
@@ -364,11 +411,13 @@ export function slugify(s: string): string {
 function toPosting(p: any): JobPostingLite {
   return { id: p?.id ?? "", slug: p?.slug ?? "", title: p?.title ?? "", isPublished: Boolean(p?.isPublished), requisitionId: p?.requisitionId ?? "" };
 }
-// Returns the existing published posting for a requisition, if any.
+// Returns the existing published posting for THIS requisition, if any. Must match
+// requisitionId exactly — never fall back to the first row in the list, or the
+// "Post job" link would resolve to some other requisition's slug (seed leakage).
 export async function findPostingForRequisition(requisitionId: string): Promise<JobPostingLite | null> {
   try {
     const list = arr(await raw("GET", `/job-postings?requisitionId=${encodeURIComponent(requisitionId)}`)).map(toPosting);
-    return list.find((p) => p.requisitionId === requisitionId) ?? list[0] ?? null;
+    return list.find((p) => p.requisitionId === requisitionId) ?? null;
   } catch { return null; }
 }
 // Creates (publishes) a posting. Retries once with a longer slug on a 409 slug clash.

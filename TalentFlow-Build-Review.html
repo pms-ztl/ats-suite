@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TalentFlow ATS - Build Review (Round 1)</title>
+<style>
+  :root{
+    --green:#0f9d76; --blue:#3f6fe0; --violet:#7c5cff;
+    --ink:#16203a; --ink2:#4a5468; --ink3:#8b93a7;
+    --line:#e4e8f0; --tint:#f5f7fb;
+    --amber:#9a6a10;
+  }
+  *{ box-sizing:border-box; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{
+    font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    color:var(--ink); font-size:11.3pt; line-height:1.5; margin:0;
+  }
+  @page{ size:A4; margin:14mm 15mm 16mm; }
+
+  /* ---- cover ---- */
+  .cover{ page-break-after:always; padding-top:14mm; }
+  .kicker{ letter-spacing:.2em; text-transform:uppercase; font-size:9.5pt; font-weight:700; color:var(--blue); }
+  h1{ font-size:29pt; line-height:1.08; letter-spacing:-0.02em; margin:8px 0 6px; }
+  .sub{ font-size:12.5pt; color:var(--ink2); max-width:32em; margin:0 0 18px; }
+  .meta{ font-size:10pt; color:var(--ink3); margin-bottom:18px; }
+  .legend{ border:1px solid var(--line); border-radius:12px; padding:15px 17px; background:var(--tint); max-width:37em; }
+  .legend h3{ margin:0 0 9px; font-size:10pt; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3); }
+  .voice{ display:flex; gap:10px; align-items:baseline; margin:7px 0; }
+  .badge{ display:inline-grid; place-items:center; width:24px; height:24px; border-radius:6px; color:#fff; font-weight:800; font-size:10pt; flex-shrink:0; }
+  .badge.d{ background:var(--green); } .badge.s{ background:var(--blue); } .badge.p{ background:var(--violet); }
+  .voice b{ font-size:11pt; } .voice span{ color:var(--ink2); font-size:10.3pt; }
+  .rule{ height:3px; width:60px; background:var(--blue); border-radius:3px; margin:0 0 16px; }
+  .drive-note{ margin:11px 0 0; font-size:9.6pt; color:var(--ink2); }
+  .drive-note b{ color:var(--ink); }
+  .statkey{ margin-top:10px; font-size:9.4pt; color:var(--ink2); }
+  .pill{ display:inline-block; font-size:8.4pt; font-weight:800; border-radius:99px; padding:1px 8px; margin:0 4px 0 0; }
+  .pill.done{ background:#e6f6ef; color:#0f8a66; } .pill.prog{ background:#fdf3e0; color:#9a6a10; } .pill.next{ background:#eef0f5; color:#5b647a; }
+  .creds{ margin-top:9px; font-size:9.3pt; color:var(--ink3); }
+  .creds code{ background:#fff; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:9pt; }
+
+  /* ---- scenes ---- */
+  .scene{ margin:0 0 11px; }
+  .scene-head{ display:flex; align-items:center; gap:10px; margin:16px 0 6px; break-after:avoid; flex-wrap:wrap; }
+  .scene-no{ font-weight:800; color:#fff; background:var(--ink); border-radius:6px; padding:2px 9px; font-size:10pt; }
+  .scene-title{ font-size:14pt; font-weight:800; letter-spacing:-0.01em; }
+  .time{ margin-left:auto; font-size:9.5pt; font-weight:700; color:var(--ink3); border:1px solid var(--line); border-radius:99px; padding:2px 10px; }
+
+  /* operator action cue with click steps */
+  .op{ margin:6px 0 9px; padding:9px 13px; border:1px solid var(--line); border-left:4px solid var(--ink3); border-radius:8px; background:#fbfcfe; break-inside:avoid; }
+  .op.d{ border-left-color:var(--green); } .op.s{ border-left-color:var(--blue); } .op.p{ border-left-color:var(--violet); }
+  .op .tag{ display:inline-block; font-size:8.5pt; font-weight:800; letter-spacing:.06em; color:#fff; background:var(--ink3); border-radius:4px; padding:3px 8px; margin-bottom:6px; }
+  .op.d .tag{ background:var(--green); } .op.s .tag{ background:var(--blue); } .op.p .tag{ background:var(--violet); }
+  ol.opsteps{ margin:2px 0 0; padding-left:20px; }
+  ol.opsteps li{ font-size:9.8pt; color:var(--ink2); margin:3px 0; line-height:1.4; }
+  ol.opsteps li b{ color:var(--ink); font-weight:700; }
+  .op .sublabel{ font-size:8.8pt; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.04em; margin:7px 0 1px; }
+
+  .line{ margin:6px 0; padding-left:62px; text-indent:-62px; break-inside:avoid; }
+  .nm{ display:inline-block; min-width:52px; font-weight:800; font-size:10pt; text-indent:0; margin-right:10px; vertical-align:top; }
+  .nm.d{ color:var(--green); } .nm.s{ color:var(--blue); } .nm.p{ color:var(--violet); }
+
+  /* status note (replaces salesy callouts) */
+  .status{ border:1px solid var(--line); border-left:4px solid var(--blue); border-radius:8px; padding:7px 13px; margin:8px 0 4px; font-size:9.8pt; background:#fafbfe; break-inside:avoid; color:var(--ink2); }
+  .status .lab{ font-weight:800; font-size:8.4pt; letter-spacing:.06em; color:var(--ink3); margin-right:6px; }
+
+  /* ---- appendix ---- */
+  .appendix{ page-break-before:always; }
+  .ap-head{ font-size:16pt; font-weight:800; letter-spacing:-0.01em; margin:0 0 4px; }
+  .ap-sub{ color:var(--ink2); font-size:10.5pt; margin:0 0 12px; }
+  table.stat{ width:100%; border-collapse:collapse; font-size:9.8pt; margin-bottom:18px; }
+  table.stat th{ text-align:left; font-size:8.6pt; text-transform:uppercase; letter-spacing:.05em; color:var(--ink3); border-bottom:1.5px solid var(--line); padding:6px 8px; }
+  table.stat td{ border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; }
+  table.stat td:first-child{ font-weight:600; color:var(--ink); width:46%; }
+  ol.qs{ counter-reset:q; list-style:none; padding:0; margin:0; }
+  ol.qs li{ counter-increment:q; position:relative; padding:9px 14px 9px 42px; border:1px solid var(--line); border-radius:9px; margin:7px 0; font-size:10.6pt; break-inside:avoid; }
+  ol.qs li::before{ content:counter(q); position:absolute; left:11px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:var(--blue); color:#fff; display:grid; place-items:center; font-weight:800; font-size:10pt; }
+  .honest{ margin-top:16px; padding:12px 15px; border:1px dashed var(--line); border-radius:10px; background:var(--tint); font-size:9.8pt; color:var(--ink2); }
+  .honest b{ color:var(--ink); }
+  .foot{ margin-top:18px; font-size:9pt; color:var(--ink3); text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="kicker">Build Review &middot; Round 1 &middot; Live Walkthrough</div>
+  <h1>TalentFlow ATS</h1>
+  <div class="rule"></div>
+  <p class="sub">Where the build stands today. Shown live, with honest status on each part, and the open questions where we need your input.</p>
+  <p class="meta"><b>Format:</b> about 15 minutes, then questions &nbsp;&bull;&nbsp; <b>For:</b> HR, Project and Product leads &nbsp;&bull;&nbsp; <b>From:</b> the development team</p>
+
+  <div class="legend">
+    <h3>Presenting</h3>
+    <div class="voice"><span class="badge d">D</span><div><b>Danish &middot; project lead.</b> <span>Frames each part and gives the honest status.</span></div></div>
+    <div class="voice"><span class="badge s">S</span><div><b>Sanjay &middot; engineering.</b> <span>Explains how it works and what is solid versus rough.</span></div></div>
+    <div class="voice"><span class="badge p">P</span><div><b>Preethi &middot; product / HR-facing.</b> <span>Connects it to how your teams actually work, and collects your input.</span></div></div>
+    <p class="statkey"><span class="pill done">DONE</span>working today &nbsp; <span class="pill prog">IN PROGRESS</span>built, being finished &nbsp; <span class="pill next">NEXT</span>planned, not started yet</p>
+    <p class="drive-note"><b>Who drives the screen rotates</b> so one of us is always demoing live. Each part starts with an <b>OPERATOR</b> box: the exact clicks, using the app's real labels.</p>
+    <p class="creds"><b>Demo login:</b> <code>priya@pinnacle.demo</code> / <code>PinnacleDemo123!</code> &nbsp;&bull;&nbsp; <b>Sidebar groups:</b> Hiring, Intelligence, Governance, Workspace.</p>
+  </div>
+</section>
+
+<!-- ===================== OPENING ===================== -->
+<div class="scene-head"><span class="scene-no">0</span><span class="scene-title">Opening: what this walkthrough is</span><span class="time">0:00 &ndash; 1:30</span></div>
+<div class="op"><span class="tag">ON SCREEN</span><ol class="opsteps"><li>Dashboard ready on a screen-share. Nobody clicks anything until Danish hands over to Preethi.</li></ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"Thanks for making the time. This is our first full walkthrough of what we have built so far. The plan for the next fifteen minutes is simple. We will show you the main flow working live, a candidate coming in, the resume getting read, screening, the interview, and the admin side. We will be honest about what is done and what is still in progress, and there are a few points where we genuinely need your input. Please stop us with questions at any time."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And since your teams are the ones who will actually use this every day, your feedback today matters more than anything we say. If something does not match how hiring really works on your side, please tell us. That is exactly what we want from this session."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"One quick note on how we built it. We wired the real flow end to end, real services and real AI calls, not slides or mock screens. So what you are seeing is the actual system. Some parts are solid, some are still rough, and we will point those out honestly as we go."</p>
+  <p class="line"><span class="nm d">Danish</span>"Preethi, let us start by signing in."</p>
+</div>
+
+<!-- ===================== 1. GOALS ===================== -->
+<div class="scene-head"><span class="scene-no">1</span><span class="scene-title">The goals we are building against</span><span class="time">1:30 &ndash; 2:45</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span><ol class="opsteps">
+  <li>On the login page, type the email in the <b>Work email</b> box and the password in the <b>Password</b> box.</li>
+  <li>Click the <b>Sign In</b> button (it reads "Sign In to" your workspace). It lands on <b>Home</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"While Preethi signs in, here are the four goals we set at the start, so you can hold us to them. One, actually read every applicant, not just the first few. Two, make the AI explain itself, so every score comes with a reason. Three, keep hiring fair, and be able to show that it is. And four, let your team change forms and settings themselves, without raising a ticket with us each time."</p>
+  <p class="line"><span class="nm d">Danish</span>"So as we go, please measure us against those four. We will show you where we have met them, and we will be clear about where there is still work left to do."</p>
+</div>
+
+<!-- ===================== 2. INTAKE ===================== -->
+<div class="scene-head"><span class="scene-no">2</span><span class="scene-title">How candidates come in</span><span class="time">2:45 &ndash; 4:30</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span>
+  <div class="sublabel">Edit the application form</div>
+  <ol class="opsteps">
+    <li>Click <b>Requisitions</b> in the sidebar, then open any job.</li>
+    <li>Click the <b>Application form</b> tab.</li>
+    <li>Under <b>Add a field</b>, click <b>Dropdown</b>. Type two or three choices, then turn on <b>Required</b>.</li>
+    <li>Under <b>Add a field</b>, click <b>File upload</b>. Set <b>Accepted types</b> to <b>.pdf</b>.</li>
+    <li>Click <b>Publish</b> (top right). Wait for the green <b>Saved</b>.</li>
+  </ol>
+  <div class="sublabel">Show bulk resume upload</div>
+  <ol class="opsteps">
+    <li>Click <b>Candidates</b>, then the <b>Import</b> button (opens the <b>Bulk import candidates</b> page).</li>
+    <li>Choose <b>Resume files</b>, click <b>Choose files</b>, and pick a folder of resumes.</li>
+    <li>Click <b>Upload [N] resumes</b>. Wait for the "resumes uploaded" message.</li>
+  </ol>
+</div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"First, how people apply. We built the application form so your team can change it yourselves. I will add a dropdown question, mark it required, and add a field that accepts only PDFs, then click Publish. The public page candidates see updates straight away. No developer needed for a change like this."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"There are nine field types, and the basics, name, email and resume, are locked so they cannot be removed by mistake. Candidates can reach you four ways: a public link with no login, a single resume upload, a bulk upload, and a spreadsheet import that checks for duplicates first."</p>
+  <p class="line"><span class="nm p">Preethi</span>"Here is the bulk one. I pick a whole folder of resumes and upload them together, and it takes all of them in for reading."</p>
+  <p class="line"><span class="nm d">Danish</span>"Status on this part: the form builder and all four ways in are working today."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>Form builder and all four intake paths are working today.</div>
+</div>
+
+<!-- ===================== 3. PARSING + COST ===================== -->
+<div class="scene-head"><span class="scene-no">3</span><span class="scene-title">Reading the resume, and tracking the cost</span><span class="time">4:30 &ndash; 7:00</span></div>
+<div class="op s"><span class="tag">OPERATOR &middot; SANJAY</span><ol class="opsteps">
+  <li>Click <b>Candidates</b>, then click one candidate to open their profile.</li>
+  <li>Scroll to the <b>Parsed résumé</b> section (it has an AI icon, with Fields and Skills).</li>
+  <li>Click <b>Billing &amp; Plan</b> in the sidebar. Point to the <b>AI spend trend</b> chart.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"Once a resume comes in, the AI reads it and fills in the profile. Here is one, the name, contact details, years of experience, skills, and the work history, all pulled out automatically. Each field also gets a confidence score, and it flags anything that looks off, so the recruiter knows where to ask a follow-up question."</p>
+  <p class="line"><span class="nm d">Danish</span>"On cost, since that usually comes up early. We track every AI call, so we can tell you what the system actually costs to run. This chart is the month's AI spend by provider. Two honest notes here. First, the chart is in US dollars right now, we still need to switch the display to rupees. Second, we do not have a per-resume cost figure on screen yet. We work it out from the total, which comes to roughly two rupees a resume. If a per-resume view would be useful to you, it is a small addition."</p>
+  <p class="line"><span class="nm p">Preethi</span>"From the HR side, the simple value is that the recruiter opens a profile that is already read and organised, instead of a stack of raw PDFs to wade through."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>Resume reading and cost tracking work. &nbsp;<span class="pill prog">IN PROGRESS</span>currency display (dollars to rupees). &nbsp;<span class="pill next">NEXT</span>optional per-resume cost view, if you want it.</div>
+</div>
+
+<!-- ===================== 4. SCORING + FAIRNESS ===================== -->
+<div class="scene-head"><span class="scene-no">4</span><span class="scene-title">Scoring, with the reason shown</span><span class="time">7:00 &ndash; 9:30</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Screening</b> in the sidebar. Click the top candidate to open their scorecard.</li>
+  <li>Expand the requirement list, then turn on the <b>Reasoning trace</b> toggle.</li>
+  <li>Click <b>Review Queue</b> in the sidebar (under Intelligence) to show flagged candidates.</li>
+  <li>Click <b>Compliance</b> (under Governance), then open the <b>Adverse impact</b> tab.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"Next, screening. Each candidate is scored against the specific job, with a clear result: pass, review, or fail. We also focused on the reason behind each score. For every requirement, it shows met or not met, and the exact line from the resume that backs it up. So every decision can be explained and audited if needed."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"Under the hood, it reads each requirement and looks for real evidence, rather than just matching keywords, and it keeps the bar steady across candidates for the same role. When it is not confident, it does not decide on its own. It sends the candidate to a review queue for a person to look at."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And here is that review queue, where a person makes the final call. The screen is clear that the AI only advises. We have also built a fairness view that checks for adverse impact against the standard rule. One honest note: the scoring and the evidence are working, but some of the numbers on this fairness screen are still sample data while we finish connecting the real figures."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>scoring, per-requirement evidence, and the human review queue. &nbsp;<span class="pill prog">IN PROGRESS</span>the fairness dashboard (partly sample data for now).</div>
+</div>
+
+<!-- ===================== 5. INTERVIEWS ===================== -->
+<div class="scene-head"><span class="scene-no">5</span><span class="scene-title">Setting up the interview</span><span class="time">9:30 &ndash; 10:45</span></div>
+<div class="op p"><span class="tag">OPERATOR &middot; PREETHI</span><ol class="opsteps">
+  <li>Click <b>Interviews</b> in the sidebar, then click <b>Schedule interview</b> (top right).</li>
+  <li>Pick the <b>Candidate</b>, pick the <b>Requisition</b>, then pick the <b>Round</b> (it loads from the job's interview loop).</li>
+  <li>Set the <b>Date &amp; time</b> and the <b>Duration</b>, then click <b>Schedule</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"When a candidate passes, we set up the interview here. I pick the candidate and the job, it already knows the job's interview rounds so I just choose one, I set a time, and click Schedule. It creates a real interview that the panel can see."</p>
+  <p class="line"><span class="nm s">Sanjay</span>"Two things to be clear about. Creating and tracking interviews works today. The smarter part, where the system reads everyone's calendar and picks a conflict-free time by itself, is designed but needs us to connect Google or Outlook calendars first. That is on our next list, not done yet."</p>
+  <p class="line"><span class="nm d">Danish</span>"So this area is partly there. Scheduling works now, automatic calendar booking is a next step."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>creating and tracking interviews. &nbsp;<span class="pill next">NEXT</span>calendar integration so it can pick times automatically.</div>
+</div>
+
+<!-- ===================== 6. ACCESS + DATA SAFETY ===================== -->
+<div class="scene-head"><span class="scene-no">6</span><span class="scene-title">Access levels and keeping data separate</span><span class="time">10:45 &ndash; 12:15</span></div>
+<div class="op s"><span class="tag">OPERATOR &middot; SANJAY</span><ol class="opsteps">
+  <li>Click <b>Settings</b> in the sidebar, then open <b>Team &amp; roles</b>.</li>
+  <li>Show the people list with their <b>roles</b> and the <b>Reports to</b> column.</li>
+  <li>Point to the <b>Invite member</b> button (no need to actually send one).</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm s">Sanjay</span>"On access and data safety. There are three levels: a platform admin over the whole system, the company admin, which is your side, and the team beneath that, managers, recruiters, interviewers. A manager can add their own people but cannot give anyone more access than they have themselves. You can see who reports to whom right here. And on keeping companies separate: one company's data cannot be seen by another. That is enforced at the database level, not just in our application code, and it fails safe. This is in place across our services."</p>
+  <p class="line"><span class="nm d">Danish</span>"Passwords are properly secured, and two-step login and single sign-on are supported."</p>
+  <p class="line"><span class="nm p">Preethi</span>"And for HR specifically, a hiring manager can grow their own team without waiting on a ticket, and everyone only sees the people they actually manage."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>three access levels, database-level data separation, and secure login.</div>
+</div>
+
+<!-- ===================== 7. COST CONTROL ===================== -->
+<div class="scene-head"><span class="scene-no">7</span><span class="scene-title">Cost control and plans</span><span class="time">12:15 &ndash; 13:15</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Billing &amp; Plan</b> in the sidebar (under Workspace).</li>
+  <li>Show <b>Usage this period</b>: <b>Agent runs</b>, <b>Tokens in</b>, <b>Tokens out</b>.</li>
+  <li>Click <b>Change plan</b> to open the options, then close the window.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"Quickly on cost control. The idea is that you pay for what is used, not per person on the team. Here is usage and spend for the month. Plans have limits, and if you reach one you get a clear message rather than a surprise bill. We can switch an expensive feature off, and set a monthly cap. The usage and limits work today. The plan-change request flow is wired but still a little rough, and we are polishing it."</p>
+  <p class="line"><span class="nm p">Preethi</span>"The point for you is that the cost tracks how much hiring you actually do, rather than how big your team is."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>usage, spend, and plan limits. &nbsp;<span class="pill prog">IN PROGRESS</span>the plan-change request flow (being polished).</div>
+</div>
+
+<!-- ===================== 8. COMPLIANCE + RECORDS ===================== -->
+<div class="scene-head"><span class="scene-no">8</span><span class="scene-title">Records and data handling</span><span class="time">13:15 &ndash; 14:00</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Click <b>Compliance</b>, then open the <b>Audit log</b> tab to show the timeline.</li>
+  <li>Click <b>Settings</b>, then <b>Data retention</b>. Point to <b>Honor erasure requests</b> and <b>Purge now</b>.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm p">Preethi</span>"Last part, records and data handling. Every important action is written to an audit log you cannot edit, only add to. And in settings, you set how long to keep data and switch on automatic handling of erasure requests. One honest point here: a single 'export everything for this candidate' button is not in the screen yet, that currently runs in the back end. We can add a button if your team would use it, and that is a good example of where your input helps us decide what to build next."</p>
+  <div class="status"><span class="lab">STATUS</span><span class="pill done">DONE</span>audit log and data-retention settings. &nbsp;<span class="pill next">NEXT</span>per-candidate export and erase buttons in the UI, if wanted.</div>
+</div>
+
+<!-- ===================== CLOSE ===================== -->
+<div class="scene-head"><span class="scene-no">&#9679;</span><span class="scene-title">Where we are, and what we need from you</span><span class="time">14:00 &ndash; 15:00</span></div>
+<div class="op d"><span class="tag">OPERATOR &middot; DANISH</span><ol class="opsteps">
+  <li>Return to a clean <b>Home</b> dashboard so the screen is tidy for questions.</li>
+</ol></div>
+<div class="scene">
+  <p class="line"><span class="nm d">Danish</span>"So that is where we are. The core flow, apply, read, screen, interview, and the admin side, works end to end today. The main things still in progress are connecting the real fairness numbers, the calendar integration for interviews, and a few smaller polish items we flagged along the way."</p>
+  <p class="line"><span class="nm p">Preethi</span>"What would help us most now is your steer. A few questions for you. Of the things still in progress, which matters most to your teams? Are there fields or steps in the hiring flow that we have missed? And how would you like fairness and data-deletion handled, so it fits your own policies?"</p>
+  <p class="line"><span class="nm s">Sanjay</span>"We will take your feedback into the next round and come back with these gaps closed and a tighter, more finished build."</p>
+  <p class="line"><span class="nm d">Danish</span>"Thank you. We are happy to go deeper on any part, or take your questions now."</p>
+</div>
+
+<!-- ===================== APPENDIX ===================== -->
+<section class="appendix">
+  <div class="ap-head">Status at a glance</div>
+  <p class="ap-sub">A one-look summary you can leave with the team.</p>
+  <table class="stat">
+    <thead><tr><th>Area</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Application form builder + four intake paths</td><td><span class="pill done">DONE</span>working today</td></tr>
+      <tr><td>AI resume reading (parsing) and cost tracking</td><td><span class="pill done">DONE</span>working &nbsp;<span class="pill prog">IN PROGRESS</span>currency display, optional per-resume cost</td></tr>
+      <tr><td>Screening: score + per-requirement evidence + review queue</td><td><span class="pill done">DONE</span>working today</td></tr>
+      <tr><td>Fairness / adverse-impact dashboard</td><td><span class="pill prog">IN PROGRESS</span>some sample data, real figures being wired</td></tr>
+      <tr><td>Interview scheduling and tracking</td><td><span class="pill done">DONE</span>working &nbsp;<span class="pill next">NEXT</span>automatic calendar booking</td></tr>
+      <tr><td>Three access levels + database data separation + secure login</td><td><span class="pill done">DONE</span>working today</td></tr>
+      <tr><td>Billing: usage, spend, plan limits, cost cap</td><td><span class="pill done">DONE</span>working &nbsp;<span class="pill prog">IN PROGRESS</span>plan-change flow polish</td></tr>
+      <tr><td>Audit log + data-retention settings</td><td><span class="pill done">DONE</span>working &nbsp;<span class="pill next">NEXT</span>per-candidate export/erase buttons</td></tr>
+    </tbody>
+  </table>
+
+  <div class="ap-head" style="font-size:14pt;">Open questions for you</div>
+  <p class="ap-sub">What we would like your input on before the next round.</p>
+  <ol class="qs">
+    <li>Of the in-progress items, fairness data, calendar integration, plan-change polish, which is the highest priority for your teams?</li>
+    <li>Are there application-form fields or hiring-pipeline steps your teams need that we have not built yet?</li>
+    <li>How would you like fairness monitoring surfaced, and who should see it?</li>
+    <li>For data deletion, do you want per-candidate export and erase buttons in the screen, or is the automatic retention handling enough?</li>
+    <li>Is a per-resume cost view worth building, or is the monthly total sufficient?</li>
+  </ol>
+
+  <div class="honest">
+    <b>A note on how we have framed status.</b> Everything shown is the live system, not a mock-up. We have marked each area Done, In progress, or Next, and we have called out the specific gaps in plain terms: the billing figures display in dollars and need switching to rupees, the fairness screen still shows some sample data, automatic calendar-based scheduling needs a calendar connected, and per-candidate data export and erase currently run in the back end rather than as buttons. We would rather be clear about these now than oversell them.
+  </div>
+
+  <p class="foot">TalentFlow ATS &middot; Build Review, Round 1 &middot; Danish, Sanjay &amp; Preethi &middot; development team update</p>
+</section>
+
+</body>
+</html>

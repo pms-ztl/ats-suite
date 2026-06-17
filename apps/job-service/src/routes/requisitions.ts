@@ -10,6 +10,7 @@ const requireReqEditor = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { RequisitionStatusSchema, FormFieldSchema } from "@cdc-ats/contracts";
 import { prisma, prismaAdmin } from "../lib/prisma.js";
 import { fetchPlanLimits } from "../lib/service-client.js";
+import { ensurePublishedPosting } from "../lib/ensure-posting.js";
 
 const router = Router();
 
@@ -132,6 +133,11 @@ router.post("/", requireReqEditor, async (req: Request, res: Response, next: Nex
         customFields: (body.customFields ?? []) as any,
       },
     });
+    // Best-effort: a requisition opened on create gets a published career-portal
+    // posting immediately (never fails the create).
+    if (requisition.status === "OPEN") {
+      await ensurePublishedPosting(prisma, tenantId, requisition.id);
+    }
     created(res, { ...requisition, complianceWarnings: complianceWarnings(requisition as any) });
   } catch (err) { next(err); }
 });
@@ -163,6 +169,11 @@ router.patch("/:id", requireReqEditor, async (req: Request, res: Response, next:
     const { count } = await prisma.requisition.updateMany({ where: { id, tenantId }, data });
     if (count === 0) throw Errors.notFound("Requisition");
     const updated = await prisma.requisition.findUnique({ where: { id } });
+    // Best-effort: when a requisition transitions INTO OPEN, ensure it has a
+    // published career-portal posting (idempotent; never fails the update).
+    if (updated?.status === "OPEN" && existing.status !== "OPEN") {
+      await ensurePublishedPosting(prisma, tenantId, id);
+    }
     ok(res, { ...updated, complianceWarnings: complianceWarnings(updated as any) });
   } catch (err) { next(err); }
 });

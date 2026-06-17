@@ -15,6 +15,7 @@ import {
   runAgent,
   runAgenticAgent,
   hasAgenticAgent,
+  realLLMAvailable,
   publishAgentCompleted,
   type SourcingInput,
   type SourcingOutput,
@@ -137,6 +138,218 @@ router.post("/", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Re
       tokensUsed: result.snapshot.tokensIn + result.snapshot.tokensOut,
       costUsd: result.snapshot.costUsd,
       modelName: result.snapshot.modelName,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── POST /internal/sourcing/search ──────────────────────────────────────
+// Free-text "who I need" → REAL AI ranking of the tenant's OWN candidate
+// pool. This is what the /sourcing page button calls.
+//   body:   { query: string, limit?: number }
+//   ranks: the tenant's real Candidate rows (parsed resume text + skills +
+//          summary) against `query` using the real LLM (sourcing agent, Groq
+//          via the ai-engine). Falls back to a real keyword/skill score over
+//          the same rows if the LLM is unavailable. Never invents people.
+//   returns: { query, scanned, usedLLM, matches: [{ candidateId, name, role,
+//             score (0-100 fit), evidence }], summary?, agentRunId?, ... }
+
+/** Flatten parsed skills (string | {label}|{id}|{raw}) to a lowercased list. */
+function parsedSkillList(parsed: any): string[] {
+  const raw = parsed?.skills;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((s: any) => (typeof s === "string" ? s : s?.label ?? s?.raw ?? s?.id ?? ""))
+    .filter(Boolean);
+}
+
+/** Best-effort current role/title from real parsed data — never fabricated. */
+function deriveRole(c: { summary?: string | null; parsedSummary?: any }): string {
+  const p = c.parsedSummary ?? {};
+  if (typeof p.headline === "string" && p.headline.trim()) return p.headline.trim();
+  if (Array.isArray(p.experience) && p.experience.length) {
+    const e = p.experience[0];
+    const title = e?.raw?.title ?? e?.title ?? "";
+    const company = e?.companyLabel ?? e?.raw?.company ?? "";
+    const joined = [title, company].filter(Boolean).join(" @ ");
+    if (joined) return joined;
+  }
+  return "";
+}
+
+/** Signal-dense profile text fed to the LLM ranker (real candidate data only). */
+function profileSummary(c: {
+  summary?: string | null; tags?: string[]; parsedSummary?: any;
+}): string {
+  const p = c.parsedSummary ?? {};
+  const skills = parsedSkillList(p);
+  const tags = (c.tags ?? []) as string[];
+  const allSkills = Array.from(new Set([...skills, ...tags]));
+  const exp = Array.isArray(p.experience)
+    ? p.experience
+        .map((e: any) => `${e?.raw?.title ?? e?.title ?? ""} ${e?.companyLabel ?? e?.raw?.company ?? ""}`.trim())
+        .filter(Boolean)
+    : [];
+  const parts = [
+    c.summary ?? p.summary ?? "",
+    typeof p.totalYearsExperience === "number" ? `${p.totalYearsExperience} years total experience` : "",
+    allSkills.length ? `Skills: ${allSkills.slice(0, 30).join(", ")}` : "",
+    exp.length ? `Experience: ${exp.slice(0, 8).join("; ")}` : "",
+  ];
+  return parts.filter(Boolean).join("\n").trim();
+}
+
+const SearchSchema = z.object({
+  query: z.string().min(2).max(2000),
+  limit: z.number().int().min(1).max(50).optional(),
+});
+
+router.post("/search", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const { query, limit } = SearchSchema.parse(req.body);
+    const max = limit ?? 10;
+
+    // 1. Load the tenant's REAL candidate pool (RLS-scoped). This is the
+    //    knowledge base — no external data, no fabricated rows.
+    const candidates = await prisma.candidate.findMany({
+      where: { tenantId },
+      take: 500,
+      orderBy: { createdAt: "desc" },
+    });
+
+    // 2. Honest empty — the tenant simply has no candidates yet.
+    if (candidates.length === 0) {
+      return ok(res, {
+        query,
+        scanned: 0,
+        usedLLM: false,
+        matches: [],
+        summary: "No candidates in your pool yet. Import or receive applications to build a searchable talent base.",
+      });
+    }
+
+    // Pre-compute per-candidate derived role + profile text from real data.
+    const enriched = candidates.map((c) => ({
+      row: c,
+      name: `${c.firstName} ${c.lastName}`.trim(),
+      role: deriveRole(c),
+      profile: profileSummary(c),
+      skills: Array.from(
+        new Set([...(c.tags ?? []), ...parsedSkillList(c.parsedSummary)]),
+      ),
+    }));
+
+    // Pre-rank by lightweight keyword/skill relevance. Used to (a) feed the LLM a
+    // SHORTLIST that fits the model's tokens-per-minute budget (sending all rows
+    // overflows Groq's free-tier TPM), and (b) drive the no-LLM fallback.
+    const terms = Array.from(
+      new Set(
+        query
+          .toLowerCase()
+          .split(/[^a-z0-9+#.]+/i)
+          .map((t) => t.trim())
+          .filter((t) => t.length >= 2),
+      ),
+    );
+    const ranked = enriched
+      .map((e) => {
+        const hay = `${e.name} ${e.role} ${e.profile} ${e.skills.join(" ")}`.toLowerCase();
+        const skillBag = e.skills.map((s) => s.toLowerCase());
+        const hits = terms.filter((t) => skillBag.some((s) => s.includes(t)) || hay.includes(t));
+        return { e, score: terms.length ? Math.round((hits.length / terms.length) * 100) : 0, hits };
+      })
+      .sort((a, b) => b.score - a.score);
+    // The LLM only sees the most-relevant slice (or the first N on a vague query),
+    // with tight per-candidate summaries, so the prompt stays under the TPM limit.
+    const LLM_POOL = 30;
+    const llmShortlist = (ranked.some((r) => r.score > 0) ? ranked.filter((r) => r.score > 0) : ranked).slice(0, LLM_POOL);
+
+    // 3. Real LLM ranking via the sourcing agent (Groq through the ai-engine).
+    //    We treat the free-text query as the requisition's title+requirements
+    //    so the agent's evidence is grounded in the real candidate profiles.
+    if (realLLMAvailable("claude-sonnet-4-20250514")) {
+      try {
+        const candidatePool: SourcingInput["candidatePool"] = llmShortlist.map(({ e }) => ({
+          id: e.row.id,
+          name: e.name,
+          skills: e.skills.slice(0, 12),
+          ...(e.profile ? { summary: `${e.role ? e.role + ". " : ""}${e.profile}`.slice(0, 220) } : {}),
+          source: "database" as const,
+        }));
+
+        const result = await runAgent<SourcingInput, SourcingOutput>({
+          agentType: "sourcing",
+          input: {
+            requisition: {
+              id: "free-text-search",
+              title: query,
+              department: "",
+              description: `Find candidates matching this request: ${query}`,
+              requirements: [query],
+            },
+            candidatePool,
+            maxResults: max,
+          },
+          context: { tenantId, userId, persistRun: publishAgentCompleted(logger) },
+        });
+
+        const byId = new Map(enriched.map((e) => [e.row.id, e]));
+        const matches = result.output.candidates
+          .map((c) => {
+            const e = byId.get(c.id);
+            if (!e) return null; // drop anything not in the real pool
+            return {
+              candidateId: c.id,
+              name: e.name || c.name,
+              role: e.role,
+              score: Math.round(Math.max(0, Math.min(1, c.matchScore)) * 100),
+              evidence: c.rationale,
+            };
+          })
+          .filter((m): m is NonNullable<typeof m> => m !== null)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, max);
+
+        logger.info({ scanned: candidates.length, returned: matches.length }, "AI sourcing search finished");
+        return ok(res, {
+          query,
+          scanned: candidates.length,
+          usedLLM: true,
+          matches,
+          summary: result.output.summary,
+          agentRunId: result.agentRunId,
+          tokensUsed: result.snapshot.tokensIn + result.snapshot.tokensOut,
+          costUsd: result.snapshot.costUsd,
+          modelName: result.snapshot.modelName,
+        });
+      } catch (err) {
+        // LLM failed mid-run — fall through to the real keyword scorer below
+        // rather than 500ing. Still real data, just no LLM.
+        logger.warn({ err }, "AI sourcing LLM failed; falling back to keyword match");
+      }
+    }
+
+    // 4. Fallback — real keyword/skill scoring over the real rows (reusing the
+    //    pre-ranking above). No invented people; evidence cites matched terms.
+    const scored = ranked.filter((x) => x.score > 0).slice(0, max);
+
+    return ok(res, {
+      query,
+      scanned: candidates.length,
+      usedLLM: false,
+      matches: scored.map((x) => ({
+        candidateId: x.e.row.id,
+        name: x.e.name,
+        role: x.e.role,
+        score: x.score,
+        evidence: x.hits.length
+          ? `Keyword match on ${x.hits.slice(0, 6).join(", ")} (LLM ranking unavailable).`
+          : "Partial match (LLM ranking unavailable).",
+      })),
+      summary: `Matched ${scored.length} of ${candidates.length} candidates by keyword/skill overlap (AI ranker unavailable).`,
     });
   } catch (err) {
     next(err);

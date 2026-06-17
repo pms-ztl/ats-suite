@@ -35,6 +35,7 @@ export default function ChatPage() {
   const [users, setUsers] = useState<AssignableUser[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [sending, setSending] = useState(false);
+  const [threadLoading, setThreadLoading] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<string | null>(null);
   selectedRef.current = selected;
@@ -49,9 +50,18 @@ export default function ChatPage() {
 
   const openConvo = useCallback(async (id: string) => {
     setSelected(id);
-    setMessages(await getConversationMessages(id));
-    await markConversationRead(id);
-    setConvos((cs) => cs.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
+    // Clear the previous thread and show a loading state immediately so the
+    // panel never flashes a misleading "empty thread" while the real messages
+    // for THIS conversation are still in flight.
+    setMessages([]);
+    setThreadLoading(true);
+    try {
+      setMessages(await getConversationMessages(id));
+      await markConversationRead(id);
+      setConvos((cs) => cs.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
+    } finally {
+      setThreadLoading(false);
+    }
   }, []);
 
   useEffect(() => { reloadConvos(); listAssignableUsers().then(setUsers); }, [reloadConvos]);
@@ -96,6 +106,9 @@ export default function ChatPage() {
 
   const selectedConvo = convos.find((c) => c.id === selected);
   const title = (c: Conversation) => c.title || c.participantIds.filter((p) => p !== meId).map(nameOf).join(", ") || "Conversation";
+  // Header title for the open thread: use the conversation's resolved name, or a
+  // neutral label while the conversation metadata is still loading into the list.
+  const selectedTitle = selectedConvo ? title(selectedConvo) : "Conversation";
 
   return (
     <div className="cd-scope" style={{ height: "100%", display: "flex", background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}>
@@ -138,9 +151,9 @@ export default function ChatPage() {
 
       {/* thread */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        {selectedConvo ? (
+        {selected ? (
           <>
-            <div style={{ padding: "16px 22px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-lg)" }}>{title(selectedConvo)}</div>
+            <div style={{ padding: "16px 22px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-lg)" }}>{selectedTitle}</div>
             <div ref={threadRef} style={{ flex: 1, overflowY: "auto", padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
               {messages.map((m) => {
                 const mine = m.senderId === meId;
@@ -152,7 +165,8 @@ export default function ChatPage() {
                   </div>
                 );
               })}
-              {messages.length === 0 && <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-sm)", margin: "auto" }}>Say hello.</div>}
+              {threadLoading && messages.length === 0 && <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-sm)", margin: "auto" }}>Loading conversation…</div>}
+              {!threadLoading && messages.length === 0 && <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-sm)", margin: "auto" }}>No messages yet — say hello.</div>}
             </div>
             <div style={{ padding: "14px 22px", borderTop: "1px solid var(--c-line)", display: "flex", gap: 10, alignItems: "flex-end" }}>
               <textarea value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} rows={1} placeholder="Write a message... (Enter to send)" style={{ flex: 1, resize: "none", padding: "11px 14px", borderRadius: "var(--r-lg)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-sans)", outline: "none", maxHeight: 120 }} />
