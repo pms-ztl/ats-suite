@@ -27,8 +27,10 @@
   --ease-spring: cubic-bezier(.34,1.4,.5,1);
   --t-fast: .13s; --t: .24s; --t-slow: .46s;
 
-  /* ---- Shell layout dimensions (used by the Aurora app shell) ---- */
-  --topbar: 56px; --side: 268px; --rail: 64px;
+  /* ---- Shell layout dimensions (used by the Aurora app shell) ----
+     Aligned to the .cd-scope values in cd-tokens.css so the two definitions
+     cannot diverge (the shell chrome reads these). --side stays 268px. */
+  --topbar: 60px; --side: 268px; --rail: 76px;
 
   /* ---- LIGHT THEME palette (bare oklch channels) ---- */
   color-scheme: light;
@@ -217,6 +219,14 @@ body {
 
 /* ---- Aurora ambient field + film grain (the System & Shell background) ---- */
 .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; opacity: var(--aurora-opacity); transition: opacity var(--t-slow) var(--ease-out); }
+
+/* Aurora dial-down on dense data routes (home, screening, analytics): cd-shell.tsx
+   sets data-dense="1" on the .cd-scope wrapper from the pathname. The .aurora div
+   is a sibling of #main (which contains .cd-scope), so a body:has() match dims it
+   to ~.18 (light) / ~.22 (dark) so the ambient field never competes with charts.
+   Marketing/auth/empty screens carry no .cd-scope, so the richer aurora stays. */
+body:has(.cd-scope[data-dense="1"]) .aurora { opacity: 0.18; }
+.dark body:has(.cd-scope[data-dense="1"]) .aurora { opacity: 0.22; }
 .aurora i { position: absolute; display: block; border-radius: 50%; filter: blur(70px); will-change: transform; }
 .aurora .b1 { width: 46vw; height: 46vw; left: -8vw; top: -12vw; background: radial-gradient(circle at 50% 50%, var(--c-brand) 0%, transparent 68%); opacity: .09; animation: drift1 26s var(--ease-io) infinite alternate; }
 .aurora .b2 { width: 40vw; height: 40vw; right: -10vw; top: 4vw; background: radial-gradient(circle at 50% 50%, var(--c-ai) 0%, transparent 68%); opacity: .13; animation: drift2 32s var(--ease-io) infinite alternate; }
@@ -253,6 +263,17 @@ body {
    stack to one column on narrow screens (no empty auto-fit track left over). */
 .viz-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
 @media (max-width: 880px) { .viz-2up { grid-template-columns: 1fr; } }
+/* HITL review queue: fixed 380px rail + flexible detail; each pane owns its own scroll
+   on desktop. Under 1024px it collapses to a single column and scrolls as one document
+   (the panes drop their fixed per-pane height so nothing is clipped). */
+.hitl-split { display: grid; grid-template-columns: 380px 1fr; height: 100%; min-height: 0; align-items: stretch; }
+@media (max-width: 1024px) {
+  .hitl-split { grid-template-columns: 1fr; height: auto; min-height: 100%; overflow-y: auto; }
+  .hitl-split > aside { border-right: none !important; border-bottom: 1px solid var(--line); }
+  .hitl-split > aside, .hitl-split > .hitl-detail { overflow: visible !important; height: auto !important; }
+}
+/* Auto-fit chart-card region: gains columns on ultrawide, collapses to 1 col under ~1024px. */
+.cd-autofit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(8px, 2vw, 24px); align-items: stretch; }
 .skeleton-shimmer { position: relative; overflow: hidden; background: oklch(var(--surface-2)); }
 .skeleton-shimmer::after { content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, oklch(1 0 0 / .14), transparent); animation: shimmer 1.5s infinite; }
 .animate-page-in { animation: fadeInUp .2s var(--ease-out) forwards; }

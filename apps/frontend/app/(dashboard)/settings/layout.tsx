@@ -14,7 +14,7 @@ const NAV: { group: string; items: [string, string][] }[] = [
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   return (
-    <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 gap-4 md:grid-cols-[230px_1fr]">
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-[230px_1fr]">
       <nav aria-label="Settings" className="md:sticky md:top-6 md:self-start">
         <h1 className="mb-3 text-lg font-extrabold tracking-tight">Settings</h1>
         {NAV.map((g) => (

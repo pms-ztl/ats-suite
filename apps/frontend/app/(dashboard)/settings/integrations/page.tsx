@@ -187,7 +187,7 @@ function MarketplacePanel() {
 
 export default function IntegrationsSettingsPage() {
   return (
-    <div style={{ maxWidth: 1000, animation: "rise .3s var(--ease-out)" }}>
+    <div style={{ animation: "rise .3s var(--ease-out)" }}>
       <MarketplacePanel />
     </div>
   );

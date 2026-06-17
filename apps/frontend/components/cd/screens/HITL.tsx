@@ -26,7 +26,7 @@ export function HITL({ data, onResolve }: { data: HitlData; onResolve?: (id: str
   const resolve = (verb: string) => { setDone((d) => ({ ...d, [sel as string]: verb })); setConfirm(false); onResolve?.(sel as string, verb, code); };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", height: "100%", minHeight: 0 }}>
+    <div className="hitl-split">
       <aside style={{ borderRight: "1px solid var(--line)", overflowY: "auto", background: "color-mix(in oklab, var(--surface) 50%, transparent)" }}>
         <div style={{ padding: "18px 18px 12px", position: "sticky", top: 0, background: "var(--bg)", zIndex: 2, borderBottom: "1px solid var(--line)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
@@ -60,8 +60,8 @@ export function HITL({ data, onResolve }: { data: HitlData; onResolve?: (id: str
         })}
       </aside>
 
-      <div style={{ overflowY: "auto", padding: "26px 30px 40px" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+      <div className="hitl-detail" style={{ overflowY: "auto" }}>
+        <div className="cd-page">
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
             <Pill mono>{cur.id}</Pill>
             <h2 style={{ margin: 0, fontSize: "var(--fs-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{cur.kind}</h2>

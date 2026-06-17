@@ -16,7 +16,7 @@ const MOBILITY_DATA: MobilityData = {
 export function MobilityLive() {
   return (
     <div>
-      <div style={{ display: "flex", gap: 9, alignItems: "center", margin: "14px 24px 0", padding: "10px 14px", borderRadius: "var(--r, 11px)", background: "var(--warn-tint)", color: "var(--warn)", border: "1px solid color-mix(in oklab, var(--warn) 32%, transparent)", fontSize: 12.5, fontWeight: 600 }}>
+      <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 14, padding: "10px 14px", borderRadius: "var(--r, 11px)", background: "var(--warn-tint)", color: "var(--warn)", border: "1px solid color-mix(in oklab, var(--warn) 32%, transparent)", fontSize: 12.5, fontWeight: 600 }}>
         <span aria-hidden>⚠</span>
         <span><b>Sample preview</b>: the internal-mobility engine is not enabled for this workspace yet; these matches are illustrative.</span>
       </div>

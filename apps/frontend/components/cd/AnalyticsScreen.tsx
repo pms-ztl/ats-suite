@@ -52,8 +52,8 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
     .map((s) => ({ src: s.src, n: sourcesHaveHires ? s.hires : s.apps, color: s.color }));
   const sourceMetric = sourcesHaveHires ? "Hires" : "Applications";
   return (
-    <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+    <div style={{ overflowY: "auto", height: "100%" }}>
+      <div className="cd-page">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
           <div><h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Analytics</h1>
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>Hiring performance across {a.orgName} · {a.range}.</p></div>
@@ -74,7 +74,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
 
         {/* conversion gauge + channel orbit - the same real funnel/source data the
             cards below use (conversion = applied->hired, dots = applications per channel) */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
           <Reveal i={4}><SectionCard title="Pipeline conversion" icon="check">
             <ArcMeter value={conversionPct ?? null} sub="applied to hired" emptyLabel="Conversion appears once candidates flow." />
           </SectionCard></Reveal>
@@ -110,7 +110,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
         <div style={{ height: 16 }} />
 
         {/* KPIs */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }} className="an-kpis">
+        <div className="cd-grid-kpi an-kpis" style={{ marginBottom: 18 }}>
           {a.kpis.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}
         </div>
 
@@ -121,7 +121,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
               <div style={{ display: "flex", gap: 9, alignItems: "center" }}><Icon name="sparkles" size={16} style={{ color: "var(--ai)" }} /><span style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>Insights</span><Pill mono tone="var(--ai-ink)" bg="var(--ai-tint-2)">analytics agent</Pill></div>
               <span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>ranked by severity · grounded in your data</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 0 }} className="an-insights">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 0 }} className="an-insights">
               {a.insights.map((ins, i) => (
                 <div key={i} style={{ padding: "16px 18px", borderLeft: i ? "1px solid var(--line)" : "none" }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}><SevDot sev={ins.sev} /><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: ins.sev === "critical" ? "var(--danger)" : ins.sev === "warning" ? "var(--warn)" : "var(--info)" }}>{ins.sev}</span></div>
@@ -135,7 +135,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
         </Reveal>
 
         {/* funnel + diversity */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
           <Reveal i={5}><SectionCard title="Pipeline funnel" icon="radar" headRight={a.funnelConversion ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{a.funnelConversion}</Pill> : undefined}>
             <div style={{ height: 260 }}>
               {funnelData.some((s) => s.value > 0)
@@ -160,7 +160,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
         </div>
 
         {/* time-to-hire trend + by dept */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
           <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={hasTth && a.tthDelta ? <Pill mono tone="var(--ink-2)" bg="var(--surface-2)">{a.tthDelta}</Pill> : undefined}>
             {/* Real monthly avg-days-to-hire with dashed median + p90 bands from
                 /api/analytics/time-to-hire. Empty -> honest EmptyChart. */}

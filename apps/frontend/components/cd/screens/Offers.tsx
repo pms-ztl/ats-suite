@@ -89,8 +89,8 @@ function OffersList({ data, lifecycle, onOpen, onCreate }: { data: OffersData; l
   }));
   const hasFunnel = offerFunnel[0].value > 0;
   return (
-    <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+    <div style={{ overflowY: "auto", height: "100%" }}>
+      <div className="cd-page">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
           <div><h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Offers</h1>
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>{offers.filter((o) => o.status === "draft").length} drafts · {offers.filter((o) => o.status === "pending").length} awaiting approval · {offers.filter((o) => o.status === "sent").length} sent.</p></div>

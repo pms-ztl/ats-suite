@@ -134,47 +134,42 @@ interface JobSummary {
   required: string[];
   custom: { label: string; help: string }[];
 }
-const DEFAULT_JOB: JobSummary = {
-  title: "Senior Backend Engineer",
-  dept: "Payments",
-  loc: "Austin, TX · Remote (US)",
-  min: 160,
-  max: 200,
-  blurb: "Design and scale the core services behind a platform that moves billions of dollars a year.",
-  required: [
-    "5+ years building backend services in production",
-    "Strong in Go, Rust, or a comparable systems language",
-    "Experience with distributed systems and event-driven architectures",
-    "Track record owning services from design through on-call",
-  ],
-  custom: [
-    { label: "Must have fintech domain experience", help: "Tell us about regulated money movement, payments, or banking work." },
-    { label: "Time-zone overlap", help: "Do you have at least 4 hours overlap with US Central?" },
-  ],
+// Honest neutral placeholder, NEVER fabricated job content. Until the real job
+// loads we show only a neutral title; a fetch failure renders an explicit error
+// state (see the render) rather than inventing a role, salary or requirements.
+const EMPTY_JOB: JobSummary = {
+  title: "This role",
+  dept: "",
+  loc: "",
+  min: null,
+  max: null,
+  blurb: "",
+  required: [],
+  custom: [],
 };
 
 function normalizeJob(d: any): JobSummary {
-  if (!d || typeof d !== "object") return DEFAULT_JOB;
+  if (!d || typeof d !== "object") return EMPTY_JOB;
   const j = d.data ?? d.job ?? d;
-  if (!j || typeof j !== "object") return DEFAULT_JOB;
+  if (!j || typeof j !== "object") return EMPTY_JOB;
   const custom = Array.isArray(j.customQuestions ?? j.custom ?? j.questions)
     ? (j.customQuestions ?? j.custom ?? j.questions).map((c: any) =>
         typeof c === "string"
           ? { label: c, help: "" }
           : { label: c.label ?? c.question ?? c.prompt ?? "Question", help: c.help ?? c.placeholder ?? c.description ?? "" })
-    : DEFAULT_JOB.custom;
+    : EMPTY_JOB.custom;
   const required = Array.isArray(j.requirements ?? j.required ?? j.mustHaves)
     ? (j.requirements ?? j.required ?? j.mustHaves).map((r: any) => (typeof r === "string" ? r : r.label ?? r.text ?? String(r)))
-    : DEFAULT_JOB.required;
+    : EMPTY_JOB.required;
   return {
-    title: j.title ?? j.name ?? DEFAULT_JOB.title,
-    dept: j.department ?? j.dept ?? DEFAULT_JOB.dept,
-    loc: j.location ?? j.loc ?? DEFAULT_JOB.loc,
-    min: typeof j.salaryMin === "number" ? Math.round(j.salaryMin / 1000) : (typeof j.min === "number" ? j.min : DEFAULT_JOB.min),
-    max: typeof j.salaryMax === "number" ? Math.round(j.salaryMax / 1000) : (typeof j.max === "number" ? j.max : DEFAULT_JOB.max),
-    blurb: j.summary ?? j.blurb ?? j.description ?? DEFAULT_JOB.blurb,
-    required: required.length ? required : DEFAULT_JOB.required,
-    custom: custom.length ? custom : DEFAULT_JOB.custom,
+    title: j.title ?? j.name ?? EMPTY_JOB.title,
+    dept: j.department ?? j.dept ?? EMPTY_JOB.dept,
+    loc: j.location ?? j.loc ?? EMPTY_JOB.loc,
+    min: typeof j.salaryMin === "number" ? Math.round(j.salaryMin / 1000) : (typeof j.min === "number" ? j.min : EMPTY_JOB.min),
+    max: typeof j.salaryMax === "number" ? Math.round(j.salaryMax / 1000) : (typeof j.max === "number" ? j.max : EMPTY_JOB.max),
+    blurb: j.summary ?? j.blurb ?? j.description ?? EMPTY_JOB.blurb,
+    required,
+    custom,
   };
 }
 
@@ -215,7 +210,9 @@ function Confirm({ job, reference, slug }: { job: JobSummary; reference: string 
 export default function ApplyPage() {
   const { slug, id } = useParams<{ slug: string; id: string }>();
 
-  const [job, setJob] = useState<JobSummary>(DEFAULT_JOB);
+  const [job, setJob] = useState<JobSummary>(EMPTY_JOB);
+  const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [done, setDone] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -231,13 +228,18 @@ export default function ApplyPage() {
   const [consent, setConsent] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // best-effort load of the job summary (tenant-scoped first, then public)
+  // best-effort load of the job summary (tenant-scoped first, then public). We
+  // NEVER fall back to a fabricated job: if the fetch fails we surface an honest
+  // error state instead of inventing a role / salary / requirements.
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     (async () => {
       const res = await raw([`/c/${slug}/jobs/${id}`, `/public/jobs/${id}`]);
-      if (!cancelled && res?.ok && res.data) setJob(normalizeJob(res.data));
+      if (cancelled) return;
+      if (res?.ok && res.data) setJob(normalizeJob(res.data));
+      else setLoadFailed(true);
+      setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [slug, id]);
@@ -284,28 +286,58 @@ export default function ApplyPage() {
   const salary = job.min != null && job.max != null ? `₹${job.min}k to ₹${job.max}k` : null;
   const jobsHref = slug ? `/c/${slug}/jobs` : "/jobs";
 
-  return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 20px", animation: "rise .4s var(--ease-out)" }}>
-      <a href={jobsHref} style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
-
-      {/* job header */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <Chip icon="briefcase">{job.dept}</Chip>
-        <Chip icon="pin">{job.loc}</Chip>
-        {salary && <Chip icon="card" tone="var(--c-brand)" bg="var(--c-brand-tint)">{salary}</Chip>}
+  // Honest loading + error states: we never render a fabricated job, so until
+  // the real role loads we show a neutral loader, and on failure an explicit
+  // "could not load" notice with a way back to the live job list.
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+        <a href={jobsHref} style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
+        <div style={{ color: "var(--c-ink-3)", fontSize: "var(--fs-md)", padding: "40px 0" }}>Loading this role...</div>
       </div>
-      <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 14px" }}>{job.title}</h1>
-      <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 18px" }}>{job.blurb} You will own services end to end and grow with a team that values clarity and craft.</p>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontWeight: 700, marginBottom: 9 }}>What you will need</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {job.required.map((r, i) => (
-            <div key={i} style={{ display: "flex", gap: 9, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
-              <I n="check" s={17} c="var(--c-brand)" style={{ flexShrink: 0, marginTop: 1 }} />{r}
-            </div>
-          ))}
+    );
+  }
+  if (loadFailed) {
+    return (
+      <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+        <a href={jobsHref} style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-surface)", border: "1px solid var(--c-line)" }}>
+          <I n="shield" s={18} c="var(--c-ink-3)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>We could not load this role.</div>
+            <p style={{ margin: "4px 0 0", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.6 }}>It may have been closed or the link may be out of date. <a href={jobsHref} style={{ color: "var(--c-brand)", fontWeight: 600 }}>Browse open roles</a> to find another opening.</p>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+      <a href={jobsHref} style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
+
+      {/* job header - only render facets the real job actually provides */}
+      {(job.dept || job.loc || salary) && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+          {job.dept && <Chip icon="briefcase">{job.dept}</Chip>}
+          {job.loc && <Chip icon="pin">{job.loc}</Chip>}
+          {salary && <Chip icon="card" tone="var(--c-brand)" bg="var(--c-brand-tint)">{salary}</Chip>}
+        </div>
+      )}
+      <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 14px" }}>{job.title}</h1>
+      {job.blurb && <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 18px" }}>{job.blurb}</p>}
+      {job.required.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontWeight: 700, marginBottom: 9 }}>What you will need</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {job.required.map((r, i) => (
+              <div key={i} style={{ display: "flex", gap: 9, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
+                <I n="check" s={17} c="var(--c-brand)" style={{ flexShrink: 0, marginTop: 1 }} />{r}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AINotice />
 

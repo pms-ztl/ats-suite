@@ -199,7 +199,9 @@ const CSS = `
 .wsadminx .tabs a.on { color: var(--ink); border-bottom-color: var(--brand); }
 
 .wsadminx .body { padding: 26px 0 10px; }
-.wsadminx .wrap { max-width: 1100px; margin: 0 auto; }
+/* Cap + centering now come from the shared .cd-page container (cd-shell routes
+   flow pages through it), so .wrap no longer self-caps to 1100. */
+.wsadminx .wrap { }
 .wsadminx .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--r-pill); font-size: 11px; font-weight: 700; }
 .wsadminx .chip-brand { background: var(--brand-tint); color: var(--brand-ink); } .wsadminx .chip-ai { background: var(--ai-tint); color: var(--ai-ink); } .wsadminx .chip-ok { background: var(--ok-tint); color: var(--ok); } .wsadminx .chip-warn { background: var(--warn-tint); color: var(--warn); } .wsadminx .chip-danger { background: var(--danger-tint); color: var(--danger); } .wsadminx .chip-info { background: var(--info-tint); color: var(--info); }
 .wsadminx .pagehead { margin-bottom: 20px; } .wsadminx .pagehead h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.03em; } .wsadminx .pagehead p { font-size: 14px; color: var(--ink-2); margin-top: 5px; }
@@ -207,16 +209,17 @@ const CSS = `
 .wsadminx .scene { animation: wsadminx-rise .4s var(--ease-out) both; } @keyframes wsadminx-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* kpi cards */
-.wsadminx .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.wsadminx .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: clamp(8px, 2vw, 24px); margin-bottom: 18px; align-items: stretch; }
 .wsadminx .kpi { border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface); padding: 15px 16px; box-shadow: var(--e1); position: relative; overflow: hidden; }
 .wsadminx .kpi .l { font-size: 12px; color: var(--ink-2); font-weight: 600; display: inline-flex; gap: 7px; align-items: center; }
 .wsadminx .kpi .l .ic { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-3); }
 .wsadminx .kpi .v { font-size: 27px; font-weight: 800; letter-spacing: -0.03em; margin-top: 10px; }
 .wsadminx .kpi .d { font-size: 11.5px; font-weight: 700; margin-top: 6px; }
-@media (max-width: 820px){ .wsadminx .kpis { grid-template-columns: repeat(2, 1fr); } }
 
-.wsadminx .grid2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: start; }
-@media (max-width: 860px){ .wsadminx .grid2 { grid-template-columns: 1fr; } }
+/* Two-column working layout: auto-fit so ultrawide gains columns and the band
+   collapses to 1 col on narrow screens; stretch so the short column matches the
+   tall one (spec 2). */
+.wsadminx .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: clamp(8px, 2vw, 24px); align-items: stretch; }
 .wsadminx .card { border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--e1); overflow: hidden; }
 .wsadminx .card-h { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--line); }
 .wsadminx .card-h .t { font-weight: 700; font-size: 14.5px; display: inline-flex; gap: 8px; align-items: center; }
@@ -315,7 +318,7 @@ export default function WorkspaceAdminPage() {
   const { sorted: auditSorted, sort: auditSort, toggle: auditToggle } = useTableSort(AUDIT_ROWS);
 
   return (
-    <div className="wsadminx mx-auto w-full max-w-[1200px]">
+    <div className="wsadminx">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div style={{ display: "flex", gap: 9, alignItems: "center", margin: "14px 0 4px", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-warn-tint)", color: "var(--c-warn)", border: "1px solid color-mix(in oklab, var(--c-warn) 32%, transparent)", fontSize: 12.5, fontWeight: 600 }}>
         <span aria-hidden>⚠</span>

@@ -88,14 +88,17 @@ const inp: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRa
 
 interface FormField { id: string; type: string; label: string; required?: boolean; order?: number; options?: string[]; fileTypes?: string[]; maxSizeMb?: number; url?: string; src?: string; helpText?: string; placeholder?: string }
 interface JobSummary { title: string; dept: string; loc: string; min: number | null; max: number | null; blurb: string; required: string[] }
-const DEFAULT_JOB: JobSummary = { title: "This role", dept: "", loc: "", min: null, max: null, blurb: "", required: [] };
+// Honest neutral placeholder, NEVER fabricated job content. Until the real job
+// loads we show only a neutral title; a fetch failure renders an explicit error
+// state (see the render) rather than inventing a role, salary or requirements.
+const EMPTY_JOB: JobSummary = { title: "This role", dept: "", loc: "", min: null, max: null, blurb: "", required: [] };
 
 function normalizeJob(raw: any): JobSummary {
   const p = raw?.data ?? raw ?? {};
   const j = p.requisition ?? p.job ?? p;
   const required = Array.isArray(j?.requirements) ? j.requirements.map((r: any) => (typeof r === "string" ? r : r?.label ?? String(r))) : [];
   return {
-    title: p.title ?? j?.title ?? DEFAULT_JOB.title,
+    title: p.title ?? j?.title ?? EMPTY_JOB.title,
     dept: j?.department ?? "", loc: j?.location ?? "",
     min: typeof j?.salaryMin === "number" ? Math.round(j.salaryMin / 1000) : null,
     max: typeof j?.salaryMax === "number" ? Math.round(j.salaryMax / 1000) : null,
@@ -122,9 +125,10 @@ function Confirm({ title, reference }: { title: string; reference: string | null
 
 export default function ApplyPage() {
   const { id: slug } = useParams<{ id: string }>();
-  const [job, setJob] = useState<JobSummary>(DEFAULT_JOB);
+  const [job, setJob] = useState<JobSummary>(EMPTY_JOB);
   const [fields, setFields] = useState<FormField[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [consent, setConsent] = useState(false);
@@ -140,7 +144,10 @@ export default function ApplyPage() {
     (async () => {
       const [j, f] = await Promise.all([getJSON(`/public/jobs/${slug}`), getJSON(`/public/jobs/${slug}/form`)]);
       if (cancelled) return;
+      // NEVER fall back to a fabricated job: if the job summary fails to load we
+      // surface an honest error state instead of inventing a role / requirements.
       if (j) setJob(normalizeJob(j));
+      else { setLoadFailed(true); setLoading(false); return; }
       const fl = (f?.data?.fields ?? f?.fields ?? []) as FormField[];
       setFields([...fl].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
       setLoading(false);
@@ -178,8 +185,26 @@ export default function ApplyPage() {
 
   const salary = job.min != null && job.max != null ? `₹${job.min}k to ₹${job.max}k` : null;
 
+  // Honest error state: we never render a fabricated job, so a failed job-summary
+  // fetch surfaces an explicit "could not load" notice with a way back to the
+  // live job list rather than a placeholder role.
+  if (loadFailed) {
+    return (
+      <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+        <a href="/jobs" style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "16px 18px", borderRadius: "var(--r-lg)", background: "var(--c-surface)", border: "1px solid var(--c-line)" }}>
+          <I n="shield" s={18} c="var(--c-ink-3)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>We could not load this role.</div>
+            <p style={{ margin: "4px 0 0", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.6 }}>It may have been closed or the link may be out of date. <a href="/jobs" style={{ color: "var(--c-brand)", fontWeight: 600 }}>Browse open roles</a> to find another opening.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 20px", animation: "rise .4s var(--ease-out)" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
       <a href="/jobs" style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>

@@ -30,6 +30,25 @@
   /* layout (app shell rail / sidebar / topbar) */
   --rail: 76px; --side: 268px; --topbar: 60px;
 
+  /* page-shell width system (Every Layout "Center" pattern) */
+  --page-gutter: clamp(16px, 1rem + 1.5vw, 40px);  /* fluid side gutter */
+  --page-max: 1440px;        /* standard dashboard cap (cards/tables/charts) */
+  --page-max-wide: 1760px;   /* ultrawide / bento variant */
+  --page-max-prose: 66ch;    /* single-column running text only */
+
+  /* spacing ramp (4/8 base; additive, used by new code) */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+  /* status tokens (up/warn/down/info/no-data + tinted chip backgrounds) */
+  --st-good: #22C55E; --st-warn: #F59E0B; --st-bad: #EF4444; --st-info: #3B82F6; --st-nodata: #9CA3AF;
+  --st-good-bg: oklch(0.95 0.05 152); --st-warn-bg: oklch(0.955 0.05 80); --st-bad-bg: oklch(0.955 0.04 25);
+  --st-info-bg: oklch(0.95 0.04 245); --st-nodata-bg: oklch(0.96 0.004 175);
+
+  /* categorical viz palette (Okabe-Ito, CVD-safe) */
+  --viz-1: #E69F00; --viz-2: #56B4E9; --viz-3: #009E73; --viz-4: #F0E442;
+  --viz-5: #0072B2; --viz-6: #D55E00; --viz-7: #CC79A7;
+
   /* palette (light) */
   --bg: oklch(0.984 0.006 165); --bg-deep: oklch(0.972 0.008 165);
   --surface: oklch(0.997 0.003 165); --surface-2: oklch(0.978 0.006 165); --surface-3: oklch(0.962 0.008 165);
@@ -78,4 +97,43 @@
   --ring: 0 0 0 3px oklch(0.755 0.13 162 / .30); --ai-ring: 0 0 0 3px oklch(0.715 0.155 292 / .28);
 
   --grain-opacity: .35; --aurora-opacity: .9;
+
+  /* status tinted chip backgrounds (dark-built; foreground hexes stay constant) */
+  --st-good-bg: oklch(0.31 0.06 152); --st-warn-bg: oklch(0.33 0.06 80); --st-bad-bg: oklch(0.33 0.07 25);
+  --st-info-bg: oklch(0.31 0.06 245); --st-nodata-bg: oklch(0.30 0.006 178);
+}
+
+/* =========================================================================
+   SHARED PAGE CONTAINER (Every Layout "Center" pattern). The single source of
+   horizontal rhythm for flow screens: caps width, centers, and applies the
+   fluid side gutter so margins no longer differ per page. cd-shell.tsx routes
+   every flow page's children through <div className="cd-page">. Screens that
+   want the ultrawide/bento cap or a prose column set data-width on a wrapper.
+   ========================================================================= */
+.cd-scope .cd-page {
+  inline-size: 100%;
+  max-inline-size: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+  padding-block: clamp(16px, 2vw, 28px);
+}
+.cd-scope .cd-page[data-width="wide"]  { max-inline-size: var(--page-max-wide); }
+.cd-scope .cd-page[data-width="prose"] { max-inline-size: var(--page-max-prose); }
+
+/* =========================================================================
+   RESPONSIVE GRID HELPERS. Ultrawide gains COLUMNS, not stretched cards.
+   8px base gap rhythm via clamp. align-items:stretch so a short column matches
+   the tall one. Collapse to fewer columns on narrow screens via the minmax min.
+   ========================================================================= */
+.cd-scope .cd-grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(8px, 2vw, 24px);
+  align-items: stretch;
+}
+.cd-scope .cd-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: clamp(8px, 2vw, 24px);
+  align-items: stretch;
 }

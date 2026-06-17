@@ -308,31 +308,15 @@ const SET_NAV: { group: string; items: NavItem[] }[] = [
 ];
 
 export default function SettingsPage() {
-  // The prototype's panel-switch is React useState. This landing page defaults to
-  // the Account panel (wired to the signed-in user); the other nav items also
-  // deep-link to their real /settings/* sub-routes.
-  const [sel, setSel] = useState("account");
-  const Panel = SET_NAV.flatMap(g => g.items).find(it => it.id === sel)?.Panel ?? PAccount;
+  // The settings DOUBLE-NAV is collapsed: the route's layout.tsx now renders the
+  // ONE settings nav rail, and that rail already deep-links to every /settings/*
+  // sub-route. The only panel unique to this landing page is Account (it has no
+  // dedicated sub-route), so the landing page renders just that panel. Spacing
+  // comes solely from the shared .cd-page container (no local max-width cap, no
+  // duplicate aside, no nested grid).
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
-      <div style={{ display: "grid", gridTemplateColumns: "232px 1fr", minHeight: 0 }}>
-        <aside style={{ borderRight: "1px solid var(--c-line)", overflowY: "auto", padding: "20px 12px", background: "color-mix(in oklab, var(--c-surface) 50%, transparent)" }}>
-          <h1 style={{ margin: "0 0 16px 8px", fontSize: "var(--fs-lg)", fontWeight: 700, letterSpacing: "-0.02em" }}>Settings</h1>
-          {SET_NAV.map((g, gi) => (
-            <div key={gi} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--c-ink-3)", padding: "0 8px 6px" }}>{g.group}</div>
-              {g.items.map(({ id, label, icon, href }) => (
-                <a key={id} href={href} onClick={(e) => { if (id === "account") { e.preventDefault(); setSel(id); } }} style={{ width: "100%", display: "flex", gap: 10, alignItems: "center", padding: "8px 10px", borderRadius: "var(--r)", border: "none", cursor: "pointer", marginBottom: 1, textAlign: "left",
-                  background: sel === id ? "var(--c-brand-tint)" : "transparent", color: sel === id ? "var(--c-brand-ink)" : "var(--c-ink-2)", fontWeight: sel === id ? 700 : 500, fontSize: "var(--fs-sm)" }}
-                  onMouseEnter={e => { if (sel !== id) e.currentTarget.style.background = "var(--c-surface-2)"; }} onMouseLeave={e => { if (sel !== id) e.currentTarget.style.background = "transparent"; }}>
-                  <Icon name={icon} size={16} style={{ color: sel === id ? "var(--c-brand)" : "var(--c-ink-3)" }} />{label}
-                </a>
-              ))}
-            </div>
-          ))}
-        </aside>
-        <div style={{ overflowY: "auto", padding: "30px 36px 60px" }}><div style={{ maxWidth: 820, animation: "rise .3s var(--ease-out)" }} key={sel}><Panel /></div></div>
-      </div>
+    <div style={{ animation: "rise .3s var(--ease-out)" }}>
+      <PAccount />
     </div>
   );
 }

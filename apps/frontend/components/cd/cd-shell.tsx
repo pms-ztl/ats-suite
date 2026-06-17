@@ -209,7 +209,7 @@ export function CdShell({ children }: { children: React.ReactNode }) {
   // Full-height CD screens (own internal scroll, edge-to-edge) render full-bleed;
   // flow pages (dashboards + not-yet-swapped pages) keep the scroll + padding
   // gutter. This set grows as each full-height screen is wired onto its route.
-  const FULL_BLEED = new Set(["/screening", "/candidates", "/decisions", "/offers", "/interviews", "/hitl", "/requisitions", "/analytics", "/analytics/diversity", "/billing", "/copilot", "/scheduling", "/security", "/ai", "/mobility", "/admin", "/admin/platform/agents", "/admin/platform/cost", "/admin/platform/prompts", "/admin/plan-requests", "/admin/platform/audit"]);
+  const FULL_BLEED = new Set(["/screening", "/candidates", "/decisions", "/offers", "/interviews", "/hitl", "/requisitions", "/analytics", "/analytics/diversity", "/billing", "/copilot", "/chat", "/security", "/ai", "/admin", "/admin/platform/agents", "/admin/platform/cost", "/admin/platform/prompts", "/admin/plan-requests", "/admin/platform/audit"]);
   // Full-height detail screens live on dynamic routes: /requisitions/<id> and
   // /requisitions/new (IntakeScreen, kept as the real-functional port). One segment
   // after /requisitions, so the /requisitions/<id>/rounds + /form-builder sub-routes
@@ -220,8 +220,15 @@ export function CdShell({ children }: { children: React.ReactNode }) {
     /^\/requisitions\/[^/]+$/.test(pathname) ||
     (/^\/candidates\/[^/]+$/.test(pathname) && pathname !== "/candidates/import");
 
+  // Dense data routes (home dashboard, screening, analytics) dial the ambient
+  // aurora WAY down so it does not compete with charts. globals.css matches
+  // body:has(.cd-scope[data-dense="1"]) .aurora and drops its opacity to
+  // ~.18/.22. Other routes keep the richer aurora.
+  const DENSE = new Set(["/", "/screening", "/analytics"]);
+  const dataDense = DENSE.has(pathname) ? "1" : undefined;
+
   return (
-    <div className="cd-scope" style={{ height: "calc(100dvh / 0.9)", overflow: "hidden", background: "transparent" }}>
+    <div className="cd-scope" data-dense={dataDense} style={{ height: "calc(100dvh / 0.9)", overflow: "hidden", background: "transparent" }}>
       <Shell
         user={shellUser}
         workspace={workspace}
@@ -242,7 +249,7 @@ export function CdShell({ children }: { children: React.ReactNode }) {
           <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>{children}</div>
         ) : (
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-            <div style={{ padding: 24 }}>{children}</div>
+            <div className="cd-page">{children}</div>
           </div>
         )}
       </Shell>

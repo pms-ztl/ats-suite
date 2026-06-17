@@ -302,7 +302,7 @@ function InboundEmailPanel() {
 
 export default function InboundEmailSettingsPage() {
   return (
-    <div style={{ maxWidth: 820, animation: "rise .3s var(--ease-out)" }}>
+    <div style={{ animation: "rise .3s var(--ease-out)" }}>
       <InboundEmailPanel />
     </div>
   );

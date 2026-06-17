@@ -116,9 +116,9 @@ export function Decisions({ data, onDecision }: { data: DecisionsData; onDecisio
         })}
       </aside>
 
-      <div style={{ overflowY: "auto", padding: "26px 30px 40px" }}>
+      <div style={{ overflowY: "auto" }}>
         {cur && (
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <div className="cd-page">
             <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 18 }}>
               <span className="mono" style={{ width: 48, height: 48, borderRadius: "var(--r)", display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)", fontWeight: 700, fontSize: 16 }}>{cur.ini}</span>
               <div style={{ flex: 1 }}>

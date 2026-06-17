@@ -97,7 +97,10 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
   };
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+    // The bento ops home shares the uniform page container at the ultrawide cap
+    // (data-width="wide" -> --page-max-wide). No bespoke maxWidth/margin self-cap;
+    // spacing + centering come from .cd-page.
+    <div className="cd-page" data-width="wide">
       <CommandHero title="Org overview" sub="Everything happening across your hiring operation, in real time." workspace={workspace} stats={heroStats} live={live} onToggleLive={() => setLive((v) => !v)}>
         <Pill icon="clock" tone="var(--ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 30 days</Pill>
         <Btn variant="primary" icon="arrowUpRight" onClick={onExport}>Export report</Btn>
@@ -115,15 +118,15 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
         </SectionCard>
       </Reveal>
 
-      {/* 8 KPIs */}
+      {/* 8 KPIs - responsive auto-fit so ultrawide gains columns, collapses to 2/1 narrow. */}
       {kpis.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 18 }}>
+        <div className="cd-grid-kpi" style={{ marginBottom: 18 }}>
           {kpis.map((k, i) => <KPICard key={k.id ?? k.label} k={k} i={i} />)}
         </div>
       )}
 
-      {/* charts row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
+      {/* charts row - responsive auto-fit cards (reflow to 1 col under ~1024px). */}
+      <div className="cd-grid-cards" style={{ marginBottom: 16 }}>
         <Reveal i={8}><SectionCard title="Pipeline funnel" icon="radar" action="Breakdown" headRight={funnelConversionLabel ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{funnelConversionLabel}</Pill> : undefined}>
           {/* Same real funnel stages (live candidate counts, pipeline order) as a
               waterfall cascade - the translucent falls show the true drop between stages. */}
@@ -144,7 +147,7 @@ export function OrgOverview({ data }: { data: OrgOverviewData }) {
         </SectionCard></Reveal>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, alignItems: "start" }}>
+      <div className="cd-grid-cards">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Reveal i={10}><SectionCard title="Time-to-hire trend" icon="chart" headRight={trendDeltaLabel ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)" icon="arrowUpRight">{trendDeltaLabel}</Pill> : undefined}>
             <div style={{ height: 200 }}>

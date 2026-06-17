@@ -25,8 +25,8 @@ function IVList({ data, weekAhead, densityDays, onOpen, onSchedule }: { data: In
   const { sorted: rows, sort, toggle } = useTableSort(filtered, { key: "when", dir: "desc" });
   const headCell: React.CSSProperties = { fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)" };
   return (
-    <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ overflowY: "auto", height: "100%" }}>
+      <div className="cd-page">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
           <div><h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Interviews</h1>
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>{all.filter((r) => r.status === "awaiting").length} awaiting feedback · {all.filter((r) => r.status === "scheduled").length} upcoming.</p></div>
@@ -109,8 +109,8 @@ function IVList({ data, weekAhead, densityDays, onOpen, onSchedule }: { data: In
 function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsData["types"]; onBack: () => void }) {
   const t = types[d.type];
   return (
-    <div style={{ overflowY: "auto", height: "100%", padding: "18px 30px 50px" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+    <div style={{ overflowY: "auto", height: "100%" }}>
+      <div className="cd-page">
         <button onClick={onBack} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12.5, color: "var(--ink-2)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, marginBottom: 14 }}><Icon name="chevsL" size={14} /> Interviews</button>
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
           <span className="mono" style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)", fontWeight: 700, fontSize: 16 }}>{d.ini}</span>
@@ -122,7 +122,7 @@ function IVDetail({ d, types, onBack }: { d: InterviewDetail; types: InterviewsD
           <Btn variant="primary" icon="check">Submit feedback</Btn>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 18, alignItems: "start" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div style={{ borderRadius: "var(--r-xl)", border: "1px solid color-mix(in oklab, var(--ai) 22%, var(--line))", background: "var(--surface)", overflow: "hidden", boxShadow: "var(--e1)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "linear-gradient(110deg, var(--ai-tint), transparent 65%)", borderBottom: "1px solid var(--line)" }}>

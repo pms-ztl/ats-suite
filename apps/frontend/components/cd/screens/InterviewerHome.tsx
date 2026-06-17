@@ -10,16 +10,16 @@ import type { InterviewerHomeData } from "../types";
 export function InterviewerHome({ data, onSchedule }: { data: InterviewerHomeData; onSchedule?: () => void }) {
   const { title, sub, kpis = [], today = [], feedback = [], allCaughtUpNote } = data;
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto" }}>
+    <div>
       <Greeting title={title} sub={sub}>
         <Btn variant="soft" icon="calendar" onClick={onSchedule}>Full schedule</Btn>
       </Greeting>
       {kpis.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${kpis.length}, 1fr)`, gap: 14, marginBottom: 18 }}>
+        <div className="cd-grid-kpi" style={{ marginBottom: 18 }}>
           {kpis.map((k, i) => <KPICard key={k.id ?? k.label} k={k} i={i} />)}
         </div>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, alignItems: "start" }}>
         <Reveal i={4}><SectionCard title="Today's interviews" icon="calendar">
           {today.length ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>

@@ -127,14 +127,14 @@ export function SchedulingLive() {
   const loading = cands.loading || reqs.loading;
 
   return (
-    <div className="mx-auto w-full max-w-[1100px]">
+    <div className="w-full">
       <header className="mb-5">
         <h1 className="text-2xl font-extrabold tracking-tight">Scheduling</h1>
         <p className="mt-1 text-ink-2">Book a real interview against a requisition&apos;s configured loop. AI slot proposals switch on once a Google or Outlook calendar is connected.</p>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16, alignItems: "start" }}>
-        <Reveal i={1}><SectionCard title="Book an interview" icon="calendar">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "clamp(12px, 2vw, 24px)", alignItems: "stretch" }}>
+        <Reveal i={1} style={{ height: "100%" }}><SectionCard title="Book an interview" icon="calendar" style={{ height: "100%" }}>
           {loading && <div className="grid gap-2"><Skeleton className="h-10 rounded-[11px]" /><Skeleton className="h-10 rounded-[11px]" /><Skeleton className="h-10 rounded-[11px]" /></div>}
           {!loading && (cands.error || reqs.error) && <ErrorState title="Could not load scheduling data" body="Candidates or requisitions did not respond." code="GET /api/candidates · /api/requisitions" onRetry={() => { cands.reload(); reqs.reload(); }} />}
           {!loading && !cands.error && !reqs.error && (

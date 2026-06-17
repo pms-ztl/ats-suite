@@ -183,7 +183,8 @@ function RecruiterDash() {
     }));
 
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
+    // No bespoke cap: the shared .cd-page (from cd-shell) governs width + gutter + centering.
+    <div>
       <Greeting title={`${greetingFor()}, ${firstName(user)}`}
         sub={`${(screening.data ?? []).length} screened application${(screening.data ?? []).length === 1 ? "" : "s"} and ${scheduling.length} candidate${scheduling.length === 1 ? "" : "s"} waiting to be scheduled.`}>
         <a href="/candidates/import"><Btn variant="soft" icon="users">Bulk upload</Btn></a>
@@ -205,7 +206,7 @@ function RecruiterDash() {
         </SectionCard></Reveal>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, alignItems: "start" }}>
+      <div className="cd-grid-cards">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Reveal i={4}><SectionCard title="Latest applications" icon="users" action="View all" onAction={() => { window.location.href = "/candidates"; }} pad={6}>
             {screening.loading && <div className="grid gap-2 p-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
@@ -486,7 +487,8 @@ function HMDash() {
   const myReqs = (reqs.data ?? []).slice(0, 3);
 
   return (
-    <div className="mx-auto w-full max-w-[1200px]">
+    // No bespoke cap: the shared .cd-page (from cd-shell) governs width + gutter + centering.
+    <div>
       <Greeting title={`${greetingFor()}, ${firstName(user)}`}
         sub={`${(review.data ?? []).length} decision${(review.data ?? []).length === 1 ? " is" : "s are"} waiting on you${slaStats.overdue > 0 ? `, ${slaStats.overdue} time-sensitive` : ""}.`}>
         <a href="/analytics"><Btn variant="soft" icon="chart">View analytics</Btn></a>
@@ -514,7 +516,7 @@ function HMDash() {
         </SectionCard></Reveal>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, alignItems: "start" }}>
+      <div className="cd-grid-cards">
         <Reveal i={4}><SectionCard title="Decisions awaiting you" icon="gavel" action="View queue" onAction={() => { window.location.href = "/hitl"; }} pad={10}>
           {review.loading && <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[58px] rounded-[11px]" />)}</div>}
           {review.error && <ErrorState title="Could not load the queue" body="The HITL service did not respond." code="GET /api/agents/hitl" onRetry={review.reload} />}
@@ -743,7 +745,8 @@ function InterviewerDash() {
   })();
 
   return (
-    <div className="mx-auto w-full max-w-[980px]">
+    // No bespoke cap: the shared .cd-page (from cd-shell) governs width + gutter + centering.
+    <div>
       <Greeting title={`${greetingFor()}, ${firstName(user)}`}
         sub={`You have ${today.length} interview${today.length === 1 ? "" : "s"} today and ${feedback.length} scorecard${feedback.length === 1 ? "" : "s"} to write.`}>
         <a href="/interviews"><Btn variant="soft" icon="calendar">Full schedule</Btn></a>
@@ -766,7 +769,7 @@ function InterviewerDash() {
         </SectionCard></Reveal>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, alignItems: "start" }}>
+      <div className="cd-grid-cards">
         <Reveal i={4}><SectionCard title="Today's interviews" icon="calendar">
           {interviews.loading && <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-[66px] rounded-[14px]" />)}</div>}
           {interviews.error && <ErrorState title="Could not load interviews" body="The interviews service did not respond." code="GET /api/interviews" onRetry={interviews.reload} />}

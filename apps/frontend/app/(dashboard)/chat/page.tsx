@@ -2,8 +2,10 @@
 // app/(dashboard)/chat/page.tsx
 // Functional, tenant-isolated, real-time team chat wired to the real backend
 // (notification-service /internal/messages, RLS-scoped). Lives INSIDE the dashboard
-// shell (sidebar + nav) so it is no longer a dead-end full-screen route — fills the
-// shell's main area at height:100%. Conversations, threads and unread counts come
+// shell (sidebar + nav) so it is no longer a dead-end full-screen route. It is a
+// full-bleed route, so its root flexes to fill the shell's definite-height main
+// area (flex:1; minHeight:0) and the thread panel scrolls instead of collapsing.
+// Conversations, threads and unread counts come
 // from the API; new messages arrive live over the shared SSE stream
 // (/api/notifications/stream, "message" events). A user can only ever see and
 // message people in their own tenant — enforced by RLS server-side.
@@ -111,9 +113,9 @@ export default function ChatPage() {
   const selectedTitle = selectedConvo ? title(selectedConvo) : "Conversation";
 
   return (
-    <div className="cd-scope" style={{ height: "100%", display: "flex", background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}>
+    <div className="cd-scope" style={{ flex: 1, minHeight: 0, display: "flex", background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--font-sans)" }}>
       {/* sidebar */}
-      <div style={{ width: 300, borderRight: "1px solid var(--c-line)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+      <div style={{ width: 300, borderRight: "1px solid var(--c-line)", display: "flex", flexDirection: "column", flexShrink: 0, minHeight: 0 }}>
         <div style={{ padding: "18px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ fontWeight: 800, fontSize: "var(--fs-xl)", letterSpacing: "-0.02em" }}>Messages</div>
           <button onClick={() => setShowNew((s) => !s)} title="New message" style={{ width: 34, height: 34, borderRadius: 99, border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", cursor: "pointer", fontSize: 20, lineHeight: 1 }}>+</button>
@@ -150,7 +152,7 @@ export default function ChatPage() {
       </div>
 
       {/* thread */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0 }}>
         {selected ? (
           <>
             <div style={{ padding: "16px 22px", borderBottom: "1px solid var(--c-line)", fontWeight: 700, fontSize: "var(--fs-lg)" }}>{selectedTitle}</div>

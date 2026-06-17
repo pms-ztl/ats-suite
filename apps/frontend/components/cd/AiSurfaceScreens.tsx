@@ -80,8 +80,8 @@ export function NotificationsScreen({ data }: { data: NotifPrefsData }) {
 
 export function MobilityScreen({ data }: { data: MobilityData }) {
   const [added, setAdded] = useState<Record<number, boolean>>({});
-  return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
-    <div style={{ maxWidth: 980, margin: "0 auto" }}>
+  return <div>
+    <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
         <div><div style={{ display: "flex", gap: 9, alignItems: "center" }}><h1 style={{ margin: 0, fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em" }}>Internal mobility</h1><Pill icon="sparkles" tone="var(--ai-ink)" bg="var(--ai-tint)">skill-matched</Pill></div>
           <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>Current employees the AI matched to your open roles, promote from within.</p></div>

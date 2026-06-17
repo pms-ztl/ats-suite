@@ -160,7 +160,7 @@ export default function RetentionSettingsPage() {
   );
 
   return (
-    <div style={{ maxWidth: 820, animation: "rise .3s var(--ease-out)" }}>
+    <div style={{ animation: "rise .3s var(--ease-out)" }}>
       <PanelHead title="Data retention" desc="GDPR-compliant deletion policies. Changes apply going forward, never retroactively." action={saveAction} />
 
       {/* per-data-type retention periods */}
