@@ -10,8 +10,8 @@ import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { OrgOverviewLive } from "@/components/cd/org-overview-live";
-import { EmptyChart, TreemapChart, FunnelViz, DonutChart, BarsChart, SankeyFlow, CHART_COLORS, colorAt } from "@/components/shared/charts";
-import { FlowRibbon, ArcMeter, OrbitField, PulseGrid, BeadStream, SonarSweep, TideBands } from "@/components/shared/ribbon";
+import { EmptyChart, DonutChart, BarsChart, SankeyFlow, CHART_COLORS, colorAt } from "@/components/shared/charts";
+import { FlowRibbon, ArcMeter, OrbitField, PulseGrid, BeadStream, SonarSweep, TideBands, StepCascade } from "@/components/shared/ribbon";
 import { ActivityRings } from "@/components/shared/ribbon-ext";
 import {
   getDashboardKpis, listScreening, listRequisitions, listReviewQueue, listInterviews, listCandidates,
@@ -172,7 +172,7 @@ function RecruiterDash() {
   })();
 
   // Hero ribbon: the live pipeline as one stream. Each point's thickness is the
-  // real candidate count per stage from the same funnel aggregate FunnelViz reads,
+  // real candidate count per stage from the same funnel aggregate the cascade reads,
   // ordered by the canonical forward flow and humanized (APPLIED -> Applied).
   const pipelinePoints = (funnel.data ?? [])
     .filter((s) => STAGE_FLOW.includes(s.stage))
@@ -282,37 +282,21 @@ function RecruiterDash() {
         </SectionCard></Reveal>
       </div>
 
-      {/* Sourcing-intelligence row: every number traces to a real record. The treemap is
-          the per-channel application mix from Candidate.source; the funnel is the live
-          stage distribution, with the AI-screened stage tinted violet. */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16, alignItems: "start" }}>
-        <Reveal i={7}><SectionCard title="Where candidates come from" icon="radar"
-          headRight={sources.data && sources.data.length ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{sources.data.length} channels</Pill> : undefined}>
-          <div style={{ height: 230 }}>
-            {sources.loading && <Skeleton className="h-full rounded-[11px]" />}
-            {sources.error && <EmptyChart label="Channel data unavailable right now." />}
-            {sources.data && (sources.data.length
-              ? <TreemapChart data={sources.data.map((s, i) => ({ name: s.source, size: s.applied, fill: colorAt(i) }))} valueFormatter={(v) => `${v} applied`} />
-              : <EmptyChart label="Channel mix appears once candidates carry a source." />)}
-          </div>
-          {sources.data && sources.data.length > 0 && (
-            <p style={{ margin: "10px 2px 0", fontSize: 11, color: "var(--c-ink-3)" }}>
-              Box size = applications per channel. Conversion appears alongside once hires land.
-            </p>
-          )}
-        </SectionCard></Reveal>
-
+      {/* Hiring pipeline: the live stage distribution as an honest cascade, each stage
+          counting every candidate at-or-beyond it. The per-channel application mix lives
+          in the Channel orbit below, so it is not duplicated here. */}
+      <div style={{ marginTop: 16 }}>
         <Reveal i={8}><SectionCard title="Hiring pipeline" icon="chart"
-          headRight={<Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" icon="sparkles">violet = AI-screened</Pill>}>
-          <div style={{ height: 230 }}>
+          headRight={funnel.data && funnel.data.length ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{funnel.data.length} stages</Pill> : undefined}>
+          <div style={{ height: 260 }}>
             {funnel.loading && <Skeleton className="h-full rounded-[11px]" />}
             {funnel.error && <EmptyChart label="Pipeline data unavailable right now." />}
             {funnel.data && (funnel.data.length
-              ? <FunnelViz data={funnel.data.map((s) => ({
-                  name: s.stage.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
-                  value: s.count,
-                  fill: s.stage === "SCREENED" ? CHART_COLORS.ai : CHART_COLORS.brand,
-                }))} valueFormatter={(v) => v.toLocaleString()} />
+              ? <StepCascade height={260} stages={funnel.data.map((s) => ({
+                  label: s.stage.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+                  n: s.count,
+                }))} valueLabel={(n) => n.toLocaleString()}
+                emptyLabel="The funnel fills as applications move through stages." />
               : <EmptyChart label="The funnel fills as applications move through stages." />)}
           </div>
         </SectionCard></Reveal>

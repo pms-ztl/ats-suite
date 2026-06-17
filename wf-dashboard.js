@@ -1,0 +1,50 @@
+export const meta = {
+  name: 'realtime-ops-home-dashboard',
+  description: 'WF-Dashboard: real-time ops home wired to REAL data (no fake zeros) — backward-compatible backend KPIs/sparklines, KPI-card kit, and the OrgOverview bento blueprint',
+  phases: [
+    { title: 'Backend', detail: 'platform.ts + overview endpoints: real time-to-hire/offer-accept/sparkline/delta (additive, backward-compatible)' },
+    { title: 'Prep', detail: 'lib/api.ts (stop null->0) + dashboard component kit (KpiCard/DeltaPill/LiveStatus/EmptyMetric)' },
+    { title: 'Wire', detail: 'org-overview-live + OrgOverview bento blueprint on real datasets' },
+    { title: 'Verify', detail: 'tsc (frontend + gateway + services) + no-fabrication audit' },
+  ],
+}
+
+const REPORT = {
+  type: "object", additionalProperties: false,
+  properties: {
+    files: { type: "array", items: { type: "string" } },
+    summary: { type: "string" },
+    buildClean: { type: "boolean" },
+    contract: { type: "string", description: "exact new JSON field names + shapes you added/consumed, for cross-phase alignment" },
+    notes: { type: "string" },
+  },
+  required: ["files", "summary", "buildClean", "contract", "notes"],
+}
+
+const CTX = "Repo D:/CDC/ATS. FIRST read D:/CDC/ATS/DESIGN_SPEC.md section 7 (REAL-TIME OPS HOME) — the single source of truth, including the home blueprint table mapping each widget to a REAL dataset and a house-viz model. HARD RULES (non-negotiable): REAL data or honest empty states ONLY — NEVER fabricate/mock, and NEVER render a fake 0 or flat zero-line for ABSENT data (use an em-dash style empty + a 'No data yet'/'Not enough history' caption; suppress the delta pill when there is no prior period; distinguish a real measured 0 from absent). No em/en dashes in authored copy. Match existing idioms. Backend changes MUST be ADDITIVE and backward-compatible (do NOT remove or rename existing response fields — the frozen v1 frontend still reads them). Build the affected workspace(s) before finishing (`npx tsc --noEmit` for frontend; `npm run build --workspace=@cdc-ats/<svc>` for services after `npx prisma generate` if needed).";
+
+phase('Backend')
+log('Backend: real derivable KPIs + sparklines + deltas (additive)')
+const backend = await agent(CTX + "\n\n=== SLICE: backend real KPIs (api-gateway + candidate/job/billing overview endpoints) ===\nThe gateway aggregator apps/api-gateway/src/routes/platform.ts returns null for avgTimeToHire/offerAcceptRate/complianceScore/diversityScore/timeSeriesData and emits NO *Change deltas or *Sparkline arrays. Make the genuinely-derivable ones REAL (keep the rest honest-null), strictly ADDITIVE:\n1) candidate-service /internal/candidates/overview: from real Application rows compute avgTimeToHire (mean of hiredAt - appliedAt over HIRED apps that have both timestamps; null if none) and a weeklyInflow sparkline (count of applications per ISO-week for the last 8 weeks, real). Add them to the overview response without removing existing fields.\n2) job-service or candidate-service: offerAcceptRate from real offer/application data (accepted / extended; null if zero extended) + the raw counts.\n3) billing-service /internal/billing/overview: a real spend sparkline (cost per day/week over the window) if cheaply derivable from AgentRunCost; else leave it out (do not fake).\n4) gateway platform.ts /unified-overview: pass these through (avgTimeToHire, offerAcceptRate, weeklyInflow sparkline, spend sparkline) and, where a real prior-period value exists, compute a real *Change delta (else omit it — never emit a 0% placeholder). Keep complianceScore/diversityScore/diversityData null (honest — no demographic store). Build the touched services (regen prisma if a query needs it). In `contract` list the EXACT new field names + shapes you added so the frontend agents can consume them.", { label: 'db:backend', phase: 'Backend', schema: REPORT })
+log('Backend done: buildClean=' + (backend && backend.buildClean) + ' | contract=' + (backend && backend.contract ? 'provided' : 'none'))
+
+phase('Prep')
+log('Prep: lib/api (stop null->0) + dashboard component kit')
+const prep = (await parallel([
+  () => agent(CTX + "\n\n=== SLICE: frontend dashboard component kit (NEW shared file) ===\nCreate apps/frontend/components/cd/dashboard-kit.tsx (client) with the canonical, reusable pieces from DESIGN_SPEC 7b/7c, styled with the existing cd-tokens (status tokens --st-good/warn/bad/info/nodata already exist; use them):\n- <KpiCard>: NAME (uppercase muted ~12-14px) / VALUE (clamp(1.75rem,1.2rem+2vw,2.5rem), tabular-nums, letter-spacing -0.012em) / optional PERIOD caption / optional <DeltaPill> / optional sparkline slot / optional target line. Props accept a value that may be null/absent -> render the HONEST EMPTY state (em-dash style char, --st-nodata gray, caption like 'No data yet') instead of 0.\n- <DeltaPill>: arrow glyph + signed value + comparison basis; color by DIRECTION-OF-GOODNESS via a `goodWhen?: 'up'|'down'` prop (inverse metrics like time-to-fill go red on increase). Arrow aria-hidden; text carries meaning. Render nothing when delta is null/no-prior-period.\n- <LiveStatus>: a single role=status pulsing dot (green Live / amber Stale) + 'Updated Ns ago' relative label; reuse the app's existing freshness source (lib/use-data.ts 45s refetch) rather than inventing a new timer. Wrap the pulse animation in @media (prefers-reduced-motion: no-preference).\n- <EmptyMetric> helper for the em-dash empty.\nBuild: cd apps/frontend && npx tsc --noEmit. In `contract` give the exact component prop signatures.", { label: 'db:kit', phase: 'Prep', schema: REPORT }),
+  () => agent(CTX + "\n\n=== SLICE: lib/api.ts honesty + new fields ===\nIn apps/frontend/lib/api.ts: (1) the dashboard KPI mapper (~786-789) coerces null->0 (`Number(value)||0`, delta `Math.round()||0`, flat sparkline). STOP coercing absent values to 0: pass through null/undefined so the KpiCard can render an honest empty; only use a real number when the backend actually returned one. (2) Add typed accessors / map the NEW platform fields the Backend phase added (avgTimeToHire, offerAcceptRate, weeklyInflow sparkline, spend sparkline, any *Change deltas) so the home can consume them. Do NOT fabricate fallback values. Keep all existing exports/signatures backward-compatible. Build: cd apps/frontend && npx tsc --noEmit. In `contract` note the exact getter names/shapes the Wire phase should call.", { label: 'db:api', phase: 'Prep', schema: REPORT }),
+])).filter(Boolean)
+log('Prep done: ' + prep.length + '/2')
+
+phase('Wire')
+log('Wire: org-overview-live + OrgOverview bento on real data')
+const wire = await agent(CTX + "\n\n=== SLICE: the ops home (org-overview-live.tsx + OrgOverview.tsx) ===\nThe Prep phase added apps/frontend/components/cd/dashboard-kit.tsx (KpiCard/DeltaPill/LiveStatus/EmptyMetric) and updated lib/api.ts (no more null->0; new KPI getters). The Backend phase exposed real avgTimeToHire/offerAcceptRate/weeklyInflow/spend sparklines + deltas. Read both phases' `contract` notes, then rebuild the ADMIN ops home:\n1) apps/frontend/components/cd/org-overview-live.tsx: STOP hardcoding activity:[] (line ~73), trend:[] (~106), agentBars:[] (~111). Wire trend to the real weeklyInflow/timeSeries, agentBars to the real getBillingUsage.byAgent, and surface the rich REAL datasets the recruiter home already proves work: getBillingUsage, getSpendTrend, getOversight (HITL), getSourceOfHire, listScreening (verdict mix), listOffers (lifecycle), weeklyCounts (inflow), listInterviews, getFunnel. For the activity feed: if no real tenant-activity endpoint exists, HIDE that card rather than show a permanent empty (do NOT fabricate a feed).\n2) apps/frontend/components/cd/screens/OrgOverview.tsx: implement the DESIGN_SPEC 7d bento blueprint using <KpiCard>+<DeltaPill>+sparkline for the hero KPI row (Candidates in pipeline w/ inflow sparkline, Time-to-fill vs benchmark, Offer acceptance, HITL pending, AI spend) and the house-viz models for the bands (hiring funnel via StepCascade/FlowRibbon as the primary; source-of-hire, AI spend by provider, screening verdict mix, interview load, per-agent spend as breakdowns). Add a single <LiveStatus> in the header. EVERY card uses an honest empty state when its dataset is empty (no fake zeros). Keep data-width=\"wide\" container behavior. Real data only. Build: cd apps/frontend && npx tsc --noEmit.", { label: 'db:wire', phase: 'Wire', schema: REPORT })
+log('Wire done: buildClean=' + (wire && wire.buildClean))
+
+phase('Verify')
+const verify = (await parallel([
+  () => agent("Build verification for D:/CDC/ATS. Run verbatim and report each: cd apps/frontend && npx tsc --noEmit ; cd apps/api-gateway && npx tsc --noEmit ; cd apps/candidate-service && npx tsc --noEmit ; cd apps/job-service && npx tsc --noEmit ; cd apps/billing-service && npx tsc --noEmit. REPORT: files=any with errors, summary=pass/fail, buildClean=all green, contract='', notes=every error verbatim.", { label: 'vf:builds', phase: 'Verify', schema: REPORT }),
+  () => agent(CTX + "\n\n=== AUDIT: no fabrication + honest empties (read-only) ===\nVerify citing file:line: (1) lib/api.ts no longer coerces absent KPI values to 0/flat-spark. (2) OrgOverview/org-overview-live render honest empty states (em-dash + 'No data yet'/'Not enough history') for absent metrics and SUPPRESS the delta pill with no prior period — NO fake 0 anywhere. (3) the home surfaces REAL datasets (getBillingUsage/getOversight/getSourceOfHire/listScreening/listOffers/weeklyCounts/getFunnel) and no card renders fabricated/sample data. (4) backend platform.ts changes are ADDITIVE (existing fields still present, so frozen v1 is unaffected) and the real KPIs are computed from real rows (not constants). (5) the funnel uses StepCascade/FlowRibbon (not the old dark FunnelViz). Return REPORT: files=violations, summary=verdict, buildClean=true iff clean, contract='', notes=each issue with file:line.", { label: 'vf:audit', phase: 'Verify', schema: REPORT }),
+])).filter(Boolean)
+
+return { backend, prep, wire, verify }

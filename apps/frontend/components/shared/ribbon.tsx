@@ -10,6 +10,7 @@
 // BOTH scopes - the dashboard pages (--c-*) and the cd screens (bare tokens) -
 // and to light/dark automatically: var(--c-brand, var(--brand, #16a37a)).
 import * as React from "react";
+import { useMeasuredScale, scaledFont } from "./use-measured-scale";
 
 export interface RibbonPoint { label: string; n: number; sub?: string }
 
@@ -42,6 +43,7 @@ export function FlowRibbon({
   emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const [svgRef, k] = useMeasuredScale(1000);
   const total = points.reduce((s, x) => s + x.n, 0);
   if (!points.length || total === 0) {
     return (
@@ -102,7 +104,7 @@ export function FlowRibbon({
           .ribbon-current-${uid}{stroke-dasharray:3 14;animation:ribbon-drift-${uid} 2.6s linear infinite;}
           @keyframes ribbon-drift-${uid}{to{stroke-dashoffset:-34;}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Flow by stage">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Flow by stage">
         <defs>
           <linearGradient id={`ribbon-g-${uid}`} x1="0" y1="0" x2="1" y2="0">
             {stops.map((c, i) => (
@@ -122,12 +124,12 @@ export function FlowRibbon({
           <g key={i}>
             <line x1={p.x} y1={midY - p.half - 10} x2={p.x} y2={midY + p.half + 10} stroke={T.line} strokeWidth="1" strokeDasharray="2 4" />
             <circle cx={p.x} cy={midY} r="4" fill={T.surface} stroke={T.ai} strokeWidth="2" />
-            <text x={p.x} y={midY - p.half - 20} textAnchor="middle" fontSize={dense ? 14 : 17} fontWeight="800"
+            <text x={p.x} y={midY - p.half - 20} textAnchor="middle" fontSize={scaledFont(dense ? 14 : 17, k, 13)} fontWeight="800"
               fill={T.ink} fontFamily="var(--font-mono, monospace)">{fmt(p.n)}</text>
-            <text x={p.x} y={midY + maxHalf + 30} textAnchor="middle" fontSize={dense ? 9.5 : 10.5} fontWeight="700"
+            <text x={p.x} y={midY + maxHalf + 30} textAnchor="middle" fontSize={scaledFont(dense ? 9.5 : 10.5, k)} fontWeight="700"
               fill={T.ink2} style={{ textTransform: "uppercase", letterSpacing: ".05em" } as any}>{p.label}</text>
             {(p.sub || (showShare && total > 0)) && (
-              <text x={p.x} y={midY + maxHalf + 44} textAnchor="middle" fontSize="10"
+              <text x={p.x} y={midY + maxHalf + 44} textAnchor="middle" fontSize={scaledFont(10, k)}
                 fill={T.ink3} fontFamily="var(--font-mono, monospace)">{p.sub ?? `${Math.round((p.n / total) * 100)}%`}</text>
             )}
           </g>
@@ -143,14 +145,18 @@ export function FlowRibbon({
    REAL data only.
 ============================================================================= */
 
+// Categorical series palette: the CVD-safe Okabe-Ito set, sourced from the
+// shared --viz-1..-7 tokens (cd-tokens.css) with literal fallbacks so the kit
+// still renders outside the .cd-scope. These are the house's only categorical
+// series colors; do NOT hardcode brand/ai/info as series fills.
 const PALETTE_T = [
-  "var(--c-brand, var(--brand, #16a37a))",
-  "var(--c-ai, var(--ai, #7c5cff))",
-  "var(--c-info, var(--info, #5588fb))",
-  "var(--c-warn, var(--warn, #e09f3e))",
-  "var(--c-ok, var(--ok, #16a34a))",
-  "var(--c-danger, var(--danger, #e05252))",
-  "var(--c-ai-2, var(--ai-2, #a855f7))",
+  "var(--viz-1, #E69F00)",
+  "var(--viz-2, #56B4E9)",
+  "var(--viz-3, #009E73)",
+  "var(--viz-5, #0072B2)",
+  "var(--viz-6, #D55E00)",
+  "var(--viz-7, #CC79A7)",
+  "var(--viz-4, #F0E442)",
 ];
 
 function EmptyNote({ label, height = 150 }: { label: string; height?: number }) {
@@ -225,10 +231,11 @@ export function OrbitField({
   centerLabel?: string; centerSub?: string; height?: number; emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const W = 640, H = 380, cx = 320, cy = 190;
+  const [svgRef, k] = useMeasuredScale(W);
   const live = items.filter((d) => d.n > 0).slice(0, 8);
   const total = live.reduce((s, d) => s + d.n, 0);
   if (!live.length || total === 0) return <EmptyNote label={emptyLabel} height={height} />;
-  const W = 640, H = 380, cx = 320, cy = 190;
   const ranked = live.slice().sort((a, b) => b.n - a.n);
   const maxN = ranked[0].n;
   const rings = [92, 138];
@@ -246,7 +253,7 @@ export function OrbitField({
           .orbit-ring-${uid}{animation:orbit-spin-${uid} 60s linear infinite;transform-box:fill-box;transform-origin:center;}
           @keyframes orbit-spin-${uid}{to{transform:rotate(360deg);}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition orbit">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition orbit">
         <defs>
           <radialGradient id={`orbit-hub-${uid}`} cx="0.5" cy="0.5" r="0.5">
             <stop offset="0%" stopColor={T.ai} stopOpacity="0.18" />
@@ -261,17 +268,18 @@ export function OrbitField({
         {pts.map((p, i) => <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={p.color} strokeOpacity="0.14" strokeWidth="1.5" />)}
         <circle cx={cx} cy={cy} r={46} fill={T.surface} stroke={T.line} strokeWidth="1.5"
           style={{ filter: `drop-shadow(0 8px 18px color-mix(in oklab, ${T.ink} 12%, transparent))` }} />
-        <text x={cx} y={cy + 1} textAnchor="middle" fontSize="24" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">{centerLabel ?? String(total)}</text>
-        {centerSub && <text x={cx} y={cy + 19} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".06em" } as any}>{centerSub}</text>}
+        <text x={cx} y={cy + 1} textAnchor="middle" fontSize={scaledFont(24, k, 14)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">{centerLabel ?? String(total)}</text>
+        {centerSub && <text x={cx} y={cy + 19} textAnchor="middle" fontSize={scaledFont(9.5, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".06em" } as any}>{centerSub}</text>}
         {pts.map((p, i) => (
           <g key={i}>
             <circle cx={p.x} cy={p.y} r={p.r} fill={p.color} fillOpacity="0.85" stroke={T.surface} strokeWidth="2.5"
               style={{ filter: `drop-shadow(0 5px 12px color-mix(in oklab, ${T.ink} 14%, transparent))` }} />
-            <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={p.r > 16 ? 12 : 10} fontWeight="800" fill={T.inkInv} fontFamily="var(--font-mono, monospace)">{p.n}</text>
-            <text x={p.x} y={p.below ? p.y + p.r + 16 : p.y - p.r - 10} textAnchor="middle" fontSize="10.5" fontWeight="700" fill={T.ink2}>
+            <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={scaledFont(p.r > 16 ? 12 : 10, k)} fontWeight="800" fill={T.inkInv} fontFamily="var(--font-mono, monospace)">{p.n}</text>
+            <text x={p.x} y={p.below ? p.y + p.r + 16 : p.y - p.r - 10} textAnchor="middle" fontSize={scaledFont(10.5, k)} fontWeight="700" fill={T.ink2}>
+              {p.label.length > 16 ? <title>{p.label}</title> : null}
               {p.label.length > 16 ? p.label.slice(0, 15) + "…" : p.label}
             </text>
-            {p.sub && <text x={p.x} y={p.below ? p.y + p.r + 29 : p.y - p.r - 23} textAnchor="middle" fontSize="9.5" fill={T.ink3} fontFamily="var(--font-mono, monospace)">{p.sub}</text>}
+            {p.sub && <text x={p.x} y={p.below ? p.y + p.r + 29 : p.y - p.r - 23} textAnchor="middle" fontSize={scaledFont(9.5, k)} fill={T.ink3} fontFamily="var(--font-mono, monospace)">{p.sub}</text>}
           </g>
         ))}
       </svg>
@@ -474,10 +482,11 @@ export function PetalBloom({
   centerLabel?: string; centerSub?: string; height?: number; emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const W = 640, H = 420, cx = 320, cy = 210;
+  const [svgRef, k] = useMeasuredScale(W);
   const live = items.filter((d) => d.n > 0).slice(0, 10);
   const total = live.reduce((s, d) => s + d.n, 0);
   if (!live.length || total === 0) return <EmptyNote label={emptyLabel} height={height} />;
-  const W = 640, H = 420, cx = 320, cy = 210;
   const ranked = live.slice().sort((a, b) => b.n - a.n);
   const maxN = ranked[0].n;
   const minL = 56, maxL = 132;
@@ -486,22 +495,29 @@ export function PetalBloom({
     const L = minL + Math.sqrt(d.n / maxN) * (maxL - minL);
     const w = Math.min(34, 14 + (180 / ranked.length));
     const rad = (angle * Math.PI) / 180;
-    const tipR = L + 18;
+    const sin = Math.sin(rad), cos = Math.cos(rad);
+    // Near-vertical petals (small |sin|) get a longer tip lead so their text
+    // clears the petal stalk, plus a small vertical nudge AWAY from center so
+    // a top petal's label rides higher and a bottom petal's lower - this is the
+    // de-overlap that kept top/bottom labels from colliding with the hub band.
+    const nearVert = Math.abs(sin) < 0.35;
+    const tipR = L + (nearVert ? 24 : 18);
+    const ny = nearVert ? -Math.sign(cos || 1) * 7 : 0;
     return {
       ...d, angle, L, w,
       color: PALETTE_T[i % PALETTE_T.length],
-      lx: cx + tipR * Math.sin(rad), ly: cy - tipR * Math.cos(rad),
-      sin: Math.sin(rad),
+      lx: cx + tipR * sin, ly: cy - tipR * cos + ny,
+      sin,
     };
   });
   return (
-    <div style={{ width: "100%", maxWidth: 660, margin: "0 auto" }}>
+    <div style={{ width: "100%" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @media (prefers-reduced-motion: no-preference){
           .petal-${uid}{animation:petal-bloom-${uid} .9s cubic-bezier(.22,1,.36,1) both;}
           @keyframes petal-bloom-${uid}{from{transform:scale(0);}to{transform:scale(1);}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition bloom">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition bloom">
         <defs>
           {petals.map((p, i) => (
             <linearGradient key={i} id={`petal-g-${uid}-${i}`} x1="0" y1="1" x2="0" y2="0">
@@ -520,20 +536,24 @@ export function PetalBloom({
             </g>
           </g>
         ))}
-        {petals.map((p, i) => (
-          <text key={`t${i}`} x={p.lx} y={p.ly} textAnchor={p.sin > 0.35 ? "start" : p.sin < -0.35 ? "end" : "middle"}
-            dominantBaseline="middle" fontSize="11" fontWeight="700" fill={T.ink2}>
-            <tspan fill={T.ink} fontFamily="var(--font-mono, monospace)" fontWeight="800">{p.n}</tspan>
-            <tspan dx="5">{p.label}</tspan>
-            {p.sub ? <tspan dx="5" fill={T.ink3} fontWeight="600" fontSize="10">{p.sub}</tspan> : null}
-          </text>
-        ))}
+        {petals.map((p, i) => {
+          const long = p.label.length > 18;
+          return (
+            <text key={`t${i}`} x={p.lx} y={p.ly} textAnchor={p.sin > 0.28 ? "start" : p.sin < -0.28 ? "end" : "middle"}
+              dominantBaseline="middle" fontSize={scaledFont(13, k)} fontWeight="700" fill={T.ink2}>
+              {long ? <title>{p.label}</title> : null}
+              <tspan fill={T.ink} fontFamily="var(--font-mono, monospace)" fontWeight="800">{p.n}</tspan>
+              <tspan dx="5">{long ? p.label.slice(0, 17) + "…" : p.label}</tspan>
+              {p.sub ? <tspan dx="5" fill={T.ink3} fontWeight="600" fontSize={scaledFont(11.5, k)}>{p.sub}</tspan> : null}
+            </text>
+          );
+        })}
         <circle cx={cx} cy={cy} r="37" fill={T.surface} stroke={T.line} strokeWidth="1.5"
           style={{ filter: `drop-shadow(0 4px 12px color-mix(in oklab, ${T.ink} 14%, transparent))` }} />
-        <text x={cx} y={cy - 1} textAnchor="middle" fontSize="19" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
+        <text x={cx} y={cy - 1} textAnchor="middle" fontSize={scaledFont(19, k, 13)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
           {centerLabel ?? total}
         </text>
-        {centerSub && <text x={cx} y={cy + 15} textAnchor="middle" fontSize="8.5" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
+        {centerSub && <text x={cx} y={cy + 15} textAnchor="middle" fontSize={scaledFont(11, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
       </svg>
     </div>
   );
@@ -554,9 +574,10 @@ export function SonarSweep({
   height?: number; emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const W = 640, H = 430, cx = 320, cy = 204, R = 168;
+  const [svgRef, k] = useMeasuredScale(W);
   const live = items.slice(0, 12);
   if (!live.length) return <EmptyNote label={emptyLabel} height={height} />;
-  const W = 640, H = 430, cx = 320, cy = 204, R = 168;
   const blips = live.map((d, i) => {
     const angle = -90 + ((i * 137.5) % 360);
     const rad = (angle * Math.PI) / 180;
@@ -578,7 +599,7 @@ export function SonarSweep({
           .blip-${uid}{transform-box:fill-box;transform-origin:center;animation:blip-pulse-${uid} 2.6s ease-in-out infinite;}
           @keyframes blip-pulse-${uid}{0%,100%{transform:scale(1);}50%{transform:scale(1.35);}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Proximity sweep">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Proximity sweep">
         <defs>
           <linearGradient id={`sweep-g-${uid}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={T.brand} stopOpacity="0.30" />
@@ -604,19 +625,19 @@ export function SonarSweep({
               style={{ filter: `drop-shadow(0 0 7px color-mix(in oklab, ${b.color} 60%, transparent))` }} />
             {live.length <= 9 && (
               <text x={b.x + (b.cos >= 0 ? 11 : -11)} y={b.y + 1} textAnchor={b.cos >= 0 ? "start" : "end"}
-                dominantBaseline="middle" fontSize="10.5" fontWeight="700" fill={T.ink2}>
-                {b.label}{b.sub ? <tspan dx="4" fill={T.ink3} fontWeight="600" fontSize="9.5">{b.sub}</tspan> : null}
+                dominantBaseline="middle" fontSize={scaledFont(10.5, k)} fontWeight="700" fill={T.ink2}>
+                {b.label}{b.sub ? <tspan dx="4" fill={T.ink3} fontWeight="600" fontSize={scaledFont(9.5, k)}>{b.sub}</tspan> : null}
               </text>
             )}
           </g>
         ))}
         <circle cx={cx} cy={cy} r="27" fill={T.surface} stroke={T.line} strokeWidth="1.5"
           style={{ filter: `drop-shadow(0 4px 12px color-mix(in oklab, ${T.ink} 14%, transparent))` }} />
-        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize="16" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
+        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fontSize={scaledFont(16, k, 13)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
           {centerLabel ?? live.length}
         </text>
-        {centerSub && <text x={cx} y={cy + 44} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
-        {rangeLabel && <text x={cx} y={H - 10} textAnchor="middle" fontSize="10.5" fill={T.ink3}>{rangeLabel}</text>}
+        {centerSub && <text x={cx} y={cy + 44} textAnchor="middle" fontSize={scaledFont(9.5, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
+        {rangeLabel && <text x={cx} y={H - 10} textAnchor="middle" fontSize={scaledFont(10.5, k)} fill={T.ink3}>{rangeLabel}</text>}
       </svg>
     </div>
   );
@@ -770,10 +791,11 @@ export function HaloStack({
   centerLabel?: string; centerSub?: string; height?: number; emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const W = 640, H = 400, cx = 320, cy = 186;
+  const [svgRef, k] = useMeasuredScale(W);
   const live = items.filter((d) => d.n > 0).slice(0, 5);
   const total = live.reduce((s, d) => s + d.n, 0);
   if (!live.length || total === 0) return <EmptyNote label={emptyLabel} height={height} />;
-  const W = 640, H = 400, cx = 320, cy = 186;
   const ranked = live.slice().sort((a, b) => b.n - a.n).map((d, i) => ({ ...d, color: d.color || PALETTE_T[i % PALETTE_T.length] }));
   const maxN = ranked[0].n;
   let r = 50;
@@ -790,7 +812,7 @@ export function HaloStack({
           ${rings.map((g, i) => `.halo-${uid}-${i}{transform-origin:${cx}px ${cy}px;animation:halo-rot-${uid} ${g.dur}s linear infinite ${g.dir < 0 ? "reverse" : "normal"};}`).join("\n")}
           @keyframes halo-rot-${uid}{to{transform:rotate(360deg);}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Halo mix">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Halo mix">
         {rings.map((g, i) => (
           <circle key={i} className={`halo-${uid}-${i}`} cx={cx} cy={cy} r={g.r} fill="none"
             stroke={g.color} strokeWidth={g.t} strokeLinecap="round" opacity="0.8"
@@ -799,10 +821,10 @@ export function HaloStack({
         ))}
         <circle cx={cx} cy={cy} r="38" fill={T.surface} stroke={T.line} strokeWidth="1.5"
           style={{ filter: `drop-shadow(0 4px 12px color-mix(in oklab, ${T.ink} 14%, transparent))` }} />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="20" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={scaledFont(20, k, 13)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
           {centerLabel ?? total}
         </text>
-        {centerSub && <text x={cx} y={cy + 18} textAnchor="middle" fontSize="8.5" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
+        {centerSub && <text x={cx} y={cy + 18} textAnchor="middle" fontSize={scaledFont(8.5, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
       </svg>
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
         {rings.map((g, i) => (
@@ -947,10 +969,11 @@ export function RayBurst({
   centerLabel?: string; centerSub?: string; height?: number; emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const W = 640, H = 420, cx = 320, cy = 204, r0 = 44;
+  const [svgRef, k] = useMeasuredScale(W);
   const live = items.filter((d) => d.n > 0).slice(0, 12);
   const total = live.reduce((s, d) => s + d.n, 0);
   if (!live.length || total === 0) return <EmptyNote label={emptyLabel} height={height} />;
-  const W = 640, H = 420, cx = 320, cy = 204, r0 = 44;
   const ranked = live.slice().sort((a, b) => b.n - a.n);
   const maxN = ranked[0].n;
   const rays = ranked.map((d, i) => {
@@ -969,28 +992,32 @@ export function RayBurst({
           ${rays.map((g, i) => `.ray-${uid}-${i}{stroke-dasharray:${Math.ceil(g.len)};stroke-dashoffset:${Math.ceil(g.len)};animation:ray-grow-${uid}-${i} .7s cubic-bezier(.22,1,.36,1) ${i * 60}ms forwards;}
           @keyframes ray-grow-${uid}-${i}{to{stroke-dashoffset:0;}}`).join("\n")}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Ray burst">
-        {rays.map((g, i) => (
-          <g key={i}>
-            <line className={`ray-${uid}-${i}`} x1={g.x0} y1={g.y0} x2={g.x1} y2={g.y1}
-              stroke={g.color} strokeWidth="5" strokeLinecap="round" opacity="0.78" />
-            <circle cx={g.x1} cy={g.y1} r="5.5" fill={g.color} stroke={T.surface} strokeWidth="2"
-              style={{ filter: `drop-shadow(0 0 7px color-mix(in oklab, ${g.color} 60%, transparent))` }} />
-            {rays.length <= 10 && (
-              <text x={g.lx} y={g.ly + 1} textAnchor={g.cos > 0.3 ? "start" : g.cos < -0.3 ? "end" : "middle"}
-                dominantBaseline="middle" fontSize="10.5" fontWeight="700" fill={T.ink2}>
-                <tspan fill={T.ink} fontFamily="var(--font-mono, monospace)" fontWeight="800">{g.n}</tspan>
-                <tspan dx="4">{g.label}</tspan>
-              </text>
-            )}
-          </g>
-        ))}
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Ray burst">
+        {rays.map((g, i) => {
+          const long = g.label.length > 16;
+          return (
+            <g key={i}>
+              <line className={`ray-${uid}-${i}`} x1={g.x0} y1={g.y0} x2={g.x1} y2={g.y1}
+                stroke={g.color} strokeWidth="5" strokeLinecap="round" opacity="0.78" />
+              <circle cx={g.x1} cy={g.y1} r="5.5" fill={g.color} stroke={T.surface} strokeWidth="2"
+                style={{ filter: `drop-shadow(0 0 7px color-mix(in oklab, ${g.color} 60%, transparent))` }} />
+              {rays.length <= 10 && (
+                <text x={g.lx} y={g.ly + 1} textAnchor={g.cos > 0.3 ? "start" : g.cos < -0.3 ? "end" : "middle"}
+                  dominantBaseline="middle" fontSize={scaledFont(10.5, k)} fontWeight="700" fill={T.ink2}>
+                  {long ? <title>{g.label}</title> : null}
+                  <tspan fill={T.ink} fontFamily="var(--font-mono, monospace)" fontWeight="800">{g.n}</tspan>
+                  <tspan dx="4">{long ? g.label.slice(0, 15) + "…" : g.label}</tspan>
+                </text>
+              )}
+            </g>
+          );
+        })}
         <circle cx={cx} cy={cy} r={r0 - 8} fill={T.surface} stroke={T.line} strokeWidth="1.5"
           style={{ filter: `drop-shadow(0 4px 12px color-mix(in oklab, ${T.ink} 14%, transparent))` }} />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={scaledFont(18, k, 13)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">
           {centerLabel ?? total}
         </text>
-        {centerSub && <text x={cx} y={cy + 17} textAnchor="middle" fontSize="8.5" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
+        {centerSub && <text x={cx} y={cy + 17} textAnchor="middle" fontSize={scaledFont(8.5, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as any}>{centerSub}</text>}
       </svg>
     </div>
   );

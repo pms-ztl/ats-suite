@@ -12,9 +12,9 @@ import { Pill } from "../aurora-kit";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
 import type { OffersData, OfferDetail, OfferStatusKey } from "../types";
-import { ChartCard, FunnelViz, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { ChartCard, EmptyChart } from "@/components/shared/charts";
 import { SectionCard, Reveal } from "../aurora-kit";
-import { FlowRibbon, BeadStream } from "@/components/shared/ribbon";
+import { FlowRibbon, BeadStream, StepCascade } from "@/components/shared/ribbon";
 
 // ----- Offer lifecycle (ribbon) -----
 // The screen's row type folds EXPIRED into "declined" (it has no "expired" key), so the
@@ -78,16 +78,12 @@ function OffersList({ data, lifecycle, onOpen, onCreate }: { data: OffersData; l
   const STAGE_LABEL: Record<string, string> = {
     draft: "Draft", pending: "Pending", approved: "Approved", sent: "Sent", accepted: "Accepted",
   };
-  const FUNNEL_COLORS = [
-    CHART_COLORS.ink3, CHART_COLORS.warn, CHART_COLORS.brand, CHART_COLORS.info, CHART_COLORS.ok,
-  ];
   const linearOffers = offers.filter((o) => o.status !== "declined");
   const offerFunnel = STAGE_ORDER.map((stage, i) => ({
-    name: STAGE_LABEL[stage],
-    value: linearOffers.filter((o) => STAGE_ORDER.indexOf(o.status) >= i).length,
-    fill: FUNNEL_COLORS[i],
+    label: STAGE_LABEL[stage],
+    n: linearOffers.filter((o) => STAGE_ORDER.indexOf(o.status) >= i).length,
   }));
-  const hasFunnel = offerFunnel[0].value > 0;
+  const hasFunnel = offerFunnel[0].n > 0;
   return (
     <div style={{ overflowY: "auto", height: "100%" }}>
       <div className="cd-page">
@@ -108,9 +104,10 @@ function OffersList({ data, lifecycle, onOpen, onCreate }: { data: OffersData; l
         </Reveal>
         {offers.length > 0 && (
           <div style={{ marginBottom: 18 }}>
-            <ChartCard title="Offers by stage" subtitle={`${linearOffers.length} active in the approval funnel`} height={190}>
+            <ChartCard title="Offers by stage" subtitle={`${linearOffers.length} active in the approval funnel`} height={220}>
               {hasFunnel ? (
-                <FunnelViz data={offerFunnel} valueFormatter={(v) => `${v}`} />
+                <StepCascade stages={offerFunnel} height={220}
+                  emptyLabel="No active offers in the funnel" />
               ) : <EmptyChart label="No active offers in the funnel" />}
             </ChartCard>
           </div>

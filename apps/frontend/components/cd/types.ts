@@ -8,10 +8,12 @@ import type { IconName } from "./icon";
 export interface KPI {
   id?: string;
   label: string;          // e.g. "Time to hire"
-  value: number;          // raw number; CountUp animates to it
-  icon: IconName;
-  spark: number[];        // sparkline series, oldest -> newest
-  delta: number;          // change vs last period (already computed)
+  value: number | null;   // raw number; CountUp animates to it. null = honest empty (no datum)
+  icon: IconName | string;
+  spark: number[];        // sparkline series, oldest -> newest ([] = no real history; no flat line)
+  delta: number | null;   // change vs last period; null = no prior period -> pill suppressed
+  hasValue?: boolean;     // tell a real measured 0 apart from an absent value
+  hasPrior?: boolean;     // a real prior period exists for the delta
   good?: boolean;         // is the delta direction good? drives green/red
   ai?: boolean;           // machine-generated metric -> violet accent + AI pill
   prefix?: string;        // e.g. "$"
@@ -21,9 +23,10 @@ export interface KPI {
 /* ----- CommandHero stat tile ----- */
 export interface HeroStat {
   label: string;
-  value: number;
-  icon: IconName;
+  value: number | null;   // null = honest empty (no datum), rendered as em-dash
+  icon: IconName | string;
   spark?: number[];
+  hasValue?: boolean;
   ai?: boolean;
   prefix?: string;
   suffix?: string;
@@ -165,6 +168,32 @@ export interface OrgOverviewData {
   inflow?: { label: string; n: number }[];                         // new candidates per week (Candidate.createdAt)
   departments?: { name: string; value: number }[];                 // open roles by department (Requisition.department)
   interviewMix?: { name: string; value: number; color: string }[]; // interviews by live status
+  /* ---- REAL-TIME OPS HOME (DESIGN_SPEC 7d) additive fields. All optional so the
+        frozen v1 reader keeps working; each renders an honest empty state when absent. ---- */
+  updatedAt?: number;                                              // ms epoch of the last successful load (drives one header LiveStatus)
+  heroKpis?: OrgHeroKpi[];                                         // the 4-6 hero KPI tiles (KpiCard + DeltaPill + sparkline)
+  verdictMix?: { name: string; value: number; color: string }[];  // screener PASS/REVIEW/FAIL mix (listScreening)
+  offerLifecycle?: { status: string; n: number; color: string }[];// offer status lifecycle (listOffers)
+}
+
+/* ----- One hero KPI tile for the ops home (maps to <KpiCard>). value/delta are null
+   when the metric is genuinely absent (renders the em-dash empty, never a fake 0);
+   `spark` is [] when there is no real series (no flat zero-line). ----- */
+export interface OrgHeroKpi {
+  id: string;
+  name: string;                 // uppercase card title
+  value: number | null;         // null/absent -> honest em-dash empty
+  delta?: number | null;        // change vs prior period; null/undefined -> pill suppressed
+  goodWhen?: "up" | "down";     // direction-of-goodness (inverse metrics like time-to-fill use "down")
+  spark?: number[];             // sparkline series, oldest -> newest ([] = no history)
+  icon?: IconName | string;
+  ai?: boolean;
+  prefix?: string;
+  suffix?: string;
+  period?: string;              // caption, e.g. "Last 30 days"
+  emptyCaption?: string;        // caption for the empty state
+  deltaSuffix?: string;
+  target?: { value: number; label?: string } | null; // optional benchmark/target line
 }
 
 /* --- RecruiterHome --- */

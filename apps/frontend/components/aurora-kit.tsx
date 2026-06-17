@@ -178,7 +178,7 @@ export function Greeting({ title, sub, children }: { title: React.ReactNode; sub
   );
 }
 
-type Stat = { label: string; value: number; icon: string; ai?: boolean; prefix?: string; suffix?: string; spark?: number[] };
+type Stat = { label: string; value: number | null; icon: string; ai?: boolean; prefix?: string; suffix?: string; spark?: number[]; hasValue?: boolean };
 /** Premium command-center hero band. */
 export function CommandHero({
   title, sub, stats, live, onToggleLive, eyebrow = "Northwind Talent", children,
@@ -215,10 +215,12 @@ export function CommandHero({
                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--c-ink-2)", fontWeight: 600 }}>
                   <Icon name={s.icon} size={13} style={{ color: s.ai ? "var(--c-ai)" : "var(--c-ink-3)" }} />{s.label}
                 </div>
-                <div className="mono tnum" style={{ fontSize: 25, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1, marginTop: 7 }}>
-                  <CountUp to={s.value} fmt={(n) => (s.prefix || "") + Math.round(n).toLocaleString() + (s.suffix || "")} />
+                <div className="mono tnum" style={{ fontSize: 25, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1, marginTop: 7, color: (s.hasValue ?? (s.value !== null && s.value !== undefined)) ? undefined : "var(--c-ink-3)" }}>
+                  {(s.hasValue ?? (s.value !== null && s.value !== undefined))
+                    ? <CountUp to={s.value as number} fmt={(n) => (s.prefix || "") + Math.round(n).toLocaleString() + (s.suffix || "")} />
+                    : <span>&mdash;</span>}
                 </div>
-                {s.spark && <div style={{ marginTop: 6 }}><Spark data={s.spark} w={94} h={22} color={s.ai ? "var(--c-ai)" : "var(--c-brand)"} /></div>}
+                {s.spark && s.spark.length > 0 && <div style={{ marginTop: 6 }}><Spark data={s.spark} w={94} h={22} color={s.ai ? "var(--c-ai)" : "var(--c-brand)"} /></div>}
               </div>
             ))}
           </div>
@@ -228,7 +230,9 @@ export function CommandHero({
   );
 }
 
-export function DeltaPill({ delta, good, suffix = "" }: { delta: number; good?: boolean; suffix?: string }) {
+export function DeltaPill({ delta, good, suffix = "" }: { delta: number | null; good?: boolean; suffix?: string }) {
+  // Absent prior period -> render nothing (the caller already suppresses; this is a guard).
+  if (delta === null || delta === undefined) return null;
   if (delta === 0) return <Pill tone="var(--c-ink-3)" bg="transparent" icon="dot">no change</Pill>;
   const up = delta > 0;
   const tone = good ? "var(--c-ok)" : "var(--c-danger)";
@@ -240,10 +244,16 @@ export function DeltaPill({ delta, good, suffix = "" }: { delta: number; good?: 
   );
 }
 
-export type Kpi = { id?: string; label: string; value: number; icon: string; spark: number[]; delta: number; good?: boolean; ai?: boolean; prefix?: string; suffix?: string };
+// `value`/`delta` accept `null` for HONEST EMPTY STATES (absent metric / no prior
+// period). `hasValue`/`hasPrior` (optional) let a real measured 0 be told apart
+// from absent. A literal number renders exactly as before (backward-compatible).
+export type Kpi = { id?: string; label: string; value: number | null; icon: string; spark: number[]; delta: number | null; hasValue?: boolean; hasPrior?: boolean; good?: boolean; ai?: boolean; prefix?: string; suffix?: string };
 export function KPICard({ k, i = 0 }: { k: Kpi; i?: number }) {
   const fmt = (n: number) => (k.prefix || "") + Math.round(n).toLocaleString() + (k.suffix || "");
-  const accent = k.ai ? "var(--c-ai)" : k.good === false && k.delta !== 0 ? "var(--c-danger)" : "var(--c-brand)";
+  // Absent value (null, or hasValue explicitly false) -> honest em-dash, never 0.
+  const hasValue = k.hasValue ?? (k.value !== null && k.value !== undefined);
+  const hasPrior = k.hasPrior ?? (k.delta !== null && k.delta !== undefined);
+  const accent = k.ai ? "var(--c-ai)" : k.good === false && hasPrior && k.delta !== 0 ? "var(--c-danger)" : "var(--c-brand)";
   return (
     <Reveal i={i}>
       <div className="kpi-prem" style={{ background: "var(--c-surface)", border: "1px solid var(--c-line)", borderRadius: "var(--r-lg)", padding: "15px 16px 17px", boxShadow: "var(--e1)",
@@ -260,10 +270,18 @@ export function KPICard({ k, i = 0 }: { k: Kpi; i?: number }) {
           {k.ai && <Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" style={{ fontSize: 9, padding: "1px 6px" }}>AI</Pill>}
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8, marginTop: 13, position: "relative" }}>
-          <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }} className="tnum"><CountUp to={k.value} fmt={fmt} /></div>
-          <Spark data={k.spark} w={74} h={28} color={accent} />
+          <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: hasValue ? undefined : "var(--c-ink-3)" }} className="tnum">
+            {hasValue ? <CountUp to={k.value as number} fmt={fmt} /> : <span style={{ fontVariantNumeric: "tabular-nums" }}>&mdash;</span>}
+          </div>
+          {/* No fabricated flat zero-line: only draw a sparkline from a real series. */}
+          {k.spark.length > 0 && <Spark data={k.spark} w={74} h={28} color={accent} />}
         </div>
-        <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 6 }}><DeltaPill delta={k.delta} good={k.good} suffix={k.suffix === "%" ? "%" : ""} /> <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>vs last period</span></div>
+        <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 6 }}>
+          {/* Suppress the delta pill entirely when there is no prior period. */}
+          {hasPrior
+            ? <><DeltaPill delta={k.delta as number} good={k.good} suffix={k.suffix === "%" ? "%" : ""} /> <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>vs last period</span></>
+            : <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{hasValue ? "No prior period" : "No data yet"}</span>}
+        </div>
         <span className="accent-bar" style={{ background: `linear-gradient(90deg, ${accent}, color-mix(in oklab, ${accent} 25%, transparent))`, borderRadius: "0 0 var(--r-lg) var(--r-lg)", animationDelay: (i * 60 + 200) + "ms" }} />
       </div>
     </Reveal>

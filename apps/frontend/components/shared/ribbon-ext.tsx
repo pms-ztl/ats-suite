@@ -13,6 +13,7 @@
 // Models: StreamGraph, WaffleField, ActivityRings, CalendarHeat, KiteRadar,
 // MilestoneSpine, HoneyComb.
 import * as React from "react";
+import { useMeasuredScale, scaledFont } from "./use-measured-scale";
 
 const T = {
   brand: "var(--c-brand, var(--brand, #16a37a))",
@@ -117,6 +118,7 @@ export function StreamGraph({
   });
   const peakJ = totals.indexOf(maxTotal);
   const dense = nB > 9;
+  const [svgRef, k] = useMeasuredScale(W);
   return (
     <div style={SPLIT}>
       <div style={VIZCOL}>
@@ -125,7 +127,7 @@ export function StreamGraph({
             .stream-${uid} path{animation:stream-in-${uid} .8s ease-out both;}
             @keyframes stream-in-${uid}{from{opacity:0;}to{opacity:1;}}
           }` }} />
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition over time">
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Composition over time">
           <defs>
             {bands.map((b, i) => (
               <linearGradient key={i} id={`stream-g-${uid}-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -142,10 +144,10 @@ export function StreamGraph({
               <path key={i} d={b.d} fill={`url(#stream-g-${uid}-${i})`} stroke={T.surface} strokeWidth="1.1" strokeOpacity="0.55" style={{ animationDelay: `${i * 70}ms` }} />
             ))}
           </g>
-          <text x={x(peakJ)} y={midY - (maxTotal * scale) / 2 - 8} textAnchor="middle" fontSize="11" fontWeight="800" fill={T.ink2} fontFamily="var(--font-mono, monospace)">{maxTotal}</text>
+          <text x={x(peakJ)} y={midY - (maxTotal * scale) / 2 - 8} textAnchor="middle" fontSize={scaledFont(11, k, 12)} fontWeight="800" fill={T.ink2} fontFamily="var(--font-mono, monospace)">{maxTotal}</text>
           {buckets.map((bk, j) => (
             (!dense || j % 2 === nB % 2 || j === nB - 1) ? (
-              <text key={j} x={x(j)} y={H - 10} textAnchor="middle" fontSize="10" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".04em" } as React.CSSProperties}>{bk.label}</text>
+              <text key={j} x={x(j)} y={H - 10} textAnchor="middle" fontSize={scaledFont(10, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".04em" } as React.CSSProperties}>{bk.label}</text>
             ) : null
           ))}
         </svg>
@@ -238,6 +240,7 @@ export function ActivityRings({
     const rr = 116 - i * (sw + gap);
     return { ...r, frac, rr, C: 2 * Math.PI * rr, color: r.color || PALETTE_T[i % PALETTE_T.length], max };
   });
+  const [svgRef, k] = useMeasuredScale(W);
   return (
     <div style={SPLIT}>
       <div style={{ flex: "0 1 230px", minWidth: 190 }}>
@@ -245,7 +248,7 @@ export function ActivityRings({
           @media (prefers-reduced-motion: no-preference){
             ${ringData.map((r, i) => `.ring-${uid}-${i}{animation:ring-fill-${uid}-${i} 1.1s cubic-bezier(.3,1,.5,1) both;}@keyframes ring-fill-${uid}-${i}{from{stroke-dashoffset:${r.C};}to{stroke-dashoffset:${r.C * (1 - r.frac)};}}`).join("")}
           }` }} />
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Rates">
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Rates">
           <defs>
             {ringData.map((r, i) => (
               <linearGradient key={i} id={`ring-g-${uid}-${i}`} x1="0" y1="0" x2="1" y2="1">
@@ -267,8 +270,8 @@ export function ActivityRings({
           </g>
           {centerLabel != null && (
             <>
-              <text x={cx} y={cy - 2} textAnchor="middle" dominantBaseline="middle" fontSize="36" fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">{centerLabel}</text>
-              {centerSub && <text x={cx} y={cy + 26} textAnchor="middle" fontSize="10" fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as React.CSSProperties}>{centerSub}</text>}
+              <text x={cx} y={cy - 2} textAnchor="middle" dominantBaseline="middle" fontSize={scaledFont(36, k, 14)} fontWeight="800" fill={T.ink} fontFamily="var(--font-mono, monospace)">{centerLabel}</text>
+              {centerSub && <text x={cx} y={cy + 26} textAnchor="middle" fontSize={scaledFont(10, k)} fontWeight="700" fill={T.ink3} style={{ textTransform: "uppercase", letterSpacing: ".07em" } as React.CSSProperties}>{centerSub}</text>}
             </>
           )}
         </svg>
@@ -320,6 +323,7 @@ export function CalendarHeat({
   const cols = maxCol + 1;
   const W = leftPad + cols * (cell + gp);
   const H = topPad + 7 * (cell + gp);
+  const [svgRef, k] = useMeasuredScale(W);
   const dayLabels = weekStartsMonday ? ["M", "", "W", "", "F", "", ""] : ["S", "M", "", "W", "", "F", ""];
   const color = (n: number | undefined) => {
     if (!n) return `color-mix(in oklab, ${T.ink3} 9%, transparent)`;
@@ -332,7 +336,7 @@ export function CalendarHeat({
     const colDate = new Date(originMs + c * 7 * 86400000);
     if (colDate.getMonth() !== prevMonth) {
       prevMonth = colDate.getMonth();
-      monthMarks.push(<text key={`m${c}`} x={leftPad + c * (cell + gp)} y={10} fontSize="9.5" fontWeight="700" fill={T.ink3}>{MONTHS[prevMonth]}</text>);
+      monthMarks.push(<text key={`m${c}`} x={leftPad + c * (cell + gp)} y={10} fontSize={scaledFont(9.5, k)} fontWeight="700" fill={T.ink3}>{MONTHS[prevMonth]}</text>);
     }
     for (let r = 0; r < 7; r++) {
       const n = cellsByKey.get(`${c}:${r}`);
@@ -356,10 +360,10 @@ export function CalendarHeat({
   return (
     <div style={SPLIT}>
       <div style={{ flex: "2 1 360px", minWidth: 300 }}>
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: "auto", display: "block" }} role="img" aria-label="Daily activity">
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: "auto", display: "block" }} role="img" aria-label="Daily activity">
           {monthMarks}
           {dayLabels.map((d, r) => d ? (
-            <text key={r} x={leftPad - 6} y={topPad + r * (cell + gp) + cell - 4} textAnchor="end" fontSize="9" fontWeight="700" fill={T.ink3}>{d}</text>
+            <text key={r} x={leftPad - 6} y={topPad + r * (cell + gp) + cell - 4} textAnchor="end" fontSize={scaledFont(9, k)} fontWeight="700" fill={T.ink3}>{d}</text>
           ) : null)}
           {rects}
         </svg>
@@ -411,6 +415,7 @@ export function KiteRadar({
   const poly = (pts: number[][]) => pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ") + " Z";
   const stops = gradient && gradient.length >= 2 ? gradient : [T.brand, T.info, T.ai];
   const grid = [0.25, 0.5, 0.75, 1];
+  const [svgRef, k] = useMeasuredScale(W);
   return (
     <div style={SPLIT}>
       <div style={{ flex: "1 1 300px", minWidth: 260 }}>
@@ -419,7 +424,7 @@ export function KiteRadar({
             .kite-${uid}{transform-box:fill-box;transform-origin:${cx}px ${cy}px;animation:kite-in-${uid} .9s cubic-bezier(.22,1,.36,1) both;}
             @keyframes kite-in-${uid}{from{transform:scale(.2);opacity:0;}to{transform:scale(1);opacity:1;}}
           }` }} />
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: "auto", display: "block", overflow: "visible", margin: "0 auto" }} role="img" aria-label="Multi-dimensional profile">
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: "auto", display: "block", overflow: "visible", margin: "0 auto" }} role="img" aria-label="Multi-dimensional profile">
           <defs>
             <radialGradient id={`kite-g-${uid}`}>
               <stop offset="0%" stopColor={stops[stops.length - 1]} stopOpacity="0.42" />
@@ -433,7 +438,7 @@ export function KiteRadar({
             <polygon key={gi} points={live.map((_, i) => pt(i, R * g).join(",")).join(" ")} fill="none" stroke={T.line} strokeWidth="1" strokeDasharray={gi === grid.length - 1 ? "none" : "3 5"} />
           ))}
           {grid.map((g, gi) => (
-            <text key={`gl${gi}`} x={cx + 4} y={cy - R * g + 3} fontSize="8.5" fontWeight="600" fill={T.ink3} opacity="0.8">{Math.round(g * 100)}</text>
+            <text key={`gl${gi}`} x={cx + 4} y={cy - R * g + 3} fontSize={scaledFont(8.5, k)} fontWeight="600" fill={T.ink3} opacity="0.8">{Math.round(g * 100)}</text>
           ))}
           {live.map((_, i) => { const [ex, ey] = pt(i, R); return <line key={i} x1={cx} y1={cy} x2={ex} y2={ey} stroke={T.line} strokeWidth="1" strokeOpacity="0.6" />; })}
           <path className={`kite-${uid}`} d={poly(valuePts)} fill={`url(#kite-g-${uid})`} stroke={`url(#kite-s-${uid})`} strokeWidth="2.5" strokeLinejoin="round"
@@ -442,7 +447,7 @@ export function KiteRadar({
           {live.map((a, i) => {
             const [lx, ly] = pt(i, R + 18);
             const anchor = Math.abs(lx - cx) < 16 ? "middle" : lx > cx ? "start" : "end";
-            return <text key={i} x={lx} y={ly} textAnchor={anchor} dominantBaseline="middle" fontSize="10" fontWeight="700" fill={T.ink2}>{a.label}</text>;
+            return <text key={i} x={lx} y={ly} textAnchor={anchor} dominantBaseline="middle" fontSize={scaledFont(10, k)} fontWeight="700" fill={T.ink2}>{a.label}</text>;
           })}
         </svg>
       </div>
@@ -470,6 +475,7 @@ export function MilestoneSpine({
   const step = (W - padX * 2) / (live.length - 1);
   const x = (i: number) => padX + i * step;
   const lastDone = live.reduce((acc, s, i) => (s.done || s.current ? i : acc), -1);
+  const [svgRef, k] = useMeasuredScale(W);
   return (
     <div style={{ width: "100%" }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -477,7 +483,7 @@ export function MilestoneSpine({
           .ms-cur-${uid}{transform-box:fill-box;transform-origin:center;animation:ms-pulse-${uid} 2.2s ease-in-out infinite;}
           @keyframes ms-pulse-${uid}{0%{transform:scale(1);opacity:.5;}70%{transform:scale(2.1);opacity:0;}100%{opacity:0;}}
         }` }} />
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Journey">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }} role="img" aria-label="Journey">
         <defs>
           <linearGradient id={`ms-g-${uid}`} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor={T.brand} /><stop offset="100%" stopColor={T.ai} /></linearGradient>
         </defs>
@@ -495,8 +501,8 @@ export function MilestoneSpine({
               <circle cx={cxn} cy={cy} r={s.done || s.current ? 9 : 7} fill={s.done ? T.brand : s.current ? T.ai : T.surface} stroke={tone} strokeWidth="2.5"
                 style={s.done || s.current ? { filter: `drop-shadow(0 2px 7px color-mix(in oklab, ${tone} 45%, transparent))` } : undefined} />
               {s.done && <path d={`M ${cxn - 3.5} ${cy} l 2.4 2.6 l 4.6 -5`} fill="none" stroke={T.surface} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
-              <text x={cxn} y={above ? cy - 22 : cy + 30} textAnchor="middle" fontSize="11.5" fontWeight={s.current ? 800 : 700} fill={s.current ? T.ink : s.done ? T.ink : T.ink2}>{s.label}</text>
-              {s.sub && <text x={cxn} y={above ? cy - 36 : cy + 44} textAnchor="middle" fontSize="10" fontWeight="600" fill={T.ink3} fontFamily="var(--font-mono, monospace)">{s.sub}</text>}
+              <text x={cxn} y={above ? cy - 22 : cy + 30} textAnchor="middle" fontSize={scaledFont(11.5, k, 12)} fontWeight={s.current ? 800 : 700} fill={s.current ? T.ink : s.done ? T.ink : T.ink2}>{s.label}</text>
+              {s.sub && <text x={cxn} y={above ? cy - 36 : cy + 44} textAnchor="middle" fontSize={scaledFont(10, k)} fontWeight="600" fill={T.ink3} fontFamily="var(--font-mono, monospace)">{s.sub}</text>}
             </g>
           );
         })}

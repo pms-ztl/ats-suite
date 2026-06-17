@@ -38,7 +38,12 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const [runsToday, totals] = await Promise.all([
+    // Window for the spend sparkline: last 14 days (inclusive of today).
+    const sparkDays = 14;
+    const sparkSince = new Date(Date.now() - (sparkDays - 1) * 24 * 60 * 60 * 1000);
+    sparkSince.setHours(0, 0, 0, 0);
+
+    const [runsToday, totals, sparkRows] = await Promise.all([
       prisma.agentRunCost.count({
         where: { tenantId, createdAt: { gte: startOfToday } },
       }),
@@ -47,7 +52,33 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
         _count: { _all: true },
         _sum: { tokensIn: true, tokensOut: true, costUsd: true },
       }),
+      prisma.agentRunCost.findMany({
+        where: { tenantId, createdAt: { gte: sparkSince } },
+        select: { costUsd: true, createdAt: true },
+      }),
     ]);
+
+    // --- spendSparkline — total AI cost per local day over the last 14 days.
+    // Real measured per-day spend; a 0 inside the window is a genuine "no runs
+    // that day" (the day exists in range). Empty array only when there are no
+    // rows in the window at all (frontend keeps its honest empty state then).
+    const dayBuckets = new Map<string, number>();
+    for (const r of sparkRows) {
+      const d = r.createdAt;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      dayBuckets.set(key, (dayBuckets.get(key) ?? 0) + Number(r.costUsd));
+    }
+    const spendSparkline: { label: string; cost: number }[] = [];
+    if (sparkRows.length > 0) {
+      for (let i = sparkDays - 1; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        spendSparkline.push({
+          label: `${d.getMonth() + 1}/${d.getDate()}`,
+          cost: Number((dayBuckets.get(key) ?? 0).toFixed(4)),
+        });
+      }
+    }
 
     ok(res, {
       aiDecisionsToday: runsToday,
@@ -55,6 +86,8 @@ router.get("/overview", async (req: Request, res: Response, next: NextFunction) 
       totalTokensIn: totals._sum.tokensIn ?? 0,
       totalTokensOut: totals._sum.tokensOut ?? 0,
       totalCostUsd: Number(totals._sum.costUsd ?? 0),
+      // --- additive: real per-day AI spend over the last 14 days (or [] = no data) ---
+      spendSparkline,
     });
   } catch (err) { next(err); }
 });

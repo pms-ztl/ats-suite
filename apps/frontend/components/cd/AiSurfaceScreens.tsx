@@ -8,17 +8,18 @@ import { Icon } from "./icon";
 import type { PlatformCostData, NotifPrefsData, NotifPref, MobilityData, PlatformJobsData } from "./types";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
-import { TreemapChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
 
 export function PlatformCostScreen({ data }: { data: PlatformCostData }) {
   // Pareto: agent spend, sorted desc (real per-agent costUsd from billing rollup).
   const agents = data.agents.slice().sort((a, b) => b.cost - a.cost);
-  // Treemap: tenant spend (real per-tenant costUsd). Over-budget tenants tinted red.
+  // Bars: tenant spend (real per-tenant costUsd), to match the Spend-by-agent sibling.
+  // Over-budget tenants tinted red.
   const tenants = data.tenants.slice().sort((a, b) => b.cost - a.cost).slice(0, 10);
   const agentBars = agents.map((a) => ({ agent: a.n, cost: Math.round(a.cost * 100) / 100 }));
-  const tenantTree = tenants
+  const tenantBars = tenants
     .filter((t) => t.cost > 0)
-    .map((t) => ({ name: t.name, size: Math.round(t.cost * 100) / 100, fill: t.health === "over" ? CHART_COLORS.danger : undefined }));
+    .map((t) => ({ name: t.name, cost: Math.round(t.cost * 100) / 100, over: t.health === "over" }));
   const usd = (v: any) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   return <div style={{ overflowY: "auto", height: "100%", padding: "26px 30px 50px" }}>
     <div style={{ maxWidth: 1240, margin: "0 auto" }}>
@@ -38,8 +39,10 @@ export function PlatformCostScreen({ data }: { data: PlatformCostData }) {
         </SectionCard></Reveal>
         <Reveal i={5}><SectionCard title="Spend by tenant" icon="building" action="All tenants">
           <div style={{ height: 280, marginTop: 4 }}>
-            {tenantTree.length > 0
-              ? <TreemapChart data={tenantTree} valueFormatter={usd} />
+            {tenantBars.length > 0
+              ? <BarsChart data={tenantBars} categoryKey="name" layout="horizontal"
+                  series={[{ key: "cost", name: "Spend (30d)" }]} valueFormatter={usd}
+                  colorFn={(row) => (row.over ? CHART_COLORS.danger : CHART_COLORS.ai)} />
               : <EmptyChart label="No tenant spend in the last 30 days" />}
           </div>
           {data.overBudgetNote && <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: "var(--r)", background: "var(--danger-tint)", fontSize: 11.5, color: "var(--ink-2)", display: "flex", gap: 8, alignItems: "center" }}><Icon name="flag" size={13} style={{ color: "var(--danger)" }} />{data.overBudgetNote}</div>}

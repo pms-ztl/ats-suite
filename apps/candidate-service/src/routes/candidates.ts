@@ -27,6 +27,37 @@ import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
+/**
+ * Bucket a set of dates into `weeks` consecutive 7-day windows ending now, and
+ * return a per-window count series for a sparkline. Each `n` is a real measured
+ * count (a 0 here is genuine — the window exists in the observed range). Weeks
+ * run oldest -> newest so the latest point is last.
+ */
+function buildWeeklyInflow(dates: Array<Date | null | undefined>, weeks: number): { label: string; n: number }[] {
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const out: { label: string; n: number; from: number; to: number }[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const to = now - i * weekMs;
+    const from = to - weekMs;
+    const d = new Date(from);
+    out.push({
+      label: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+      n: 0,
+      from,
+      to,
+    });
+  }
+  for (const dt of dates) {
+    if (!dt) continue;
+    const t = dt.getTime();
+    if (!isFinite(t)) continue;
+    const b = out.find((w) => t >= w.from && t < w.to);
+    if (b) b.n++;
+  }
+  return out.map(({ label, n }) => ({ label, n }));
+}
+
 const CreateCandidateSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(80),
@@ -59,25 +90,96 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 router.get("/overview", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
-    const [totalCandidates, activeApplications, hiredApplications, applicationsByStage] =
-      await Promise.all([
-        prisma.candidate.count({ where: { tenantId } }),
-        prisma.application.count({ where: { tenantId, status: "ACTIVE" } }),
-        prisma.application.count({ where: { tenantId, status: "HIRED" } }),
-        prisma.application.groupBy({
-          by: ["stage"],
-          where: { tenantId },
-          _count: { _all: true },
-        }),
-      ]);
+    const [
+      totalCandidates,
+      activeApplications,
+      hiredApplications,
+      applicationsByStage,
+      hiredApps,
+      inflowApps,
+      offersByStatus,
+    ] = await Promise.all([
+      prisma.candidate.count({ where: { tenantId } }),
+      prisma.application.count({ where: { tenantId, status: "ACTIVE" } }),
+      prisma.application.count({ where: { tenantId, status: "HIRED" } }),
+      prisma.application.groupBy({
+        by: ["stage"],
+        where: { tenantId },
+        _count: { _all: true },
+      }),
+      // For avgTimeToHire: HIRED apps carry their hire moment in stageUpdatedAt
+      // (when status flipped to HIRED). There's no dedicated hiredAt column, so
+      // stageUpdatedAt is the truthful proxy for the hire date.
+      prisma.application.findMany({
+        where: { tenantId, status: "HIRED" },
+        select: { appliedAt: true, stageUpdatedAt: true },
+      }),
+      // For the weeklyInflow sparkline: appliedAt over the last ~8 ISO weeks.
+      prisma.application.findMany({
+        where: {
+          tenantId,
+          appliedAt: { gte: new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000) },
+        },
+        select: { appliedAt: true },
+      }),
+      // For offerAcceptRate: real Offer lifecycle counts.
+      prisma.offer.groupBy({
+        by: ["status"],
+        where: { tenantId },
+        _count: { _all: true },
+      }),
+    ]);
     const byStage: Record<string, number> = {};
     for (const row of applicationsByStage) byStage[row.stage] = row._count._all;
+
+    // --- avgTimeToHire (days) — mean of (stageUpdatedAt - appliedAt) over HIRED
+    // apps that have both timestamps. null when there are no completed hires so
+    // the frontend renders an honest empty state rather than a fake 0.
+    let avgTimeToHire: number | null = null;
+    {
+      const durations: number[] = [];
+      for (const a of hiredApps) {
+        if (!a.appliedAt || !a.stageUpdatedAt) continue;
+        const ms = a.stageUpdatedAt.getTime() - a.appliedAt.getTime();
+        if (ms >= 0 && isFinite(ms)) durations.push(ms / (24 * 60 * 60 * 1000));
+      }
+      if (durations.length > 0) {
+        const mean = durations.reduce((s, d) => s + d, 0) / durations.length;
+        avgTimeToHire = Number(mean.toFixed(1));
+      }
+    }
+
+    // --- weeklyInflow sparkline — applications per ISO week for the last 8 weeks.
+    // Each entry is a real measured count (0 is a genuine measured 0 here, since
+    // the window itself exists). The array is empty only when no inflow at all.
+    const weeklyInflow = buildWeeklyInflow(inflowApps.map((a) => a.appliedAt), 8);
+
+    // --- offerAcceptRate — accepted / extended. "Extended" = offers that reached
+    // a candidate (SENT, ACCEPTED, DECLINED, EXPIRED). DRAFT/PENDING_APPROVAL/
+    // APPROVED are not yet in front of the candidate so they don't count.
+    const offerCounts: Record<string, number> = {};
+    for (const row of offersByStatus) offerCounts[row.status] = row._count._all;
+    const offersAccepted = offerCounts["ACCEPTED"] ?? 0;
+    const offersExtended =
+      (offerCounts["SENT"] ?? 0) +
+      (offerCounts["ACCEPTED"] ?? 0) +
+      (offerCounts["DECLINED"] ?? 0) +
+      (offerCounts["EXPIRED"] ?? 0);
+    const offerAcceptRate =
+      offersExtended > 0 ? Number(((offersAccepted / offersExtended) * 100).toFixed(1)) : null;
+
     ok(res, {
       totalCandidates,
       activeCandidates: activeApplications, // alias for dashboard
       activeApplications,
       hiredApplications,
       applicationsByStage: byStage,
+      // --- additive real KPIs (null/empty = honest "no data", never a fake 0) ---
+      avgTimeToHire,        // number (days) | null
+      weeklyInflow,         // [{ label, n }] real per-ISO-week applied counts (last 8)
+      offerAcceptRate,      // number (percent) | null
+      offersAccepted,       // raw count
+      offersExtended,       // raw count (denominator)
     });
   } catch (err) { next(err); }
 });

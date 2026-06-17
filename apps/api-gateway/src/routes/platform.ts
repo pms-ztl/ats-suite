@@ -26,6 +26,13 @@ interface CandOverview {
   activeApplications: number;
   hiredApplications: number;
   applicationsByStage: Record<string, number>;
+  // Additive real KPIs (candidate-service /internal/candidates/overview).
+  // null/[]/absent = honest "no data", never a fabricated 0.
+  avgTimeToHire?: number | null;
+  weeklyInflow?: Array<{ label: string; n: number }>;
+  offerAcceptRate?: number | null;
+  offersAccepted?: number;
+  offersExtended?: number;
 }
 interface BillingOverview {
   aiDecisionsToday: number;
@@ -33,6 +40,15 @@ interface BillingOverview {
   totalTokensIn: number;
   totalTokensOut: number;
   totalCostUsd: number;
+  // Additive real KPI (billing-service /internal/billing/overview).
+  spendSparkline?: Array<{ label: string; cost: number }>;
+}
+
+// Percent change between two real prior-vs-current values. Returns null (so the
+// caller OMITS the field) when there is no usable prior period — never a fake 0%.
+function pctChange(current: number, prior: number): number | null {
+  if (!isFinite(current) || !isFinite(prior) || prior <= 0) return null;
+  return Number((((current - prior) / prior) * 100).toFixed(1));
 }
 
 export function platformRouter(logger: Logger): Router {
@@ -82,6 +98,33 @@ export function platformRouter(logger: Logger): Router {
         logger.warn({ err: billRes.reason }, "platform-overview: billing-service slice failed");
       }
 
+      // --- Real, derivable KPIs (additive; honest-null/empty otherwise) -------
+      // weeklyInflow: applications per ISO week (last 8) from candidate-service.
+      // Used as the active-candidates momentum sparkline; the week-over-week
+      // delta is a real prior-vs-current comparison (omitted when no prior week).
+      const weeklyInflow = candData?.weeklyInflow ?? [];
+      const inflowSpark = weeklyInflow.map((w) => w.n);
+      let activeCandidatesChange: number | null = null;
+      if (weeklyInflow.length >= 2) {
+        const last = weeklyInflow[weeklyInflow.length - 1]!.n;
+        const prev = weeklyInflow[weeklyInflow.length - 2]!.n;
+        activeCandidatesChange = pctChange(last, prev);
+      }
+
+      // spendSparkline: AI cost per day (last 14) from billing-service. Real
+      // spend delta = last 7 days vs the prior 7 days (omitted when prior is 0).
+      const spendSpark = billData?.spendSparkline ?? [];
+      const spendSparkValues = spendSpark.map((d) => d.cost);
+      let spendChange: number | null = null;
+      if (spendSpark.length >= 14) {
+        const prior7 = spendSpark.slice(0, 7).reduce((s, d) => s + d.cost, 0);
+        const last7 = spendSpark.slice(7).reduce((s, d) => s + d.cost, 0);
+        spendChange = pctChange(last7, prior7);
+      }
+
+      const avgTimeToHire = candData?.avgTimeToHire ?? null;
+      const offerAcceptRate = candData?.offerAcceptRate ?? null;
+
       // Build the response shape the dashboard expects. Use null for
       // not-yet-implemented metrics so the UI renders "—" honestly.
       ok(res, {
@@ -94,14 +137,29 @@ export function platformRouter(logger: Logger): Router {
         aiDecisionsToday: billData?.aiDecisionsToday ?? 0,
         totalAgentRuns: billData?.totalAgentRuns ?? 0,
 
-        // Derivable metrics — null until backed by real history
-        avgTimeToHire: null,        // needs hired_at-applied_at history
-        offerAcceptRate: null,      // needs OFFERED + (HIRED|REJECTED) counts
+        // Real derived metrics (null when there is genuinely no data yet)
+        avgTimeToHire,              // mean days hired apps spent in pipeline | null
+        offerAcceptRate,            // accepted / extended offers, percent | null
+        offersAccepted: candData?.offersAccepted ?? null,
+        offersExtended: candData?.offersExtended ?? null,
+
+        // Still honest-null — no demographic / audit-pass-rate store exists
         complianceScore: null,      // needs audit-trail pass-rate
         diversityScore: null,       // needs demographic data + parity calc
         costPerHire: candData?.hiredApplications && billData?.totalCostUsd
           ? Number((billData.totalCostUsd / candData.hiredApplications).toFixed(2))
           : null,
+
+        // Real sparklines (empty array = no data; frontend keeps honest empty state)
+        activeCandidatesSparkline: inflowSpark,   // weekly application inflow (8 pts)
+        weeklyInflow,                             // labelled series (for richer viz)
+        spendSparkline: spendSpark,               // labelled per-day AI spend (14 pts)
+        aiSpendSparkline: spendSparkValues,       // bare values for a simple sparkline
+
+        // Real period deltas — present ONLY when a real prior period exists.
+        // (Omitted entirely otherwise; the frontend then suppresses the pill.)
+        ...(activeCandidatesChange !== null ? { activeCandidatesChange } : {}),
+        ...(spendChange !== null ? { aiSpendChange: spendChange } : {}),
 
         // Per-stage funnel for the chart
         pipelineData: candData?.applicationsByStage

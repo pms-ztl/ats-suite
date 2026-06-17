@@ -771,22 +771,44 @@ export async function getOversight(): Promise<OversightStats> {
 
 /* ---------- Dashboard (home) ---------- */
 // Matches the aurora-kit `Kpi` shape so KpiRow/KPICard render directly.
+// HONEST EMPTY STATES: `value`/`delta` are `null` when the backend genuinely has
+// no datum (never coerced to 0). `spark` is an EMPTY array when there is no real
+// series (never a fabricated flat line). `hasValue`/`hasPrior` let the card tell a
+// real measured 0 apart from an absent metric, and suppress the delta pill when
+// there is no prior period to compare against. A literal numeric 0 with
+// hasValue=true is a real measured value and must render as "0", not as empty.
 export type DashKpi = {
-  id: string; label: string; value: number; icon: string; spark: number[];
-  delta: number; good?: boolean; ai?: boolean; prefix?: string; suffix?: string;
+  id: string; label: string; value: number | null; icon: string; spark: number[];
+  delta: number | null; hasValue: boolean; hasPrior: boolean;
+  good?: boolean; ai?: boolean; prefix?: string; suffix?: string;
 };
 export async function getDashboardKpis(): Promise<DashKpi[]> {
-  const res: any = await raw("GET", "/platform/unified-overview").catch(() => ({}));
-  const d = res?.data ?? res ?? {};
-  const flat = (v: number) => [v, v, v, v, v, v];
+  const d = await getPlatformOverview();
+  // A present, finite number = a real value (including a real measured 0).
+  // null/undefined/NaN = absent -> render an honest em-dash empty, not 0.
+  const num = (v: unknown): number | null => {
+    if (v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
   const mk = (
-    id: string, label: string, icon: string, value: any, change: any, spark: any,
+    id: string, label: string, icon: string, value: unknown, change: unknown, spark: unknown,
     opts: Partial<DashKpi> = {},
   ): DashKpi => {
-    const v = Number(value) || 0;
+    const v = num(value);
+    const delta = num(change);
+    // Only a real, non-empty series becomes a sparkline; otherwise stay empty so
+    // the card draws no fabricated flat zero-line.
+    const series = Array.isArray(spark)
+      ? (spark.map(num).filter((n): n is number => n !== null))
+      : [];
     return {
-      id, label, icon, value: v, delta: Math.round(Number(change) || 0),
-      spark: Array.isArray(spark) && spark.length ? spark.map(Number) : flat(v),
+      id, label, icon,
+      value: v,
+      hasValue: v !== null,
+      delta,
+      hasPrior: delta !== null,        // backend omits *Change entirely when no prior period
+      spark: series,
       ...opts,
     };
   };
@@ -800,4 +822,149 @@ export async function getDashboardKpis(): Promise<DashKpi[]> {
     mk("div", "Diversity index", "grid", d.diversityScore, d.diversityScoreChange, d.diversityScoreSparkline, { good: true }),
     mk("cost", "Cost per hire", "card", d.costPerHire, d.costPerHireChange, d.costPerHireSparkline, { prefix: "₹", good: false }),
   ];
+}
+
+/* ---------- Platform unified-overview (typed accessor for the home) ---------- */
+// One typed read of GET /platform/unified-overview. Every field passes through
+// EXACTLY what the backend returned: real counts stay numbers (including a real
+// measured 0), not-yet-available metrics stay `null`, period deltas are
+// `undefined` when the backend omitted them (no prior period), and sparkline
+// series are `[]` when there is genuinely no history. NO fabricated fallbacks.
+//
+// Backend (api-gateway/src/routes/platform.ts) contract this mirrors:
+//   counts (always real): openRequisitions, totalRequisitions, activeCandidates,
+//     totalCandidates, hiredApplications, aiDecisionsToday, totalAgentRuns
+//   derived (number | null): avgTimeToHire, offerAcceptRate, offersAccepted,
+//     offersExtended, costPerHire
+//   honest-null (not yet computed): complianceScore, diversityScore
+//   sparklines: activeCandidatesSparkline (number[]), weeklyInflow ({label,n}[]),
+//     spendSparkline ({label,cost}[]), aiSpendSparkline (number[])
+//   deltas (present ONLY with a real prior period): activeCandidatesChange,
+//     aiSpendChange
+// NOTE: the backend currently emits NO *Change/*Sparkline for reqs / time-to-hire
+//   / offer-accept / ai-decisions / compliance / diversity / cost-per-hire, so
+//   those read back as undefined here and the card stays on an honest empty pill.
+export type WeeklyInflowPoint = { label: string; n: number };
+export type SpendDayPoint = { label: string; cost: number };
+export type PlatformOverview = {
+  // Real counts (a 0 here is a genuine measured 0)
+  openRequisitions: number | null;
+  totalRequisitions: number | null;
+  activeCandidates: number | null;
+  totalCandidates: number | null;
+  hiredApplications: number | null;
+  aiDecisionsToday: number | null;
+  totalAgentRuns: number | null;
+  // Real derived metrics (null = no data yet)
+  avgTimeToHire: number | null;
+  offerAcceptRate: number | null;
+  offersAccepted: number | null;
+  offersExtended: number | null;
+  costPerHire: number | null;
+  // Honest-null until a real source exists
+  complianceScore: number | null;
+  diversityScore: number | null;
+  // Real series ([] = no history; never fabricated)
+  activeCandidatesSparkline: number[];
+  weeklyInflow: WeeklyInflowPoint[];
+  spendSparkline: SpendDayPoint[];
+  aiSpendSparkline: number[];
+  // Real period deltas (undefined = backend had no prior period -> suppress pill).
+  // These mirror the KPI ids consumed by getDashboardKpis.
+  openRequisitionsChange?: number;
+  activeCandidatesChange?: number;
+  avgTimeToHireChange?: number;
+  offerAcceptRateChange?: number;
+  aiDecisionsTodayChange?: number;
+  complianceScoreChange?: number;
+  diversityScoreChange?: number;
+  costPerHireChange?: number;
+  aiSpendChange?: number;
+  // Per-KPI sparkline aliases the card row reads (only activeCandidates is real today)
+  openRequisitionsSparkline?: number[];
+  avgTimeToHireSparkline?: number[];
+  offerAcceptRateSparkline?: number[];
+  aiDecisionsTodaySparkline?: number[];
+  complianceScoreSparkline?: number[];
+  diversityScoreSparkline?: number[];
+  costPerHireSparkline?: number[];
+  // Funnel + reserved-for-future (kept for backward compatibility)
+  pipelineData: Array<{ name: string; value: number }> | null;
+  timeSeriesData: unknown | null;
+  diversityData: unknown | null;
+  _partialErrors?: { job: boolean; candidate: boolean; billing: boolean };
+};
+export async function getPlatformOverview(): Promise<PlatformOverview> {
+  const res: any = await raw("GET", "/platform/unified-overview").catch(() => ({}));
+  const d = res?.data ?? res ?? {};
+  // Pass through a finite number as-is (preserving a real 0); anything absent or
+  // non-numeric becomes null. NEVER substitute 0 for an absent value.
+  const num = (v: unknown): number | null => {
+    if (v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  // A real delta only if the backend actually sent a finite number for it.
+  const delta = (v: unknown): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const series = (v: unknown): number[] =>
+    Array.isArray(v) ? v.map((x) => Number(x)).filter((n) => Number.isFinite(n)) : [];
+  const weeklyInflow: WeeklyInflowPoint[] = Array.isArray(d.weeklyInflow)
+    ? d.weeklyInflow.map((w: any) => ({ label: String(w?.label ?? ""), n: Number(w?.n ?? 0) }))
+    : [];
+  const spendSparkline: SpendDayPoint[] = Array.isArray(d.spendSparkline)
+    ? d.spendSparkline.map((s: any) => ({ label: String(s?.label ?? ""), cost: Number(s?.cost ?? 0) }))
+    : [];
+  // The active-candidates momentum spark is the real weekly-inflow series; expose
+  // it both as the bare array the backend already sends and via the KPI alias.
+  const activeCandidatesSparkline = series(d.activeCandidatesSparkline).length
+    ? series(d.activeCandidatesSparkline)
+    : weeklyInflow.map((w) => w.n);
+  return {
+    openRequisitions: num(d.openRequisitions),
+    totalRequisitions: num(d.totalRequisitions),
+    activeCandidates: num(d.activeCandidates),
+    totalCandidates: num(d.totalCandidates),
+    hiredApplications: num(d.hiredApplications),
+    aiDecisionsToday: num(d.aiDecisionsToday),
+    totalAgentRuns: num(d.totalAgentRuns),
+    avgTimeToHire: num(d.avgTimeToHire),
+    offerAcceptRate: num(d.offerAcceptRate),
+    offersAccepted: num(d.offersAccepted),
+    offersExtended: num(d.offersExtended),
+    costPerHire: num(d.costPerHire),
+    complianceScore: num(d.complianceScore),
+    diversityScore: num(d.diversityScore),
+    activeCandidatesSparkline,
+    weeklyInflow,
+    spendSparkline,
+    aiSpendSparkline: series(d.aiSpendSparkline),
+    // Deltas: only present when the backend actually emitted them.
+    openRequisitionsChange: delta(d.openRequisitionsChange),
+    activeCandidatesChange: delta(d.activeCandidatesChange),
+    avgTimeToHireChange: delta(d.avgTimeToHireChange),
+    offerAcceptRateChange: delta(d.offerAcceptRateChange),
+    aiDecisionsTodayChange: delta(d.aiDecisionsTodayChange),
+    complianceScoreChange: delta(d.complianceScoreChange),
+    diversityScoreChange: delta(d.diversityScoreChange),
+    costPerHireChange: delta(d.costPerHireChange),
+    aiSpendChange: delta(d.aiSpendChange),
+    // Per-KPI sparkline aliases: only feed the card a series when one is real.
+    openRequisitionsSparkline: series(d.openRequisitionsSparkline),
+    avgTimeToHireSparkline: series(d.avgTimeToHireSparkline),
+    offerAcceptRateSparkline: series(d.offerAcceptRateSparkline),
+    aiDecisionsTodaySparkline: series(d.aiDecisionsTodaySparkline),
+    complianceScoreSparkline: series(d.complianceScoreSparkline),
+    diversityScoreSparkline: series(d.diversityScoreSparkline),
+    costPerHireSparkline: series(d.costPerHireSparkline),
+    pipelineData: Array.isArray(d.pipelineData)
+      ? d.pipelineData.map((p: any) => ({ name: String(p?.name ?? ""), value: Number(p?.value ?? 0) }))
+      : null,
+    timeSeriesData: d.timeSeriesData ?? null,
+    diversityData: d.diversityData ?? null,
+    _partialErrors: d._partialErrors,
+  } as PlatformOverview;
 }

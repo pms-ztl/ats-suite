@@ -5,10 +5,10 @@ import React from "react";
 import { Pill, Reveal, KPICard, SectionCard } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
-import { FlowRibbon, ArcMeter, OrbitField, CometTrail } from "@/components/shared/ribbon";
+import { FlowRibbon, ArcMeter, OrbitField, CometTrail, StepCascade } from "@/components/shared/ribbon";
 import { StreamGraph } from "@/components/shared/ribbon-ext";
 import {
-  FunnelViz, BarsChart, TrendChart, EmptyChart, CHART_COLORS,
+  BarsChart, TrendChart, EmptyChart, CHART_COLORS,
 } from "@/components/shared/charts";
 import type { AnalyticsData, AnalyticsInsight } from "./types";
 import type { FairnessMetric } from "@/lib/types";
@@ -139,7 +139,9 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
           <Reveal i={5}><SectionCard title="Pipeline funnel" icon="radar" headRight={a.funnelConversion ? <Pill mono tone="var(--ok)" bg="var(--ok-tint)">{a.funnelConversion}</Pill> : undefined}>
             <div style={{ height: 260 }}>
               {funnelData.some((s) => s.value > 0)
-                ? <FunnelViz data={funnelData} valueFormatter={(v) => Number(v).toLocaleString()} />
+                ? <StepCascade height={260} stages={funnelData.map((s) => ({ label: s.name, n: s.value }))}
+                    valueLabel={(n) => n.toLocaleString()}
+                    emptyLabel="Pipeline funnel - no candidates in pipeline yet" />
                 : <EmptyChart label="Pipeline funnel - no candidates in pipeline yet" />}
             </div>
           </SectionCard></Reveal>

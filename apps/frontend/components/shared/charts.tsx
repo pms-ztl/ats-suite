@@ -11,7 +11,7 @@
 import * as React from "react";
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  ScatterChart, Scatter, ZAxis, Treemap, RadialBarChart, RadialBar, FunnelChart, Funnel,
+  ScatterChart, Scatter, ZAxis, Treemap, FunnelChart, Funnel,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, LabelList, Sankey, Layer,
 } from "recharts";
 import { cn } from "@/lib/utils";
@@ -129,11 +129,17 @@ function AutoSize({ height, children }: { height?: number; children: (w: number,
   );
 }
 
-const axisProps = {
-  tick: { fontSize: 11, fill: CHART_COLORS.ink3 },
-  tickLine: false,
-  axisLine: { stroke: CHART_COLORS.grid },
-} as const;
+// Labels should grow on big cards instead of staying pinned at 11px. AutoSize already
+// measures the container width, so derive a single fontSize from it (floored at 11) and
+// thread it through axis ticks, thresholds, legends, treemap/sankey/funnel labels.
+const fontFor = (w: number) => Math.max(11, Math.round(w / 60));
+
+const axisPropsFor = (w: number) =>
+  ({
+    tick: { fontSize: fontFor(w), fill: CHART_COLORS.ink3 },
+    tickLine: false,
+    axisLine: { stroke: CHART_COLORS.grid },
+  }) as const;
 
 /* ---- Trend (area or line) with optional comparison band lines (e.g. median / p90) ---- */
 export function TrendChart({
@@ -164,10 +170,10 @@ export function TrendChart({
           ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-        <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis {...axisProps} width={44} />
+        <XAxis dataKey={xKey} {...axisPropsFor(__w)} />
+        <YAxis {...axisPropsFor(__w)} width={44} />
         <Tooltip content={<DefaultTooltip valueFormatter={valueFormatter} />} />
-        {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
+        {series.length > 1 && <Legend wrapperStyle={{ fontSize: fontFor(__w) }} />}
         {series.map((s, i) =>
           (s.type ?? "area") === "area" ? (
             <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color || colorAt(i)}
@@ -219,21 +225,21 @@ export function BarsChart({
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} horizontal={!horizontal} vertical={horizontal} />
         {horizontal ? (
           <>
-            <XAxis type="number" {...axisProps} />
-            <YAxis type="category" dataKey={categoryKey} {...axisProps} width={120} />
+            <XAxis type="number" {...axisPropsFor(__w)} />
+            <YAxis type="category" dataKey={categoryKey} {...axisPropsFor(__w)} width={120} />
           </>
         ) : (
           <>
-            <XAxis type="category" dataKey={categoryKey} {...axisProps} />
-            <YAxis type="number" {...axisProps} width={44} />
+            <XAxis type="category" dataKey={categoryKey} {...axisPropsFor(__w)} />
+            <YAxis type="number" {...axisPropsFor(__w)} width={44} />
           </>
         )}
         <Tooltip cursor={{ fill: "rgba(148,163,184,0.08)" }} content={<DefaultTooltip valueFormatter={valueFormatter} />} />
-        {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
+        {series.length > 1 && <Legend wrapperStyle={{ fontSize: fontFor(__w) }} />}
         {threshold != null && (
           <ReferenceLine {...(horizontal ? { x: threshold.value } : { y: threshold.value })}
             stroke={CHART_COLORS.danger} strokeDasharray="4 4"
-            label={{ value: threshold.label, fontSize: 10, fill: CHART_COLORS.danger }} />
+            label={{ value: threshold.label, fontSize: Math.max(11, fontFor(__w) - 1), fill: CHART_COLORS.danger }} />
         )}
         {series.map((s, i) => (
           <Bar key={s.key} dataKey={s.key} name={s.name} stackId={s.stackId} radius={horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0]} maxBarSize={44} fill={fillFor(s, i)}
@@ -269,7 +275,7 @@ export function DonutChart({
             {data.map((_, i) => <Cell key={i} fill={pal[i % pal.length]} />)}
           </Pie>
           <Tooltip content={<DefaultTooltip valueFormatter={valueFormatter} />} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Legend wrapperStyle={{ fontSize: fontFor(__w) }} />
         </PieChart>
       </ResponsiveContainer>
       )}</AutoSize>
@@ -297,8 +303,8 @@ export function ScatterPlot({
       <ResponsiveContainer width={__w} height={__h}>
       <ScatterChart margin={{ top: 12, right: 16, bottom: 4, left: -4 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
-        <XAxis type="number" dataKey={xKey} name={xName} {...axisProps} tickFormatter={xFormatter} />
-        <YAxis type="number" dataKey={yKey} name={yName} {...axisProps} width={48} tickFormatter={yFormatter} />
+        <XAxis type="number" dataKey={xKey} name={xName} {...axisPropsFor(__w)} tickFormatter={xFormatter} />
+        <YAxis type="number" dataKey={yKey} name={yName} {...axisPropsFor(__w)} width={48} tickFormatter={yFormatter} />
         {zKey && <ZAxis type="number" dataKey={zKey} range={[60, 420]} />}
         <Tooltip cursor={{ strokeDasharray: "3 3" }} content={<DefaultTooltip valueFormatter={valueFormatter} />} />
         <Scatter data={data}>
@@ -312,26 +318,31 @@ export function ScatterPlot({
 
 /* ---- Treemap (e.g. cost concentration / channel mix) with readable in-cell labels ---- */
 function TreemapCell(props: any) {
-  const { x, y, width, height, name, value, fill, valueFormatter, depth } = props;
+  const { x, y, width, height, name, value, fill, valueFormatter, depth, baseFont } = props;
   if (width <= 0 || height <= 0) return null;
   // recharts also runs the content renderer for the ROOT node; without a fill it
   // paints black and peeks through the children's rounded corners (ugly in the
   // light theme). Leaf cells only.
   if (!name || depth === 0) return null;
+  // Label sizes scale with the card width (AutoSize) so they grow on big cards.
+  const nameFont = Math.max(11, baseFont ?? 11.5);
+  const valueFont = Math.max(11, (baseFont ?? 11.5) - 1);
   const showName = width > 56 && height > 30;
-  const showValue = width > 56 && height > 48;
+  const showValue = width > 56 && height > nameFont + valueFont + 12;
   const fmt = valueFormatter || ((v: any) => v);
+  // Char budget tracks the actual rendered font width (~0.6em per glyph).
+  const charBudget = Math.max(3, Math.floor((width - 12) / (nameFont * 0.6)));
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} rx={8} ry={8}
         fill={fill} fillOpacity={0.88} stroke="var(--c-surface, #fff)" strokeWidth={2.5} />
       {showName && (
-        <text x={x + 8} y={y + 18} fill="var(--c-ink-inv, #fff)" fontSize={11.5} fontWeight={700} style={{ pointerEvents: "none" }}>
-          {String(name).length > Math.floor(width / 7) ? String(name).slice(0, Math.max(3, Math.floor(width / 7) - 1)) + "…" : name}
+        <text x={x + 8} y={y + nameFont + 6} fill="var(--c-ink-inv, #fff)" fontSize={nameFont} fontWeight={700} style={{ pointerEvents: "none" }}>
+          {String(name).length > charBudget ? String(name).slice(0, Math.max(3, charBudget - 1)) + "…" : name}
         </text>
       )}
       {showValue && (
-        <text x={x + 8} y={y + 34} fill="var(--c-ink-inv, #fff)" fillOpacity={0.85} fontSize={10.5} fontFamily="var(--font-mono, monospace)" style={{ pointerEvents: "none" }}>
+        <text x={x + 8} y={y + nameFont + valueFont + 10} fill="var(--c-ink-inv, #fff)" fillOpacity={0.85} fontSize={valueFont} fontFamily="var(--font-mono, monospace)" style={{ pointerEvents: "none" }}>
           {fmt(value)}
         </text>
       )}
@@ -345,7 +356,7 @@ export function TreemapChart({ data, valueFormatter, height }: { data: { name: s
     <AutoSize height={height}>{(__w, __h) => (
       <ResponsiveContainer width={__w} height={__h}>
       <Treemap data={colored} dataKey="size" nameKey="name" aspectRatio={4 / 3} isAnimationActive
-        content={<TreemapCell valueFormatter={valueFormatter} />}>
+        content={<TreemapCell valueFormatter={valueFormatter} baseFont={fontFor(__w)} />}>
         <Tooltip content={<DefaultTooltip valueFormatter={valueFormatter} />} />
       </Treemap>
     </ResponsiveContainer>
@@ -357,20 +368,24 @@ export function TreemapChart({ data, valueFormatter, height }: { data: { name: s
    Takes simple {from, to, value} links; nodes are derived. Node + link colors follow the
    theme tokens, labels render beside each node. ---- */
 function SankeyNode({ x, y, width, height, payload, containerWidth }: any) {
-  const isLeft = x + width / 2 < (containerWidth ?? 600) / 2;
+  const cw = containerWidth ?? 600;
+  const isLeft = x + width / 2 < cw / 2;
+  // Node labels scale with the rendered chart width so they grow on big cards.
+  const nameFont = Math.max(11, Math.round(cw / 60));
+  const valueFont = Math.max(11, Math.round(cw / 60) - 1);
   return (
     <Layer>
       <rect x={x} y={y} width={width} height={height} rx={3} fill={payload.fill || CHART_COLORS.ai} fillOpacity={0.92} />
       <text
         x={isLeft ? x + width + 7 : x - 7} y={y + height / 2}
         textAnchor={isLeft ? "start" : "end"} dominantBaseline="middle"
-        fontSize={11.5} fontWeight={600} fill="var(--c-ink, #16203a)">
+        fontSize={nameFont} fontWeight={600} fill="var(--c-ink, #16203a)">
         {payload.name}
       </text>
       <text
-        x={isLeft ? x + width + 7 : x - 7} y={y + height / 2 + 13}
+        x={isLeft ? x + width + 7 : x - 7} y={y + height / 2 + nameFont + 2}
         textAnchor={isLeft ? "start" : "end"} dominantBaseline="middle"
-        fontSize={10} fill={CHART_COLORS.ink3} fontFamily="var(--font-mono, monospace)">
+        fontSize={valueFont} fill={CHART_COLORS.ink3} fontFamily="var(--font-mono, monospace)">
         {payload.valueLabel ?? ""}
       </text>
     </Layer>
@@ -417,33 +432,6 @@ export function SankeyFlow({
   );
 }
 
-/* ---- Radial gauge (single 0-100 value) with a gradient arc ---- */
-export function RadialGauge({ value, label, color = CHART_COLORS.brand, height }: { value: number; label?: React.ReactNode; color?: string; height?: number }) {
-  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
-  const data = [{ name: "v", value: Math.max(0, Math.min(100, value)), fill: `url(#gauge-${uid})` }];
-  return (
-    <div className="relative h-full w-full" style={{ filter: "drop-shadow(0 6px 14px color-mix(in oklab, var(--c-ink, #16203a) 10%, transparent))" }}>
-      <AutoSize height={height}>{(__w, __h) => (
-      <ResponsiveContainer width={__w} height={__h}>
-        <RadialBarChart innerRadius="72%" outerRadius="98%" data={data} startAngle={90} endAngle={-270}>
-          <defs>
-            <linearGradient id={`gauge-${uid}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={1} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.55} />
-            </linearGradient>
-          </defs>
-          <RadialBar dataKey="value" background={{ fill: "color-mix(in oklab, var(--c-ink-3, #94a3b8) 12%, transparent)" }} cornerRadius={12} />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      )}</AutoSize>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-xl font-semibold">{Math.round(value)}%</div>
-        {label != null && <div className="text-[11px] text-muted-foreground">{label}</div>}
-      </div>
-    </div>
-  );
-}
-
 /* ---- Funnel (pipeline stages) ---- */
 export function FunnelViz({ data, valueFormatter, height }: { data: { name: string; value: number; fill?: string }[]; valueFormatter?: (v: any) => string; height?: number }) {
   if (!data?.length) return <EmptyChart />;
@@ -451,11 +439,11 @@ export function FunnelViz({ data, valueFormatter, height }: { data: { name: stri
   return (
     <AutoSize height={height}>{(__w, __h) => (
       <ResponsiveContainer width={__w} height={__h}>
-      <FunnelChart>
+      <FunnelChart margin={{ left: 90, right: 90, top: 8, bottom: 8 }}>
         <Tooltip content={<DefaultTooltip valueFormatter={valueFormatter} />} />
         <Funnel dataKey="value" data={colored} isAnimationActive>
-          <LabelList position="right" fill="currentColor" stroke="none" dataKey="name" style={{ fontSize: 11 }} />
-          <LabelList position="left" fill="currentColor" stroke="none" dataKey="value" style={{ fontSize: 11, fontWeight: 600 }} />
+          <LabelList position="right" fill="var(--ink)" stroke="none" dataKey="name" style={{ fontSize: fontFor(__w) }} />
+          <LabelList position="left" fill="var(--ink-2)" stroke="none" dataKey="value" style={{ fontSize: fontFor(__w), fontWeight: 600 }} />
         </Funnel>
       </FunnelChart>
     </ResponsiveContainer>
