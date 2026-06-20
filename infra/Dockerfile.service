@@ -45,6 +45,7 @@ COPY packages/contracts/package.json         packages/contracts/package.json
 COPY packages/ai-engine/package.json         packages/ai-engine/package.json
 COPY packages/nats-client/package.json       packages/nats-client/package.json
 COPY packages/outbox/package.json            packages/outbox/package.json
+COPY packages/embed-sdk/package.json         packages/embed-sdk/package.json
 
 RUN npm install --no-audit --no-fund
 
@@ -64,6 +65,13 @@ COPY --from=deps /repo/tsconfig.base.json ./tsconfig.base.json
 # Copy ALL source (workspaces are interdependent)
 COPY packages ./packages
 COPY apps ./apps
+
+# Restore nested workspace node_modules that npm created for version-conflicting
+# deps (e.g. @cdc-ats/common needs ajv@8 while a transitive dep pins the root to
+# ajv@6, so npm nests ajv@8 under packages/common/node_modules). The root-only
+# node_modules COPY above misses these nested dirs, so copy them from deps
+# explicitly or common (and everything that depends on it) fails to compile.
+COPY --from=deps /repo/packages/common/node_modules ./packages/common/node_modules
 
 # Build shared packages first. Service-independent, so kept ABOVE `ARG SERVICE`:
 # this layer and everything above it (apk install, npm deps, source, shared

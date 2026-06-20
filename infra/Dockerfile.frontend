@@ -26,6 +26,7 @@ COPY packages/contracts/package.json         packages/contracts/package.json
 COPY packages/ai-engine/package.json         packages/ai-engine/package.json
 COPY packages/nats-client/package.json       packages/nats-client/package.json
 COPY packages/outbox/package.json            packages/outbox/package.json
+COPY packages/embed-sdk/package.json         packages/embed-sdk/package.json
 RUN npm install --no-audit --no-fund
 
 FROM node:${NODE_VERSION} AS builder
@@ -37,6 +38,11 @@ COPY --from=deps /repo/turbo.json ./turbo.json
 COPY --from=deps /repo/tsconfig.base.json ./tsconfig.base.json
 COPY packages ./packages
 COPY apps/frontend ./apps/frontend
+# Restore nested workspace node_modules npm created for version-conflicting deps
+# that the root-only node_modules COPY misses: @cdc-ats/common's ajv@8 (root has a
+# transitive ajv@6) and the frontend's nanoid@5 (root has a transitive nanoid@3).
+COPY --from=deps /repo/packages/common/node_modules ./packages/common/node_modules
+COPY --from=deps /repo/apps/frontend/node_modules ./apps/frontend/node_modules
 # Build-time public env (defaults sensible; override in compose).
 # NEXT_PUBLIC_API_URL is the browser's fetch base (use "/api" for same-origin
 # behind a tunnel). GATEWAY_ORIGIN is the server-side proxy target the Next

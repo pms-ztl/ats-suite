@@ -68,9 +68,12 @@ export function createApp(logger: Logger): Express {
   // additively under /internal/users (so the gateway's /api/me/dashboards/* and
   // /api/tenant/dashboards/* proxies land here). Declared BEFORE usersRouter so
   // the literal /me/* and /tenant/* paths are matched here and never captured by
-  // usersRouter's /:id. These routes ALWAYS need req.user (caller identity), so
-  // readAuthHeaders is NON-optional; the RLS client keys writes to the caller.
-  app.use("/internal/users", readAuthHeaders(), dashboardsRouter);
+  // usersRouter's /:id. readAuthHeaders is OPTIONAL at the mount because Express
+  // runs this prefix middleware for EVERY /internal/users/* request (incl. the
+  // pre-auth verify-credentials in usersRouter that falls through this router); a
+  // non-optional check here rejected login. The dashboard handlers still require
+  // auth per-request via getUserId(req)/getTenantId(req), which throw if absent.
+  app.use("/internal/users", readAuthHeaders({ optional: true }), dashboardsRouter);
   app.use("/internal/users", readAuthHeaders({ optional: true }), usersRouter);
   // Auth polish — forgot/reset password are unauthenticated; the others
   // (change-password, mfa/*) require X-User-Id from a logged-in JWT.
