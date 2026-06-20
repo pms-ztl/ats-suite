@@ -43,6 +43,14 @@ COPY apps/frontend ./apps/frontend
 # transitive ajv@6) and the frontend's nanoid@5 (root has a transitive nanoid@3).
 COPY --from=deps /repo/packages/common/node_modules ./packages/common/node_modules
 COPY --from=deps /repo/apps/frontend/node_modules ./apps/frontend/node_modules
+
+# Build the shared workspace packages the frontend value-imports (e.g.
+# @cdc-ats/contracts zod schemas) so their dist/ exists before next build.
+# packages/ above is copied as source only (dist is gitignored), and unlike
+# Dockerfile.service the frontend builder had no shared-build step, so webpack
+# could not resolve @cdc-ats/contracts.
+RUN npx turbo run build --filter=@cdc-ats/contracts --filter=@cdc-ats/common
+
 # Build-time public env (defaults sensible; override in compose).
 # NEXT_PUBLIC_API_URL is the browser's fetch base (use "/api" for same-origin
 # behind a tunnel). GATEWAY_ORIGIN is the server-side proxy target the Next
