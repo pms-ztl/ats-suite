@@ -100,6 +100,11 @@ export interface NavItem {
   roles?: string[];       // role ids that may see this item; omit = all roles
   count?: number;         // optional count pill
   ai?: boolean;           // shows the violet AI dot on the icon
+  // WF9 / SLICE I3 — module gating affordance. When a nav item's owning module is
+  // PLAN-LOCKED (the tenant's plan does not include it), the shell keeps the item
+  // visible but marks it as an upgrade affordance instead of routing to a dead
+  // 402. Omit/false = a normal nav item (byte-identical to v1).
+  lock?: boolean;         // plan-locked: render a padlock badge + upgrade intent
 }
 
 export interface NavSection {

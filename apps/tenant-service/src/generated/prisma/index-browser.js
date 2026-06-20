@@ -147,6 +147,10 @@ exports.Prisma.TenantScalarFieldEnum = {
   onboardingSteps: 'onboardingSteps',
   onboardingDismissedAt: 'onboardingDismissedAt',
   onboardingCompletedAt: 'onboardingCompletedAt',
+  embedAllowedOrigins: 'embedAllowedOrigins',
+  dashboardThemeTokens: 'dashboardThemeTokens',
+  defaultColorMode: 'defaultColorMode',
+  defaultDashboardByRole: 'defaultDashboardByRole',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

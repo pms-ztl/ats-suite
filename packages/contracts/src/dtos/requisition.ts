@@ -56,6 +56,12 @@ export const FormFieldSchema = z.object({
   maxLength: z.number().int().optional(),
   pattern: z.string().optional(),
   order: z.number().int(),
+  // Optional assessment metadata (OA platform, WF later). These are additive
+  // and MUST stay optional so existing requisition/form payloads validate
+  // unchanged. A plain application form never sets them.
+  correctAnswer: z.union([z.string(), z.array(z.string())]).optional(),
+  points: z.number().int().optional(),
+  timeLimit: z.number().int().optional(),
 });
 export type FormField = z.infer<typeof FormFieldSchema>;
 

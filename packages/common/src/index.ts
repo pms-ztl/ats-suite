@@ -19,3 +19,10 @@ export * from "./middleware/tenant-rate-limit.js";
 
 export * from "./types/auth.js";
 export * from "./types/response.js";
+
+export * from "./modules/types.js";
+export * from "./modules/registry.js";
+export * from "./modules/plan-limits.js";
+export * from "./modules/is-module-on.js";
+export * from "./crypto/aes-gcm.js";
+export * from "./validation/ajv.js";

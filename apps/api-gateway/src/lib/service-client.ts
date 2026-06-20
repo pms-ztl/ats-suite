@@ -17,6 +17,7 @@ const URLS = {
   resume: process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007",
   screening: process.env["SCREENING_SERVICE_URL"] ?? "http://localhost:4008",
   notification: process.env["NOTIFICATION_SERVICE_URL"] ?? "http://localhost:4009",
+  assessment: process.env["ASSESSMENT_SERVICE_URL"] ?? "http://localhost:4014",
 };
 
 type ServiceName = keyof typeof URLS;

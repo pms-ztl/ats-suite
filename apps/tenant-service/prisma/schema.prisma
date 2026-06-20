@@ -82,6 +82,34 @@ model Tenant {
   onboardingDismissedAt DateTime?
   onboardingCompletedAt DateTime?
 
+  // WF2 — embeddable widget groundwork. The exact set of external origins this
+  // tenant has explicitly authorized to frame /embed/* + call /api/embed/*.
+  // Each entry is a normalized https origin ("https://host[:port]", no path).
+  // Defaulted empty => additive, no backfill needed; the actual db-push lands
+  // in WF3, the /embed routes + SDK in WF9. Fail-CLOSED security model: an empty
+  // array means NO external site may frame this tenant, so framing stays denied
+  // until an admin opts a specific origin in. Validated at write time in
+  // branding.ts (URL-parsed, https-only, origin-only — no paths/wildcards).
+  embedAllowedOrigins String[] @default([])
+
+  // WF3 — dashboard/theme defaults groundwork (additive, defaulted so the frozen
+  // v1 demo cannot regress; the actual db-push lands in the migrator-rebuild
+  // recipe, the dashboard renderer + theming layer arrive in later WFs).
+  //   dashboardThemeTokens   the tenant-wide design-token overrides (CSS custom
+  //                          properties / palette) applied to every dashboard for
+  //                          this tenant. Shape: a flat map of token name -> value;
+  //                          {} means "use the platform defaults" (no override).
+  //   defaultColorMode       the tenant's default color scheme for new users who
+  //                          have not set a per-user preference. One of
+  //                          "system" | "light" | "dark"; "system" follows the OS.
+  //   defaultDashboardByRole maps a role key (ADMIN/RECRUITER/HIRING_MANAGER/...)
+  //                          to the dashboardKey that role lands on by default.
+  //                          {} means "use the platform default home for every
+  //                          role"; entries are additive overrides per role.
+  dashboardThemeTokens   Json   @default("{}")
+  defaultColorMode       String @default("system")
+  defaultDashboardByRole Json   @default("{}")
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

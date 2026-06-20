@@ -161,6 +161,31 @@ exports.Prisma.FeatureFlagScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ModuleRegistryScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  name: 'name',
+  version: 'version',
+  category: 'category',
+  type: 'type',
+  requiresPlan: 'requiresPlan',
+  manifest: 'manifest',
+  defaultEnabled: 'defaultEnabled',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TenantModuleScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  moduleKey: 'moduleKey',
+  enabled: 'enabled',
+  config: 'config',
+  enabledAt: 'enabledAt',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PlatformAgentKillSwitchScalarFieldEnum = {
   agentType: 'agentType',
   disabled: 'disabled',
@@ -247,6 +272,8 @@ exports.Prisma.ModelName = {
   AgentKillSwitch: 'AgentKillSwitch',
   AgentRunCost: 'AgentRunCost',
   FeatureFlag: 'FeatureFlag',
+  ModuleRegistry: 'ModuleRegistry',
+  TenantModule: 'TenantModule',
   PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
   PlatformKillAudit: 'PlatformKillAudit',
   StripeSubscription: 'StripeSubscription',

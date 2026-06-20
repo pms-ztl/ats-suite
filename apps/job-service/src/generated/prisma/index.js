@@ -266,7 +266,8 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../../../.env"
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.19.3",
@@ -275,6 +276,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -293,8 +295,8 @@ const fs = require('fs')
 config.dirname = __dirname
 if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
   const alternativePaths = [
-    "src/generated/prisma",
-    "generated/prisma",
+    "apps/job-service/src/generated/prisma",
+    "job-service/src/generated/prisma",
   ]
   
   const alternativePath = alternativePaths.find((altPath) => {
@@ -324,7 +326,7 @@ Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "query_engine-windows.dll.node");
-path.join(process.cwd(), "src/generated/prisma/query_engine-windows.dll.node")
+path.join(process.cwd(), "apps/job-service/src/generated/prisma/query_engine-windows.dll.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "src/generated/prisma/schema.prisma")
+path.join(process.cwd(), "apps/job-service/src/generated/prisma/schema.prisma")

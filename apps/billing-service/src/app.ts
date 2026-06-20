@@ -8,6 +8,9 @@ import { prisma } from "./lib/prisma.js";
 import billingRouter from "./routes/billing.js";
 import platformRouter from "./routes/platform.js";
 import stripeRouter, { verifyAndProcess } from "./routes/stripe.js";
+// WF4 — module resolver. Additive: mounted onto the SAME /internal/billing and
+// /internal/platform prefixes (no existing/proxied route is altered).
+import { tenantModulesRouter, platformModulesRouter } from "./routes/modules.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -67,9 +70,14 @@ export function createApp(logger: Logger): Express {
 
   // Internal routes — gateway forwards X-Tenant-Id/X-User-Id
   app.use("/internal/billing", readAuthHeaders(), billingRouter);
+  // WF4 — tenant module resolver (check-module, modules list, module toggle).
+  // Same auth + tenant context as billingRouter; additive mount.
+  app.use("/internal/billing", readAuthHeaders(), tenantModulesRouter);
   // Platform control plane (super-admin only). Role enforcement happens at the
   // gateway via requireSuperAdmin — here we trust the forwarded X-User-Role.
   app.use("/internal/platform", readAuthHeaders(), platformRouter);
+  // WF4 — platform module catalog (super-admin). Additive mount.
+  app.use("/internal/platform", readAuthHeaders(), platformModulesRouter);
   // Phase 30 — Stripe self-serve. /webhook above is the unprotected, raw-body
   // route; everything else under /internal/stripe is auth-gated.
   app.use("/internal/stripe", readAuthHeaders(), stripeRouter);

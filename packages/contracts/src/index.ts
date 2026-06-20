@@ -9,6 +9,9 @@ export * from "./dtos/interview.js";
 export * from "./dtos/plan-change.js";
 export * from "./dtos/notification.js";
 export * from "./dtos/bulk-upload.js";
+export * from "./dtos/assessment.js";
+export * from "./dtos/dashboard.js";
+export * from "./dtos/module.js";
 
 export * from "./events/event-base.js";
 export * from "./events/tenant-events.js";

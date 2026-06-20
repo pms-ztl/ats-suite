@@ -36,10 +36,12 @@ export function gdprRouter(_logger: Logger): Router {
         role: req.user.role, email: req.user.email,
       };
 
-      const [candidate, resumes, screenings] = await Promise.allSettled([
+      const [candidate, resumes, screenings, assessments] = await Promise.allSettled([
         callService<any>("candidate", { path: `/internal/gdpr/candidates/${id}/export`, userHeaders, timeoutMs: 5000 }),
         callService<any[]>("resume", { path: `/internal/resume?candidateId=${id}`, userHeaders, timeoutMs: 5000 }).catch(() => []),
         callService<any[]>("screening", { path: `/internal/screening?candidateId=${id}`, userHeaders, timeoutMs: 5000 }).catch(() => []),
+        // WF10/J1 - online-assessment data (attempts, answers, results, proctoring).
+        callService<any>("assessment", { path: `/internal/gdpr/candidates/${id}/export`, userHeaders, timeoutMs: 8000 }).catch(() => null),
       ]);
 
       if (candidate.status === "rejected") {
@@ -59,10 +61,14 @@ export function gdprRouter(_logger: Logger): Router {
         attachments: candidate.value.attachments ?? [],
         resumes: resumes.status === "fulfilled" ? resumes.value : [],
         screenings: screenings.status === "fulfilled" ? screenings.value : [],
+        // WF10/J1 - OA export leg (null when assessment-service is unreachable
+        // or the candidate has no OA data; honest absence, never fabricated).
+        assessments: assessments.status === "fulfilled" ? assessments.value : null,
         _partial: {
           candidate: candidate.status === "fulfilled",
           resume: resumes.status === "fulfilled",
           screening: screenings.status === "fulfilled",
+          assessment: assessments.status === "fulfilled" && assessments.value != null,
         },
       };
 
@@ -144,10 +150,12 @@ export function gdprRouter(_logger: Logger): Router {
         role: req.user.role, email: req.user.email,
       };
 
-      const [candidate, resume, screening] = await Promise.allSettled([
+      const [candidate, resume, screening, assessment] = await Promise.allSettled([
         callService<any>("candidate", { method: "DELETE", path: `/internal/gdpr/candidates/${id}`, userHeaders, timeoutMs: 5000 }),
         callService<any>("resume", { method: "DELETE", path: `/internal/resume?candidateId=${id}`, userHeaders, timeoutMs: 5000 }).catch(() => null),
         callService<any>("screening", { method: "DELETE", path: `/internal/screening?candidateId=${id}`, userHeaders, timeoutMs: 5000 }).catch(() => null),
+        // WF10/J1 - erase OA rows (Attempt/Answer/AssessmentResult/ProctorEvent/Invite).
+        callService<any>("assessment", { method: "DELETE", path: `/internal/gdpr/candidates/${id}`, userHeaders, timeoutMs: 8000 }).catch(() => null),
       ]);
 
       if (candidate.status === "rejected") {
@@ -162,6 +170,7 @@ export function gdprRouter(_logger: Logger): Router {
           candidate: candidate.status === "fulfilled" ? "anonymized" : "failed",
           resume:    resume.status === "fulfilled" ? "deleted" : "failed-or-skipped",
           screening: screening.status === "fulfilled" ? "deleted" : "failed-or-skipped",
+          assessment: assessment.status === "fulfilled" && assessment.value != null ? "erased" : "failed-or-skipped",
         },
       });
     } catch (err) { next(err); }

@@ -17,6 +17,7 @@
  *                 enqueue BullMQ job
  */
 import { prisma } from "./prisma.js";
+import { unsealConfig } from "./integration-config.js";
 import { publishToUser } from "./redis-pubsub.js";
 import { enqueueDelivery } from "../workers/delivery.worker.js";
 
@@ -93,7 +94,8 @@ export async function emitNotification(input: NotificationInput) {
         where: { tenantId_kind: { tenantId: input.tenantId, kind: "slack" } },
       });
       if (integration?.enabled) {
-        const config = integration.config as { webhookUrl?: string };
+        // Decrypt at point of use — backward-compatible with legacy plaintext rows.
+        const config = unsealConfig(integration.config) as { webhookUrl?: string };
         if (config.webhookUrl) {
           const delivery = await prisma.notificationDelivery.create({
             data: {

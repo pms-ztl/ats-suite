@@ -1072,6 +1072,7 @@ export namespace Prisma {
     stripeCustomerId: string | null
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
+    defaultColorMode: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1099,6 +1100,7 @@ export namespace Prisma {
     stripeCustomerId: string | null
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
+    defaultColorMode: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1129,6 +1131,10 @@ export namespace Prisma {
     onboardingSteps: number
     onboardingDismissedAt: number
     onboardingCompletedAt: number
+    embedAllowedOrigins: number
+    dashboardThemeTokens: number
+    defaultColorMode: number
+    defaultDashboardByRole: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1166,6 +1172,7 @@ export namespace Prisma {
     stripeCustomerId?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
+    defaultColorMode?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1193,6 +1200,7 @@ export namespace Prisma {
     stripeCustomerId?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
+    defaultColorMode?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1223,6 +1231,10 @@ export namespace Prisma {
     onboardingSteps?: true
     onboardingDismissedAt?: true
     onboardingCompletedAt?: true
+    embedAllowedOrigins?: true
+    dashboardThemeTokens?: true
+    defaultColorMode?: true
+    defaultDashboardByRole?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1340,6 +1352,10 @@ export namespace Prisma {
     onboardingSteps: JsonValue
     onboardingDismissedAt: Date | null
     onboardingCompletedAt: Date | null
+    embedAllowedOrigins: string[]
+    dashboardThemeTokens: JsonValue
+    defaultColorMode: string
+    defaultDashboardByRole: JsonValue
     createdAt: Date
     updatedAt: Date
     _count: TenantCountAggregateOutputType | null
@@ -1389,6 +1405,10 @@ export namespace Prisma {
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
+    embedAllowedOrigins?: boolean
+    dashboardThemeTokens?: boolean
+    defaultColorMode?: boolean
+    defaultDashboardByRole?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     planChangeRequests?: boolean | Tenant$planChangeRequestsArgs<ExtArgs>
@@ -1421,6 +1441,10 @@ export namespace Prisma {
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
+    embedAllowedOrigins?: boolean
+    dashboardThemeTokens?: boolean
+    defaultColorMode?: boolean
+    defaultDashboardByRole?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["tenant"]>
@@ -1451,6 +1475,10 @@ export namespace Prisma {
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
+    embedAllowedOrigins?: boolean
+    dashboardThemeTokens?: boolean
+    defaultColorMode?: boolean
+    defaultDashboardByRole?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["tenant"]>
@@ -1481,11 +1509,15 @@ export namespace Prisma {
     onboardingSteps?: boolean
     onboardingDismissedAt?: boolean
     onboardingCompletedAt?: boolean
+    embedAllowedOrigins?: boolean
+    dashboardThemeTokens?: boolean
+    defaultColorMode?: boolean
+    defaultDashboardByRole?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "brandPrimaryColor" | "brandSecondaryColor" | "brandAccentColor" | "brandTagline" | "careerPortalWelcomeMessage" | "careerPortalAboutHtml" | "careerPortalHeroImageUrl" | "dataRetentionDays" | "stripeCustomerId" | "onboardingSteps" | "onboardingDismissedAt" | "onboardingCompletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
+  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "plan" | "status" | "trialEndsAt" | "logoUrl" | "website" | "industry" | "companySize" | "dataRegion" | "isolationConfig" | "settings" | "brandPrimaryColor" | "brandSecondaryColor" | "brandAccentColor" | "brandTagline" | "careerPortalWelcomeMessage" | "careerPortalAboutHtml" | "careerPortalHeroImageUrl" | "dataRetentionDays" | "stripeCustomerId" | "onboardingSteps" | "onboardingDismissedAt" | "onboardingCompletedAt" | "embedAllowedOrigins" | "dashboardThemeTokens" | "defaultColorMode" | "defaultDashboardByRole" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
   export type TenantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     planChangeRequests?: boolean | Tenant$planChangeRequestsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
@@ -1524,6 +1556,10 @@ export namespace Prisma {
       onboardingSteps: Prisma.JsonValue
       onboardingDismissedAt: Date | null
       onboardingCompletedAt: Date | null
+      embedAllowedOrigins: string[]
+      dashboardThemeTokens: Prisma.JsonValue
+      defaultColorMode: string
+      defaultDashboardByRole: Prisma.JsonValue
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["tenant"]>
@@ -1975,6 +2011,10 @@ export namespace Prisma {
     readonly onboardingSteps: FieldRef<"Tenant", 'Json'>
     readonly onboardingDismissedAt: FieldRef<"Tenant", 'DateTime'>
     readonly onboardingCompletedAt: FieldRef<"Tenant", 'DateTime'>
+    readonly embedAllowedOrigins: FieldRef<"Tenant", 'String[]'>
+    readonly dashboardThemeTokens: FieldRef<"Tenant", 'Json'>
+    readonly defaultColorMode: FieldRef<"Tenant", 'String'>
+    readonly defaultDashboardByRole: FieldRef<"Tenant", 'Json'>
     readonly createdAt: FieldRef<"Tenant", 'DateTime'>
     readonly updatedAt: FieldRef<"Tenant", 'DateTime'>
   }
@@ -3609,6 +3649,10 @@ export namespace Prisma {
     onboardingSteps: 'onboardingSteps',
     onboardingDismissedAt: 'onboardingDismissedAt',
     onboardingCompletedAt: 'onboardingCompletedAt',
+    embedAllowedOrigins: 'embedAllowedOrigins',
+    dashboardThemeTokens: 'dashboardThemeTokens',
+    defaultColorMode: 'defaultColorMode',
+    defaultDashboardByRole: 'defaultDashboardByRole',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -3824,6 +3868,10 @@ export namespace Prisma {
     onboardingSteps?: JsonFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
+    embedAllowedOrigins?: StringNullableListFilter<"Tenant">
+    dashboardThemeTokens?: JsonFilter<"Tenant">
+    defaultColorMode?: StringFilter<"Tenant"> | string
+    defaultDashboardByRole?: JsonFilter<"Tenant">
     createdAt?: DateTimeFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeFilter<"Tenant"> | Date | string
     planChangeRequests?: PlanChangeRequestListRelationFilter
@@ -3855,6 +3903,10 @@ export namespace Prisma {
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrderInput | SortOrder
     onboardingCompletedAt?: SortOrderInput | SortOrder
+    embedAllowedOrigins?: SortOrder
+    dashboardThemeTokens?: SortOrder
+    defaultColorMode?: SortOrder
+    defaultDashboardByRole?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     planChangeRequests?: PlanChangeRequestOrderByRelationAggregateInput
@@ -3889,6 +3941,10 @@ export namespace Prisma {
     onboardingSteps?: JsonFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
+    embedAllowedOrigins?: StringNullableListFilter<"Tenant">
+    dashboardThemeTokens?: JsonFilter<"Tenant">
+    defaultColorMode?: StringFilter<"Tenant"> | string
+    defaultDashboardByRole?: JsonFilter<"Tenant">
     createdAt?: DateTimeFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeFilter<"Tenant"> | Date | string
     planChangeRequests?: PlanChangeRequestListRelationFilter
@@ -3920,6 +3976,10 @@ export namespace Prisma {
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrderInput | SortOrder
     onboardingCompletedAt?: SortOrderInput | SortOrder
+    embedAllowedOrigins?: SortOrder
+    dashboardThemeTokens?: SortOrder
+    defaultColorMode?: SortOrder
+    defaultDashboardByRole?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: TenantCountOrderByAggregateInput
@@ -3958,6 +4018,10 @@ export namespace Prisma {
     onboardingSteps?: JsonWithAggregatesFilter<"Tenant">
     onboardingDismissedAt?: DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
     onboardingCompletedAt?: DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
+    embedAllowedOrigins?: StringNullableListFilter<"Tenant">
+    dashboardThemeTokens?: JsonWithAggregatesFilter<"Tenant">
+    defaultColorMode?: StringWithAggregatesFilter<"Tenant"> | string
+    defaultDashboardByRole?: JsonWithAggregatesFilter<"Tenant">
     createdAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   }
@@ -4083,6 +4147,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
+    embedAllowedOrigins?: TenantCreateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     planChangeRequests?: PlanChangeRequestCreateNestedManyWithoutTenantInput
@@ -4114,6 +4182,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
+    embedAllowedOrigins?: TenantCreateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     planChangeRequests?: PlanChangeRequestUncheckedCreateNestedManyWithoutTenantInput
@@ -4145,6 +4217,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     planChangeRequests?: PlanChangeRequestUpdateManyWithoutTenantNestedInput
@@ -4176,6 +4252,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     planChangeRequests?: PlanChangeRequestUncheckedUpdateManyWithoutTenantNestedInput
@@ -4207,6 +4287,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
+    embedAllowedOrigins?: TenantCreateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4237,6 +4321,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4267,6 +4355,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4471,6 +4563,14 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -4523,6 +4623,10 @@ export namespace Prisma {
     onboardingSteps?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
+    embedAllowedOrigins?: SortOrder
+    dashboardThemeTokens?: SortOrder
+    defaultColorMode?: SortOrder
+    defaultDashboardByRole?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4554,6 +4658,7 @@ export namespace Prisma {
     stripeCustomerId?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
+    defaultColorMode?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4581,6 +4686,7 @@ export namespace Prisma {
     stripeCustomerId?: SortOrder
     onboardingDismissedAt?: SortOrder
     onboardingCompletedAt?: SortOrder
+    defaultColorMode?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -4785,6 +4891,10 @@ export namespace Prisma {
     _max?: NestedEnumPlanChangeStatusFilter<$PrismaModel>
   }
 
+  export type TenantCreateembedAllowedOriginsInput = {
+    set: string[]
+  }
+
   export type PlanChangeRequestCreateNestedManyWithoutTenantInput = {
     create?: XOR<PlanChangeRequestCreateWithoutTenantInput, PlanChangeRequestUncheckedCreateWithoutTenantInput> | PlanChangeRequestCreateWithoutTenantInput[] | PlanChangeRequestUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: PlanChangeRequestCreateOrConnectWithoutTenantInput | PlanChangeRequestCreateOrConnectWithoutTenantInput[]
@@ -4825,6 +4935,11 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type TenantUpdateembedAllowedOriginsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -5213,6 +5328,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
+    embedAllowedOrigins?: TenantCreateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5243,6 +5362,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: Date | string | null
     onboardingCompletedAt?: Date | string | null
+    embedAllowedOrigins?: TenantCreateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5289,6 +5412,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5319,6 +5446,10 @@ export namespace Prisma {
     onboardingSteps?: JsonNullValueInput | InputJsonValue
     onboardingDismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     onboardingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    embedAllowedOrigins?: TenantUpdateembedAllowedOriginsInput | string[]
+    dashboardThemeTokens?: JsonNullValueInput | InputJsonValue
+    defaultColorMode?: StringFieldUpdateOperationsInput | string
+    defaultDashboardByRole?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

@@ -8,6 +8,10 @@
  *   tenant.{*}.interview.feedback.submitted → INTERVIEW_FEEDBACK_NEW (tenant broadcast)
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
+import { z } from "zod";
+// Subscribers run cross-tenant in-process (no HTTP request context), so they use
+// the default/admin client + an explicit tenantId, like the candidate subscriber.
+import { prisma } from "./prisma.js";
 import { auditAndDeliver } from "./webhooks.js";
 import {
   TenantCreatedPayloadSchema,
@@ -232,5 +236,104 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
-  logger.info("notification-service NATS subscribers started (6 subjects)");
+  // ── tenant.{*}.assessment.completed ───────────────────────────────────────
+  // WF10/J1 - when an Online Assessment is graded, route it to the EXISTING HITL
+  // review queue with NO solely-automated reject (GDPR Art.22 / EU AI Act). We
+  // raise a HitlCheckpoint (the same queue the /hitl page reads) whenever the
+  // grade needs a human look - open-ended items pending a grade, a low-confidence
+  // AI essay grade, OR a marginal numeric result. The checkpoint is a REVIEW
+  // request only; it never rejects the candidate. We also notify tenant admins.
+  // A clean, comfortably-passing/failing auto-grade does NOT create a checkpoint
+  // (no needless queue noise) and STILL takes no adverse action.
+  await subscribeToEvents({
+    stream: "ASSESSMENT_EVENTS",
+    subject: "tenant.*.assessment.completed",
+    durable: "notification-service:assessment-completed",
+    logger,
+    handler: async (envelope) => {
+      const p = AssessmentCompletedPayload.parse(envelope.payload);
+
+      // Only enqueue a human review when the grade is actually flagged. needsReview
+      // is true for pending open-ended items, low-confidence AI grades, or marginal
+      // scores (the grading worker sets it). passed===null is the same signal
+      // (verdict held for a human). Either way we route to HITL, never auto-reject.
+      const flagged = p.needsReview === true || p.passed === null;
+      if (!flagged) {
+        await auditAndDeliver("assessment.completed", p as any, { logger });
+        return;
+      }
+
+      // Idempotency: the durable consumer can redeliver; key the checkpoint to the
+      // attempt so a redelivery does not create a duplicate review item.
+      const agentRunId = `assessment-completed:${p.attemptId}`;
+      const existing = await prisma.hitlCheckpoint.findFirst({
+        where: { tenantId: p.tenantId, agentRunId },
+        select: { id: true },
+      });
+
+      let checkpointId = existing?.id ?? null;
+      if (!existing) {
+        const checkpoint = await prisma.hitlCheckpoint.create({
+          data: {
+            tenantId: p.tenantId,
+            agentRunId,
+            agentType: "oa-grader",
+            // low_confidence is the closest existing HITL type for an OA result
+            // that needs a human grade/confirmation (the enum is shared across
+            // agents). The payload carries the full OA context.
+            type: "low_confidence",
+            action: "Review assessment result",
+            payload: {
+              source: "assessment.completed",
+              assessmentId: p.assessmentId,
+              attemptId: p.attemptId,
+              candidateId: p.candidateId,
+              applicationId: p.applicationId ?? null,
+              score: p.score ?? null,
+              // passed is null while the verdict is held for a human (no auto-reject).
+              passed: p.passed ?? null,
+              needsReview: p.needsReview ?? null,
+            } as any,
+            slaMinutes: 240,
+          },
+        });
+        checkpointId = checkpoint.id;
+      }
+
+      // Notify tenant admins that a result is waiting for review (in-app + slack),
+      // exactly like the HITL create route does.
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,
+        type: "SYSTEM",
+        title: "Assessment result needs review",
+        body: "An online assessment was graded and needs a human review. A person makes the final decision.",
+        link: checkpointId ? `/hitl?id=${checkpointId}` : "/hitl",
+        metadata: {
+          hitlId: checkpointId,
+          assessmentId: p.assessmentId,
+          attemptId: p.attemptId,
+          candidateId: p.candidateId,
+        },
+        channels: ["in_app", "slack"],
+      }).catch(() => { /* non-fatal */ });
+
+      await auditAndDeliver("assessment.completed", p as any, { logger });
+    },
+  });
+
+  logger.info("notification-service NATS subscribers started (7 subjects)");
 }
+
+// WF10/J1 - assessment.completed payload (grading worker). passed is null while a
+// human review is pending; applicationId may be null for a standalone assessment.
+const AssessmentCompletedPayload = z.object({
+  tenantId: z.string(),
+  assessmentId: z.string(),
+  attemptId: z.string(),
+  candidateId: z.string(),
+  applicationId: z.string().nullable().optional(),
+  passed: z.boolean().nullable().optional(),
+  score: z.number().nullable().optional(),
+  needsReview: z.boolean().optional(),
+}).passthrough();

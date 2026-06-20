@@ -20,11 +20,13 @@
     "@cdc-ats/nats-client": "*",
     "@prisma/client": "^6.0.0",
     "express": "^4.21.2",
+    "multer": "^1.4.5-lts.2",
     "pino": "^9.5.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.13",
     "@types/node": "^22.10.5",
     "prisma": "^6.0.0",
     "tsx": "^4.19.2",

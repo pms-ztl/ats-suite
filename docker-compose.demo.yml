@@ -58,6 +58,9 @@ x-svc-env: &svc-env
   AGENT_SERVICE_URL: http://agent-service:4011
   ANALYTICS_SERVICE_URL: http://analytics-service:4012
   COMPLIANCE_SERVICE_URL: http://compliance-service:4013
+  # WF3 — assessment-service. Reachable in-network on 4014; the gateway does NOT
+  # proxy to it yet (that lands in WF7).
+  ASSESSMENT_SERVICE_URL: http://assessment-service:4014
   # Each service's Prisma schema reads its own <SVC>_DATABASE_URL (not the
   # generic DATABASE_URL). Every service gets the full set; each uses only its own.
   IDENTITY_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/identity_db
@@ -73,6 +76,7 @@ x-svc-env: &svc-env
   AGENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_db
   ANALYTICS_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
   COMPLIANCE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
+  ASSESSMENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/assessment_db
 
 x-svc-build: &svc-build
   context: .
@@ -89,6 +93,10 @@ x-svc-defaults: &svc-defaults
 
 networks:
   ats_net: { driver: bridge }
+  # WF3 — isolated sandbox network for the Judge0 code-execution sidecar. It has
+  # NO route to ats_net: untrusted candidate code must never reach the platform
+  # services. `internal: true` also cuts it off from the host/outbound network.
+  judge0_net: { driver: bridge, internal: true }
 
 volumes:
   postgres_data:
@@ -179,14 +187,18 @@ services:
       AGENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_db
       ANALYTICS_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/analytics_db
       COMPLIANCE_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
+      ASSESSMENT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/assessment_db
 
-  # ── Backend services (14) ──────────────────────────────────────────────────
+  # ── Backend services (15) ──────────────────────────────────────────────────
   api-gateway:
     <<: *svc-defaults
     build: { <<: *svc-build, args: { SERVICE: api-gateway } }
     environment:
       <<: *svc-env
       PORT: "4000"
+      # WF2 — signing secret for the future /embed/* + /api/embed/* embed-token
+      # mint/verify. Interpolated from the gitignored .env (never a literal here).
+      EMBED_SECRET: ${EMBED_SECRET}
     ports: ["4000:4000"]
 
   identity-service:
@@ -284,6 +296,10 @@ services:
       <<: *svc-env
       PORT: "4009"
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
+      # WF2 — AES-256-GCM key for @cdc-ats/common encryptConfig/decryptConfig
+      # (TenantIntegration secrets at rest). Interpolated from the gitignored
+      # .env (never a literal here). assessment-service (WF3) gets the same var.
+      ATS_CONFIG_ENC_KEY: ${ATS_CONFIG_ENC_KEY}
 
   search-service:
     <<: *svc-defaults
@@ -317,6 +333,33 @@ services:
       PORT: "4013"
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/compliance_db
 
+  # ── WF3 — assessment-service (online assessments / OA) ─────────────────────
+  # Runs + health-checks on 4014. The gateway does NOT proxy to it yet (WF7).
+  assessment-service:
+    <<: *svc-defaults
+    build: { <<: *svc-build, args: { SERVICE: assessment-service } }
+    environment:
+      <<: *svc-env
+      PORT: "4014"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/assessment_db
+      # AES-256-GCM key for @cdc-ats/common encryptConfig/decryptConfig (OA
+      # provider secrets at rest). Interpolated from the gitignored .env.
+      ATS_CONFIG_ENC_KEY: ${ATS_CONFIG_ENC_KEY}
+
+  # ── WF3 — Judge0 CE code-execution sidecar (PLACEHOLDER, UNROUTED) ─────────
+  # Present so the OA coding-question runtime is reserved, but DELIBERATELY cut
+  # off: it sits on judge0_net (internal: true) ONLY, with NO route to ats_net,
+  # and ALLOW_ENABLE_NETWORK=false so submitted candidate code cannot reach the
+  # network. assessment-service does NOT call it until WF7 wires the runner.
+  judge0:
+    image: judge0/judge0:1.13.1
+    restart: unless-stopped
+    privileged: true
+    networks: [judge0_net]
+    environment:
+      # Untrusted code must not get a network. Hard off until WF7.
+      ALLOW_ENABLE_NETWORK: "false"
+
   # ── Frontend ───────────────────────────────────────────────────────────────
   frontend:
     build:
@@ -348,6 +391,9 @@ services:
       API_URL: http://api-gateway:4000/api
       TENANT_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tenant_db
       BILLING_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/billing_db
+      # WF10 / J4 — the demo-entitlement step writes the tenant-default
+      # DashboardLayout into identity_db, so the seeder needs this URL too.
+      IDENTITY_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/identity_db
 
   # ── Public tunnel (prints the URL in its logs) ─────────────────────────────
   cloudflared:

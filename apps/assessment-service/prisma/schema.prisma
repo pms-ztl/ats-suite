@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ASSESSMENT_DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Online Assessment (OA) platform schema. Mirrors the DTO shapes in
+// packages/contracts/src/dtos/assessment.ts. Every domain entity is tenant
+// scoped (RLS strict) except the QuestionBank/Question library, which follows
+// the job-service Skill idiom: tenant rows are isolated, NULL-tenant rows are
+// global/platform-managed. See prisma/apply-rls.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  MCQ_SINGLE
+  MCQ_MULTI
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  CODING
+}
+
+enum AssessmentInviteStatus {
+  PENDING
+  SENT
+  OPENED
+  STARTED
+  SUBMITTED
+  EXPIRED
+  REVOKED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  GRADED
+}
+
+// An assessment definition. `questions` holds the inline question array (the
+// AssessmentSchema embeds Question objects); questions may alternatively be
+// sourced from a QuestionBank. requisitionId is a cross-service FK (job-service).
+model Assessment {
+  id               String           @id @default(uuid())
+  tenantId         String
+  requisitionId    String?
+  questionBankId   String?
+  title            String
+  description      String?
+  status           AssessmentStatus @default(DRAFT)
+  durationMinutes  Int?
+  passingScore     Int?
+  shuffleQuestions Boolean          @default(false)
+  questions        Json             @default("[]")
+  // Authoring slice (WF7 / G2): the canonical question + section tree as an
+  // AJV-validated, immutable versioned JSONB document. `questions` (above) stays
+  // the flat inline array the take/grade slices read; `schemaJson` is the richer
+  // authoring tree (sections -> questions, settings) the builder edits. `version`
+  // increments on every published mutation and `publishedHash` is the content
+  // hash captured at publish time so a PUBLISHED assessment is reproducible.
+  schemaJson       Json             @default("{}")
+  version          Int              @default(1)
+  publishedHash    String?
+  publishedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  invites AssessmentInvite[]
+  attempts Attempt[]
+  results AssessmentResult[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, requisitionId])
+}
+
+// A single-use candidate invitation to take an assessment. `tokenHash` is the
+// hashed form of the opaque link token (never store the raw token).
+//
+// External OA-provider correlation (WF8): when a candidate is invited to a vendor
+// test (HackerRank, Codility, ...) instead of the native take flow,
+//   - `provider`             is the registry key of the vendor adapter (the same
+//                            string as the TenantIntegration `kind`), so the
+//                            inbound webhook can resolve the right adapter.
+//   - `providerInvitationId` is the vendor's own invitation id — the correlation
+//                            key the inbound webhook echoes back so we can resolve
+//                            {tenantId, applicationId} with NO auth context.
+//   - `providerSecret`       is the per-invite webhook-signing secret, AES-GCM
+//                            encrypted at rest (the inbound webhook decrypts it at
+//                            the point of HMAC verification; it is never logged).
+model AssessmentInvite {
+  id                   String                 @id @default(uuid())
+  tenantId             String
+  assessmentId         String
+  candidateId          String
+  applicationId        String?
+  tokenHash            String                 @unique
+  provider             String?
+  providerInvitationId String?                @unique
+  providerSecret       String?
+  email                String
+  status               AssessmentInviteStatus @default(PENDING)
+  expiresAt            DateTime?
+  sentAt               DateTime?
+  openedAt             DateTime?
+  startedAt            DateTime?
+  submittedAt          DateTime?
+  // Single-use guard: stamped the moment the candidate starts an attempt from
+  // this invite. A non-null consumedAt means the token can no longer open a new
+  // attempt (the public take route rejects it as already used).
+  consumedAt           DateTime?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id])
+  attempt    Attempt?
+
+  @@index([tenantId])
+  @@index([tenantId, assessmentId])
+  @@index([tenantId, candidateId])
+}
+
+// A candidate's attempt at an assessment. One attempt per invite (@unique).
+//
+// On start the public take route FREEZES a snapshot onto the attempt:
+//   - `questionOrder`  the realized question order (after any per-attempt
+//                      shuffle) so reloads + autosave + grading all agree.
+//   - `answerKey`      the per-question grade material (type, points, required,
+//                      correctAnswer for deterministic items). This is the
+//                      server-side truth used at submit; it is NEVER part of any
+//                      payload returned to the candidate UI.
+// The attempt also owns the take SESSION + the CLOCK:
+//   - `sessionTokenHash`  hash of the short-lived per-attempt session token
+//                         (raw token returned once on start, never stored).
+//   - `remainingSeconds`  server-authoritative time left, persisted on each
+//                         heartbeat; the server (not the browser) is the clock.
+//   - `lastHeartbeatAt`   when remainingSeconds was last persisted.
+model Attempt {
+  id               String        @id @default(uuid())
+  tenantId         String
+  assessmentId     String
+  inviteId         String        @unique
+  candidateId      String
+  status           AttemptStatus @default(IN_PROGRESS)
+  startedAt        DateTime?
+  submittedAt      DateTime?
+  durationSeconds  Int?
+  // Frozen per-attempt snapshot (realized at start). Both are server-side only:
+  // answerKey carries correctAnswer / hidden grade material and is never sent
+  // back to the candidate.
+  questionOrder    Json          @default("[]")
+  answerKey        Json          @default("[]")
+  // Take session + server-authoritative clock.
+  sessionTokenHash String?       @unique
+  remainingSeconds Int?
+  lastHeartbeatAt  DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  assessment   Assessment        @relation(fields: [assessmentId], references: [id])
+  invite       AssessmentInvite  @relation(fields: [inviteId], references: [id])
+  answers      Answer[]
+  proctorEvents ProctorEvent[]
+  result       AssessmentResult?
+
+  @@index([tenantId])
+  @@index([tenantId, assessmentId])
+  @@index([tenantId, candidateId])
+}
+
+// One candidate response per (attempt, question). `value` is a single string
+// for SHORT_ANSWER/ESSAY/CODING/TRUE_FALSE or an array of option ids for
+// MCQ_MULTI — stored as JSON to carry either shape.
+model Answer {
+  id               String   @id @default(uuid())
+  tenantId         String
+  attemptId        String
+  questionId       String
+  value            Json?
+  timeSpentSeconds Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  attempt Attempt @relation(fields: [attemptId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([tenantId])
+  @@index([tenantId, attemptId])
+}
+
+// A proctoring signal captured during an attempt (tab-switch, paste, face-lost,
+// etc.). `type` is the event kind; `metadata` carries free-form provider detail.
+model ProctorEvent {
+  id        String   @id @default(uuid())
+  tenantId  String
+  attemptId String
+  type      String
+  metadata  Json     @default("{}")
+  occurredAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  attempt Attempt @relation(fields: [attemptId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, attemptId])
+}
+
+// The scored outcome of an attempt. One result per attempt (@unique). Raw and
+// max score are absolute points; `perQuestion` carries the per-question grade
+// breakdown. `pendingManualReview` is true while open-ended questions await a
+// human grader.
+model AssessmentResult {
+  id                  String    @id @default(uuid())
+  tenantId            String
+  assessmentId        String
+  attemptId           String    @unique
+  candidateId         String
+  rawScore            Float
+  maxScore            Float
+  passed              Boolean?
+  pendingManualReview Boolean   @default(false)
+  perQuestion         Json      @default("[]")
+  // EU AI Act / GDPR Art.15 explainability record (WF10 / J1). A structured,
+  // candidate-safe explanation of HOW this score was produced: the grading method
+  // per question (deterministic exact-match, AI-assisted rubric, code execution,
+  // or human review), whether AI assisted, the per-question rationale/confidence
+  // (read verbatim from the real grades, never fabricated), and the standing
+  // human-review status. It NEVER contains the answer key or hidden test cases.
+  // Persisted on every (auto + human) finalize so a data-subject access request
+  // and the candidate-facing explanation can both read it. Default null until
+  // the first grade lands. See workers/grading.worker.ts buildExplainability.
+  explainability      Json?
+  gradedAt            DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id])
+  attempt    Attempt    @relation(fields: [attemptId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, assessmentId])
+  @@index([tenantId, candidateId])
+}
+
+// A reusable library of questions. tenantId NULL = global/platform-managed bank
+// shared by all tenants (Skill idiom). Tenant-owned banks are isolated.
+model QuestionBank {
+  id          String     @id @default(uuid())
+  tenantId    String?
+  name        String
+  description String?
+  category    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  questions Question[]
+
+  @@index([tenantId])
+}
+
+// A bank question. tenantId NULL = global/platform-managed (Skill idiom).
+// `options` holds MCQ/TRUE_FALSE choices; `correctAnswer` is the auto-grade key
+// (an option id, an array of option ids, or a canonical SHORT_ANSWER string).
+model Question {
+  id            String       @id @default(uuid())
+  tenantId      String?
+  questionBankId String
+  type          QuestionType
+  prompt        String
+  order         Int          @default(0)
+  required      Boolean      @default(true)
+  points        Int          @default(1)
+  timeLimit     Int?
+  options       Json?
+  correctAnswer Json?
+  language      String?
+  starterCode   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  questionBank QuestionBank @relation(fields: [questionBankId], references: [id])
+
+  @@index([tenantId])
+  @@index([questionBankId])
+}

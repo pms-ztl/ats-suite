@@ -415,7 +415,17 @@ export function Shell(props: ShellProps) {
                   </span>
                   {!(collapsed && !mobile) && <>
                     <span style={{ flex: 1, textAlign: "left", whiteSpace: "nowrap" }}>{it.label}</span>
-                    {it.count != null && <span className="mono tnum" style={{ fontSize: 11, fontWeight: 600, color: on ? "var(--brand)" : "var(--ink-3)", background: on ? "var(--surface)" : "var(--surface-2)", padding: "1px 7px", borderRadius: 99 }}>{it.count}</span>}
+                    {/* WF9 / SLICE I3 — plan-locked module: a padlock + upgrade chip
+                        in place of the count, so the feature stays discoverable and
+                        clicking routes to the upgrade path rather than a dead 402.
+                        `it.lock` is undefined for every v1 item -> unchanged. */}
+                    {it.lock ? (
+                      <span title="Not included in your plan — upgrade to enable" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, letterSpacing: ".02em", color: "var(--ai)", background: "var(--ai-tint)", padding: "1px 7px 1px 5px", borderRadius: 99, flexShrink: 0 }}>
+                        <Icon name="lock" size={11} stroke={2.2} />Upgrade
+                      </span>
+                    ) : it.count != null ? (
+                      <span className="mono tnum" style={{ fontSize: 11, fontWeight: 600, color: on ? "var(--brand)" : "var(--ink-3)", background: on ? "var(--surface)" : "var(--surface-2)", padding: "1px 7px", borderRadius: 99 }}>{it.count}</span>
+                    ) : null}
                   </>}
                 </button>
               );

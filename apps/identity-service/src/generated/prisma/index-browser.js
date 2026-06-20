@@ -233,6 +233,34 @@ exports.Prisma.SsoLoginAuditScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.DashboardLayoutScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  scope: 'scope',
+  dashboardKey: 'dashboardKey',
+  name: 'name',
+  document: 'document',
+  schemaVersion: 'schemaVersion',
+  isDefault: 'isDefault',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserUiPrefsScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  colorMode: 'colorMode',
+  density: 'density',
+  locale: 'locale',
+  timezone: 'timezone',
+  accentOverride: 'accentOverride',
+  prefs: 'prefs',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -286,7 +314,9 @@ exports.Prisma.ModelName = {
   InviteToken: 'InviteToken',
   AuditEvent: 'AuditEvent',
   TenantSso: 'TenantSso',
-  SsoLoginAudit: 'SsoLoginAudit'
+  SsoLoginAudit: 'SsoLoginAudit',
+  DashboardLayout: 'DashboardLayout',
+  UserUiPrefs: 'UserUiPrefs'
 };
 
 /**

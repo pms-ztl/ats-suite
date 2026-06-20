@@ -56,6 +56,9 @@ export const ICONS: Record<string, string> = {
   layers: "M12 3 3 8l9 5 9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5",
   motion: "M3 12h4l2-6 4 14 2-8h6",
   shapes: "M12 4l3.5 6H8.5zM5 14h6v6H5zM18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  // Closed padlock — used by the shell nav to mark a plan-locked module (an
+  // upgrade affordance) rather than hiding the item. Additive: a new key only.
+  lock: "M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1ZM12 15v2",
 };
 
 export type IconName = keyof typeof ICONS | string;

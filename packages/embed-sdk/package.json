@@ -1,0 +1,23 @@
+{
+  "name": "@cdc-ats/embed-sdk",
+  "version": "0.0.1",
+  "private": true,
+  "description": "First-party browser SDK for embedding CDC ATS modules into host apps via scoped, token-authorized iframes.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "rimraf": "^6.0.1"
+  }
+}

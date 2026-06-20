@@ -26,6 +26,7 @@ import {
   tenantRateLimit,
   sentryErrorHandler,
   Errors,
+  MODULE_REGISTRY,
 } from "@cdc-ats/common";
 import { Redis } from "ioredis";
 import type { Logger } from "pino";
@@ -33,6 +34,12 @@ import { createProxyMiddleware, type Options as ProxyOptions } from "http-proxy-
 import { gatewayAuth } from "./lib/auth-middleware.js";
 import { resolveTenantPlan } from "./lib/tenant-plan.js";
 import { requireAgentPlan } from "./lib/agent-gate.js";
+// WF4 — module gate. resolveModule powers the /api/me/modules nav/widget filter
+// below; requireModule (WF4-exported) is the per-tenant module gate. WF7 attaches
+// it to the new /api/assessments authored surface (the first module-owned route).
+import { resolveModule, requireModule } from "./lib/module-gate.js";
+import { embedFramingHeaders } from "./lib/embed-headers.js";
+import { mintEmbedToken, EMBED_EXPIRES_SECONDS } from "./lib/embed-token.js";
 import authRouter from "./routes/auth.js";
 import impersonateRouter from "./routes/impersonate.js";
 import { publicIngestRouter } from "./routes/public-ingest.js";
@@ -40,6 +47,7 @@ import { platformRouter } from "./routes/platform.js";
 import { analyticsAgentRouter, biasAuditorRouter, copilotRouter } from "./routes/agents.js";
 import { aggregatorRouter } from "./routes/aggregators.js";
 import { gdprRouter } from "./routes/gdpr.js";
+import { embedRouter } from "./routes/embed.js";
 
 // Lazy-connect Redis so tests / no-redis dev still work
 let redis: Redis | null = null;
@@ -95,6 +103,15 @@ export function createApp(logger: Logger): Express {
   app.use(compression());
   app.use(cookieParser());
   app.use(metrics.middleware);
+
+  // WF2 — scoped embed framing. Runs AFTER helmet() so it can override helmet's
+  // global X-Frame-Options, but ONLY on /embed/* and /api/embed/* (it no-ops on
+  // every other path, leaving the global frameguard byte-identical). On the
+  // embed surface it removes X-Frame-Options and sets CSP frame-ancestors from
+  // the verified embed token's allowedOrigins, failing closed to 'none' when no
+  // valid token / empty allowlist. Mounted before the proxy chain so the headers
+  // are set regardless of how the embed request is ultimately routed.
+  app.use(embedFramingHeaders());
 
   // Rate limits are env-configurable so a dedicated load-test environment can
   // measure true capacity. DISABLE_RATE_LIMIT=1 turns them off entirely (load
@@ -213,6 +230,69 @@ export function createApp(logger: Logger): Express {
   const agentUrl = process.env["AGENT_SERVICE_URL"] ?? "http://localhost:4011";
   const analyticsServiceUrl = process.env["ANALYTICS_SERVICE_URL"] ?? "http://localhost:4012";
   const complianceServiceUrl = process.env["COMPLIANCE_SERVICE_URL"] ?? "http://localhost:4013";
+  // WF7 — assessment-service (online assessments / OA), port 4014. Proxied for
+  // the first time here (it ran un-proxied since WF3); see the /api/assessments +
+  // /api/public/assessment + Judge0-callback mounts below.
+  const assessmentUrl = process.env["ASSESSMENT_SERVICE_URL"] ?? "http://localhost:4014";
+
+  // WF7 — PUBLIC candidate take surface (no auth). The candidate opens an
+  // assessment from a single-use invite token, so there is NO JWT and NO tenant
+  // header on these calls — the assessment-service public-take router resolves the
+  // tenant FROM the token row via prismaAdmin (the job-service public-by-slug
+  // idiom). This is a RAW createProxyMiddleware (NO gatewayAuth, NO
+  // X-Internal-Service stamp — the same posture as the public apply + inbound-email
+  // blocks): the token in the body/header IS the credential, verified downstream.
+  // It supports multipart take uploads untouched (no body parser consumes the
+  // stream). Mounted BEFORE the generic /api/public catch-all so this exact
+  // sub-path wins over the job-service rewrite.
+  //   /api/public/assessment/*  → assessment-service /internal/public/assessment/*
+  app.use(
+    "/api/public/assessment",
+    createProxyMiddleware({
+      target: assessmentUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/public/assessment${path}`,
+      logger,
+    })
+  );
+
+  // WF7/G7 — Judge0 inbound callback ingress. PUBLIC + raw proxy: the isolated
+  // Judge0 sidecar delivers per-submission verdicts here and carries NO JWT — the
+  // opaque submission token in the body IS the correlation credential (verified
+  // downstream by matching it to a stored test case). Same posture as the
+  // inbound-email / twilio webhook proxies: NO gatewayAuth, NO X-Internal-Service
+  // stamp, and NO body parser (the JSON body streams through untouched).
+  //   /api/internal/judge0/*  → assessment-service /internal/judge0/*
+  app.use(
+    "/api/internal/judge0",
+    createProxyMiddleware({
+      target: assessmentUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/judge0${path}`,
+      logger,
+    })
+  );
+
+  // WF8/H4 — inbound OA-provider result webhook ingress. PUBLIC + raw proxy: an
+  // external assessment vendor (Codility, HackerEarth, iMocha, TestGorilla) POSTs
+  // a completion event here and carries NO JWT — the providerInvitationId in the
+  // path IS the correlation credential and the vendor's HMAC signature (over the
+  // raw body, verified downstream against the per-invite secret) is the auth. Same
+  // posture as the Judge0 / inbound-email / twilio webhook proxies: NO gatewayAuth,
+  // NO X-Internal-Service stamp, and NO body parser (the raw bytes the vendor
+  // signed stream through untouched so the HMAC check matches). NOT module-gated:
+  // a vendor cannot send the tenant's oa-assessments flag, and the downstream
+  // route safely no-ops an unknown/forged correlation id.
+  //   /api/inbound-assessment/*  → assessment-service /internal/inbound-assessment/*
+  app.use(
+    "/api/inbound-assessment",
+    createProxyMiddleware({
+      target: assessmentUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/inbound-assessment${path}`,
+      logger,
+    })
+  );
 
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   app.use(
@@ -362,17 +442,249 @@ export function createApp(logger: Logger): Express {
       }
     }
   );
+  // WF4 — tenant-admin gate for tenant-scoped module mutations. Mirrors the
+  // inline requireSuperAdmin below; the verified JWT role is the authority.
+  const requireTenantAdmin = (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) return next(Errors.unauthorized());
+    if (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN") {
+      return next(Errors.forbidden("Tenant admin role required"));
+    }
+    next();
+  };
+
   app.use("/api/users", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users"));
   app.use("/api/billing", gatewayAuth(), forwardHeaders(billingUrl, "/internal/billing"));
+
+  // WF4 — module surface for the tenant. All additive, behind gatewayAuth.
+  //
+  // GET /api/me/modules — the caller tenant's RESOLVED enabled module set, for
+  // nav + widget filtering on the client. Resolves every registered module via
+  // the module-gate (billing check-module, REAL TenantModule/ModuleRegistry +
+  // PLAN_LIMITS rows — never a hardcoded enabled:true), fail-soft per module so
+  // a billing blip degrades gracefully rather than 500ing the whole nav.
+  app.get(
+    "/api/me/modules",
+    gatewayAuth(),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const resolved = await Promise.all(
+          MODULE_REGISTRY.map(async (m) => {
+            const r = await resolveModule(req, m.key);
+            return {
+              key: m.key,
+              name: m.name,
+              category: m.category,
+              type: m.type,
+              enabled: r.enabled === true,
+              reason: r.enabled ? undefined : r.reason,
+              requiresPlan: m.requiresPlan ?? null,
+              contributions: m.contributions,
+            };
+          }),
+        );
+        res.json({
+          success: true,
+          data: {
+            modules: resolved,
+            enabledKeys: resolved.filter((m) => m.enabled).map((m) => m.key),
+          },
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // PUT /api/tenant/modules/:key — tenant admin toggles a module on/off for
+  // their own tenant. requireTenantAdmin gate, then proxied to billing
+  // (/internal/billing/modules/:key) which owns the TenantModule write +
+  // publishes module.toggled (the gateway cache buster subscribes to it).
+  app.put(
+    "/api/tenant/modules/:key",
+    gatewayAuth(),
+    requireTenantAdmin,
+    express.json({ limit: "256kb" }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const moduleKey = req.params["key"] as string;
+        const { callService } = await import("./lib/service-client.js");
+        const data = await callService<unknown>("billing", {
+          method: "PUT",
+          path: `/internal/billing/modules/${encodeURIComponent(moduleKey)}`,
+          body: req.body,
+          userHeaders: {
+            userId: req.user.id,
+            tenantId: req.user.tenantId,
+            role: req.user.role,
+            email: req.user.email,
+          },
+        });
+        res.json({ success: true, data });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+  // WF6/F1 — per-user dashboard layouts + UI preferences, and tenant-default
+  // layouts. Plain forwardHeaders proxies (no express.json — the body streams
+  // through, matching every other write proxy here). All behind gatewayAuth so
+  // the verified JWT claims are stamped on as X-User-Id/X-Tenant-Id/X-User-Role
+  // before reaching identity, which keys the RLS writes to the caller.
+  //   GET/PUT/DELETE /api/me/dashboards/:dashboardKey
+  //                                  → identity /internal/users/me/dashboards/:k
+  //   GET/PATCH      /api/me/preferences
+  //                                  → identity /internal/users/me/preferences
+  //   GET/PUT        /api/tenant/dashboards/:dashboardKey (tenant-admin only,
+  //      enforced inside identity)   → identity /internal/users/tenant/dashboards/:k
+  app.use("/api/me/dashboards", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users/me/dashboards"));
+  app.use("/api/me/preferences", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users/me/preferences"));
+  app.use("/api/tenant/dashboards", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users/tenant/dashboards"));
+
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
   app.use("/api/jd-author", gatewayAuth(), requireAgentPlan("jd-author"), forwardHeaders(jobUrl, "/internal/jd-author"));
+
+  // WF7 — Online Assessments authoring/invite/results surface (recruiter-side).
+  // The FIRST module-owned gateway route: gated behind requireModule('oa-assessments')
+  // so a tenant without the module (not on plan / kill-switched / dependency off)
+  // gets 404/402 here, while the byte-frozen v1 surface stays untouched. The mount
+  // is method-agnostic (GET reads + POST/PUT/PATCH/DELETE authoring), and
+  // forwardHeaders stamps the verified JWT claims (X-User-Id/X-Tenant-Id/X-User-Role)
+  // so the assessment-service RLS client scopes every read/write to the caller's
+  // tenant. invites + results live under the same /internal/assessments base.
+  //   /api/assessments/*  → assessment-service /internal/assessments/*
+  app.use(
+    "/api/assessments",
+    gatewayAuth(),
+    requireModule("oa-assessments"),
+    forwardHeaders(assessmentUrl, "/internal/assessments"),
+  );
 
   // Platform aggregator — fans out to job + candidate + billing in parallel
   app.use("/api/platform", gatewayAuth(), platformRouter(logger));
 
   // GDPR — per-candidate export + delete fans out across services
   app.use("/api/gdpr", gatewayAuth(), express.json({ limit: "1mb" }), gdprRouter(logger));
+
+  // WF2 — POST /api/embed/token. An AUTHED user mints a short-lived embed token
+  // for a resource they can already access (gatewayAuth has verified them). The
+  // gateway resolves the tenant's frame-ancestors allowlist SERVER-SIDE (the
+  // tenant's embedAllowedOrigins, via tenant-service branding) so the client
+  // can never widen its own framing scope. The minted token bakes the verified
+  // tenant/user/role + the requested module/resourceId/params + that allowlist.
+  //
+  // Fail closed: if the tenant has no configured origins AND the authed caller
+  // did not pass an explicit allowedOrigins, the token carries [] and the embed
+  // consumer emits frame-ancestors 'none' (no origin may frame). The explicit
+  // allowedOrigins fallback exists only until WF3 makes the tenant column the
+  // live source of truth; it is still constrained to the caller's own tenant.
+  //
+  // Registered BEFORE the catch-all /api aggregator so this exact path wins.
+  app.post(
+    "/api/embed/token",
+    gatewayAuth(),
+    express.json({ limit: "64kb" }),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (!req.user) throw Errors.unauthorized();
+        const { module, resourceId, params, allowedOrigins } = (req.body ?? {}) as {
+          module?: unknown;
+          resourceId?: unknown;
+          params?: unknown;
+          allowedOrigins?: unknown;
+        };
+        if (typeof module !== "string" || module.length === 0) {
+          throw Errors.validation("module is required");
+        }
+        if (typeof resourceId !== "string" || resourceId.length === 0) {
+          throw Errors.validation("resourceId is required");
+        }
+        const lockedParams =
+          params && typeof params === "object" && !Array.isArray(params)
+            ? (params as Record<string, unknown>)
+            : {};
+
+        // Resolve the tenant's configured allowlist (server-side, authoritative).
+        // Fail soft to [] if tenant-service is unreachable — fail closed on the
+        // resulting empty allowlist rather than throwing.
+        let tenantOrigins: string[] = [];
+        try {
+          const { callService } = await import("./lib/service-client.js");
+          const branding = await callService<{ embedAllowedOrigins?: unknown }>("tenant", {
+            method: "GET",
+            path: "/internal/branding",
+            userHeaders: {
+              userId: req.user.id,
+              tenantId: req.user.tenantId,
+              role: req.user.role,
+              email: req.user.email,
+            },
+            timeoutMs: 4000,
+          });
+          if (Array.isArray(branding?.embedAllowedOrigins)) {
+            tenantOrigins = (branding.embedAllowedOrigins as unknown[]).filter(
+              (o): o is string => typeof o === "string" && o.length > 0,
+            );
+          }
+        } catch {
+          tenantOrigins = [];
+        }
+
+        // Until WF3 wires the tenant column end to end, accept an explicit
+        // allowedOrigins from the authed caller as a fallback ONLY when the
+        // tenant has none configured. Each entry must be a clean https origin
+        // (parsed, no path/query/credentials, no wildcard) — anything looser is
+        // dropped, so the trust boundary can never be widened past a bare origin.
+        let resolvedOrigins = tenantOrigins;
+        if (resolvedOrigins.length === 0 && Array.isArray(allowedOrigins)) {
+          resolvedOrigins = (allowedOrigins as unknown[])
+            .map((o) => (typeof o === "string" ? o.trim() : ""))
+            .map((raw) => {
+              if (!raw) return null;
+              try {
+                const u = new URL(raw);
+                if (u.protocol !== "https:") return null;
+                if ((u.pathname && u.pathname !== "/") || u.search || u.hash || u.username || u.password) return null;
+                if (!u.hostname || u.hostname.includes("*")) return null;
+                return u.origin;
+              } catch {
+                return null;
+              }
+            })
+            .filter((o): o is string => o !== null);
+          resolvedOrigins = Array.from(new Set(resolvedOrigins));
+        }
+
+        const token = mintEmbedToken({
+          tenantId: req.user.tenantId,
+          sub: req.user.id,
+          role: req.user.role,
+          module,
+          resourceId,
+          params: lockedParams,
+          allowedOrigins: resolvedOrigins,
+        });
+        res.json({ success: true, data: { token, expiresIn: EMBED_EXPIRES_SECONDS } });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  // WF9 / SLICE I1 — embed DATA PLANE (token-authed, NO gatewayAuth). The
+  // embeddable chrome-less widgets are framed into a customer site with no
+  // session JWT — the short-lived signed EMBED TOKEN (minted above) is the only
+  // credential. embedRouter() verifies that token itself and resolves the LOCKED
+  // resource scoped to the baked tenantId (never the request):
+  //   POST /api/embed/validate -> { valid, module, resourceId, params, branding }
+  //   GET  /api/embed/data     -> the locked funnel / screening / chart / public job
+  // Mounted on /api/embed (relaxed framing via embedFramingHeaders + nginx),
+  // BEFORE the catch-all /api aggregator (which is gatewayAuth-gated) so these
+  // exact sub-paths win. The /api/embed/token mint above stays gatewayAuth (an
+  // already-logged-in user mints the token); only validate + data are token-authed.
+  app.use("/api/embed", embedRouter());
 
   // Cross-service read aggregators (analytics/pipeline, /agents/hitl,
   // /sourcing/talent-pools, etc.). MUST come BEFORE the single-service
@@ -710,6 +1022,12 @@ export function createApp(logger: Logger): Express {
   // which owns the platform kill switches, cross-tenant cost rollup, and prompt overrides.
   app.use("/api/super-admin/platform", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform"));
 
+  // WF4 — super-admin module control plane (GET list + PUT platform default /
+  // registry sync). Proxies to billing-service /internal/platform/modules which
+  // owns the ModuleRegistry + cross-tenant TenantModule rows. GET reads, PUT
+  // mutates; both flow through the same mount. requireSuperAdmin gates it.
+  app.use("/api/super-admin/modules", gatewayAuth(), requireSuperAdmin, forwardHeaders(billingUrl, "/internal/platform/modules"));
+
   // GET /api/super-admin/billing/invoices — current-cycle invoices derived from
   // each tenant's REAL plan + MRR. One "paid" invoice per PAYING tenant; FREE
   // tenants (no MRR) generate no invoice (so no false "failed payment" alarms).
@@ -790,6 +1108,25 @@ export function createApp(logger: Logger): Express {
       target: notificationUrl,
       changeOrigin: true,
       pathRewrite: (path) => `/internal/inbound-email${path}`,
+      logger,
+    })
+  );
+
+  // WF7 — Judge0 code-execution callback. Judge0 (the external code runner) PUTs
+  // each submission's verdict to this URL when execution finishes (async grading).
+  // It is an EXTERNAL caller: no JWT, no tenant header, and explicitly NO
+  // X-Internal-Service stamp — a RAW proxy that streams the body untouched, like
+  // the inbound-email + twilio webhook blocks. The assessment-service callback
+  // route authenticates the verdict by the opaque per-submission token Judge0
+  // echoes back (minted when the run was enqueued) and resolves the tenant from
+  // that row via prismaAdmin; the gateway is a dumb pass-through here.
+  //   /api/internal/judge0/callback/*  → assessment-service /internal/judge0/callback/*
+  app.use(
+    "/api/internal/judge0/callback",
+    createProxyMiddleware({
+      target: assessmentUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/judge0/callback${path}`,
       logger,
     })
   );

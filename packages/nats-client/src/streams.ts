@@ -50,6 +50,12 @@ export const CORE_STREAMS: StreamSpec[] = [
     retentionDays: 14,
   },
   {
+    name: "ASSESSMENT_EVENTS",
+    subjects: ["tenant.*.assessment.>"],
+    description: "Online assessment lifecycle: invited, started, submitted, completed (graded)",
+    retentionDays: 30,
+  },
+  {
     name: "INTERVIEW_EVENTS",
     subjects: ["tenant.*.interview.>"],
     description: "Interview scheduled, feedback submitted",

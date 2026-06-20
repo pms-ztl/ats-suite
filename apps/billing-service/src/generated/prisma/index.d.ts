@@ -34,6 +34,16 @@ export type AgentRunCost = $Result.DefaultSelection<Prisma.$AgentRunCostPayload>
  */
 export type FeatureFlag = $Result.DefaultSelection<Prisma.$FeatureFlagPayload>
 /**
+ * Model ModuleRegistry
+ * 
+ */
+export type ModuleRegistry = $Result.DefaultSelection<Prisma.$ModuleRegistryPayload>
+/**
+ * Model TenantModule
+ * 
+ */
+export type TenantModule = $Result.DefaultSelection<Prisma.$TenantModulePayload>
+/**
  * Model PlatformAgentKillSwitch
  * 
  */
@@ -216,6 +226,26 @@ export class PrismaClient<
     * ```
     */
   get featureFlag(): Prisma.FeatureFlagDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.moduleRegistry`: Exposes CRUD operations for the **ModuleRegistry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModuleRegistries
+    * const moduleRegistries = await prisma.moduleRegistry.findMany()
+    * ```
+    */
+  get moduleRegistry(): Prisma.ModuleRegistryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tenantModule`: Exposes CRUD operations for the **TenantModule** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenantModules
+    * const tenantModules = await prisma.tenantModule.findMany()
+    * ```
+    */
+  get tenantModule(): Prisma.TenantModuleDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.platformAgentKillSwitch`: Exposes CRUD operations for the **PlatformAgentKillSwitch** model.
@@ -711,6 +741,8 @@ export namespace Prisma {
     AgentKillSwitch: 'AgentKillSwitch',
     AgentRunCost: 'AgentRunCost',
     FeatureFlag: 'FeatureFlag',
+    ModuleRegistry: 'ModuleRegistry',
+    TenantModule: 'TenantModule',
     PlatformAgentKillSwitch: 'PlatformAgentKillSwitch',
     PlatformKillAudit: 'PlatformKillAudit',
     StripeSubscription: 'StripeSubscription',
@@ -734,7 +766,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "platformAgentKillSwitch" | "platformKillAudit" | "stripeSubscription" | "stripeWebhookEvent" | "promptOverride"
+      modelProps: "tenantPlanCache" | "agentKillSwitch" | "agentRunCost" | "featureFlag" | "moduleRegistry" | "tenantModule" | "platformAgentKillSwitch" | "platformKillAudit" | "stripeSubscription" | "stripeWebhookEvent" | "promptOverride"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1031,6 +1063,154 @@ export namespace Prisma {
           count: {
             args: Prisma.FeatureFlagCountArgs<ExtArgs>
             result: $Utils.Optional<FeatureFlagCountAggregateOutputType> | number
+          }
+        }
+      }
+      ModuleRegistry: {
+        payload: Prisma.$ModuleRegistryPayload<ExtArgs>
+        fields: Prisma.ModuleRegistryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModuleRegistryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModuleRegistryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          findFirst: {
+            args: Prisma.ModuleRegistryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModuleRegistryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          findMany: {
+            args: Prisma.ModuleRegistryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>[]
+          }
+          create: {
+            args: Prisma.ModuleRegistryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          createMany: {
+            args: Prisma.ModuleRegistryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModuleRegistryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>[]
+          }
+          delete: {
+            args: Prisma.ModuleRegistryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          update: {
+            args: Prisma.ModuleRegistryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          deleteMany: {
+            args: Prisma.ModuleRegistryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModuleRegistryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModuleRegistryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>[]
+          }
+          upsert: {
+            args: Prisma.ModuleRegistryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModuleRegistryPayload>
+          }
+          aggregate: {
+            args: Prisma.ModuleRegistryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModuleRegistry>
+          }
+          groupBy: {
+            args: Prisma.ModuleRegistryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModuleRegistryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModuleRegistryCountArgs<ExtArgs>
+            result: $Utils.Optional<ModuleRegistryCountAggregateOutputType> | number
+          }
+        }
+      }
+      TenantModule: {
+        payload: Prisma.$TenantModulePayload<ExtArgs>
+        fields: Prisma.TenantModuleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenantModuleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenantModuleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          findFirst: {
+            args: Prisma.TenantModuleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenantModuleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          findMany: {
+            args: Prisma.TenantModuleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>[]
+          }
+          create: {
+            args: Prisma.TenantModuleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          createMany: {
+            args: Prisma.TenantModuleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenantModuleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>[]
+          }
+          delete: {
+            args: Prisma.TenantModuleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          update: {
+            args: Prisma.TenantModuleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          deleteMany: {
+            args: Prisma.TenantModuleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenantModuleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenantModuleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>[]
+          }
+          upsert: {
+            args: Prisma.TenantModuleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantModulePayload>
+          }
+          aggregate: {
+            args: Prisma.TenantModuleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenantModule>
+          }
+          groupBy: {
+            args: Prisma.TenantModuleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenantModuleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenantModuleCountArgs<ExtArgs>
+            result: $Utils.Optional<TenantModuleCountAggregateOutputType> | number
           }
         }
       }
@@ -1504,6 +1684,8 @@ export namespace Prisma {
     agentKillSwitch?: AgentKillSwitchOmit
     agentRunCost?: AgentRunCostOmit
     featureFlag?: FeatureFlagOmit
+    moduleRegistry?: ModuleRegistryOmit
+    tenantModule?: TenantModuleOmit
     platformAgentKillSwitch?: PlatformAgentKillSwitchOmit
     platformKillAudit?: PlatformKillAuditOmit
     stripeSubscription?: StripeSubscriptionOmit
@@ -5716,6 +5898,2105 @@ export namespace Prisma {
      * Omit specific fields from the FeatureFlag
      */
     omit?: FeatureFlagOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ModuleRegistry
+   */
+
+  export type AggregateModuleRegistry = {
+    _count: ModuleRegistryCountAggregateOutputType | null
+    _min: ModuleRegistryMinAggregateOutputType | null
+    _max: ModuleRegistryMaxAggregateOutputType | null
+  }
+
+  export type ModuleRegistryMinAggregateOutputType = {
+    id: string | null
+    key: string | null
+    name: string | null
+    version: string | null
+    category: string | null
+    type: string | null
+    requiresPlan: string | null
+    defaultEnabled: boolean | null
+    createdAt: Date | null
+  }
+
+  export type ModuleRegistryMaxAggregateOutputType = {
+    id: string | null
+    key: string | null
+    name: string | null
+    version: string | null
+    category: string | null
+    type: string | null
+    requiresPlan: string | null
+    defaultEnabled: boolean | null
+    createdAt: Date | null
+  }
+
+  export type ModuleRegistryCountAggregateOutputType = {
+    id: number
+    key: number
+    name: number
+    version: number
+    category: number
+    type: number
+    requiresPlan: number
+    manifest: number
+    defaultEnabled: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ModuleRegistryMinAggregateInputType = {
+    id?: true
+    key?: true
+    name?: true
+    version?: true
+    category?: true
+    type?: true
+    requiresPlan?: true
+    defaultEnabled?: true
+    createdAt?: true
+  }
+
+  export type ModuleRegistryMaxAggregateInputType = {
+    id?: true
+    key?: true
+    name?: true
+    version?: true
+    category?: true
+    type?: true
+    requiresPlan?: true
+    defaultEnabled?: true
+    createdAt?: true
+  }
+
+  export type ModuleRegistryCountAggregateInputType = {
+    id?: true
+    key?: true
+    name?: true
+    version?: true
+    category?: true
+    type?: true
+    requiresPlan?: true
+    manifest?: true
+    defaultEnabled?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ModuleRegistryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModuleRegistry to aggregate.
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleRegistries to fetch.
+     */
+    orderBy?: ModuleRegistryOrderByWithRelationInput | ModuleRegistryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModuleRegistryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleRegistries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleRegistries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModuleRegistries
+    **/
+    _count?: true | ModuleRegistryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModuleRegistryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModuleRegistryMaxAggregateInputType
+  }
+
+  export type GetModuleRegistryAggregateType<T extends ModuleRegistryAggregateArgs> = {
+        [P in keyof T & keyof AggregateModuleRegistry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModuleRegistry[P]>
+      : GetScalarType<T[P], AggregateModuleRegistry[P]>
+  }
+
+
+
+
+  export type ModuleRegistryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModuleRegistryWhereInput
+    orderBy?: ModuleRegistryOrderByWithAggregationInput | ModuleRegistryOrderByWithAggregationInput[]
+    by: ModuleRegistryScalarFieldEnum[] | ModuleRegistryScalarFieldEnum
+    having?: ModuleRegistryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModuleRegistryCountAggregateInputType | true
+    _min?: ModuleRegistryMinAggregateInputType
+    _max?: ModuleRegistryMaxAggregateInputType
+  }
+
+  export type ModuleRegistryGroupByOutputType = {
+    id: string
+    key: string
+    name: string
+    version: string
+    category: string
+    type: string
+    requiresPlan: string | null
+    manifest: JsonValue
+    defaultEnabled: boolean
+    createdAt: Date
+    _count: ModuleRegistryCountAggregateOutputType | null
+    _min: ModuleRegistryMinAggregateOutputType | null
+    _max: ModuleRegistryMaxAggregateOutputType | null
+  }
+
+  type GetModuleRegistryGroupByPayload<T extends ModuleRegistryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModuleRegistryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModuleRegistryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModuleRegistryGroupByOutputType[P]>
+            : GetScalarType<T[P], ModuleRegistryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModuleRegistrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    name?: boolean
+    version?: boolean
+    category?: boolean
+    type?: boolean
+    requiresPlan?: boolean
+    manifest?: boolean
+    defaultEnabled?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["moduleRegistry"]>
+
+  export type ModuleRegistrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    name?: boolean
+    version?: boolean
+    category?: boolean
+    type?: boolean
+    requiresPlan?: boolean
+    manifest?: boolean
+    defaultEnabled?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["moduleRegistry"]>
+
+  export type ModuleRegistrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    name?: boolean
+    version?: boolean
+    category?: boolean
+    type?: boolean
+    requiresPlan?: boolean
+    manifest?: boolean
+    defaultEnabled?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["moduleRegistry"]>
+
+  export type ModuleRegistrySelectScalar = {
+    id?: boolean
+    key?: boolean
+    name?: boolean
+    version?: boolean
+    category?: boolean
+    type?: boolean
+    requiresPlan?: boolean
+    manifest?: boolean
+    defaultEnabled?: boolean
+    createdAt?: boolean
+  }
+
+  export type ModuleRegistryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "name" | "version" | "category" | "type" | "requiresPlan" | "manifest" | "defaultEnabled" | "createdAt", ExtArgs["result"]["moduleRegistry"]>
+
+  export type $ModuleRegistryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModuleRegistry"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      key: string
+      name: string
+      version: string
+      category: string
+      type: string
+      requiresPlan: string | null
+      manifest: Prisma.JsonValue
+      defaultEnabled: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["moduleRegistry"]>
+    composites: {}
+  }
+
+  type ModuleRegistryGetPayload<S extends boolean | null | undefined | ModuleRegistryDefaultArgs> = $Result.GetResult<Prisma.$ModuleRegistryPayload, S>
+
+  type ModuleRegistryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModuleRegistryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModuleRegistryCountAggregateInputType | true
+    }
+
+  export interface ModuleRegistryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModuleRegistry'], meta: { name: 'ModuleRegistry' } }
+    /**
+     * Find zero or one ModuleRegistry that matches the filter.
+     * @param {ModuleRegistryFindUniqueArgs} args - Arguments to find a ModuleRegistry
+     * @example
+     * // Get one ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModuleRegistryFindUniqueArgs>(args: SelectSubset<T, ModuleRegistryFindUniqueArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModuleRegistry that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModuleRegistryFindUniqueOrThrowArgs} args - Arguments to find a ModuleRegistry
+     * @example
+     * // Get one ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModuleRegistryFindUniqueOrThrowArgs>(args: SelectSubset<T, ModuleRegistryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModuleRegistry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryFindFirstArgs} args - Arguments to find a ModuleRegistry
+     * @example
+     * // Get one ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModuleRegistryFindFirstArgs>(args?: SelectSubset<T, ModuleRegistryFindFirstArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModuleRegistry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryFindFirstOrThrowArgs} args - Arguments to find a ModuleRegistry
+     * @example
+     * // Get one ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModuleRegistryFindFirstOrThrowArgs>(args?: SelectSubset<T, ModuleRegistryFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModuleRegistries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModuleRegistries
+     * const moduleRegistries = await prisma.moduleRegistry.findMany()
+     * 
+     * // Get first 10 ModuleRegistries
+     * const moduleRegistries = await prisma.moduleRegistry.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const moduleRegistryWithIdOnly = await prisma.moduleRegistry.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModuleRegistryFindManyArgs>(args?: SelectSubset<T, ModuleRegistryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModuleRegistry.
+     * @param {ModuleRegistryCreateArgs} args - Arguments to create a ModuleRegistry.
+     * @example
+     * // Create one ModuleRegistry
+     * const ModuleRegistry = await prisma.moduleRegistry.create({
+     *   data: {
+     *     // ... data to create a ModuleRegistry
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModuleRegistryCreateArgs>(args: SelectSubset<T, ModuleRegistryCreateArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModuleRegistries.
+     * @param {ModuleRegistryCreateManyArgs} args - Arguments to create many ModuleRegistries.
+     * @example
+     * // Create many ModuleRegistries
+     * const moduleRegistry = await prisma.moduleRegistry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModuleRegistryCreateManyArgs>(args?: SelectSubset<T, ModuleRegistryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModuleRegistries and returns the data saved in the database.
+     * @param {ModuleRegistryCreateManyAndReturnArgs} args - Arguments to create many ModuleRegistries.
+     * @example
+     * // Create many ModuleRegistries
+     * const moduleRegistry = await prisma.moduleRegistry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModuleRegistries and only return the `id`
+     * const moduleRegistryWithIdOnly = await prisma.moduleRegistry.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModuleRegistryCreateManyAndReturnArgs>(args?: SelectSubset<T, ModuleRegistryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModuleRegistry.
+     * @param {ModuleRegistryDeleteArgs} args - Arguments to delete one ModuleRegistry.
+     * @example
+     * // Delete one ModuleRegistry
+     * const ModuleRegistry = await prisma.moduleRegistry.delete({
+     *   where: {
+     *     // ... filter to delete one ModuleRegistry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModuleRegistryDeleteArgs>(args: SelectSubset<T, ModuleRegistryDeleteArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModuleRegistry.
+     * @param {ModuleRegistryUpdateArgs} args - Arguments to update one ModuleRegistry.
+     * @example
+     * // Update one ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModuleRegistryUpdateArgs>(args: SelectSubset<T, ModuleRegistryUpdateArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModuleRegistries.
+     * @param {ModuleRegistryDeleteManyArgs} args - Arguments to filter ModuleRegistries to delete.
+     * @example
+     * // Delete a few ModuleRegistries
+     * const { count } = await prisma.moduleRegistry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModuleRegistryDeleteManyArgs>(args?: SelectSubset<T, ModuleRegistryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModuleRegistries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModuleRegistries
+     * const moduleRegistry = await prisma.moduleRegistry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModuleRegistryUpdateManyArgs>(args: SelectSubset<T, ModuleRegistryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModuleRegistries and returns the data updated in the database.
+     * @param {ModuleRegistryUpdateManyAndReturnArgs} args - Arguments to update many ModuleRegistries.
+     * @example
+     * // Update many ModuleRegistries
+     * const moduleRegistry = await prisma.moduleRegistry.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModuleRegistries and only return the `id`
+     * const moduleRegistryWithIdOnly = await prisma.moduleRegistry.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModuleRegistryUpdateManyAndReturnArgs>(args: SelectSubset<T, ModuleRegistryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModuleRegistry.
+     * @param {ModuleRegistryUpsertArgs} args - Arguments to update or create a ModuleRegistry.
+     * @example
+     * // Update or create a ModuleRegistry
+     * const moduleRegistry = await prisma.moduleRegistry.upsert({
+     *   create: {
+     *     // ... data to create a ModuleRegistry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModuleRegistry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModuleRegistryUpsertArgs>(args: SelectSubset<T, ModuleRegistryUpsertArgs<ExtArgs>>): Prisma__ModuleRegistryClient<$Result.GetResult<Prisma.$ModuleRegistryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModuleRegistries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryCountArgs} args - Arguments to filter ModuleRegistries to count.
+     * @example
+     * // Count the number of ModuleRegistries
+     * const count = await prisma.moduleRegistry.count({
+     *   where: {
+     *     // ... the filter for the ModuleRegistries we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModuleRegistryCountArgs>(
+      args?: Subset<T, ModuleRegistryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModuleRegistryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModuleRegistry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModuleRegistryAggregateArgs>(args: Subset<T, ModuleRegistryAggregateArgs>): Prisma.PrismaPromise<GetModuleRegistryAggregateType<T>>
+
+    /**
+     * Group by ModuleRegistry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModuleRegistryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModuleRegistryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModuleRegistryGroupByArgs['orderBy'] }
+        : { orderBy?: ModuleRegistryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModuleRegistryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModuleRegistryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModuleRegistry model
+   */
+  readonly fields: ModuleRegistryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModuleRegistry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModuleRegistryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModuleRegistry model
+   */
+  interface ModuleRegistryFieldRefs {
+    readonly id: FieldRef<"ModuleRegistry", 'String'>
+    readonly key: FieldRef<"ModuleRegistry", 'String'>
+    readonly name: FieldRef<"ModuleRegistry", 'String'>
+    readonly version: FieldRef<"ModuleRegistry", 'String'>
+    readonly category: FieldRef<"ModuleRegistry", 'String'>
+    readonly type: FieldRef<"ModuleRegistry", 'String'>
+    readonly requiresPlan: FieldRef<"ModuleRegistry", 'String'>
+    readonly manifest: FieldRef<"ModuleRegistry", 'Json'>
+    readonly defaultEnabled: FieldRef<"ModuleRegistry", 'Boolean'>
+    readonly createdAt: FieldRef<"ModuleRegistry", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModuleRegistry findUnique
+   */
+  export type ModuleRegistryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleRegistry to fetch.
+     */
+    where: ModuleRegistryWhereUniqueInput
+  }
+
+  /**
+   * ModuleRegistry findUniqueOrThrow
+   */
+  export type ModuleRegistryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleRegistry to fetch.
+     */
+    where: ModuleRegistryWhereUniqueInput
+  }
+
+  /**
+   * ModuleRegistry findFirst
+   */
+  export type ModuleRegistryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleRegistry to fetch.
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleRegistries to fetch.
+     */
+    orderBy?: ModuleRegistryOrderByWithRelationInput | ModuleRegistryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModuleRegistries.
+     */
+    cursor?: ModuleRegistryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleRegistries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleRegistries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModuleRegistries.
+     */
+    distinct?: ModuleRegistryScalarFieldEnum | ModuleRegistryScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleRegistry findFirstOrThrow
+   */
+  export type ModuleRegistryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleRegistry to fetch.
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleRegistries to fetch.
+     */
+    orderBy?: ModuleRegistryOrderByWithRelationInput | ModuleRegistryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModuleRegistries.
+     */
+    cursor?: ModuleRegistryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleRegistries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleRegistries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModuleRegistries.
+     */
+    distinct?: ModuleRegistryScalarFieldEnum | ModuleRegistryScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleRegistry findMany
+   */
+  export type ModuleRegistryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter, which ModuleRegistries to fetch.
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModuleRegistries to fetch.
+     */
+    orderBy?: ModuleRegistryOrderByWithRelationInput | ModuleRegistryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModuleRegistries.
+     */
+    cursor?: ModuleRegistryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModuleRegistries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModuleRegistries.
+     */
+    skip?: number
+    distinct?: ModuleRegistryScalarFieldEnum | ModuleRegistryScalarFieldEnum[]
+  }
+
+  /**
+   * ModuleRegistry create
+   */
+  export type ModuleRegistryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ModuleRegistry.
+     */
+    data: XOR<ModuleRegistryCreateInput, ModuleRegistryUncheckedCreateInput>
+  }
+
+  /**
+   * ModuleRegistry createMany
+   */
+  export type ModuleRegistryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModuleRegistries.
+     */
+    data: ModuleRegistryCreateManyInput | ModuleRegistryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ModuleRegistry createManyAndReturn
+   */
+  export type ModuleRegistryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModuleRegistries.
+     */
+    data: ModuleRegistryCreateManyInput | ModuleRegistryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ModuleRegistry update
+   */
+  export type ModuleRegistryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ModuleRegistry.
+     */
+    data: XOR<ModuleRegistryUpdateInput, ModuleRegistryUncheckedUpdateInput>
+    /**
+     * Choose, which ModuleRegistry to update.
+     */
+    where: ModuleRegistryWhereUniqueInput
+  }
+
+  /**
+   * ModuleRegistry updateMany
+   */
+  export type ModuleRegistryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModuleRegistries.
+     */
+    data: XOR<ModuleRegistryUpdateManyMutationInput, ModuleRegistryUncheckedUpdateManyInput>
+    /**
+     * Filter which ModuleRegistries to update
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * Limit how many ModuleRegistries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleRegistry updateManyAndReturn
+   */
+  export type ModuleRegistryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * The data used to update ModuleRegistries.
+     */
+    data: XOR<ModuleRegistryUpdateManyMutationInput, ModuleRegistryUncheckedUpdateManyInput>
+    /**
+     * Filter which ModuleRegistries to update
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * Limit how many ModuleRegistries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleRegistry upsert
+   */
+  export type ModuleRegistryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ModuleRegistry to update in case it exists.
+     */
+    where: ModuleRegistryWhereUniqueInput
+    /**
+     * In case the ModuleRegistry found by the `where` argument doesn't exist, create a new ModuleRegistry with this data.
+     */
+    create: XOR<ModuleRegistryCreateInput, ModuleRegistryUncheckedCreateInput>
+    /**
+     * In case the ModuleRegistry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModuleRegistryUpdateInput, ModuleRegistryUncheckedUpdateInput>
+  }
+
+  /**
+   * ModuleRegistry delete
+   */
+  export type ModuleRegistryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+    /**
+     * Filter which ModuleRegistry to delete.
+     */
+    where: ModuleRegistryWhereUniqueInput
+  }
+
+  /**
+   * ModuleRegistry deleteMany
+   */
+  export type ModuleRegistryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModuleRegistries to delete
+     */
+    where?: ModuleRegistryWhereInput
+    /**
+     * Limit how many ModuleRegistries to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModuleRegistry without action
+   */
+  export type ModuleRegistryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModuleRegistry
+     */
+    select?: ModuleRegistrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModuleRegistry
+     */
+    omit?: ModuleRegistryOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TenantModule
+   */
+
+  export type AggregateTenantModule = {
+    _count: TenantModuleCountAggregateOutputType | null
+    _min: TenantModuleMinAggregateOutputType | null
+    _max: TenantModuleMaxAggregateOutputType | null
+  }
+
+  export type TenantModuleMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    moduleKey: string | null
+    enabled: boolean | null
+    enabledAt: Date | null
+    updatedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantModuleMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    moduleKey: string | null
+    enabled: boolean | null
+    enabledAt: Date | null
+    updatedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantModuleCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    moduleKey: number
+    enabled: number
+    config: number
+    enabledAt: number
+    updatedBy: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TenantModuleMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    moduleKey?: true
+    enabled?: true
+    enabledAt?: true
+    updatedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantModuleMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    moduleKey?: true
+    enabled?: true
+    enabledAt?: true
+    updatedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantModuleCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    moduleKey?: true
+    enabled?: true
+    config?: true
+    enabledAt?: true
+    updatedBy?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TenantModuleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantModule to aggregate.
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantModules to fetch.
+     */
+    orderBy?: TenantModuleOrderByWithRelationInput | TenantModuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenantModuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantModules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantModules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenantModules
+    **/
+    _count?: true | TenantModuleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenantModuleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenantModuleMaxAggregateInputType
+  }
+
+  export type GetTenantModuleAggregateType<T extends TenantModuleAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenantModule]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenantModule[P]>
+      : GetScalarType<T[P], AggregateTenantModule[P]>
+  }
+
+
+
+
+  export type TenantModuleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenantModuleWhereInput
+    orderBy?: TenantModuleOrderByWithAggregationInput | TenantModuleOrderByWithAggregationInput[]
+    by: TenantModuleScalarFieldEnum[] | TenantModuleScalarFieldEnum
+    having?: TenantModuleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenantModuleCountAggregateInputType | true
+    _min?: TenantModuleMinAggregateInputType
+    _max?: TenantModuleMaxAggregateInputType
+  }
+
+  export type TenantModuleGroupByOutputType = {
+    id: string
+    tenantId: string
+    moduleKey: string
+    enabled: boolean
+    config: JsonValue
+    enabledAt: Date | null
+    updatedBy: string
+    createdAt: Date
+    updatedAt: Date
+    _count: TenantModuleCountAggregateOutputType | null
+    _min: TenantModuleMinAggregateOutputType | null
+    _max: TenantModuleMaxAggregateOutputType | null
+  }
+
+  type GetTenantModuleGroupByPayload<T extends TenantModuleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenantModuleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenantModuleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenantModuleGroupByOutputType[P]>
+            : GetScalarType<T[P], TenantModuleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenantModuleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    moduleKey?: boolean
+    enabled?: boolean
+    config?: boolean
+    enabledAt?: boolean
+    updatedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantModule"]>
+
+  export type TenantModuleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    moduleKey?: boolean
+    enabled?: boolean
+    config?: boolean
+    enabledAt?: boolean
+    updatedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantModule"]>
+
+  export type TenantModuleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    moduleKey?: boolean
+    enabled?: boolean
+    config?: boolean
+    enabledAt?: boolean
+    updatedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenantModule"]>
+
+  export type TenantModuleSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    moduleKey?: boolean
+    enabled?: boolean
+    config?: boolean
+    enabledAt?: boolean
+    updatedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TenantModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "moduleKey" | "enabled" | "config" | "enabledAt" | "updatedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["tenantModule"]>
+
+  export type $TenantModulePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenantModule"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      moduleKey: string
+      enabled: boolean
+      config: Prisma.JsonValue
+      enabledAt: Date | null
+      updatedBy: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tenantModule"]>
+    composites: {}
+  }
+
+  type TenantModuleGetPayload<S extends boolean | null | undefined | TenantModuleDefaultArgs> = $Result.GetResult<Prisma.$TenantModulePayload, S>
+
+  type TenantModuleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenantModuleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenantModuleCountAggregateInputType | true
+    }
+
+  export interface TenantModuleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenantModule'], meta: { name: 'TenantModule' } }
+    /**
+     * Find zero or one TenantModule that matches the filter.
+     * @param {TenantModuleFindUniqueArgs} args - Arguments to find a TenantModule
+     * @example
+     * // Get one TenantModule
+     * const tenantModule = await prisma.tenantModule.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenantModuleFindUniqueArgs>(args: SelectSubset<T, TenantModuleFindUniqueArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TenantModule that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenantModuleFindUniqueOrThrowArgs} args - Arguments to find a TenantModule
+     * @example
+     * // Get one TenantModule
+     * const tenantModule = await prisma.tenantModule.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenantModuleFindUniqueOrThrowArgs>(args: SelectSubset<T, TenantModuleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantModule that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleFindFirstArgs} args - Arguments to find a TenantModule
+     * @example
+     * // Get one TenantModule
+     * const tenantModule = await prisma.tenantModule.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenantModuleFindFirstArgs>(args?: SelectSubset<T, TenantModuleFindFirstArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenantModule that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleFindFirstOrThrowArgs} args - Arguments to find a TenantModule
+     * @example
+     * // Get one TenantModule
+     * const tenantModule = await prisma.tenantModule.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenantModuleFindFirstOrThrowArgs>(args?: SelectSubset<T, TenantModuleFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TenantModules that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenantModules
+     * const tenantModules = await prisma.tenantModule.findMany()
+     * 
+     * // Get first 10 TenantModules
+     * const tenantModules = await prisma.tenantModule.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenantModuleWithIdOnly = await prisma.tenantModule.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenantModuleFindManyArgs>(args?: SelectSubset<T, TenantModuleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TenantModule.
+     * @param {TenantModuleCreateArgs} args - Arguments to create a TenantModule.
+     * @example
+     * // Create one TenantModule
+     * const TenantModule = await prisma.tenantModule.create({
+     *   data: {
+     *     // ... data to create a TenantModule
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenantModuleCreateArgs>(args: SelectSubset<T, TenantModuleCreateArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TenantModules.
+     * @param {TenantModuleCreateManyArgs} args - Arguments to create many TenantModules.
+     * @example
+     * // Create many TenantModules
+     * const tenantModule = await prisma.tenantModule.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenantModuleCreateManyArgs>(args?: SelectSubset<T, TenantModuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenantModules and returns the data saved in the database.
+     * @param {TenantModuleCreateManyAndReturnArgs} args - Arguments to create many TenantModules.
+     * @example
+     * // Create many TenantModules
+     * const tenantModule = await prisma.tenantModule.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenantModules and only return the `id`
+     * const tenantModuleWithIdOnly = await prisma.tenantModule.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenantModuleCreateManyAndReturnArgs>(args?: SelectSubset<T, TenantModuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TenantModule.
+     * @param {TenantModuleDeleteArgs} args - Arguments to delete one TenantModule.
+     * @example
+     * // Delete one TenantModule
+     * const TenantModule = await prisma.tenantModule.delete({
+     *   where: {
+     *     // ... filter to delete one TenantModule
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenantModuleDeleteArgs>(args: SelectSubset<T, TenantModuleDeleteArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TenantModule.
+     * @param {TenantModuleUpdateArgs} args - Arguments to update one TenantModule.
+     * @example
+     * // Update one TenantModule
+     * const tenantModule = await prisma.tenantModule.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenantModuleUpdateArgs>(args: SelectSubset<T, TenantModuleUpdateArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TenantModules.
+     * @param {TenantModuleDeleteManyArgs} args - Arguments to filter TenantModules to delete.
+     * @example
+     * // Delete a few TenantModules
+     * const { count } = await prisma.tenantModule.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenantModuleDeleteManyArgs>(args?: SelectSubset<T, TenantModuleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantModules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenantModules
+     * const tenantModule = await prisma.tenantModule.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenantModuleUpdateManyArgs>(args: SelectSubset<T, TenantModuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantModules and returns the data updated in the database.
+     * @param {TenantModuleUpdateManyAndReturnArgs} args - Arguments to update many TenantModules.
+     * @example
+     * // Update many TenantModules
+     * const tenantModule = await prisma.tenantModule.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TenantModules and only return the `id`
+     * const tenantModuleWithIdOnly = await prisma.tenantModule.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenantModuleUpdateManyAndReturnArgs>(args: SelectSubset<T, TenantModuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TenantModule.
+     * @param {TenantModuleUpsertArgs} args - Arguments to update or create a TenantModule.
+     * @example
+     * // Update or create a TenantModule
+     * const tenantModule = await prisma.tenantModule.upsert({
+     *   create: {
+     *     // ... data to create a TenantModule
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenantModule we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenantModuleUpsertArgs>(args: SelectSubset<T, TenantModuleUpsertArgs<ExtArgs>>): Prisma__TenantModuleClient<$Result.GetResult<Prisma.$TenantModulePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TenantModules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleCountArgs} args - Arguments to filter TenantModules to count.
+     * @example
+     * // Count the number of TenantModules
+     * const count = await prisma.tenantModule.count({
+     *   where: {
+     *     // ... the filter for the TenantModules we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenantModuleCountArgs>(
+      args?: Subset<T, TenantModuleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenantModuleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenantModule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenantModuleAggregateArgs>(args: Subset<T, TenantModuleAggregateArgs>): Prisma.PrismaPromise<GetTenantModuleAggregateType<T>>
+
+    /**
+     * Group by TenantModule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantModuleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenantModuleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenantModuleGroupByArgs['orderBy'] }
+        : { orderBy?: TenantModuleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenantModuleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenantModuleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenantModule model
+   */
+  readonly fields: TenantModuleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenantModule.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenantModuleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenantModule model
+   */
+  interface TenantModuleFieldRefs {
+    readonly id: FieldRef<"TenantModule", 'String'>
+    readonly tenantId: FieldRef<"TenantModule", 'String'>
+    readonly moduleKey: FieldRef<"TenantModule", 'String'>
+    readonly enabled: FieldRef<"TenantModule", 'Boolean'>
+    readonly config: FieldRef<"TenantModule", 'Json'>
+    readonly enabledAt: FieldRef<"TenantModule", 'DateTime'>
+    readonly updatedBy: FieldRef<"TenantModule", 'String'>
+    readonly createdAt: FieldRef<"TenantModule", 'DateTime'>
+    readonly updatedAt: FieldRef<"TenantModule", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenantModule findUnique
+   */
+  export type TenantModuleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantModule to fetch.
+     */
+    where: TenantModuleWhereUniqueInput
+  }
+
+  /**
+   * TenantModule findUniqueOrThrow
+   */
+  export type TenantModuleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantModule to fetch.
+     */
+    where: TenantModuleWhereUniqueInput
+  }
+
+  /**
+   * TenantModule findFirst
+   */
+  export type TenantModuleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantModule to fetch.
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantModules to fetch.
+     */
+    orderBy?: TenantModuleOrderByWithRelationInput | TenantModuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantModules.
+     */
+    cursor?: TenantModuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantModules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantModules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantModules.
+     */
+    distinct?: TenantModuleScalarFieldEnum | TenantModuleScalarFieldEnum[]
+  }
+
+  /**
+   * TenantModule findFirstOrThrow
+   */
+  export type TenantModuleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantModule to fetch.
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantModules to fetch.
+     */
+    orderBy?: TenantModuleOrderByWithRelationInput | TenantModuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantModules.
+     */
+    cursor?: TenantModuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantModules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantModules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantModules.
+     */
+    distinct?: TenantModuleScalarFieldEnum | TenantModuleScalarFieldEnum[]
+  }
+
+  /**
+   * TenantModule findMany
+   */
+  export type TenantModuleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter, which TenantModules to fetch.
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantModules to fetch.
+     */
+    orderBy?: TenantModuleOrderByWithRelationInput | TenantModuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenantModules.
+     */
+    cursor?: TenantModuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantModules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantModules.
+     */
+    skip?: number
+    distinct?: TenantModuleScalarFieldEnum | TenantModuleScalarFieldEnum[]
+  }
+
+  /**
+   * TenantModule create
+   */
+  export type TenantModuleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TenantModule.
+     */
+    data: XOR<TenantModuleCreateInput, TenantModuleUncheckedCreateInput>
+  }
+
+  /**
+   * TenantModule createMany
+   */
+  export type TenantModuleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenantModules.
+     */
+    data: TenantModuleCreateManyInput | TenantModuleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantModule createManyAndReturn
+   */
+  export type TenantModuleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * The data used to create many TenantModules.
+     */
+    data: TenantModuleCreateManyInput | TenantModuleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantModule update
+   */
+  export type TenantModuleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TenantModule.
+     */
+    data: XOR<TenantModuleUpdateInput, TenantModuleUncheckedUpdateInput>
+    /**
+     * Choose, which TenantModule to update.
+     */
+    where: TenantModuleWhereUniqueInput
+  }
+
+  /**
+   * TenantModule updateMany
+   */
+  export type TenantModuleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenantModules.
+     */
+    data: XOR<TenantModuleUpdateManyMutationInput, TenantModuleUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantModules to update
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * Limit how many TenantModules to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantModule updateManyAndReturn
+   */
+  export type TenantModuleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * The data used to update TenantModules.
+     */
+    data: XOR<TenantModuleUpdateManyMutationInput, TenantModuleUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantModules to update
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * Limit how many TenantModules to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantModule upsert
+   */
+  export type TenantModuleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TenantModule to update in case it exists.
+     */
+    where: TenantModuleWhereUniqueInput
+    /**
+     * In case the TenantModule found by the `where` argument doesn't exist, create a new TenantModule with this data.
+     */
+    create: XOR<TenantModuleCreateInput, TenantModuleUncheckedCreateInput>
+    /**
+     * In case the TenantModule was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenantModuleUpdateInput, TenantModuleUncheckedUpdateInput>
+  }
+
+  /**
+   * TenantModule delete
+   */
+  export type TenantModuleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
+    /**
+     * Filter which TenantModule to delete.
+     */
+    where: TenantModuleWhereUniqueInput
+  }
+
+  /**
+   * TenantModule deleteMany
+   */
+  export type TenantModuleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantModules to delete
+     */
+    where?: TenantModuleWhereInput
+    /**
+     * Limit how many TenantModules to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenantModule without action
+   */
+  export type TenantModuleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantModule
+     */
+    select?: TenantModuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenantModule
+     */
+    omit?: TenantModuleOmit<ExtArgs> | null
   }
 
 
@@ -10989,6 +13270,37 @@ export namespace Prisma {
   export type FeatureFlagScalarFieldEnum = (typeof FeatureFlagScalarFieldEnum)[keyof typeof FeatureFlagScalarFieldEnum]
 
 
+  export const ModuleRegistryScalarFieldEnum: {
+    id: 'id',
+    key: 'key',
+    name: 'name',
+    version: 'version',
+    category: 'category',
+    type: 'type',
+    requiresPlan: 'requiresPlan',
+    manifest: 'manifest',
+    defaultEnabled: 'defaultEnabled',
+    createdAt: 'createdAt'
+  };
+
+  export type ModuleRegistryScalarFieldEnum = (typeof ModuleRegistryScalarFieldEnum)[keyof typeof ModuleRegistryScalarFieldEnum]
+
+
+  export const TenantModuleScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    moduleKey: 'moduleKey',
+    enabled: 'enabled',
+    config: 'config',
+    enabledAt: 'enabledAt',
+    updatedBy: 'updatedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TenantModuleScalarFieldEnum = (typeof TenantModuleScalarFieldEnum)[keyof typeof TenantModuleScalarFieldEnum]
+
+
   export const PlatformAgentKillSwitchScalarFieldEnum: {
     agentType: 'agentType',
     disabled: 'disabled',
@@ -11448,6 +13760,156 @@ export namespace Prisma {
     enabled?: BoolWithAggregatesFilter<"FeatureFlag"> | boolean
     metadata?: JsonWithAggregatesFilter<"FeatureFlag">
     updatedAt?: DateTimeWithAggregatesFilter<"FeatureFlag"> | Date | string
+  }
+
+  export type ModuleRegistryWhereInput = {
+    AND?: ModuleRegistryWhereInput | ModuleRegistryWhereInput[]
+    OR?: ModuleRegistryWhereInput[]
+    NOT?: ModuleRegistryWhereInput | ModuleRegistryWhereInput[]
+    id?: StringFilter<"ModuleRegistry"> | string
+    key?: StringFilter<"ModuleRegistry"> | string
+    name?: StringFilter<"ModuleRegistry"> | string
+    version?: StringFilter<"ModuleRegistry"> | string
+    category?: StringFilter<"ModuleRegistry"> | string
+    type?: StringFilter<"ModuleRegistry"> | string
+    requiresPlan?: StringNullableFilter<"ModuleRegistry"> | string | null
+    manifest?: JsonFilter<"ModuleRegistry">
+    defaultEnabled?: BoolFilter<"ModuleRegistry"> | boolean
+    createdAt?: DateTimeFilter<"ModuleRegistry"> | Date | string
+  }
+
+  export type ModuleRegistryOrderByWithRelationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    name?: SortOrder
+    version?: SortOrder
+    category?: SortOrder
+    type?: SortOrder
+    requiresPlan?: SortOrderInput | SortOrder
+    manifest?: SortOrder
+    defaultEnabled?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModuleRegistryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    key?: string
+    AND?: ModuleRegistryWhereInput | ModuleRegistryWhereInput[]
+    OR?: ModuleRegistryWhereInput[]
+    NOT?: ModuleRegistryWhereInput | ModuleRegistryWhereInput[]
+    name?: StringFilter<"ModuleRegistry"> | string
+    version?: StringFilter<"ModuleRegistry"> | string
+    category?: StringFilter<"ModuleRegistry"> | string
+    type?: StringFilter<"ModuleRegistry"> | string
+    requiresPlan?: StringNullableFilter<"ModuleRegistry"> | string | null
+    manifest?: JsonFilter<"ModuleRegistry">
+    defaultEnabled?: BoolFilter<"ModuleRegistry"> | boolean
+    createdAt?: DateTimeFilter<"ModuleRegistry"> | Date | string
+  }, "id" | "key">
+
+  export type ModuleRegistryOrderByWithAggregationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    name?: SortOrder
+    version?: SortOrder
+    category?: SortOrder
+    type?: SortOrder
+    requiresPlan?: SortOrderInput | SortOrder
+    manifest?: SortOrder
+    defaultEnabled?: SortOrder
+    createdAt?: SortOrder
+    _count?: ModuleRegistryCountOrderByAggregateInput
+    _max?: ModuleRegistryMaxOrderByAggregateInput
+    _min?: ModuleRegistryMinOrderByAggregateInput
+  }
+
+  export type ModuleRegistryScalarWhereWithAggregatesInput = {
+    AND?: ModuleRegistryScalarWhereWithAggregatesInput | ModuleRegistryScalarWhereWithAggregatesInput[]
+    OR?: ModuleRegistryScalarWhereWithAggregatesInput[]
+    NOT?: ModuleRegistryScalarWhereWithAggregatesInput | ModuleRegistryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    key?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    name?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    version?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    category?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    type?: StringWithAggregatesFilter<"ModuleRegistry"> | string
+    requiresPlan?: StringNullableWithAggregatesFilter<"ModuleRegistry"> | string | null
+    manifest?: JsonWithAggregatesFilter<"ModuleRegistry">
+    defaultEnabled?: BoolWithAggregatesFilter<"ModuleRegistry"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"ModuleRegistry"> | Date | string
+  }
+
+  export type TenantModuleWhereInput = {
+    AND?: TenantModuleWhereInput | TenantModuleWhereInput[]
+    OR?: TenantModuleWhereInput[]
+    NOT?: TenantModuleWhereInput | TenantModuleWhereInput[]
+    id?: StringFilter<"TenantModule"> | string
+    tenantId?: StringFilter<"TenantModule"> | string
+    moduleKey?: StringFilter<"TenantModule"> | string
+    enabled?: BoolFilter<"TenantModule"> | boolean
+    config?: JsonFilter<"TenantModule">
+    enabledAt?: DateTimeNullableFilter<"TenantModule"> | Date | string | null
+    updatedBy?: StringFilter<"TenantModule"> | string
+    createdAt?: DateTimeFilter<"TenantModule"> | Date | string
+    updatedAt?: DateTimeFilter<"TenantModule"> | Date | string
+  }
+
+  export type TenantModuleOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    moduleKey?: SortOrder
+    enabled?: SortOrder
+    config?: SortOrder
+    enabledAt?: SortOrderInput | SortOrder
+    updatedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantModuleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId_moduleKey?: TenantModuleTenantIdModuleKeyCompoundUniqueInput
+    AND?: TenantModuleWhereInput | TenantModuleWhereInput[]
+    OR?: TenantModuleWhereInput[]
+    NOT?: TenantModuleWhereInput | TenantModuleWhereInput[]
+    tenantId?: StringFilter<"TenantModule"> | string
+    moduleKey?: StringFilter<"TenantModule"> | string
+    enabled?: BoolFilter<"TenantModule"> | boolean
+    config?: JsonFilter<"TenantModule">
+    enabledAt?: DateTimeNullableFilter<"TenantModule"> | Date | string | null
+    updatedBy?: StringFilter<"TenantModule"> | string
+    createdAt?: DateTimeFilter<"TenantModule"> | Date | string
+    updatedAt?: DateTimeFilter<"TenantModule"> | Date | string
+  }, "id" | "tenantId_moduleKey">
+
+  export type TenantModuleOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    moduleKey?: SortOrder
+    enabled?: SortOrder
+    config?: SortOrder
+    enabledAt?: SortOrderInput | SortOrder
+    updatedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TenantModuleCountOrderByAggregateInput
+    _max?: TenantModuleMaxOrderByAggregateInput
+    _min?: TenantModuleMinOrderByAggregateInput
+  }
+
+  export type TenantModuleScalarWhereWithAggregatesInput = {
+    AND?: TenantModuleScalarWhereWithAggregatesInput | TenantModuleScalarWhereWithAggregatesInput[]
+    OR?: TenantModuleScalarWhereWithAggregatesInput[]
+    NOT?: TenantModuleScalarWhereWithAggregatesInput | TenantModuleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TenantModule"> | string
+    tenantId?: StringWithAggregatesFilter<"TenantModule"> | string
+    moduleKey?: StringWithAggregatesFilter<"TenantModule"> | string
+    enabled?: BoolWithAggregatesFilter<"TenantModule"> | boolean
+    config?: JsonWithAggregatesFilter<"TenantModule">
+    enabledAt?: DateTimeNullableWithAggregatesFilter<"TenantModule"> | Date | string | null
+    updatedBy?: StringWithAggregatesFilter<"TenantModule"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"TenantModule"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TenantModule"> | Date | string
   }
 
   export type PlatformAgentKillSwitchWhereInput = {
@@ -12064,6 +14526,181 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     enabled?: BoolFieldUpdateOperationsInput | boolean
     metadata?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleRegistryCreateInput = {
+    id?: string
+    key: string
+    name: string
+    version: string
+    category: string
+    type: string
+    requiresPlan?: string | null
+    manifest: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: boolean
+    createdAt?: Date | string
+  }
+
+  export type ModuleRegistryUncheckedCreateInput = {
+    id?: string
+    key: string
+    name: string
+    version: string
+    category: string
+    type: string
+    requiresPlan?: string | null
+    manifest: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: boolean
+    createdAt?: Date | string
+  }
+
+  export type ModuleRegistryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    requiresPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    manifest?: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleRegistryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    requiresPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    manifest?: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleRegistryCreateManyInput = {
+    id?: string
+    key: string
+    name: string
+    version: string
+    category: string
+    type: string
+    requiresPlan?: string | null
+    manifest: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: boolean
+    createdAt?: Date | string
+  }
+
+  export type ModuleRegistryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    requiresPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    manifest?: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModuleRegistryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    requiresPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    manifest?: JsonNullValueInput | InputJsonValue
+    defaultEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantModuleCreateInput = {
+    id?: string
+    tenantId: string
+    moduleKey: string
+    enabled?: boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: Date | string | null
+    updatedBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantModuleUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    moduleKey: string
+    enabled?: boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: Date | string | null
+    updatedBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantModuleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantModuleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantModuleCreateManyInput = {
+    id?: string
+    tenantId: string
+    moduleKey: string
+    enabled?: boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: Date | string | null
+    updatedBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantModuleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantModuleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    moduleKey?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    config?: JsonNullValueInput | InputJsonValue
+    enabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -12835,6 +15472,107 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type ModuleRegistryCountOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    name?: SortOrder
+    version?: SortOrder
+    category?: SortOrder
+    type?: SortOrder
+    requiresPlan?: SortOrder
+    manifest?: SortOrder
+    defaultEnabled?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModuleRegistryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    name?: SortOrder
+    version?: SortOrder
+    category?: SortOrder
+    type?: SortOrder
+    requiresPlan?: SortOrder
+    defaultEnabled?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModuleRegistryMinOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    name?: SortOrder
+    version?: SortOrder
+    category?: SortOrder
+    type?: SortOrder
+    requiresPlan?: SortOrder
+    defaultEnabled?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type TenantModuleTenantIdModuleKeyCompoundUniqueInput = {
+    tenantId: string
+    moduleKey: string
+  }
+
+  export type TenantModuleCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    moduleKey?: SortOrder
+    enabled?: SortOrder
+    config?: SortOrder
+    enabledAt?: SortOrder
+    updatedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantModuleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    moduleKey?: SortOrder
+    enabled?: SortOrder
+    enabledAt?: SortOrder
+    updatedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantModuleMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    moduleKey?: SortOrder
+    enabled?: SortOrder
+    enabledAt?: SortOrder
+    updatedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type PlatformAgentKillSwitchCountOrderByAggregateInput = {
     agentType?: SortOrder
     disabled?: SortOrder
@@ -12928,17 +15666,6 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type StripeWebhookEventCountOrderByAggregateInput = {
     id?: SortOrder
     type?: SortOrder
@@ -12968,20 +15695,6 @@ export namespace Prisma {
     processedAt?: SortOrder
     processingError?: SortOrder
     createdAt?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type FloatNullableFilter<$PrismaModel = never> = {

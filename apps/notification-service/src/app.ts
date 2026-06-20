@@ -8,6 +8,7 @@ import { prisma } from "./lib/prisma.js";
 import notificationsRouter from "./routes/notifications.js";
 import messagesRouter from "./routes/messages.js";
 import integrationsRouter from "./routes/integrations.js";
+import providerCredentialsRouter from "./routes/provider-credentials.js";
 import hitlRouter from "./routes/hitl.js";
 import emailTemplatesRouter from "./routes/email-templates.js";
 import supportRouter from "./routes/support.js";
@@ -44,6 +45,12 @@ export function createApp(logger: Logger): Express {
   // In-app team messaging (tenant-isolated, RLS-scoped, real-time via SSE).
   app.use("/internal/messages", readAuthHeaders(), messagesRouter);
   app.use("/internal/integrations", readAuthHeaders(), integrationsRouter);
+  // WF8 H3 — DECRYPTED OA-vendor creds for the assessment-service worker.
+  // Server-to-server ONLY: the api-gateway has NO /api/* proxy to this base, so a
+  // tenant client can never reach it; readAuthHeaders() requires the gateway's
+  // X-Internal-Service token. The redacting /internal/integrations stays the only
+  // client-visible view of these secrets.
+  app.use("/internal/provider-credentials", readAuthHeaders(), providerCredentialsRouter);
   app.use("/internal/hitl", readAuthHeaders(), hitlRouter);
   app.use("/internal/email-templates", readAuthHeaders(), emailTemplatesRouter);
   // Phase 32b — in-app support tickets. Tenant + super-admin routes share

@@ -71,6 +71,44 @@ model FeatureFlag {
   @@index([tenantId])
 }
 
+// WF3 (modular platform) — PLATFORM-GLOBAL catalog of installable modules.
+// One row per module the platform ships (no tenantId — like
+// PlatformAgentKillSwitch). Read via prismaAdmin; never RLS'd. A module is
+// switched ON for a tenant by creating a TenantModule row below; the manifest
+// here is the static definition (capabilities, routes, plan requirement).
+model ModuleRegistry {
+  id             String   @id @default(uuid())
+  key            String   @unique // stable module key, e.g. "assessments", "video-interviews"
+  name           String
+  version        String
+  category       String
+  type           String
+  // When set, the tenant's plan must include this for the module to be enabled.
+  // Null means available on every plan.
+  requiresPlan   String?
+  manifest       Json
+  defaultEnabled Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+// WF3 (modular platform) — per-tenant enablement + config for a module.
+// Sibling of the dormant FeatureFlag (same tenant-scoped shape). RLS'd with
+// the standard tenant_isolation policy so a tenant only sees its own modules.
+model TenantModule {
+  id        String    @id @default(uuid())
+  tenantId  String
+  moduleKey String // references ModuleRegistry.key (platform-global, no FK)
+  enabled   Boolean   @default(false)
+  config    Json      @default("{}")
+  enabledAt DateTime?
+  updatedBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([tenantId, moduleKey])
+  @@index([tenantId])
+}
+
 // Phase 21 — platform-wide kill switch. When `disabled = true` for an
 // agentType, ai-engine refuses to invoke that agent for ANY tenant. Used
 // for emergency stop (bad prompts shipped, model regression, billing

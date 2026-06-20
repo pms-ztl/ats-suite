@@ -48,6 +48,16 @@ async function api<T = any>(
 }
 
 // ── Data tables ──────────────────────────────────────────────────────────────
+// WF10 / J4 - `tier` marks which demo tenants stay paid (ENTERPRISE) vs which one
+// is held at FREE as the gating control. seed.sh reads NOTHING from this array;
+// it keys the plan-upgrade + entitlement steps off the tenant NAME (idempotent
+// SQL), so this field is purely documentation of the intended end state:
+//   - "enterprise" tenants are upgraded to ENTERPRISE by seed.sh, and Pinnacle
+//     (the canonical demo tenant) additionally gets the new modules turned ON via
+//     REAL TenantModule rows + a tenant-default dashboard + theme.
+//   - the single "free" tenant is LEFT at FREE so a reviewer can prove the
+//     module/plan gates still 402 (enable a PROFESSIONAL/ENTERPRISE module) and
+//     404/empty (no oa-assessments surface) for an unentitled tenant.
 const TENANTS = [
   {
     orgName: "Pinnacle Tech",
@@ -57,6 +67,7 @@ const TENANTS = [
     password: "PinnacleDemo123!",
     requisitionCount: 6,
     candidateCount: 30,
+    tier: "enterprise" as const,
   },
   {
     orgName: "Apex Manufacturing",
@@ -66,6 +77,7 @@ const TENANTS = [
     password: "ApexDemo123!",
     requisitionCount: 4,
     candidateCount: 15,
+    tier: "enterprise" as const,
   },
   {
     orgName: "Wavelength Studios",
@@ -75,6 +87,24 @@ const TENANTS = [
     password: "WavelengthDemo123!",
     requisitionCount: 2,
     candidateCount: 5,
+    tier: "enterprise" as const,
+  },
+  // WF10 / J4 - the FREE gating-control tenant. Created like any other tenant,
+  // given a little real data so its dashboards render honestly, but DELIBERATELY
+  // left on the FREE plan (seed.sh excludes it from the ENTERPRISE upgrade) and
+  // given NO TenantModule overrides. The new modules (oa-assessments,
+  // custom-dashboards, white-label-embed) therefore resolve OFF for it, which is
+  // exactly what proves the gates still bite: enabling such a module 402s, and
+  // the assessment/embed surfaces 404 / empty. Do not "upgrade" this tenant.
+  {
+    orgName: "Northwind Staffing",
+    firstName: "Nora",
+    lastName: "Webb",
+    email: "nora@northwind.demo",
+    password: "NorthwindDemo123!",
+    requisitionCount: 2,
+    candidateCount: 5,
+    tier: "free" as const,
   },
 ];
 
@@ -365,9 +395,16 @@ async function main() {
   console.log(`\n  Login as any seeded admin (or their hiring manager):`);
   for (const t of TENANTS) {
     const domain = t.email.split("@")[1];
-    console.log(`    ${t.email}  password: ${t.password}  (Tenant Admin)`);
+    const tierNote = t.tier === "free" ? "  (Tenant Admin - FREE gating control)" : "  (Tenant Admin)";
+    console.log(`    ${t.email}  password: ${t.password}${tierNote}`);
     console.log(`    manager@${domain}  password: ManagerDemo123!  (Hiring Manager)`);
   }
+  console.log(`\n  Plan/entitlements are applied by infra/seed.sh AFTER this script:`);
+  console.log(`    - Pinnacle/Apex/Wavelength -> ENTERPRISE`);
+  console.log(`    - Pinnacle additionally gets oa-assessments + custom-dashboards +`);
+  console.log(`      white-label-embed turned ON (real TenantModule rows) + a tenant`);
+  console.log(`      dashboard + theme + embed origin.`);
+  console.log(`    - Northwind Staffing stays FREE (proves gating still 402/404s).`);
   console.log(`\n  Visit dashboard: http://localhost:3000/`);
   console.log(`  Visit AI Ops: http://localhost:3001/d/cdc-ats-ai-ops`);
 }

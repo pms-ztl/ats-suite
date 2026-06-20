@@ -237,3 +237,48 @@ model SsoLoginAudit {
   @@index([tenantId, createdAt])
   @@index([email, createdAt])
 }
+
+// ── WF3 / Slice C2 — configurable dashboards + per-user UI prefs ────────────
+
+// A persisted dashboard layout document. Two flavours, distinguished by userId:
+//   - userId = NULL  → a tenant-default / system row (the layout a user inherits
+//     when they have no personal override). scope describes who it applies to.
+//   - userId = <id>  → that user's personal saved layout for a dashboardKey.
+// The `document` JSON holds the widget grid (positions, sizes, widget configs);
+// schemaVersion lets the renderer migrate older documents. Additive: existing
+// rows are unaffected because this is a brand-new table.
+model DashboardLayout {
+  id           String   @id @default(uuid())
+  tenantId     String
+  userId       String?  // NULL = tenant-default / system row; else owning user
+  scope        String   // e.g. "tenant" | "role:RECRUITER" | "user"
+  dashboardKey String   @default("home") // which dashboard surface this targets
+  name         String
+  document     Json     // widget grid + per-widget config
+  schemaVersion Int     @default(1)
+  isDefault    Boolean  @default(false)
+  updatedBy    String   // userId of whoever last saved it
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, userId, dashboardKey])
+  @@index([tenantId, scope])
+}
+
+// Per-user UI preferences (theme, density, locale, accent). One row per user.
+// prefs is an open JSON bag for forward-compatible flags so we never have to
+// migrate for a new toggle. Additive: brand-new table.
+model UserUiPrefs {
+  id             String   @id @default(uuid())
+  tenantId       String
+  userId         String   @unique
+  colorMode      String   @default("system")      // "system" | "light" | "dark"
+  density        String   @default("comfortable")  // "comfortable" | "compact"
+  locale         String?
+  timezone       String?
+  accentOverride String?
+  prefs          Json     @default("{}")
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+}

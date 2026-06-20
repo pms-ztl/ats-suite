@@ -265,14 +265,17 @@ export function KpiRow({ kpis, cols = 4 }: { kpis: KPI[]; cols?: number }) {
 
 /* -------------------------- SectionCard ------------------------- */
 export function SectionCard({
-  title, icon, action, onAction, children, pad = 18, style = {}, headRight,
+  title, icon, action, onAction, children, pad = 18, style = {}, headRight, headerClassName, headerStyle = {},
 }: {
   title: string; icon?: IconName; action?: string; onAction?: () => void; children: React.ReactNode;
   pad?: number; style?: React.CSSProperties; headRight?: React.ReactNode;
+  // Additive (WF6/F2): lets the dashboard frame stamp a drag-handle class /
+  // cursor on the header in edit mode. Existing callers omit these (no change).
+  headerClassName?: string; headerStyle?: React.CSSProperties;
 }) {
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", boxShadow: "var(--e1)", display: "flex", flexDirection: "column", minHeight: 0, ...style }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid var(--line)" }}>
+      <div className={headerClassName} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid var(--line)", ...headerStyle }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 700, fontSize: "var(--fs-md)" }}>
           {icon && <Icon name={icon} size={16} style={{ color: "var(--ink-3)" }} />}{title}
         </div>

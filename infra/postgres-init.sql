@@ -13,6 +13,7 @@ CREATE DATABASE search_db;
 CREATE DATABASE agent_db;
 CREATE DATABASE analytics_db;
 CREATE DATABASE compliance_db;
+CREATE DATABASE assessment_db;
 
 -- All services use the same `postgres` superuser for local dev.
 -- Production should create per-service users with limited grants.

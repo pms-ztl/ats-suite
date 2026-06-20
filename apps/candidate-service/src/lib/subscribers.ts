@@ -4,9 +4,12 @@
  * Subscribers consume events and mutate the local DB. Today there's just
  * one (resume.parsed); more will be added as cross-service workflows grow.
  *
- *   tenant.{tenantId}.resume.parsed   → backfill Candidate.parsedSummary
- *                                       + overwrite placeholder name/email
- *                                       for bulk-uploaded candidates
+ *   tenant.{tenantId}.resume.parsed       → backfill Candidate.parsedSummary
+ *                                           + overwrite placeholder name/email
+ *                                           for bulk-uploaded candidates
+ *   tenant.{tenantId}.assessment.completed -> advance the candidate's application
+ *                                            to ApplicationStage.ASSESSMENT
+ *                                            (WF10/J1 - never auto-rejects)
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
 import type { Logger } from "pino";
@@ -28,6 +31,20 @@ const ResumeParsedPayload = z.object({
   candidateId: z.string(),
   resumeId: z.string(),
   parsed: z.any().optional(),
+}).passthrough();
+
+// WF10/J1 - the assessment.completed payload published by the grading worker.
+// passed is null while a human review is pending (no auto-reject); applicationId
+// may be null for a standalone assessment.
+const AssessmentCompletedPayload = z.object({
+  tenantId: z.string(),
+  assessmentId: z.string(),
+  attemptId: z.string(),
+  candidateId: z.string(),
+  applicationId: z.string().nullable().optional(),
+  passed: z.boolean().nullable().optional(),
+  score: z.number().nullable().optional(),
+  needsReview: z.boolean().optional(),
 }).passthrough();
 
 // Placeholder emails from bulk-upload look like:
@@ -152,5 +169,58 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
     },
   });
 
-  logger.info("candidate-service NATS subscribers started");
+  // ── tenant.{tenantId}.assessment.completed ────────────────────────────────
+  // WF10/J1 - when an Online Assessment is graded, advance the candidate's
+  // application to the ASSESSMENT stage so the pipeline reflects that the OA leg
+  // is done. This is a STAGE ADVANCE only; it NEVER rejects (GDPR Art.22 - no
+  // solely-automated adverse decision). A failed/low score does NOT move the
+  // application backward or to a rejected status here; an adverse outcome is the
+  // HITL queue's decision (notification-service raises the checkpoint). The
+  // event carries passed=null whenever a human review is still pending.
+  await subscribeToEvents({
+    stream: "ASSESSMENT_EVENTS",
+    subject: "tenant.*.assessment.completed",
+    durable: "candidate-service:assessment-completed",
+    logger,
+    handler: async (envelope) => {
+      const p = AssessmentCompletedPayload.parse(envelope.payload);
+      if (!p.applicationId) {
+        // No application resolved (standalone assessment / candidate has no app).
+        // Honest no-op - nothing to advance.
+        logger.info({ attemptId: p.attemptId, candidateId: p.candidateId }, "assessment.completed: no applicationId, no stage to advance");
+        return;
+      }
+
+      // Only ADVANCE forward; never move a candidate who is already past the
+      // assessment stage back to it (forward-only, idempotent). We scope by
+      // tenantId + applicationId on the find AND the update.
+      const app = await prisma.application.findFirst({
+        where: { id: p.applicationId, tenantId: p.tenantId, candidateId: p.candidateId },
+        select: { id: true, stage: true },
+      });
+      if (!app) {
+        logger.warn({ applicationId: p.applicationId, tenantId: p.tenantId }, "assessment.completed: application not found");
+        return;
+      }
+      // Stages that are at/after ASSESSMENT, or terminal - do not regress.
+      const AT_OR_PAST = new Set([
+        "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED", "REJECTED", "WITHDRAWN",
+      ]);
+      if (AT_OR_PAST.has(app.stage)) {
+        logger.info({ applicationId: app.id, stage: app.stage }, "assessment.completed: already at/past ASSESSMENT, no advance");
+        return;
+      }
+
+      await prisma.application.updateMany({
+        where: { id: app.id, tenantId: p.tenantId },
+        data: { stage: "ASSESSMENT", stageUpdatedAt: new Date() },
+      });
+      logger.info(
+        { applicationId: app.id, from: app.stage, to: "ASSESSMENT", passed: p.passed, needsReview: p.needsReview },
+        "assessment.completed: advanced application to ASSESSMENT (no auto-reject)",
+      );
+    },
+  });
+
+  logger.info("candidate-service NATS subscribers started (resume.parsed + assessment.completed)");
 }

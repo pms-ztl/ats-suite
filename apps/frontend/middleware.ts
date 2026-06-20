@@ -34,6 +34,13 @@ const PUBLIC_PATHS = [
   "/profile",
   "/c",                        // tenant-scoped public board: /c/[slug]/jobs
   "/offline",
+  // WF9 / SLICE I1 — embeddable widget surface (the (embed) route group). These
+  // chrome-less pages are framed into a customer site with NO session login; the
+  // signed embed token in the URL is the only credential, verified server-side
+  // by the gateway (the page fails closed on an invalid/expired token). Adding
+  // /embed here lets the iframe reach the page without a /login redirect; it does
+  // NOT expose any data without a valid token.
+  "/embed",
 ];
 
 /**
@@ -53,6 +60,38 @@ function roleFromJwt(token: string | undefined): string | null {
     return typeof payload.role === "string" ? payload.role : null;
   } catch {
     return null;
+  }
+}
+
+// WF9 / SLICE I3 — route-prefix -> owning registry module key, for the route
+// guard below. ONLY modules that are NOT default-enabled in the @cdc-ats/common
+// registry are listed here: a default-enabled module can never end up in the
+// `ats-modules-off` disabled-set the guard reads, so listing it would be dead
+// weight AND risk a v1 regression. Today the only non-default module that owns a
+// standalone gated route is oa-assessments (/assessments); custom-dashboards and
+// white-label-embed own no standalone /-route in v1. Keep in sync with the
+// registry's defaultEnabled:false modules.
+const MODULE_ROUTE_PREFIXES: { prefix: string; module: string }[] = [
+  { prefix: "/assessments", module: "oa-assessments" },
+];
+
+/**
+ * Read the lightweight `ats-modules-off` cookie the cd-shell writes after it
+ * resolves GET /api/me/modules: a comma-joined set of NON-default module keys
+ * that are explicitly DISABLED (hard-disabled, not plan-locked) for the tenant.
+ * Absent / empty cookie => empty set => the guard is a no-op (v1 unaffected).
+ */
+function disabledModules(raw: string | undefined): Set<string> {
+  if (!raw) return new Set();
+  try {
+    return new Set(
+      decodeURIComponent(raw)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
+  } catch {
+    return new Set();
   }
 }
 
@@ -112,6 +151,27 @@ export function middleware(request: NextRequest) {
       // Interviewers are leaf nodes and have no team to manage.
       if (pathname.startsWith("/settings/team") && role === "INTERVIEWER") {
         return NextResponse.redirect(new URL("/", request.url));
+      }
+    }
+  }
+
+  // ── WF9 / SLICE I3: module-disabled route guard ─────────────────────────
+  // 404 a route whose owning module is EXPLICITLY DISABLED for this tenant. The
+  // disabled-set comes from the lightweight `ats-modules-off` cookie (written by
+  // the cd-shell after it resolves /api/me/modules); only NON-default modules can
+  // appear there. A default-enabled module is never in the set, so v1 routes are
+  // byte-identical. An absent cookie => empty set => no-op (fail open). A
+  // plan-locked module is NOT in the set (it routes to the upgrade path in-app),
+  // so this never 404s an upgradeable surface. We rewrite to an unmatched path so
+  // Next renders the app's not-found page with a real 404 status.
+  if (token) {
+    const off = disabledModules(request.cookies.get("ats-modules-off")?.value);
+    if (off.size > 0) {
+      const hit = MODULE_ROUTE_PREFIXES.find(
+        ({ prefix }) => pathname === prefix || pathname.startsWith(prefix + "/"),
+      );
+      if (hit && off.has(hit.module)) {
+        return NextResponse.rewrite(new URL("/_module-disabled", request.url));
       }
     }
   }

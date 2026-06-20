@@ -39,7 +39,8 @@ var IC = {
   lock:'<path d="M6 11V8a6 6 0 1 1 12 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z"/>',
   bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 20a2 2 0 0 0 4 0"/>',
   chat:'<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 4V6a1 1 0 0 1 1-1zM8 10h8M8 13h5"/>',
-  gear:'<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 13a1.7 1.7 0 0 0 .3 1.9 2 2 0 1 1-2.8 2.8 1.7 1.7 0 0 0-2.9 1.2 2 2 0 0 1-4 0 1.7 1.7 0 0 0-2.9-1.2 2 2 0 1 1-2.8-2.8A1.7 1.7 0 0 0 4 13a2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.2-2.9 2 2 0 1 1 2.8-2.8A1.7 1.7 0 0 0 11 4a2 2 0 0 1 4 0 1.7 1.7 0 0 0 2.9 1.2 2 2 0 1 1 2.8 2.8A1.7 1.7 0 0 0 20 11a2 2 0 0 1 0 4z"/>'
+  gear:'<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 13a1.7 1.7 0 0 0 .3 1.9 2 2 0 1 1-2.8 2.8 1.7 1.7 0 0 0-2.9 1.2 2 2 0 0 1-4 0 1.7 1.7 0 0 0-2.9-1.2 2 2 0 1 1-2.8-2.8A1.7 1.7 0 0 0 4 13a2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.2-2.9 2 2 0 1 1 2.8-2.8A1.7 1.7 0 0 0 11 4a2 2 0 0 1 4 0 1.7 1.7 0 0 0 2.9 1.2 2 2 0 1 1 2.8 2.8A1.7 1.7 0 0 0 20 11a2 2 0 0 1 0 4z"/>',
+  modules:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>'
 };
 function svg(p,s,sw){return '<svg width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.8)+'" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
 
@@ -427,6 +428,7 @@ var NAV = [
   ]},
   {group:"Platform",items:[
     {id:"health",label:"System Health",icon:"health"},
+    {id:"modules",label:"Modules",icon:"modules"},
     {id:"flags",label:"Feature Flags",icon:"flags"},
     {id:"integrations",label:"Integrations",icon:"plug"}
   ]},
@@ -497,6 +499,7 @@ function render(){
   else if(active==="agents")renderAgents();
   else if(active==="prompts")renderPrompts();
   else if(active==="health")renderHealth();
+  else if(active==="modules")renderModulesScreen();
   else if(active==="flags")renderFlags();
   else if(active==="compliance")renderCompliance();
   else if(active==="impersonation")renderImpersonation();
@@ -926,6 +929,89 @@ function renderHealth(){
   html+='</tbody></table></div></div>';
   screenEl.innerHTML=html;
 }
+
+/* ===== WF9 I5: MODULES — the platform ModuleRegistry catalog =====
+   The platform module catalog (key/name/category/version/requiresPlan/
+   defaultEnabled/dependencies). MODULES starts EMPTY: there is no designed
+   sample seed, so until the real GET /api/super-admin/modules catalog lands the
+   screen shows the amber "Sample data" banner (WIRED.modules stays false), and
+   if the catalog is genuinely empty the honest empty state renders. Each row is
+   a real manifest snapshot; the per-module catalog default can be persisted via
+   PUT /api/super-admin/modules/:key. */
+var MODULES=[];
+function catLabel(c){return titleCase(c);}
+function planPill(p){
+  if(!p) return '<span class="pill" style="color:var(--ink-3);background:var(--surface-3)">All plans</span>';
+  return '<span class="pill '+planClass(p)+'">'+planLabel(p)+'</span>';
+}
+function renderModulesScreen(){
+  var total=MODULES.length;
+  var defaultOn=MODULES.filter(function(m){return m.defaultEnabled;}).length;
+  var gated=MODULES.filter(function(m){return !!m.requiresPlan;}).length;
+  var cats={};MODULES.forEach(function(m){var c=m.category||"other";cats[c]=(cats[c]||0)+1;});
+  var html='<div class="phead"><div class="row"><div><h1>Modules</h1><p>The platform module registry: every capability the ATS can ship, with its plan gate and dependencies. Toggle a module\'s platform default below.</p></div><span class="ai-chip">'+svg(IC.modules,11)+' Module registry</span></div></div>';
+  if(!total){
+    html+='<div class="card"><div class="empty"><span class="eic">'+svg(IC.modules,30,2)+'</span><h3>No modules in the catalog</h3><p>The platform module registry is empty. Registered modules will appear here once the catalog is provisioned.</p></div></div>';
+    screenEl.innerHTML=html;return;
+  }
+  html+='<div class="kpis">'
+    +kpi({label:"Registered modules",value:String(total),icon:IC.modules})
+    +kpi({label:"On by default",value:defaultOn+"/"+total,icon:IC.check})
+    +kpi({label:"Plan-gated",value:String(gated),icon:IC.lock})
+    +kpi({label:"Categories",value:String(Object.keys(cats).length),icon:IC.flags})
+    +'</div>';
+  html+='<div class="card"><div class="ch"><div><h3>Module catalog</h3><div class="sub">Sorted by category, then key</div></div></div>'
+    +'<div class="tbl-wrap"><table style="min-width:760px"><thead><tr><th>Module</th><th>Category</th><th class="num">Version</th><th>Requires plan</th><th>Dependencies</th><th>Default</th></tr></thead><tbody>';
+  MODULES.slice().sort(function(a,b){
+    var ca=(a.category||"").toLowerCase(),cb=(b.category||"").toLowerCase();
+    if(ca!==cb) return ca<cb?-1:1;
+    return (a.key||"")<(b.key||"")?-1:(a.key||"")>(b.key||"")?1:0;
+  }).forEach(function(m){
+    var deps=Array.isArray(m.dependencies)?m.dependencies:[];
+    var depHtml=deps.length
+      ? deps.map(function(d){return '<span class="pill" style="color:var(--ink-2);background:var(--surface-3);margin:1px 0">'+chEsc(d)+'</span>';}).join(" ")
+      : '<span style="color:var(--ink-3);font-size:12.5px">None</span>';
+    var on=m.defaultEnabled;
+    html+='<tr data-mk="'+chEsc(m.key)+'">'
+      +'<td><div><div class="nm mono" style="font-size:13px;color:var(--brand-ink)">'+chEsc(m.key)+'</div><div class="sl" style="font-family:var(--font-sans)">'+chEsc(m.name||m.key)+(m.type?' · '+titleCase(m.type):'')+'</div></div></td>'
+      +'<td><span class="pill" style="color:var(--ink-2);background:var(--surface-3)">'+catLabel(m.category||"other")+'</span></td>'
+      +'<td class="num mono" style="color:var(--ink-3)">'+chEsc(m.version||"—")+'</td>'
+      +'<td>'+planPill(m.requiresPlan)+'</td>'
+      +'<td style="line-height:1.9">'+depHtml+'</td>'
+      +'<td><button class="ks'+(on?"":" off")+'" data-mod="'+chEsc(m.key)+'" aria-label="Default enabled"><i></i></button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  screenEl.innerHTML=html;
+  // Toggle a module's PLATFORM default (PUT /api/super-admin/modules/:key). On a
+  // real success the local row + the toggle flip; on failure we revert and toast.
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mod]"),function(b){
+    b.onclick=function(){
+      var key=b.getAttribute("data-mod");
+      var m=MODULES.filter(function(x){return x.key===key;})[0];
+      if(!m) return;
+      var next=!m.defaultEnabled;
+      b.classList.toggle("off",!next);                    // optimistic
+      fetch("/api/super-admin/modules/"+encodeURIComponent(key),{
+        method:"PUT",
+        credentials:"same-origin",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({defaultEnabled:next})
+      }).then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+        .then(function(res){
+          var row=res&&res.data?res.data:res;
+          m.defaultEnabled=(row&&typeof row.defaultEnabled==="boolean")?row.defaultEnabled:next;
+          b.classList.toggle("off",!m.defaultEnabled);
+          toast(m.name+" default "+(m.defaultEnabled?"enabled":"disabled"),m.defaultEnabled?"ok":"danger");
+        })
+        .catch(function(){
+          b.classList.toggle("off",!m.defaultEnabled);    // revert to last-known
+          toast("Could not update "+key+" default","danger");
+        });
+    };
+  });
+}
+
 var flagState={};FLAGS.forEach(function(f){flagState[f.n]=f.on;});
 function renderFlags(){
   var html='<div class="phead"><h1>Feature Flags</h1><p>Toggle features per tenant or roll out gradually, no deploy required.</p></div>';
@@ -1348,6 +1434,43 @@ renderNav();render();
     NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="flags") it.ct=FLAGS.length; }); });
     renderNav(); render();
   }).catch(function(){});
+})();
+
+/* ---- live hydration: Modules (the platform ModuleRegistry catalog).
+   GET /api/super-admin/modules -> { registry:[catalog rows], catalog:[manifest
+   snapshots] }. We render the `catalog` (the full shipped registry) and overlay
+   each persisted ModuleRegistry row's real platform default (defaultEnabled /
+   requiresPlan) when one exists, so the toggle reflects the live catalog value
+   rather than only the in-code manifest. Empty catalog -> honest empty state;
+   any failure -> keep the amber "Sample data" banner (WIRED.modules stays false). ---- */
+(function(){
+  function api(p){ return fetch("/api"+p,{credentials:"same-origin"}).then(function(r){ return r.ok?r.json():Promise.reject(r.status); }); }
+  api("/super-admin/modules").then(function(res){
+    var body=res&&res.data?res.data:{};
+    var catalog=Array.isArray(body.catalog)?body.catalog:[];
+    var registry=Array.isArray(body.registry)?body.registry:[];
+    if(!Array.isArray(catalog)) return;
+    var rowByKey={};
+    registry.forEach(function(r){ if(r&&r.key) rowByKey[r.key]=r; });
+    MODULES.length=0;
+    catalog.forEach(function(m){ m=m||{}; if(!m.key) return;
+      var row=rowByKey[m.key];   // persisted catalog row, if one exists
+      MODULES.push({
+        key:String(m.key),
+        name:m.name!=null?String(m.name):String(m.key),
+        category:m.category!=null?String(m.category):"other",
+        type:m.type!=null?String(m.type):"",
+        version:m.version!=null?String(m.version):"",
+        requiresPlan:(row&&row.requiresPlan!=null)?row.requiresPlan:(m.requiresPlan!=null?m.requiresPlan:null),
+        defaultEnabled:(row&&typeof row.defaultEnabled==="boolean")?row.defaultEnabled:(m.defaultEnabled===true),
+        dependencies:Array.isArray(m.dependencies)?m.dependencies:[],
+        inCatalog:m.inCatalog===true
+      });
+    });
+    if(typeof WIRED==="object"&&WIRED) WIRED.modules=1;   // banner clears only on real load
+    NAV.forEach(function(g){ g.items.forEach(function(it){ if(it.id==="modules") it.ct=MODULES.length; }); });
+    renderNav(); render();
+  }).catch(function(){ /* keep designed banner + honest empty on failure */ });
 })();
 
 /* ---- live hydration: Security & Access (real active sessions + MFA %; the

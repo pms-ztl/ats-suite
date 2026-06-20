@@ -15,7 +15,11 @@ import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const TENANT_TABLES = ["User"];
+// WF3/C2: DashboardLayout + UserUiPrefs join the per-tenant set. Both carry a
+// non-null "tenantId" so the same tenant_isolation policy applies cleanly. The
+// per-user routers (WF6) read/write them through prismaRls; admin paths (login/
+// saga/super-admin/invite) keep the admin client and are unaffected.
+const TENANT_TABLES = ["User", "DashboardLayout", "UserUiPrefs"];
 
 const run = (sql: string) => prisma.$executeRawUnsafe(sql);
 

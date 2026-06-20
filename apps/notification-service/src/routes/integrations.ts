@@ -1,12 +1,18 @@
 /**
- * Tenant integration management — Slack webhook URL, email config overrides.
+ * Tenant integration management — Slack webhook URL, email config overrides,
+ * and assessment-provider (OA) credentials (HackerRank, Codility, etc.).
  *
- *   GET    /internal/integrations            — list all for the tenant
- *   PUT    /internal/integrations/:kind      — upsert config for kind ("slack"|"email")
+ *   GET    /internal/integrations            — list all for the tenant (secrets redacted)
+ *   PUT    /internal/integrations/:kind      — upsert config for a known kind
  *   DELETE /internal/integrations/:kind      — remove config
  *   POST   /internal/integrations/:kind/test — send a test notification via this channel
  *
  * All routes are tenant-scoped via X-Tenant-Id.
+ *
+ * WF8 (Slice H1): the `config` JSON column holds secrets (API keys/tokens/webhook
+ * URLs). They are AES-GCM encrypted at rest (sealConfig) and decrypted on read
+ * (unsealConfig, backward-compatible with legacy plaintext rows via isEncrypted).
+ * Secrets are NEVER returned to the client — GET responses go through redactConfig.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
@@ -15,10 +21,20 @@ import { ok, created, Errors, getTenantId, getUserId, requireTenantAdmin } from 
 import { prismaRls as prisma } from "../lib/prisma.js";
 import { sendSlack } from "../lib/slack.js";
 import { sendEmail, renderNotificationEmail } from "../lib/mailer.js";
+import {
+  INTEGRATION_KINDS,
+  sealConfig,
+  unsealConfig,
+  redactConfig,
+  isAssessmentKind,
+} from "../lib/integration-config.js";
 
 const router = Router();
 
-const KindSchema = z.enum(["slack", "email"]);
+// Kind registry: existing channels (slack, email) plus the WF8 assessment-provider
+// kinds (hackerrank, codility, hackerearth, imocha, testgorilla). Additive — the
+// enum is derived from the shared registry so new kinds are accepted everywhere.
+const KindSchema = z.enum(INTEGRATION_KINDS);
 
 // ── GET /internal/integrations ─────────────────────────────────────────────
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
@@ -28,16 +44,12 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       where: { tenantId },
       orderBy: { createdAt: "asc" },
     });
-    // Redact webhook URLs in list view — only show last 8 chars
-    const safe = rows.map((r) => {
-      const cfg = r.config as Record<string, unknown>;
-      const redacted: Record<string, unknown> = { ...cfg };
-      if (typeof cfg["webhookUrl"] === "string") {
-        const url = cfg["webhookUrl"] as string;
-        redacted["webhookUrl"] = `…${url.slice(-12)}`;
-      }
-      return { ...r, config: redacted };
-    });
+    // Decrypt (backward-compatible: legacy plaintext passes through) then redact
+    // per-kind secret fields. Secrets are NEVER returned to the client.
+    const safe = rows.map((r) => ({
+      ...r,
+      config: redactConfig(r.kind, unsealConfig(r.config)),
+    }));
     ok(res, safe);
   } catch (err) { next(err); }
 });
@@ -51,12 +63,25 @@ const EmailConfigSchema = z.object({
   fromAddress: z.string().email().optional(),
   replyTo: z.string().email().optional(),
 });
+// Assessment-provider (OA) credentials. Non-secret routing fields (subdomain,
+// region, baseUrl) sit alongside the encrypted-at-rest secrets (apiKey/token).
+const AssessmentConfigSchema = z.object({
+  apiKey: z.string().min(1).optional(),
+  apiToken: z.string().min(1).optional(),
+  clientSecret: z.string().min(1).optional(),
+  webhookSecret: z.string().min(1).optional(),
+  subdomain: z.string().optional(),
+  region: z.string().optional(),
+  baseUrl: z.string().url().optional(),
+}).refine((c) => Boolean(c.apiKey || c.apiToken || c.clientSecret),
+  { message: "Assessment provider requires an apiKey, apiToken or clientSecret" });
+
 const UpsertSchema = z.object({
   config: z.record(z.string(), z.unknown()),
   enabled: z.boolean().optional(),
 });
 
-// Phase 27 F-028-micro-P0: integration config (Slack webhook, SMTP) is admin-only.
+// Phase 27 F-028-micro-P0: integration config (Slack webhook, SMTP, OA creds) is admin-only.
 router.put("/:kind", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
@@ -65,13 +90,19 @@ router.put("/:kind", requireTenantAdmin, async (req: Request, res: Response, nex
     // Per-kind validation
     if (kind === "slack") SlackConfigSchema.parse(body.config);
     if (kind === "email") EmailConfigSchema.parse(body.config);
+    if (isAssessmentKind(kind)) AssessmentConfigSchema.parse(body.config);
+
+    // Encrypt secrets at rest (seal-on-write). Existing plaintext rows for any
+    // kind migrate to ciphertext here on their next save — no destructive backfill.
+    const sealed = sealConfig(body.config) as any;
 
     const row = await prisma.tenantIntegration.upsert({
       where: { tenantId_kind: { tenantId, kind } },
-      update: { config: body.config as any, enabled: body.enabled ?? true },
-      create: { tenantId, kind, config: body.config as any, enabled: body.enabled ?? true },
+      update: { config: sealed, enabled: body.enabled ?? true },
+      create: { tenantId, kind, config: sealed, enabled: body.enabled ?? true },
     });
-    ok(res, row);
+    // Return the redacted view — never echo the decrypted secret back.
+    ok(res, { ...row, config: redactConfig(kind, body.config) });
   } catch (err) { next(err); }
 });
 
@@ -103,7 +134,8 @@ router.post("/:kind/test", requireTenantAdmin, async (req: Request, res: Respons
       const integration = await prisma.tenantIntegration.findUnique({
         where: { tenantId_kind: { tenantId, kind: "slack" } },
       });
-      const config = integration?.config as { webhookUrl?: string } | null;
+      // Decrypt at the point of use (server-side only) — backward-compatible read.
+      const config = integration ? (unsealConfig(integration.config) as { webhookUrl?: string }) : null;
       if (!integration?.enabled || !config?.webhookUrl) {
         throw Errors.validation("Slack integration not configured for this tenant");
       }

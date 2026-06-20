@@ -37,6 +37,7 @@ COPY apps/search-service/package.json        apps/search-service/package.json
 COPY apps/agent-service/package.json         apps/agent-service/package.json
 COPY apps/analytics-service/package.json     apps/analytics-service/package.json
 COPY apps/compliance-service/package.json    apps/compliance-service/package.json
+COPY apps/assessment-service/package.json    apps/assessment-service/package.json
 COPY apps/seed-data/package.json             apps/seed-data/package.json
 COPY apps/frontend/package.json              apps/frontend/package.json
 COPY packages/common/package.json            packages/common/package.json

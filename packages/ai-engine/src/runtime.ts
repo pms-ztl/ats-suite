@@ -70,7 +70,9 @@ export type AgentType =
   | "cover-letter-analyzer"
   | "github-corroborator"
   // Phase 38 — agentic resume verifier
-  | "resume-verifier";
+  | "resume-verifier"
+  // WF7 — Online Assessments essay/long-form rubric grader
+  | "oa-grader";
 
 export interface AgentContext {
   tenantId: string;

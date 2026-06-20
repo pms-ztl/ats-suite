@@ -4,16 +4,20 @@
  * stripped-down version for one-off internal calls.
  */
 import { AppError } from "@cdc-ats/common";
+// WF3-C5: the local PlanLimits interface (byte-identical to the in-service
+// PLAN_LIMITS shape) has been collapsed into the single derived definition in
+// @cdc-ats/common (modules/plan-limits). job-service does not keep a PLAN_LIMITS
+// data copy — it fetches the tenant's limits from billing-service over REST
+// (fetchPlanLimits below) — so only the shared type is imported here. No
+// call-site / gating behavior change.
+import type { PlanLimits } from "@cdc-ats/common";
 
 const CANDIDATE_URL = process.env["CANDIDATE_SERVICE_URL"] ?? "http://localhost:4005";
 const RESUME_URL = process.env["RESUME_SERVICE_URL"] ?? "http://localhost:4007";
 const BILLING_URL = process.env["BILLING_SERVICE_URL"] ?? "http://localhost:4003";
 const INTERNAL_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
 
-export interface PlanLimits {
-  seats: number; activeJobs: number; resumesPerMonth: number; bulkUploadMax: number;
-  agents: readonly string[] | "ALL"; customForms: boolean; configurableRounds: boolean;
-}
+export type { PlanLimits };
 
 /**
  * Fetch the tenant's plan + limits from billing-service for capability gating

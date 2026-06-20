@@ -119,6 +119,10 @@ router.get("/me", gatewayAuth(), async (req: Request, res: Response, next: NextF
       callService<{
         id: string; tenantId: string; email: string; firstName: string; lastName: string; role: string;
         isActive: boolean; lastLoginAt: string | null; emailVerified?: boolean;
+        // WF6/F1 — per-user UI preferences, returned by identity so the client
+        // hydrates theme/density/locale in this one /me round-trip (null when
+        // the user has none → client uses its seeded defaults).
+        uiPrefs?: unknown;
       }>("identity", { method: "GET", path: `/internal/users/${req.user.id}` }),
       callService<{
         id: string; name: string; slug: string; plan: string; status: string;
@@ -143,6 +147,10 @@ router.get("/me", gatewayAuth(), async (req: Request, res: Response, next: NextF
       // Phase 32a — set when a super-admin is impersonating. The frontend
       // shows the red impersonation banner whenever this is non-null.
       actorUserId: req.user.actorUserId ?? null,
+      // WF6/F1 — per-user UI preferences (theme/density/locale/accent) or null.
+      // Additive: the client falls back to its seeded defaults when null, so a
+      // user who never saved prefs is byte-identical to pre-WF6.
+      uiPrefs: user.uiPrefs ?? null,
       tenant: {
         id: tenant.id,
         name: tenant.name,

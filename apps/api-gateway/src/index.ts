@@ -17,6 +17,8 @@ initSentry({ serviceName: "api-gateway" });
 import { createApp } from "./app.js";
 import { createLogger, registerGracefulShutdown } from "@cdc-ats/common";
 import { connectNats, ensureStreams, closeNats } from "@cdc-ats/nats-client";
+// WF4 D3b — module-toggle cache buster (best-effort; no-op if NATS is down).
+import { subscribeModuleToggles } from "./lib/module-gate.js";
 
 const logger = createLogger({ serviceName: "api-gateway" });
 const PORT = Number(process.env["PORT"] ?? 4000);
@@ -30,6 +32,9 @@ async function main() {
     try {
       await connectNats({ serviceName: "api-gateway" });
       await ensureStreams();
+      // WF4 D3b — bust the module-gate cache on each module.toggled event so a
+      // tenant/super-admin toggle takes effect within one round-trip. Best-effort.
+      subscribeModuleToggles(logger);
       logger.info("NATS connected");
     } catch (err) {
       logger.warn({ err }, "NATS connect failed after retries — gateway agents will not publish cost events");

@@ -41,5 +41,9 @@ export * from "./lib/enrich.js";
 export * from "./lib/semantic-skills.js";
 export * from "./lib/github.js";
 export * from "./agents/resume-verifier-agentic.js";
+
+// WF7 — Online Assessments essay grader
+export * from "./agents/oa-essay-grader.js";
+
 export * from "./taxonomies/skills.js";
 export * from "./taxonomies/institutions.js";

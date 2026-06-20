@@ -34,6 +34,12 @@ export interface TenantBranding {
   careerPortalWelcomeMessage: string | null;
   careerPortalAboutHtml: string | null;
   careerPortalHeroImageUrl: string | null;
+  // WF6-F4 — tenant default color scheme for users who have not set a per-user
+  // preference. One of "system" | "light" | "dark". Optional on the type so older
+  // cached payloads (pre-WF6) stay assignable; the GET /internal/branding route
+  // returns it. May be absent if the backend has not been deployed yet, in which
+  // case consumers fall back to "system".
+  defaultColorMode?: "system" | "light" | "dark" | null;
 }
 
 // Module-local cache so all consumers share one fetch.

@@ -456,11 +456,33 @@ router.get("/my-team", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), asyn
 });
 
 // ─── GET /internal/users/:id ─────────────────────────────────────────────
+// This is the me-resolution path the gateway's GET /api/auth/me calls. WF6/F1
+// makes it ADDITIVELY return the user's UserUiPrefs (uiPrefs) so the client
+// hydrates theme/density/locale in the SAME round-trip — no extra fetch on load.
+// The prefs read is best-effort and on the admin client (this row is the
+// caller's own; the gateway only ever asks for the authenticated user's id):
+// a missing row or a read error leaves uiPrefs null and the client uses its
+// seeded defaults, so untouched users are byte-identical to pre-WF6.
 router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw Errors.notFound("User");
+
+    const prefsRow = await prisma.userUiPrefs
+      .findUnique({ where: { userId: id } })
+      .catch(() => null);
+    const uiPrefs = prefsRow
+      ? {
+          colorMode: prefsRow.colorMode,
+          density: prefsRow.density,
+          locale: prefsRow.locale,
+          timezone: prefsRow.timezone,
+          accentOverride: prefsRow.accentOverride,
+          prefs: (prefsRow.prefs ?? {}) as Record<string, unknown>,
+          updatedAt: prefsRow.updatedAt.toISOString(),
+        }
+      : null;
 
     ok(res, {
       id: user.id,
@@ -474,6 +496,8 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
       // Phase 31b — exposed via /auth/me so dashboard can show a confirm banner.
       emailVerified: (user as any).emailVerified ?? true,
       emailVerifiedAt: (user as any).emailVerifiedAt ?? null,
+      // WF6/F1 — per-user UI preferences (or null → client uses seeded defaults).
+      uiPrefs,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

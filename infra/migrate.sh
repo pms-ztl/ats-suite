@@ -48,11 +48,14 @@ push resume-service       "$RESUME_DATABASE_URL"
 push screening-service    "$SCREENING_DATABASE_URL"
 push notification-service "$NOTIFICATION_DATABASE_URL"
 
-# --- 4 extra services (schemas, no migrations) ---
+# --- 5 extra services (schemas, no migrations) ---
 push search-service     "$SEARCH_DATABASE_URL"     "--accept-data-loss"
 push agent-service      "$AGENT_DATABASE_URL"      "--accept-data-loss"
 push analytics-service  "$ANALYTICS_DATABASE_URL"  "--accept-data-loss"
 push compliance-service "$COMPLIANCE_DATABASE_URL" "--accept-data-loss"
+# WF3 — assessment-service (online assessments). RLS applied separately via
+# apps/assessment-service/prisma/apply-rls.ts after this push.
+push assessment-service "$ASSESSMENT_DATABASE_URL" "--accept-data-loss"
 
 # --- candidate: raw-SQL embedding columns (managed outside the Prisma schema) ---
 echo "==> [candidate] embedding columns"

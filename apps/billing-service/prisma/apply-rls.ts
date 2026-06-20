@@ -4,17 +4,18 @@
  *   node --import tsx --env-file=../../.env prisma/apply-rls.ts
  * See apps/candidate-service/prisma/apply-rls.ts for the full rationale.
  *
- * RLS'd: the tenant-scoped tables read on request paths. Left un-RLS'd:
- * StripeWebhookEvent (nullable tenant, written by the no-tenant webhook),
- * PlatformAgentKillSwitch / PlatformKillAudit / PromptOverride (platform-wide,
- * no tenantId). The NATS subscribers, the SUPER_ADMIN platform routes and the
- * Stripe webhook use the admin (non-RLS) client.
+ * RLS'd: the tenant-scoped tables read on request paths (incl. TenantModule).
+ * Left un-RLS'd: StripeWebhookEvent (nullable tenant, written by the no-tenant
+ * webhook), PlatformAgentKillSwitch / PlatformKillAudit / PromptOverride /
+ * ModuleRegistry (platform-global, no tenantId — read via prismaAdmin). The
+ * NATS subscribers, the SUPER_ADMIN platform routes and the Stripe webhook use
+ * the admin (non-RLS) client.
  */
 import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const TENANT_TABLES = ["TenantPlanCache", "AgentKillSwitch", "AgentRunCost", "FeatureFlag", "StripeSubscription"];
+const TENANT_TABLES = ["TenantPlanCache", "AgentKillSwitch", "AgentRunCost", "FeatureFlag", "StripeSubscription", "TenantModule"];
 
 const run = (sql: string) => prisma.$executeRawUnsafe(sql);
 

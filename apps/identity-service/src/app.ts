@@ -11,6 +11,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import usersRouter from "./routes/users.js";
+import dashboardsRouter from "./routes/dashboards.js";
 import authPolishRouter from "./routes/auth-polish.js";
 import ssoRouter from "./routes/sso.js";
 import gdprRouter from "./routes/gdpr.js";
@@ -63,6 +64,13 @@ export function createApp(logger: Logger): Express {
   // handlers see it. Pre-auth requests (login, register saga) carry no
   // X-Tenant-Id, which is fine — those handlers use the admin client.
   app.use(tenantContext);
+  // WF6/F1 — per-user + tenant-default dashboard layouts and UI prefs. Mounted
+  // additively under /internal/users (so the gateway's /api/me/dashboards/* and
+  // /api/tenant/dashboards/* proxies land here). Declared BEFORE usersRouter so
+  // the literal /me/* and /tenant/* paths are matched here and never captured by
+  // usersRouter's /:id. These routes ALWAYS need req.user (caller identity), so
+  // readAuthHeaders is NON-optional; the RLS client keys writes to the caller.
+  app.use("/internal/users", readAuthHeaders(), dashboardsRouter);
   app.use("/internal/users", readAuthHeaders({ optional: true }), usersRouter);
   // Auth polish — forgot/reset password are unauthenticated; the others
   // (change-password, mfa/*) require X-User-Id from a logged-in JWT.

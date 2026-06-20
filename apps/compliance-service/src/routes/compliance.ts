@@ -36,4 +36,21 @@ router.post("/bias-audit/:requisitionId", async (req: Request, res: Response, ne
   } catch (err) { next(err); }
 });
 
+// WF10/J1 - candidate DSR legs that ALSO cover Online Assessment data. These call
+// assessment-service (export / erase by candidateId) and write an audit record.
+// The api-gateway candidate fan-out covers OA directly too; these exist so a DSR
+// driven from compliance-service (the system of record for the request) reaches
+// the OA rows and leaves an audit trail.
+router.post("/dsr/candidates/:candidateId/export", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    ok(res, await complianceService.dsrAssessmentExport(getTenantId(req), getUserId(req), req.params["candidateId"] as string));
+  } catch (err) { next(err); }
+});
+
+router.delete("/dsr/candidates/:candidateId", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    ok(res, await complianceService.dsrAssessmentErase(getTenantId(req), getUserId(req), req.params["candidateId"] as string));
+  } catch (err) { next(err); }
+});
+
 export default router;

@@ -89,7 +89,20 @@ export function CandidateLayout({ children }: { children: React.ReactNode }) {
   // the global board (/jobs) and the tenant-scoped board (/c/{slug}/jobs).
   // /profile is the exact Candidate Profile design, it ships its own full-page
   // chrome (cinematic hero + nav), so render it bare like the job boards.
-  const fullBleed = pathname === "/jobs" || /^\/c\/[^/]+\/jobs$/.test(pathname) || pathname === "/profile";
+  //
+  // WF6-F4 — the ENTIRE per-tenant portal subtree (/c/{slug}/*) now gets its
+  // chrome from the nested c/[slug]/layout.tsx (BrandedShell, tenant white-label),
+  // so render all of it bare here to avoid double-wrapping with this generic
+  // glass shell. Untouched non-tenant routes (/status, /appeal, ...) are
+  // byte-identical to before — they still get this shell.
+  const isTenantPortal = /^\/c\/[^/]+(\/|$)/.test(pathname ?? "");
+  // WF7-G12 - the assessment RUNNER (/assessment/take/<token>) is a focused,
+  // timed exam surface that ships its own full-screen chrome (timer header,
+  // question-nav grid, proctor capture). It must NOT be wrapped in the portal
+  // nav/footer, which would offer the candidate escape links mid-attempt.
+  const isAssessmentTake = /^\/assessment\/take(\/|$)/.test(pathname ?? "");
+  const fullBleed =
+    pathname === "/jobs" || isTenantPortal || pathname === "/profile" || isAssessmentTake;
   if (fullBleed) return <>{children}</>;
 
   // Glassmorphism: chrome surfaces composite over the global aurora backdrop

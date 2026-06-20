@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    // This is the ONE browser-targeted package in the workspace: it manipulates
+    // the DOM, creates iframes, and talks postMessage. Every other package targets
+    // Node, so we add the DOM libs here (and only here) rather than in the shared
+    // base config. ES2022 stays from the base for language features.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
