@@ -17,6 +17,21 @@ enum RequisitionStatus {
   CANCELLED
 }
 
+// WF-E: lifecycle of a single (jobPosting, board) distribution. Mirrors the
+// real-data-or-null discipline of the assessment-provider axis: status only
+// advances on a real adapter response; externalPostingId/externalUrl stay null
+// until the board returns them. PENDING_PARTNER_APPROVAL covers boards that
+// queue a posting for manual partner review before it goes live.
+enum DistributionStatus {
+  PENDING
+  POSTING
+  ACTIVE
+  FAILED
+  EXPIRED
+  CLOSED
+  PENDING_PARTNER_APPROVAL
+}
+
 model Requisition {
   id              String            @id @default(uuid())
   tenantId        String
@@ -64,7 +79,8 @@ model JobPosting {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  requisition Requisition @relation(fields: [requisitionId], references: [id])
+  requisition           Requisition            @relation(fields: [requisitionId], references: [id])
+  jobBoardDistributions JobBoardDistribution[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -150,3 +166,88 @@ model AgentRun {
 
   @@index([tenantId, createdAt])
 }
+
+// WF-E: one row per (jobPosting, board) syndication target. The hiring-platform
+// adapter axis (job boards / multiposting partners) is DISTINCT from the
+// assessment-provider axis. HARD RULES: externalPostingId/externalUrl/status are
+// real-data-or-null, never synthesized; they are populated ONLY from a real
+// adapter response, with the verbatim vendor payload kept in `raw`. There is no
+// auto-reject; lastError captures a real adapter/transport failure.
+model JobBoardDistribution {
+  id                String             @id @default(uuid())
+  tenantId          String
+  jobPostingId      String
+  board             String
+  externalPostingId String?
+  externalUrl       String?
+  status            DistributionStatus @default(PENDING)
+  lastError         String?
+  lastSyncedAt      DateTime?
+  raw               Json?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id])
+
+  @@unique([tenantId, jobPostingId, board])
+  @@index([tenantId])
+  @@index([board, status])
+}
+
+// WF-E + WF-I: idempotency ledger AND live ingest-pipeline tracker for the public
+// application intake.
+//
+// Idempotency (WF-E): keyed by the caller-supplied Idempotency-Key per tenant so a
+// retried (or duplicated) apply POST replays the original response instead of
+// creating a second Candidate / Application. The accept step is "finished" once
+// responseCode + responseBody are set; a fresh lockedAt guards concurrent retries;
+// recoveryPoint tracks how far a partially-completed request got so an interrupted
+// write can resume.
+//
+// Pipeline tracking (WF-I / I2-I4): once the accept-fast path has created the
+// Candidate + Application it records the applicationId here and uses ingestStage to
+// carry the REAL staged-ingest progress (PENDING_INGEST -> SCANNED -> PARSED ->
+// SCREENED, or REJECTED). The apply-ingest worker (I3) advances ingestStage by
+// applicationId; the status route (I4) reads it by applicationId. ingestStage is a
+// plain string, NOT the candidate-service ApplicationStatus enum (which stays
+// ACTIVE), so the pipeline stage never collides with the application lifecycle.
+// ingestStage is null + never fabricated ahead of the real stage.
+model ApplicationIdempotency {
+  id             BigInt   @id @default(autoincrement())
+  tenantId       String
+  idempotencyKey String
+  requestMethod  String
+  requestPath    String
+  responseCode   Int?
+  responseBody   Json?
+  recoveryPoint  String   @default("started")
+  applicationId  String?
+  // Correlation keys for the async pipeline (WF-I / I3). The resume.parsed /
+  // screening.completed events carry candidateId (+ requisitionId for screening)
+  // but no applicationId, so the apply-ingest NATS subscriber resolves THIS row by
+  // (tenantId, candidateId, requisitionId) to advance ingestStage to PARSED /
+  // SCREENED. Null on the legacy multipart path (which never touches this ledger).
+  candidateId    String?
+  requisitionId  String?
+  ingestStage    String?
+  ingestError    String?
+  lockedAt       DateTime?
+  createdAt      DateTime @default(now())
+  lastRunAt      DateTime?
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, applicationId])
+  @@index([tenantId, candidateId, requisitionId])
+  @@index([tenantId, createdAt])
+}
+
+// WF-E: per-tenant bearer token for the public job feed (XML/JSON board feed).
+// One token per tenant; rotating it issues a new row's token. The feed endpoint
+// resolves the owning tenant from this token with no auth context (admin client).
+model JobFeedToken {
+  id        String   @id @default(uuid())
+  tenantId  String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
+

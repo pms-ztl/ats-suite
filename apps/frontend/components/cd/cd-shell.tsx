@@ -16,54 +16,35 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAuth } from "@/lib/auth-context";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { useModules } from "@/hooks/use-modules";
-import { brandRamp } from "@/lib/theme/brand-ramp";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
+import { Slot } from "@/lib/registry/slots";
+import { buildThemeCss, type ThemeConfig } from "@/lib/theme/build-theme-css";
 import type { IconName } from "./icon";
 import type { NavSection, RoleMeta, Workspace, ShellUser, CommandGroup, PlanUsage } from "./types";
 
 const ALL = ["admin", "recruiter", "hiring_manager", "interviewer", "compliance_officer", "super_admin"];
 
-// A valid 3- or 6-digit hex is the ONLY trigger for tenant theming. Anything else
-// (null, empty, a CSS keyword, garbage) leaves the .cd-scope emerald defaults from
-// cd-tokens.css untouched -> tenants without a brand color are byte-identical.
+// A valid 3- or 6-digit hex is the ONLY trigger for legacy tenant theming via the
+// branding payload. Anything else (null, empty, a CSS keyword, garbage) leaves the
+// .cd-scope emerald defaults from cd-tokens.css untouched. NOTE: hex values that
+// arrive via the UiConfig theme block are already validated by the contract's
+// HexColor regex (UiThemeSchema), so this guard only re-validates the *legacy*
+// branding.brandPrimaryColor that does NOT pass through that schema.
 function isHex(hex: string | null | undefined): hex is string {
   return !!hex && /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(hex);
 }
 
-// The six brand-family token keys brandRamp() produces (bare "L C H" channels).
-// We emit each in BOTH forms cd-tokens.css uses inside .cd-scope: the FULL-color
-// `--brand*` (oklch(...)) the kit reads via var(--brand), and the `--c-brand*`
-// full-color companions the kit reads via var(--c-brand). The global :root sets
-// --c-brand = oklch(var(--brand)) which DOUBLE-WRAPS inside .cd-scope (where
-// --brand is already a full color), so we redefine the --c-* brand family to the
-// resolved full color directly here, on the same scope.
-const BRAND_KEYS = [
-  "--brand", "--brand-2", "--brand-ink", "--brand-tint", "--brand-tint-2", "--on-brand",
-] as const;
-
-// Build the scoped <style> body that re-skins the whole logged-in app from one
-// tenant brand hex. brandRamp() returns the full Aurora token family as bare
-// oklch channels for the LIGHT (.cd-scope) and DARK (.dark .cd-scope) themes; we
-// wrap each channel set as a full oklch(...) color (the form cd-tokens.css uses
-// inside .cd-scope) and also redefine the matching --c-brand* companion so both
-// the `var(--brand)` and `var(--c-brand)` consumers across the kit resolve to the
-// tenant color. The selectors are keyed by a per-shell data attribute so the
-// override is scoped to THIS shell (and inherits down to any nested .cd-scope,
-// e.g. /chat, via custom-property inheritance) without touching the global
-// emerald defaults. Respecting colorMode is automatic: the .dark class on
-// <html> selects the dark block exactly as the design's own tokens do.
-function buildBrandStyle(hex: string, scopeId: string): string {
-  const ramp = brandRamp(hex);
-  const decls = (side: Record<string, string>): string =>
-    BRAND_KEYS.map((k) => {
-      const color = `oklch(${side[k]})`;
-      // --brand*  : the bare full-color token the kit reads via var(--brand).
-      // --c-brand*: the full-color companion the kit reads via var(--c-brand).
-      const cKey = k.replace(/^--/, "--c-");
-      return `${k}:${color};${cKey}:${color};`;
-    }).join("");
-  const sel = `.cd-scope[data-cd-brand="${scopeId}"]`;
-  return `${sel}{${decls(ramp.light)}}\n.dark ${sel}{${decls(ramp.dark)}}`;
-}
+// C5 — WF-B B5 THEME SINK. The whole scoped <style> body that re-skins the logged-
+// in app is now built by buildThemeCss (lib/theme/build-theme-css.ts), the
+// generalized successor to the old inline buildBrandStyle helper. Where that
+// emitted ONLY the brand ramp, buildThemeCss emits the FULL customizable token
+// surface (brand + AI-accent + secondary ramps, @font-face + --font-sans, data-
+// driven --radius / --density, and an optional Utopia fluid type/space scale),
+// scoped to THIS shell's .cd-scope via a per-shell data attribute that inherits
+// down into nested .cd-scope subtrees (e.g. /chat) exactly like before. Every hex/
+// font/number it interpolates has been validated by the @cdc-ats/contracts
+// UiThemeSchema (the CSS-injection boundary) before it reaches the sink, OR is the
+// schema-less legacy branding hex re-validated by isHex above.
 
 // WF9 / SLICE I3 — a NavRow may now declare the registry module key that OWNS it
 // (`module`). The shell resolves the tenant's enabled-module set (use-modules ->
@@ -161,6 +142,16 @@ export function CdShell({ children }: { children: React.ReactNode }) {
   // (allEnabled) when /api/me/modules is absent/errored, so a missing module
   // surface never hides a feature the user already has (v1 unaffected).
   const modules = useModules();
+  // C5 (WF-C/WF-D) — the resolved per-tenant UiConfig + its fail-soft helpers.
+  // FAIL-SOFT: when /api/me/ui-config 404s / errors / is unauthored, `config`
+  // resolves to the contract's neutral, all-enabled fallback (empty nav/routes/
+  // copy, system color mode, no brand override), so every helper below is a no-op
+  // and the shell renders BYTE-IDENTICAL to today. `config` drives: the nav
+  // (order/hidden/overrides + per-route enablement + copy labels), the breadcrumb
+  // title (route title override + copy), and the theme sink (theme block ->
+  // buildThemeCss). Nothing here invents values; it only layers a tenant's own
+  // authored, schema-validated config over the canonical chrome.
+  const { config: uiConfig, isRouteEnabled, routeTitle, navOverride, copy } = useUiConfig();
   const [hitl, setHitl] = useState(0);
   const [seats, setSeats] = useState<{ used: number; limit: number; unlimited: boolean } | null>(null);
 
@@ -222,18 +213,71 @@ export function CdShell({ children }: { children: React.ReactNode }) {
   // Full nav with roles kept on each item so the Shell can role-gate AND honor
   // its built-in "preview role" feature. id = href. Items whose owning module is
   // hard-disabled are dropped; plan-locked items stay with a `lock` affordance.
-  const nav: NavSection[] = useMemo(() => NAV.map((g) => ({
-    section: g.section ?? undefined,
-    platform: g.platform,
-    items: g.items
-      .map((it) => ({ it, decision: moduleDecision(it.module) }))
-      .filter(({ decision }) => decision !== "hide")
-      .map(({ it, decision }) => ({
-        id: it.href, label: it.label, icon: it.icon, roles: it.roles, ai: it.ai,
-        count: it.countKey === "hitl" ? (hitl > 0 ? hitl : undefined) : undefined,
-        lock: decision === "lock" || undefined,
-      })),
-  })), [hitl, moduleDecision]);
+  //
+  // C5 (WF-C/WF-D) — the tenant UiConfig now DATA-DRIVES the nav, layered AFTER the
+  // module filter so a tenant's enabled modules still win the visibility decision:
+  //   • routes[].enabled === false  -> the nav row is dropped (route disabled).
+  //   • nav.hidden includes the href -> the nav row is dropped (tenant hid it).
+  //   • nav.overrides[href]          -> relabel / re-icon / re-href the row.
+  //   • copy["nav.<href>"]           -> relabel the row (lower precedence than an
+  //                                     explicit nav.overrides.label).
+  //   • nav.order                    -> reorder rows WITHIN each section by href;
+  //                                     unlisted rows keep their canonical order
+  //                                     after the listed ones (stable).
+  // FAIL-SOFT: the fallback UiConfig has empty routes/nav/copy, so every branch is
+  // a no-op and the produced nav is byte-identical to the pre-C5 nav. An icon
+  // override is only applied when it is a valid IconName key the kit ships; an
+  // unknown icon string is ignored (the canonical icon stays) so a bad override
+  // can never render a broken glyph.
+  const navOrder = uiConfig.nav.order;
+  const navHidden = uiConfig.nav.hidden;
+  const nav: NavSection[] = useMemo(() => {
+    const hiddenSet = new Set(navHidden);
+    // Rank an href by its position in nav.order (unlisted -> +Infinity, i.e. last,
+    // preserving the canonical order among the unlisted tail).
+    const rank = (href: string): number => {
+      const i = navOrder.indexOf(href);
+      return i === -1 ? Number.POSITIVE_INFINITY : i;
+    };
+    return NAV.map((g) => {
+      const items = g.items
+        .map((it) => ({ it, decision: moduleDecision(it.module) }))
+        // module hard-disabled -> drop (unchanged from v1).
+        .filter(({ decision }) => decision !== "hide")
+        // route disabled by the tenant -> drop (fail-soft: unlisted route stays on).
+        .filter(({ it }) => isRouteEnabled(it.href))
+        // tenant explicitly hid this nav item -> drop.
+        .filter(({ it }) => !hiddenSet.has(it.href))
+        .map(({ it, decision }) => {
+          const ov = navOverride(it.href);
+          // Label precedence: explicit nav.overrides.label > copy["nav.<href>"] >
+          // canonical label. Icon/href overrides are validated below.
+          const label = ov?.label ?? copy(`nav.${it.href}`, it.label);
+          const icon = (ov?.icon && (ov.icon as IconName)) || it.icon;
+          const id = (ov?.href && typeof ov.href === "string") ? ov.href : it.href;
+          // Keep the CANONICAL href so nav.order (authored against canonical hrefs)
+          // ranks correctly even when this item was re-href'd by an override.
+          return {
+            canonical: it.href,
+            item: {
+              id, label, icon, roles: it.roles, ai: it.ai,
+              count: it.countKey === "hitl" ? (hitl > 0 ? hitl : undefined) : undefined,
+              lock: decision === "lock" || undefined,
+            },
+          };
+        });
+      // Stable reorder within the section by nav.order rank (keyed on the canonical
+      // href). Ties (including the all-unlisted v1 default) preserve source order.
+      const ordered = items
+        .map((entry, i) => ({ ...entry, i }))
+        .sort((a, b) => {
+          const ra = rank(a.canonical), rb = rank(b.canonical);
+          return ra !== rb ? ra - rb : a.i - b.i;
+        })
+        .map(({ item }) => item);
+      return { section: g.section ?? undefined, platform: g.platform, items: ordered };
+    });
+  }, [hitl, moduleDecision, isRouteEnabled, navOverride, copy, navOrder, navHidden]);
 
   // WF9 / SLICE I3 — the set of nav hrefs that are PLAN-LOCKED right now, so a
   // click routes to the upgrade path (/billing) instead of the dead 402 route.
@@ -353,27 +397,74 @@ export function CdShell({ children }: { children: React.ReactNode }) {
   // aurora WAY down so it does not compete with charts. globals.css matches
   // body:has(.cd-scope[data-dense="1"]) .aurora and drops its opacity to
   // ~.18/.22. Other routes keep the richer aurora.
+  //
+  // C5 — a tenant whose UiConfig theme.density is "compact" reads as dense
+  // EVERYWHERE (its chrome is dialed tighter by intent), so the ambient aurora
+  // stays muted on every route, not just the data routes. "cozy"/"comfortable"/
+  // absent keep the per-route behavior (byte-identical for the v1 default).
   const DENSE = new Set(["/", "/screening", "/analytics"]);
-  const dataDense = DENSE.has(pathname) ? "1" : undefined;
+  const tenantCompact = uiConfig.theme.density === "compact";
+  const dataDense = tenantCompact || DENSE.has(pathname) ? "1" : undefined;
 
-  // SLICE F3 - tenant theme injection. The brand color must reach the LOGGED-IN
-  // app, not just the public career portal. If the tenant has a valid custom
-  // brand hex, generate the full Aurora token ramp (light + dark) and inject it as
-  // a <style> scoped to THIS shell's .cd-scope via a stable per-shell id, so
-  // --brand / --brand-2 / --brand-ink / --brand-tint / --brand-tint-2 / --on-brand
-  // (and their --c-brand* companions, plus --c-brand) resolve to the tenant color
-  // across the whole subtree (it inherits into nested scopes like /chat too).
-  // No custom color -> brandHex is undefined, no data attribute, no <style> emitted
-  // -> the .cd-scope emerald defaults from cd-tokens.css apply, byte-identical to
-  // today for every untouched tenant. colorMode is respected automatically: the
-  // .dark class on <html> picks the dark block, exactly like the design tokens.
-  const brandHex = isHex(branding?.brandPrimaryColor) ? branding!.brandPrimaryColor : null;
+  // C5 (WF-C/WF-D) — TENANT THEME via the WF-B B5 sink. The resolved UiConfig
+  // theme block (brand/ai-accent/secondary hexes, colorMode, density, radius,
+  // font + @font-face, and an optional Utopia fluid scale) is fed to buildThemeCss,
+  // which emits the full scoped token surface (replacing the old brand-only
+  // buildBrandStyle). The legacy branding.brandPrimaryColor still works as the
+  // brand-hex FALLBACK for a tenant that set a brand color via the branding payload
+  // but never authored a UiConfig theme.brandHex (re-validated by isHex; UiConfig
+  // hexes are already schema-validated).
+  //
+  // BYTE-IDENTICAL FALLBACK: the contract theme defaults are colorMode "system",
+  // density "cozy", radius "soft" — the SAME values cd-tokens.css already ships.
+  // So a tenant that authored NO theme override (and has no legacy brand hex)
+  // produces an "uncustomized" theme: we emit NO <style> and NO data attribute,
+  // leaving the cd-tokens.css emerald defaults intact -> the render is byte-
+  // identical to today. We only emit when the tenant actually customized something
+  // (any hex, a font, a fluid scale, or a non-default density/radius/colorMode).
+  const legacyBrandHex = isHex(branding?.brandPrimaryColor) ? branding!.brandPrimaryColor : undefined;
+  const t = uiConfig.theme;
+  const themeCfg: ThemeConfig = {
+    brandHex: t.brandHex ?? legacyBrandHex,
+    aiAccentHex: t.aiAccentHex,
+    secondaryHex: t.secondaryHex,
+    colorMode: t.colorMode,
+    density: t.density,
+    radius: t.radius,
+    fontFamily: t.fontFamily,
+    fontSrc: t.fontSrc,
+    fluid: t.fluid,
+  };
+  // Did the tenant customize anything? Compared against the contract defaults so a
+  // bare/unauthored config is treated as uncustomized -> no <style> emitted.
+  const themeCustomized =
+    !!themeCfg.brandHex ||
+    !!themeCfg.aiAccentHex ||
+    !!themeCfg.secondaryHex ||
+    !!themeCfg.fontFamily ||
+    !!themeCfg.fluid ||
+    t.colorMode !== "system" ||
+    t.density !== "cozy" ||
+    t.radius !== "soft";
   // Stable id for the lifetime of this shell mount; only used when theming.
   const scopeId = useState(() => `t${Math.random().toString(36).slice(2, 9)}`)[0];
   const brandCss = useMemo(
-    () => (brandHex ? buildBrandStyle(brandHex, scopeId) : null),
-    [brandHex, scopeId],
+    () => {
+      if (!themeCustomized) return null;
+      const css = buildThemeCss(themeCfg, `data-cd-brand="${scopeId}"`);
+      return css.length > 0 ? css : null;
+    },
+    // themeCfg fields are primitives/plain objects derived from uiConfig + branding;
+    // depend on uiConfig.theme + the legacy hex + scopeId so the CSS rebuilds when
+    // the resolved theme changes.
+    [themeCustomized, uiConfig.theme, legacyBrandHex, scopeId], // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  // C5 — breadcrumb title: a tenant route-title override (routes[key].title) wins
+  // for the ACTIVE route; otherwise the Shell derives the title from the (already
+  // copy/override-relabeled) nav item, byte-identical to today. routeTitle returns
+  // undefined for an unlisted route, so the prop is undefined for v1 -> no change.
+  const breadcrumbTitle = routeTitle(activeId);
 
   return (
     <div className="cd-scope" data-dense={dataDense} data-cd-brand={brandCss ? scopeId : undefined} style={{ height: "calc(100dvh / 0.9)", overflow: "hidden", background: "transparent" }}>
@@ -387,12 +478,34 @@ export function CdShell({ children }: { children: React.ReactNode }) {
         notifications={[]}
         planUsage={planUsage}
         activeId={activeId}
+        breadcrumbTitle={breadcrumbTitle}
         hasUnreadNotifs={false}
         logoLight={branding?.logoUrl ?? "/assets/logo-light.png"}
         logoDark={branding?.logoUrl ?? "/assets/logo-dark.png"}
         onNavigate={onNavigate}
         onThemeChange={onThemeChange}
         onSignOut={onSignOut}
+        // D6 — WF-B slot seams at the closed shell positions. Each <Slot> resolves
+        // its bindings (defaults + the tenant's resolved UiConfig, gated by the same
+        // role/plan/module filter) and renders them lazily; with no bindings it is
+        // null, so an untouched tenant's chrome is byte-identical. ctx hands each
+        // bound block the live workspace + signed-in user + active route.
+        headerRight={
+          <Slot
+            id="shell.header.right"
+            config={uiConfig}
+            route="shell"
+            ctx={{ workspace: { id: workspace.id, name: workspace.name, plan: workspace.plan, role }, user: shellUser, activeRoute: activeId }}
+          />
+        }
+        navFooter={
+          <Slot
+            id="shell.nav.footer"
+            config={uiConfig}
+            route="shell"
+            ctx={{ workspace: { id: workspace.id, name: workspace.name, plan: workspace.plan, role }, user: shellUser, activeRoute: activeId }}
+          />
+        }
       >
         {fullBleed ? (
           <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>{children}</div>

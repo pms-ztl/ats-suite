@@ -47,6 +47,23 @@ async function main() {
     ready = true;
   });
 
+  // WF-I / I5 — keep-alive + header timeouts. Under a real apply spike the
+  // gateway fronts thousands of short-lived inbound connections (often through a
+  // tunnel / load balancer that pools upstream sockets). Node's default
+  // keepAliveTimeout is 5s, which races the LB's own keep-alive and produces
+  // spurious ECONNRESET / 502s ("socket hang up") at the proxy edge. Raise it
+  // above the typical 60s LB idle so the LB, not us, closes idle sockets, and
+  // set headersTimeout strictly greater so a slow-but-legit client is not cut
+  // mid-headers. Both are env-tunable for the load test without a code change.
+  //   GATEWAY_KEEPALIVE_TIMEOUT_MS  default 65000 (LB idle + headroom)
+  //   GATEWAY_HEADERS_TIMEOUT_MS    default 66000 (must exceed keepAliveTimeout)
+  server.keepAliveTimeout = Number(process.env["GATEWAY_KEEPALIVE_TIMEOUT_MS"] ?? 65_000);
+  server.headersTimeout = Number(process.env["GATEWAY_HEADERS_TIMEOUT_MS"] ?? 66_000);
+  // Cap concurrent sockets defensively so a flood cannot exhaust file
+  // descriptors before the async pipeline absorbs the load (0 = unlimited).
+  const maxConns = Number(process.env["GATEWAY_MAX_CONNECTIONS"] ?? 0);
+  if (maxConns > 0) server.maxConnections = maxConns;
+
   registerGracefulShutdown({
     logger,
     server,

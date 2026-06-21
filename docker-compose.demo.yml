@@ -113,6 +113,37 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+    # WF-I / I6 - ALWAYS-ON Postgres tuning for the apply-spike load test. SAFE on
+    # the single host: it only raises ceilings so a burst is admitted instead of
+    # stalling on connections or WAL pressure. 14 services x a small Prisma pool
+    # (connection_limit=8 each, set on the *_DATABASE_URL below) plus the migrator/
+    # seeder/psql tooling can momentarily need well over the stock 100 connections;
+    # max_connections=400 gives generous headroom. The bigger WAL buffers + larger
+    # max_wal_size keep a write burst (a flood of Candidate/Application inserts) from
+    # forcing frequent checkpoints that would stall the spike. shared_buffers /
+    # work_mem are modest bumps that fit a typical 8-16GB demo host; tune down via a
+    # local override if the host is smaller. These are command flags (no config file
+    # to mount), applied on every start; nothing here changes service wiring.
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=400"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "wal_buffers=32MB"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "effective_cache_size=2GB"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/00-create-dbs.sql:ro
@@ -162,6 +193,7 @@ services:
       /bin/sh -c "
       until mc alias set local http://minio:9000 minioadmin minioadmin; do echo waiting-for-minio; sleep 2; done;
       mc mb --ignore-existing local/resumes;
+      mc mb --ignore-existing local/ats-incoming;
       echo minio-bucket-ready;
       "
 
@@ -228,10 +260,61 @@ services:
   job-service:
     <<: *svc-defaults
     build: { <<: *svc-build, args: { SERVICE: job-service } }
+    # WF-I / I1 — overrides the *svc-defaults depends_on (YAML replaces, not deep-
+    # merges, a sibling depends_on) to ADD minio-setup so the incoming bucket
+    # exists before the presigned-upload-ticket route can hand out tickets. All
+    # four base conditions are re-listed verbatim so nothing is lost. The route
+    # fails soft to 503 anyway (frontend falls back to multipart apply), so this
+    # is a readiness nicety, not a hard correctness dependency.
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      nats: { condition: service_started }
+      migrator: { condition: service_completed_successfully }
+      minio-setup: { condition: service_completed_successfully }
     environment:
       <<: *svc-env
       PORT: "4004"
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db
+      # WF-I / I6 - SMALL, BOUNDED Prisma pool on the HOTTEST service under an apply
+      # spike. job-service is the apply data path; without a cap each replica's
+      # Prisma pool would open as many connections as it wants and a burst could
+      # exhaust Postgres (even at max_connections=400) before the async pipeline
+      # absorbs the writes. connection_limit=8 keeps job-service's footprint tiny and
+      # predictable (the heavy work is offloaded to the apply-ingest BullMQ worker +
+      # candidate-service, NOT held open on a job-service DB connection); pool_timeout
+      # makes a momentarily-saturated pool wait briefly rather than error instantly.
+      # NOTE: job-service's prisma schema reads env("JOB_DATABASE_URL") (NOT the
+      # generic DATABASE_URL), and the *svc-env anchor sets an UNtuned JOB_DATABASE_URL
+      # that every service inherits; a sibling key here OVERRIDES the anchor for THIS
+      # service only, so the connection_limit must be set on JOB_DATABASE_URL. DATABASE_URL
+      # is kept in sync for the per-service convention. The RLS app client reads
+      # JOB_APP_DATABASE_URL, which is unset in the demo (RLS client falls back to admin),
+      # so JOB_DATABASE_URL is the single pool that matters here. Tune via JOB_DB_CONNECTION_LIMIT.
+      JOB_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db?connection_limit=${JOB_DB_CONNECTION_LIMIT:-8}&pool_timeout=20
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/job_db?connection_limit=${JOB_DB_CONNECTION_LIMIT:-8}&pool_timeout=20
+      # WF-I / I1 — incoming object storage for the apply fast path. The browser
+      # uploads the resume DIRECTLY to this bucket via a presigned POST ticket
+      # (GET /api/public/jobs/:slug/upload-ticket). Same MinIO instance + creds as
+      # resume-service, but a SEPARATE incoming bucket. When these are unset the
+      # ticket route returns 503 and the frontend falls back to multipart apply.
+      S3_ENDPOINT: http://minio:9000
+      S3_INCOMING_BUCKET: ats-incoming
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+      # WF-I / I6 - OPTIONAL ClamAV scan, run by the apply-ingest worker (in THIS
+      # service) before a fast-path resume enters the parse pipeline. OFF BY DEFAULT:
+      # CLAMAV_ENABLED unset => the worker skips the scan and the pipeline works with
+      # no sidecar. To enable: start the profiled `clamav` service (see below) AND set
+      # CLAMAV_ENABLED=true in .env. CLAMAV_HOST defaults to the sidecar's service name.
+      # CLAMAV_FAIL_OPEN is OFF by default (fail-CLOSED): when scanning is enabled, a
+      # clamd outage is RETRIED by the worker rather than silently passing an unscanned
+      # upload; set CLAMAV_FAIL_OPEN=true only if a scanner outage should not block applies.
+      CLAMAV_ENABLED: ${CLAMAV_ENABLED:-}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_FAIL_OPEN: ${CLAMAV_FAIL_OPEN:-}
 
   candidate-service:
     <<: *svc-defaults
@@ -359,6 +442,73 @@ services:
     environment:
       # Untrusted code must not get a network. Hard off until WF7.
       ALLOW_ENABLE_NETWORK: "false"
+
+  # ── WF-I / I6 - OPTIONAL ClamAV virus-scan sidecar (OFF BY DEFAULT) ─────────
+  # NOT started by a plain `docker compose -f docker-compose.demo.yml up`: it is
+  # behind the compose profile `clamav`, so the demo stack is unaffected. The app
+  # works WITHOUT it (the job-service apply-ingest worker's scan is a no-op + clean
+  # unless CLAMAV_ENABLED is set). Enable for a production/perf run with:
+  #     CLAMAV_ENABLED=true docker compose -f docker-compose.demo.yml --profile clamav up -d
+  # First boot downloads the virus DB (freshclam, ~200-400MB) and can take a few
+  # minutes; the healthcheck waits for clamd to accept connections on 3310.
+  clamav:
+    image: clamav/clamav:stable
+    profiles: ["clamav"]
+    restart: unless-stopped
+    networks: [ats_net]
+    # No host port - only the in-network services (job-service) reach clamd.
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+  # ── WF-I / I6 - OPTIONAL PgBouncer connection pooler (OFF BY DEFAULT) ────────
+  # NOT started by default (compose profile `pgbouncer`). The stack connects each
+  # service DIRECTLY to Postgres by default; PgBouncer is an opt-in throughput knob
+  # for a perf run that wants transaction-pooled connections in front of Postgres.
+  #
+  #   ENABLE: docker compose -f docker-compose.demo.yml --profile pgbouncer up -d pgbouncer
+  #   THEN point a service at it by overriding its DATABASE_URL host:port to
+  #        pgbouncer:6432  (e.g. in a local docker-compose.override.yml), NOT here:
+  #        the default wiring must keep talking to postgres:5432 so a plain `up` is
+  #        unaffected.
+  #
+  # ── REQUIRED AUDIT BEFORE USE WITH RLS (transaction pooling) ────────────────
+  #   This stack scopes RLS via `SET app.current_tenant_id` per request. In
+  #   PgBouncer TRANSACTION pooling mode a plain `SET` (session-level) leaks across
+  #   pooled clients and BREAKS tenant isolation. Before routing any RLS service
+  #   through PgBouncer in transaction mode you MUST confirm the tenant scoping uses
+  #   `SET LOCAL ...` inside an explicit transaction (the @cdc-ats/common rlsExtend /
+  #   tenantContext path) so the setting is transaction-scoped and reset on COMMIT.
+  #   If that audit has not been done, use SESSION pooling (pool_mode=session): the
+  #   safe default below, which preserves per-connection session state and is still a
+  #   win for connection churn. Do NOT switch a service to transaction mode without
+  #   the SET-LOCAL audit.
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    profiles: ["pgbouncer"]
+    restart: unless-stopped
+    networks: [ats_net]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      # SESSION pooling is the SAFE default (preserves SET app.current_tenant_id per
+      # connection). Switch to "transaction" ONLY after the SET-LOCAL RLS audit above.
+      POOL_MODE: session
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "25"
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ── Frontend ───────────────────────────────────────────────────────────────
   frontend:

@@ -6,9 +6,12 @@
 // Data via props. Notes are locally editable (optimistic) and report via onAddNote.
 import * as React from "react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "../icon";
 import { Btn, StatusBadge } from "../aurora-ui";
 import { Pill, ScoreRing, Confidence, Timeline } from "../aurora-kit";
+import { Slot } from "@/lib/registry/slots";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 import type { CandidateProfileData, CandStage, TimelineItem } from "../types";
 
 const pStCol = (s: string) => (s === "pass" ? "var(--ok)" : s === "review" ? "var(--warn)" : "var(--danger)");
@@ -50,6 +53,23 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
   const name = blind ? "Candidate " + (c.id || "C1").toUpperCase() : c.name;
   const stageLabel = stages.find((x) => x.id === c.stage)?.label || "Screening";
 
+  // D6 / WF-B slot seams — the resolved per-tenant UiConfig (fail-soft all-enabled
+  // when unauthored) + the live route key drive which custom blocks mount. The
+  // typed `slotCtx` hands each bound block the REAL candidate entity (no fabricated
+  // fields, identity respects blind mode). An empty slot renders nothing, so the
+  // screen is byte-identical until a tenant binds something.
+  const { config: uiConfig } = useUiConfig();
+  const pathname = usePathname() ?? "";
+  const slotCtx = {
+    candidateId: c.id,
+    candidate: c,
+    stage: c.stage,
+    stageLabel,
+    verdict: s,
+    blind,
+    route: pathname,
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 26px", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
@@ -75,6 +95,9 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
       )}
 
       <div style={{ flex: 1, overflowY: "auto", padding: "22px 26px 50px" }}>
+        {/* D6 — candidate.detail.before: a custom block at the top of the candidate
+            detail content, before the identity header. Empty -> nothing. */}
+        <Slot id="candidate.detail.before" config={uiConfig} route="candidate.detail" ctx={slotCtx} />
         <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 22, flexWrap: "wrap" }}>
           <span className="mono" style={{ width: 60, height: 60, borderRadius: "var(--r-lg)", flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 20, background: blind ? "var(--surface-3)" : "linear-gradient(135deg, var(--brand), var(--ai))", color: blind ? "var(--ink-3)" : "white" }}>{blind ? "•" : c.ini}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -175,6 +198,9 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            {/* D6 — candidate.detail.sidebar: a custom block in the candidate detail
+                right rail, above the Snapshot card. Empty -> nothing. */}
+            <Slot id="candidate.detail.sidebar" config={uiConfig} route="candidate.detail" ctx={slotCtx} />
             {!blind && (
               <Zone title="Snapshot" icon="users">
                 {([["Stage", stageLabel], ["Requisition", c.reqId], ["Source", c.source], ["Applied", applied], ["Email", email], ["Phone", phone]] as [string, string][]).map(([k, v]) => (

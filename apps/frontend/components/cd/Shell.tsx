@@ -325,6 +325,16 @@ export interface ShellProps {
   onThemeChange?: (t: string) => void;
   onSignOut?: () => void;
   onShortcuts?: () => void;
+  // D6 / WF-D — optional render-prop seams the adapter (cd-shell) fills with the
+  // WF-B <Slot/> at the closed-union shell positions. ADDITIVE + FAIL-SOFT: when a
+  // prop is undefined nothing is rendered, so the chrome is byte-identical to today.
+  //   headerRight — mounts at the app header's trailing edge (slot shell.header.right),
+  //                 just before the notifications bell.
+  //   navFooter   — mounts below the primary navigation, above the plan-usage card
+  //                 (slot shell.nav.footer). Hidden on a collapsed rail so it never
+  //                 overflows the icon-only sidebar.
+  headerRight?: React.ReactNode;
+  navFooter?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -332,7 +342,8 @@ export function Shell(props: ShellProps) {
   const {
     user, workspace, workspaces = [workspace], roles, nav, commands = [], notifications = [],
     planUsage, breadcrumbTitle, hasUnreadNotifs = true, logoLight, logoDark,
-    onNavigate, onSwitchWorkspace, onSetRole, onThemeChange, onSignOut, onShortcuts, children,
+    onNavigate, onSwitchWorkspace, onSetRole, onThemeChange, onSignOut, onShortcuts,
+    headerRight, navFooter, children,
   } = props;
 
   const [theme, toggleTheme] = useTheme(onThemeChange);
@@ -433,6 +444,11 @@ export function Shell(props: ShellProps) {
           </div>
         ))}
       </nav>
+      {/* D6 — shell.nav.footer seam: a custom block below the primary nav. Only on
+          the expanded sidebar (an icon-only rail has no room); undefined -> nothing. */}
+      {!(collapsed && !mobile) && navFooter && (
+        <div style={{ padding: "0 10px 6px" }}>{navFooter}</div>
+      )}
       {!(collapsed && !mobile) && planUsage && (
         <div style={{ padding: 12, borderTop: "1px solid var(--line)" }}>
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "11px 12px" }}>
@@ -474,6 +490,9 @@ export function Shell(props: ShellProps) {
               {!mobile && <><span style={{ flex: 1, textAlign: "left", fontSize: "var(--fs-sm)" }}>Search or run a command…</span>
                 <kbd className="mono" style={{ fontSize: 11, color: "var(--ink-3)", background: "var(--surface-2)", border: "1px solid var(--line-2)", borderRadius: 6, padding: "2px 6px", fontWeight: 600 }}>⌘K</kbd></>}
             </button>
+            {/* D6 — shell.header.right seam: a custom block on the header's trailing
+                edge, before the bell. undefined -> nothing (byte-identical chrome). */}
+            {headerRight && <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{headerRight}</div>}
             <div style={{ position: "relative" }}>
               <button onClick={() => setNotif((n) => !n)} title="Notifications" style={{ width: 36, height: 36, borderRadius: "var(--r)", border: "1px solid", borderColor: notif ? "var(--line-2)" : "transparent", background: notif ? "var(--surface-2)" : "transparent", color: "var(--ink-2)", display: "grid", placeItems: "center", cursor: "pointer", position: "relative" }}>
                 <Icon name="bell" size={18} />

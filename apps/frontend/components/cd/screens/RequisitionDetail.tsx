@@ -5,9 +5,12 @@
 // rounds and form tabs render slots the app supplies (RoundsConfig / FormBuilder).
 import * as React from "react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "../icon";
 import { Btn } from "../aurora-ui";
 import { Pill, CountUp, Timeline } from "../aurora-kit";
+import { Slot } from "@/lib/registry/slots";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 import type { ReqDetailData, ReqStatusMeta } from "../types";
 
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
@@ -63,6 +66,13 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
   const m = statusMeta;
   const tabs: [string, string, IconName][] = [["overview", "Overview", "fileText"], ["pipeline", "Pipeline", "radar"], ["rounds", "Interview rounds", "calendar"], ["form", "Application form", "listChecks"], ["activity", "Activity", "bolt"]];
 
+  // D6 / WF-B slot seam — resolved per-tenant UiConfig (fail-soft) + live route key
+  // for the requisition.detail.actions cluster. ctx hands a bound action block the
+  // REAL requisition entity (id/title/status). Empty -> nothing (byte-identical).
+  const { config: uiConfig } = useUiConfig();
+  const pathname = usePathname() ?? "";
+  const slotCtx = { requisitionId: d.id, requisition: d, status: d.status, title: d.title, route: pathname };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ padding: "16px 30px 0" }}>
@@ -78,10 +88,13 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
               <span className="mono" style={{ color: "var(--brand)", fontWeight: 600 }}>₹{d.min / 1000}k to ₹{d.max / 1000}k</span>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 9 }}>
+          <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
             <Btn variant="soft" icon="copy" onClick={onEdit}>Edit</Btn>
             <Btn variant="soft" icon="users" onClick={onCandidates}>View candidates</Btn>
             <Btn variant="primary" icon="arrowUpRight" onClick={onPost}>Post job</Btn>
+            {/* D6 — requisition.detail.actions: custom action(s) appended to the
+                cluster, after Post job. Empty -> nothing. */}
+            <Slot id="requisition.detail.actions" config={uiConfig} route="requisition.detail" ctx={slotCtx} />
           </div>
         </div>
         <div style={{ display: "flex", gap: 2, marginTop: 16, borderBottom: "1px solid var(--line)" }}>

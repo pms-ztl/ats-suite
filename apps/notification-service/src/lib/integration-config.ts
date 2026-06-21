@@ -41,6 +41,21 @@ export const INTEGRATION_KINDS = [
   "hackerearth",
   "imocha",
   "testgorilla",
+  // WF-E hiring-platform / job-board adapters (DISTINCT axis from the OA
+  // assessment providers above — separate registry/module). Additive: existing
+  // kinds keep working unchanged.
+  "indeed",
+  "linkedin",
+  "ziprecruiter",
+  "naukri",
+  "seek",
+  "dice",
+  "wellfound",
+  "google-jobs",
+  "adzuna",
+  "jooble",
+  "foundit",
+  "shine",
 ] as const;
 
 export type IntegrationKind = (typeof INTEGRATION_KINDS)[number];
@@ -58,6 +73,23 @@ const SECRET_FIELDS: Record<string, readonly string[]> = {
   hackerearth: ["apiKey", "clientSecret", "webhookSecret"],
   imocha: ["apiKey", "webhookSecret"],
   testgorilla: ["apiKey", "webhookSecret"],
+  // WF-E hiring-platform / job-board adapters. Secret fields mirror each
+  // board's real auth shape (OAuth client secret, API token, or API key) plus
+  // an optional webhookSecret used to verify inbound apply/status callbacks.
+  // Non-secret routing config (clientId, employerId, subdomain, locale, ...)
+  // is intentionally NOT listed so it passes through to the client.
+  indeed: ["clientSecret", "apiToken", "webhookSecret"],
+  linkedin: ["clientSecret", "accessToken", "webhookSecret"],
+  ziprecruiter: ["apiKey", "webhookSecret"],
+  naukri: ["apiKey", "apiToken", "webhookSecret"],
+  seek: ["clientSecret", "apiToken", "webhookSecret"],
+  dice: ["apiKey", "webhookSecret"],
+  wellfound: ["apiToken", "webhookSecret"],
+  "google-jobs": ["apiKey", "webhookSecret"],
+  adzuna: ["apiKey", "appKey", "webhookSecret"],
+  jooble: ["apiKey", "webhookSecret"],
+  foundit: ["apiKey", "apiToken", "webhookSecret"],
+  shine: ["apiKey", "webhookSecret"],
 };
 
 /** True when the kind is one of the assessment-provider kinds. */
@@ -68,6 +100,32 @@ export function isAssessmentKind(kind: string): boolean {
     kind === "hackerearth" ||
     kind === "imocha" ||
     kind === "testgorilla"
+  );
+}
+
+/**
+ * True when the kind is one of the WF-E hiring-platform / job-board adapter
+ * kinds. Mirrors {@link isAssessmentKind} so AES-GCM sealing on write and
+ * secret redaction on read apply automatically to these kinds via the same
+ * {@link SECRET_FIELDS} / {@link sealConfig} / {@link redactConfig} path.
+ *
+ * This is a DISTINCT axis from the assessment-provider kinds: the two never
+ * overlap and are routed by separate registries/modules downstream.
+ */
+export function isHiringPlatformKind(kind: string): boolean {
+  return (
+    kind === "indeed" ||
+    kind === "linkedin" ||
+    kind === "ziprecruiter" ||
+    kind === "naukri" ||
+    kind === "seek" ||
+    kind === "dice" ||
+    kind === "wellfound" ||
+    kind === "google-jobs" ||
+    kind === "adzuna" ||
+    kind === "jooble" ||
+    kind === "foundit" ||
+    kind === "shine"
   );
 }
 

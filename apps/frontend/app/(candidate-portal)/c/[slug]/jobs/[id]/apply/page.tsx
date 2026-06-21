@@ -27,8 +27,16 @@
 // failure we show a friendly inline notice. No fabricated confirmation.
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { buildJobPostingJsonLd, jsonLdScriptText } from "@/lib/job-jsonld";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// Public site origin for the canonical (tenant-scoped) apply URL embedded in the
+// JSON-LD. Strips the trailing /api off the API base, else the explicit site
+// URL, else the browser origin at render time.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "") : "") ??
+  "";
 
 /* ---- raw() local: best-effort fetch against the API, JSON or FormData ---- */
 async function raw(
@@ -211,6 +219,10 @@ export default function ApplyPage() {
   const { slug, id } = useParams<{ slug: string; id: string }>();
 
   const [job, setJob] = useState<JobSummary>(EMPTY_JOB);
+  // The raw public-job payload, kept verbatim ONLY to build the schema.org
+  // JobPosting JSON-LD below. Null until a real, published job loads, so the
+  // structured-data <script> is emitted only for a genuine published role.
+  const [rawJob, setRawJob] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [done, setDone] = useState(false);
@@ -237,7 +249,7 @@ export default function ApplyPage() {
     (async () => {
       const res = await raw([`/c/${slug}/jobs/${id}`, `/public/jobs/${id}`]);
       if (cancelled) return;
-      if (res?.ok && res.data) setJob(normalizeJob(res.data));
+      if (res?.ok && res.data) { setJob(normalizeJob(res.data)); setRawJob(res.data); }
       else setLoadFailed(true);
       setLoading(false);
     })();
@@ -312,8 +324,28 @@ export default function ApplyPage() {
     );
   }
 
+  // schema.org JobPosting JSON-LD for Google for Jobs. Built from the REAL
+  // public job payload (omits any field the job does not actually carry) and
+  // emitted ONLY when a genuine published job loaded. The canonical apply URL is
+  // this tenant-scoped page (/c/{tenant}/jobs/{slug}/apply).
+  const siteOrigin = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  // No org NAME is passed: this page does not resolve a real tenant display
+  // name, and the slug is not one - so hiringOrganization is emitted without a
+  // fabricated company name (honest absence).
+  const jobLd = rawJob && siteOrigin && id
+    ? buildJobPostingJsonLd(rawJob, {
+        appUrl: siteOrigin,
+        slug: String(id),
+        applyPath: `/c/${slug}/jobs/${encodeURIComponent(String(id))}/apply`,
+      })
+    : null;
+  const jobLdText = jsonLdScriptText(jobLd);
+
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+      {jobLdText && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobLdText }} />
+      )}
       <a href={jobsHref} style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
 
       {/* job header - only render facets the real job actually provides */}

@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "gen:surfaces": "tsx scripts/gen-surface-registry.ts",
+    "prebuild": "npm run gen:surfaces",
     "build": "next build && npm run postbuild:standalone",
     "postbuild:standalone": "rimraf .next/standalone/apps/frontend/.next/static .next/standalone/apps/frontend/public && shx cp -r .next/static .next/standalone/apps/frontend/.next/static && shx cp -r public .next/standalone/apps/frontend/public",
     "start": "next start",

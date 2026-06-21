@@ -363,6 +363,33 @@ export const MODULE_REGISTRY: ModuleManifest[] = [
     failMode: "closed",
   },
   {
+    // WF-E — the hiring-platform / job-board distribution axis. DISTINCT from
+    // oa-assessments (the assessment-provider axis): separate registries, modules,
+    // gateway mounts, workers, and NATS subjects. This module posts requisitions
+    // OUT to external job boards (LinkedIn, Indeed, etc.) and ingests applications
+    // back IN, whereas oa-assessments sends tests out and pulls results back.
+    key: "job-distribution",
+    name: "Job Distribution",
+    version: "1.0.0",
+    category: "hiring",
+    type: "feature",
+    requiresPlan: "PROFESSIONAL",
+    defaultEnabled: false,
+    dependencies: [],
+    capabilities: ["jobdist.post", "jobdist.ingest"],
+    permissions: ["jobdist:write"],
+    contributions: {
+      nav: [{ label: "Job Distribution", href: "/job-distribution", roles: ["admin", "recruiter"] }],
+      gatewayRoutes: ["/api/job-distribution", "/api/inbound-job-application"],
+      workers: ["board-post", "board-sync"],
+      natsSubjects: ["jobboard.application.received"],
+    },
+    // HARD (closed): billing-sensitive (PROFESSIONAL+ paid surface) carrying
+    // per-board credentials and inbound applicant PII. A billing outage must NOT
+    // silently grant access to the distribution platform, so it fails CLOSED.
+    failMode: "closed",
+  },
+  {
     key: "custom-dashboards",
     name: "Customizable Dashboards",
     version: "1.0.0",
@@ -404,6 +431,32 @@ export const MODULE_REGISTRY: ModuleManifest[] = [
     // branding override, iframe embed). A billing outage must NOT silently grant
     // access to the white-label embed surface, so it fails CLOSED.
     failMode: "closed",
+  },
+  {
+    // WF-C/WF-D — developer-customizable UI. Lets an ENTERPRISE tenant override
+    // the dashboard theme tokens, the per-role default layout, and which surface
+    // slots render, served from /api/me/ui-config. DISTINCT from custom-dashboards
+    // (per-user widget layout) and white-label-embed (iframe/scoped-token embed):
+    // this governs the in-app shell theme + slot composition for the whole tenant.
+    key: "ui-customization",
+    name: "UI Customization",
+    version: "1.0.0",
+    category: "platform",
+    type: "capability",
+    requiresPlan: "ENTERPRISE",
+    defaultEnabled: false,
+    dependencies: [],
+    capabilities: ["ui.theme", "ui.layout", "ui.slots"],
+    permissions: ["ui:customize"],
+    contributions: {
+      gatewayRoutes: ["/api/me/ui-config"],
+    },
+    // SOFT (open): a UI personalization capability that only restyles + recomposes
+    // surfaces the user already has access to (theme tokens, layout, slot visibility);
+    // it grants no data access and is not governance. When billing is unreachable the
+    // resolver/provider falls back to the all-enabled default and the shell renders
+    // byte-identical to today, so it fails OPEN.
+    failMode: "open",
   },
 ];
 

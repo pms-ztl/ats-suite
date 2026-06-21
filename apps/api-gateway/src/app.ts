@@ -11,11 +11,13 @@
  * Phase 4 adds notification.
  */
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import http from "node:http";
+import https from "node:https";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
+import rateLimit, { type Store } from "express-rate-limit";
 import {
   createHealthRouter,
   createMetrics,
@@ -63,9 +65,85 @@ if (process.env["REDIS_URL"]) {
   }
 }
 
+// WF-I / I5 — shared keep-alive HTTP agents for the proxy chain. Without these,
+// http-proxy-middleware opens a fresh TCP (and TLS) connection per proxied
+// request; under an apply spike that means thousands of handshakes/sec to
+// job-service + resume-service, exhausting ephemeral ports and adding latency.
+// A bounded pool of reused sockets is the single biggest throughput win for the
+// public-apply data path. maxSockets is per-host, so it caps fan-out to any one
+// backend; maxFreeSockets keeps a warm pool between bursts. All env-tunable.
+const KEEPALIVE_MAX_SOCKETS = Number(process.env["GATEWAY_AGENT_MAX_SOCKETS"] ?? 512);
+const KEEPALIVE_MAX_FREE = Number(process.env["GATEWAY_AGENT_MAX_FREE_SOCKETS"] ?? 128);
+const httpKeepAliveAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: KEEPALIVE_MAX_SOCKETS,
+  maxFreeSockets: KEEPALIVE_MAX_FREE,
+  timeout: Number(process.env["GATEWAY_AGENT_SOCKET_TIMEOUT_MS"] ?? 60_000),
+});
+const httpsKeepAliveAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: KEEPALIVE_MAX_SOCKETS,
+  maxFreeSockets: KEEPALIVE_MAX_FREE,
+  timeout: Number(process.env["GATEWAY_AGENT_SOCKET_TIMEOUT_MS"] ?? 60_000),
+});
+/** Pick the right keep-alive agent for a backend target URL (http vs https). */
+function agentFor(target: string): http.Agent | https.Agent {
+  return target.startsWith("https:") ? httpsKeepAliveAgent : httpKeepAliveAgent;
+}
+// Inter-service-call timeout (gateway -> backend), aligned with the
+// resume-service 3s budget so a stuck backend frees the socket fast under load.
+export const INTER_SERVICE_TIMEOUT_MS = Number(process.env["GATEWAY_INTER_SERVICE_TIMEOUT_MS"] ?? 3000);
+
+// WF-I / I5 — optional shared Redis store for express-rate-limit. Resolved ONCE
+// at module load (top-level await, NodeNext ESM) so createApp stays synchronous.
+// `rate-limit-redis` is NOT yet declared in apps/api-gateway/package.json, so the
+// import is best-effort: when the package (or Redis) is absent we fall back to
+// the default in-memory store. To make the limiter ceilings cluster-correct
+// (counted across replicas, not per-process), add `rate-limit-redis` to the
+// gateway's dependencies — the wiring below already consumes it.
+let RateLimitRedisStore: (new (opts: any) => Store) | null = null;
+if (process.env["REDIS_URL"] && process.env["DISABLE_RATE_LIMIT"] !== "1") {
+  try {
+    // Indirect specifier (a variable, not a string literal) so tsc does NOT try
+    // to statically resolve a package that isn't installed yet — the dynamic
+    // import is best-effort and ERR_MODULE_NOT_FOUND is swallowed. This compiles
+    // whether or not `rate-limit-redis` is present in node_modules.
+    const spec = "rate-limit-redis";
+    const mod: any = await import(spec).catch(() => null);
+    RateLimitRedisStore = (mod?.default ?? mod?.RedisStore ?? null) as
+      | (new (opts: any) => Store)
+      | null;
+  } catch {
+    RateLimitRedisStore = null;
+  }
+}
+
 export function createApp(logger: Logger): Express {
   const app = express();
   const metrics = createMetrics("api-gateway");
+
+  // WF-I / I5 — THE #1 THROUGHPUT BLOCKER FIX. Trust the proxy/tunnel in front
+  // of the gateway so Express derives req.ip from X-Forwarded-For instead of the
+  // single upstream socket address. Without this, EVERY request (from every real
+  // client) shares ONE req.ip — so the per-IP rate limiters below collapse the
+  // whole apply spike into a SINGLE bucket and 429 instantly under load. Must be
+  // set BEFORE any rate-limit middleware (express-rate-limit reads req.ip at
+  // request time, but trust-proxy is an app setting that has to be in place when
+  // the request is parsed). Configurable via TRUST_PROXY:
+  //   unset / "true"  -> trust all hops (the default for a tunneled single-host
+  //                      demo where the immediate peer is always our own proxy)
+  //   "false"         -> trust none (direct-exposure deployments)
+  //   a number ("1")  -> trust exactly N hops (LB chains)
+  //   a CSV of CIDRs  -> trust only those proxy subnets
+  const trustProxyEnv = process.env["TRUST_PROXY"];
+  let trustProxy: boolean | number | string[] = true;
+  if (trustProxyEnv !== undefined) {
+    if (trustProxyEnv === "true") trustProxy = true;
+    else if (trustProxyEnv === "false") trustProxy = false;
+    else if (/^\d+$/.test(trustProxyEnv.trim())) trustProxy = Number(trustProxyEnv.trim());
+    else trustProxy = trustProxyEnv.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  app.set("trust proxy", trustProxy);
 
   app.use(requestId());
   // Per-path timeout override — MUST run BEFORE the global requestTimeout
@@ -116,26 +194,96 @@ export function createApp(logger: Logger): Express {
   // Rate limits are env-configurable so a dedicated load-test environment can
   // measure true capacity. DISABLE_RATE_LIMIT=1 turns them off entirely (load
   // tests / internal benchmarks only — NEVER in a public prod env). Defaults
-  // are unchanged, so production behavior is identical unless explicitly set.
+  // keep production behavior intact unless explicitly raised.
   const rlDisabled = process.env["DISABLE_RATE_LIMIT"] === "1";
 
-  // Strict rate limit on /api/auth to slow credential stuffing
-  const authLimiter = rateLimit({
+  // WF-I / I5 — shared Redis store so the limiter ceilings are correct ACROSS
+  // replicas (an in-memory store counts per-process, so N replicas silently
+  // multiply the effective limit by N). Uses the module-resolved optional
+  // `rate-limit-redis` store when present + Redis is connected; otherwise falls
+  // back to the default in-memory store (per-process). Declare `rate-limit-redis`
+  // in apps/api-gateway/package.json to make ceilings cluster-correct.
+  let redisStoreFactory: (() => Store) | null = null;
+  if (redis && !rlDisabled && RateLimitRedisStore) {
+    const RedisStoreCtor = RateLimitRedisStore;
+    redisStoreFactory = () =>
+      new RedisStoreCtor({
+        // ioredis: forward the limiter's commands to the shared client.
+        sendCommand: (...args: string[]) => (redis as Redis).call(...(args as [string, ...string[]])),
+        prefix: "rl:gw:",
+      });
+    logger.info("rate limiters using shared Redis store (cluster-correct)");
+  } else if (!rlDisabled) {
+    logger.warn("rate limiters using in-memory store (per-process) — declare rate-limit-redis for cluster-correct ceilings");
+  }
+  const withStore = <T extends Record<string, unknown>>(cfg: T): T =>
+    redisStoreFactory ? ({ ...cfg, store: redisStoreFactory() } as T) : cfg;
+
+  // Strict rate limit on /api/auth to slow credential stuffing. Per-IP (real
+  // client IP now that trust-proxy is set above).
+  // NOTE on `validate: false`: trust-proxy is set deliberately above, so we
+  // silence express-rate-limit v7's permissive-trust-proxy startup validation
+  // (which would otherwise log ERR_ERL_PERMISSIVE_TRUST_PROXY and, with a custom
+  // keyGenerator, the IPv6 subnet warning). The trust boundary is owned by the
+  // TRUST_PROXY env knob, not by the limiter's heuristic check.
+  const authLimiter = rateLimit(withStore({
     windowMs: 15 * 60 * 1000,
     max: Number(process.env["AUTH_RATE_LIMIT_MAX"] ?? 20),
     standardHeaders: true,
     legacyHeaders: false,
+    validate: false,
     skip: () => rlDisabled,
     message: { success: false, error: { code: "RATE_LIMITED", message: "Too many auth attempts" } },
-  });
-  const generalLimiter = rateLimit({
+  }));
+  // Global ceiling — raised WELL above legit peak so a genuine apply spike (the
+  // async pipeline absorbs the writes downstream) is admitted rather than 429'd
+  // at the edge. With trust-proxy fixed this is now a real per-IP limit, so the
+  // ceiling protects against a single hostile source without throttling a true
+  // multi-thousand-client burst. Default bumped from 500 -> 5000/15min/IP; still
+  // env-overridable and fully disabled by DISABLE_RATE_LIMIT=1.
+  const generalLimiter = rateLimit(withStore({
     windowMs: 15 * 60 * 1000,
-    max: Number(process.env["GATEWAY_RATE_LIMIT_MAX"] ?? 500),
+    max: Number(process.env["GATEWAY_RATE_LIMIT_MAX"] ?? 5000),
     standardHeaders: true,
     legacyHeaders: false,
+    validate: false,
     skip: () => rlDisabled,
-  });
+  }));
   app.use(generalLimiter);
+
+  // WF-I / I5 — public-apply burst control. A token-bucket-shaped limiter keyed
+  // by IP + email + job slug: an individual applicant may legitimately retry a
+  // few times (burst ~5) and the bucket refills ~1/s, but a single source cannot
+  // hammer one job. This is INTENTIONALLY narrow (only the public apply POSTs) so
+  // the high global ceiling above can stay generous for the real spike while this
+  // stops a hot-loop abuser. Keyed below the global limiter so both apply.
+  //   PUBLIC_APPLY_BURST     default 5   (bucket capacity / window max)
+  //   PUBLIC_APPLY_WINDOW_MS default 5000 (~1 token/s refill at burst 5)
+  const applyBurst = Number(process.env["PUBLIC_APPLY_BURST"] ?? 5);
+  const applyWindowMs = Number(process.env["PUBLIC_APPLY_WINDOW_MS"] ?? 5000);
+  const publicApplyLimiter = rateLimit(withStore({
+    windowMs: applyWindowMs,
+    max: applyBurst,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: false,
+    skip: (req: Request) => rlDisabled || req.method !== "POST",
+    keyGenerator: (req: Request) => {
+      const ip = req.ip ?? "unknown";
+      // email lives in the multipart/JSON body which is NOT parsed on this raw
+      // proxy path, so key on the stable parts we have: IP + the job slug in the
+      // path. (Per-email keying would require parsing the body and consuming the
+      // upload stream, which must stay untouched for the proxy.)
+      const slug = (req.params as Record<string, string>)?.["slug"] ?? req.path;
+      return `apply:${ip}:${slug}`;
+    },
+    message: { success: false, error: { code: "RATE_LIMITED", message: "Too many applications from this source — slow down and retry shortly." } },
+  }));
+  // Mount on BOTH public apply shapes (slug apply + slug apply-custom) before the
+  // generic /api/public proxy. Method-skipped to POST so GET listings are never
+  // throttled by this bucket.
+  app.use("/api/public/jobs/:slug/apply", publicApplyLimiter);
+  app.use("/api/public/jobs/:slug/apply-custom", publicApplyLimiter);
 
   // Per-tenant rate limit — kicks in after the gateway has resolved a
   // tenant from JWT. Falls through silently when Redis is unavailable.
@@ -161,10 +309,22 @@ export function createApp(logger: Logger): Express {
   // the express mount path stripped by app.use). So mounting at /api/billing
   // with targetPrefix /internal/billing turns GET /api/billing/agents into
   // GET <billingUrl>/internal/billing/agents.
-  const forwardHeaders = (proxyTarget: string, targetPrefix: string) => {
+  // WF-I / I5 — `agent` (keep-alive socket pooling) is applied to EVERY proxy
+  // mount: it is a pure throughput win with no behavior change. `proxyTimeout` is
+  // OPT-IN per mount (default: none) — a blanket short timeout would break the
+  // legitimately-slow paths that flow through this same helper (multipart resume
+  // uploads on /api/resume, which already get a 300s request window, and the AI
+  // agent proxies like /api/jd-author that wait on multi-second LLM calls). So we
+  // do NOT impose the 3s inter-service budget on the generic forwarder; the
+  // gateway's own callService() carries that budget for the aggregator calls.
+  const forwardHeaders = (proxyTarget: string, targetPrefix: string, opts?: { proxyTimeoutMs?: number }) => {
     const proxy = createProxyMiddleware({
       target: proxyTarget,
       changeOrigin: true,
+      // Reuse pooled keep-alive sockets to the backend instead of a fresh
+      // TCP/TLS handshake per request (the throughput win on every write).
+      agent: agentFor(proxyTarget),
+      ...(opts?.proxyTimeoutMs ? { proxyTimeout: opts.proxyTimeoutMs } : {}),
       pathRewrite: (path) => `${targetPrefix}${path}`,
       logger,
       on: {
@@ -294,12 +454,42 @@ export function createApp(logger: Logger): Express {
     })
   );
 
+  // WF-E / E6 — inbound JOB-APPLICATION webhook ingress. PUBLIC + raw proxy: an
+  // external hiring platform / job board (Indeed, LinkedIn, ZipRecruiter, Naukri,
+  // ...) POSTs a candidate application here and carries NO JWT — the {provider}
+  // + {tenantId} in the PATH are the correlation handles and the vendor's HMAC
+  // signature (over the raw body, verified downstream against the per-board webhook
+  // secret) is the auth. Same posture as the inbound-assessment / Judge0 /
+  // inbound-email / twilio webhook proxies: NO gatewayAuth, NO X-Internal-Service
+  // stamp, and NO body parser (the raw bytes the vendor signed stream through
+  // untouched so the HMAC check matches; the path tenantId is NOT a trusted auth
+  // header). NOT module-gated: a vendor cannot send the tenant's job-distribution
+  // flag, and the downstream route safely no-ops an unknown/forged provider/tenant.
+  // The hiring-platform inbound axis is DISTINCT from the OA inbound-assessment axis.
+  //   /api/inbound-job-application/:provider/:tenantId
+  //      → job-service /internal/inbound-job-application/:provider/:tenantId
+  app.use(
+    "/api/inbound-job-application",
+    createProxyMiddleware({
+      target: jobUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/internal/inbound-job-application${path}`,
+      logger,
+    })
+  );
+
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
+  // WF-I / I5 — the public APPLY data path. Reuse pooled keep-alive sockets to
+  // job-service (the hottest backend under an apply spike). No aggressive
+  // proxyTimeout here: a multipart apply (resume upload) can legitimately run
+  // longer than the 3s inter-service budget, and the request itself is governed
+  // by the /api/resume 300s window + the per-IP apply burst limiter above.
   app.use(
     "/api/public",
     createProxyMiddleware({
       target: jobUrl,
       changeOrigin: true,
+      agent: agentFor(jobUrl),
       pathRewrite: (path) => `/public${path}`,
       logger,
     })
@@ -542,6 +732,46 @@ export function createApp(logger: Logger): Express {
   app.use("/api/me/preferences", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users/me/preferences"));
   app.use("/api/tenant/dashboards", gatewayAuth(), forwardHeaders(identityUrl, "/internal/users/tenant/dashboards"));
 
+  // WF-C/WF-D (C4+D4) — developer-customizable UI config surface for the caller
+  // tenant. Mirrors the /api/me/modules + /api/me/dashboards mounts: a plain
+  // forwardHeaders proxy to tenant-service /internal/ui-config (which GET-serves
+  // the migrated UiConfig document + sibling rendering defaults, and PUT-persists
+  // a UiConfigSchema-validated document — the schema is the CSS-injection defense
+  // boundary, so every hex/font/url is validated downstream before it can reach an
+  // inline <style>). forwardHeaders stamps the verified JWT claims (X-User-Id/
+  // X-Tenant-Id/X-User-Role) so the tenant-service RLS client scopes the read/write
+  // to the caller's OWN Tenant row.
+  //
+  // GET is an OPEN READ (any authed tenant user — the chrome needs the document to
+  // render), matching the modules read-pass convention. PUT requires the
+  // ENTERPRISE-gated `ui-customization` module (requireModule), method-agnostic
+  // module gate applied ONLY to the write so a non-GET on a tenant without the
+  // module gets 404/402 here while the read — and the fail-soft default that keeps
+  // cd-shell byte-identical when /api/me/ui-config 404s or has no override — is
+  // never blocked. The gate is wired as a per-method shim (NOT a prefix-level
+  // middleware) so it can never catch the open GET or any other route. The PUT's
+  // own tenant-admin authorization is enforced downstream (tenant-service
+  // requireTenantAdmin), exactly like /api/branding + /api/onboarding.
+  //   GET /api/me/ui-config      → tenant-service /internal/ui-config (open read)
+  //   PUT /api/me/ui-config      → tenant-service /internal/ui-config
+  //                                (module-gated: requireModule('ui-customization'))
+  {
+    const uiConfigProxy = forwardHeaders(tenantUrl, "/internal/ui-config");
+    const uiConfigModuleGate = requireModule("ui-customization");
+    app.use(
+      "/api/me/ui-config",
+      gatewayAuth(),
+      (req: Request, res: Response, next: NextFunction) => {
+        // GET stays open (read-pass); only the write (PUT) is module-gated. Any
+        // other verb falls through to the gate too, so a non-GET on a tenant
+        // without the module is consistently 404/402'd rather than forwarded.
+        if (req.method === "GET") return next();
+        return uiConfigModuleGate(req, res, next);
+      },
+      uiConfigProxy,
+    );
+  }
+
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
   app.use("/api/jd-author", gatewayAuth(), requireAgentPlan("jd-author"), forwardHeaders(jobUrl, "/internal/jd-author"));
@@ -560,6 +790,25 @@ export function createApp(logger: Logger): Express {
     gatewayAuth(),
     requireModule("oa-assessments"),
     forwardHeaders(assessmentUrl, "/internal/assessments"),
+  );
+
+  // WF-E / E6 — Job Distribution surface (recruiter-side). Posts a requisition out
+  // to external hiring platforms / job boards (Indeed, LinkedIn, ZipRecruiter,
+  // Naukri, ...) and reads back the per-board distribution status. The
+  // hiring-platform adapter axis is DISTINCT from the OA assessment-provider axis:
+  // it is gated behind its OWN module (requireModule('job-distribution'),
+  // PROFESSIONAL+, defaultEnabled:false, failMode:'closed' — registered in WF-E/E5)
+  // so a tenant without the module gets 404/402 here while the byte-frozen v1
+  // surface stays untouched. The mount is method-agnostic (GET reads + POST/PUT/
+  // PATCH/DELETE distribution control), and forwardHeaders stamps the verified JWT
+  // claims (X-User-Id/X-Tenant-Id/X-User-Role) so the job-service RLS client scopes
+  // every read/write to the caller's tenant. Mirrors the /api/assessments mount.
+  //   /api/job-distribution/*  → job-service /internal/job-distribution/*
+  app.use(
+    "/api/job-distribution",
+    gatewayAuth(),
+    requireModule("job-distribution"),
+    forwardHeaders(jobUrl, "/internal/job-distribution"),
   );
 
   // Platform aggregator — fans out to job + candidate + billing in parallel

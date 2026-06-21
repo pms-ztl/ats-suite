@@ -174,6 +174,179 @@ const ASSESSMENT_PROVIDERS: AssessmentProvider[] = [
 // the real saved values. We NEVER receive the real secret here.
 interface IntegrationRow { kind: string; enabled: boolean; config: Record<string, unknown>; }
 
+/* =====================================================================
+ * WF-I (I7): live per-hiring-board credential configuration
+ * =====================================================================
+ * The same /api/integrations CRUD that backs the assessment providers also
+ * stores the WF-E job-board adapter credentials. The kind values match the
+ * hiring-platform half of INTEGRATION_KINDS in
+ * notification-service/src/lib/integration-config.ts, and each board's secret
+ * fields line up with that file's SECRET_FIELDS so the masked GET hint maps to
+ * the right input. Non-secret routing config (clientId / employerId / locale /
+ * country) is safe to display + edit.
+ *
+ * This panel is shown ONLY when the `job-distribution` module is enabled for the
+ * tenant (useModules) and is editable ONLY by ADMIN (useIsAdmin), mirroring the
+ * requireTenantAdmin gate on the PUT/DELETE routes and the requireModule
+ * gate on the distribution surface.
+ *
+ * GATING / STATUS — three honest states, derived from the partner reality of
+ * each board (NOT fabricated approval state we do not actually track):
+ *   • CONNECTED              — credentials are saved for this board (a row exists)
+ *   • PENDING_PARTNER_APPROVAL — partner-gated board, no creds yet: the recruiter
+ *                               must be approved as a partner / hold a paid
+ *                               employer subscription before the creds work.
+ *   • AVAILABLE              — zero-gating feed board (jooble, google-jobs, adzuna):
+ *                               no partner approval needed, connect any time.
+ * The status is NOT a claim that a connection is live — it reflects whether a
+ * credential row exists plus the board's own onboarding gate. */
+const JOB_DISTRIBUTION_MODULE_KEY = "job-distribution";
+
+/** Onboarding gate for a board when no credentials are saved yet. "partner" =>
+ *  PENDING_PARTNER_APPROVAL (requires partner approval / paid subscription);
+ *  "open" => AVAILABLE (zero-gating feed, connect any time). Once credentials
+ *  are saved EITHER gate resolves to CONNECTED. */
+type BoardGate = "partner" | "open";
+
+interface JobBoard {
+  kind: string;
+  name: string;
+  abbr: string;
+  color: string;
+  blurb: string;
+  /** Onboarding gate shown before any credential is saved. */
+  gate: BoardGate;
+  /** Honest note about the real-world requirement, shown for partner-gated
+   *  boards. Omitted for the zero-gating feeds. */
+  gateNote?: string;
+  fields: ProviderField[];
+}
+
+// One credential field set per board, derived from the real adapter auth shapes
+// in notification-service SECRET_FIELDS. clientId / employerId / locale /
+// country are non-secret routing config (safe to display + edit); the rest are
+// write-only secrets (never echoed back). The first non-secret field of each
+// partner-OAuth board is its public clientId, so it pairs with the secret.
+const JOB_BOARDS: JobBoard[] = [
+  {
+    kind: "indeed", name: "Indeed", abbr: "IN", color: "var(--c-info)", gate: "partner",
+    gateNote: "Requires an Indeed Apply / Sponsored Jobs partner account. Approval and a paid posting budget are arranged with Indeed.",
+    blurb: "Sponsored and organic postings, with Indeed Apply applications ingested back.",
+    fields: [
+      { key: "clientId", label: "Client ID", secret: false, placeholder: "Indeed OAuth client_id", help: "Indeed Employer → Integrations. Non-secret." },
+      { key: "clientSecret", label: "Client secret", secret: true, placeholder: "Paste your Indeed client secret", help: "Stored encrypted, never shown again." },
+      { key: "apiToken", label: "API token (optional)", secret: true, placeholder: "Publisher / Apply token, if your account uses one" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "linkedin", name: "LinkedIn", abbr: "LI", color: "var(--c-info)", gate: "partner",
+    gateNote: "Requires a LinkedIn Talent Solutions / Recruiter System Connect partnership. Access is granted by LinkedIn after partner review.",
+    blurb: "Post jobs and ingest LinkedIn applications via Recruiter System Connect.",
+    fields: [
+      { key: "clientId", label: "Client ID", secret: false, placeholder: "LinkedIn app client_id", help: "LinkedIn Developer app. Non-secret." },
+      { key: "clientSecret", label: "Client secret", secret: true, placeholder: "Paste your LinkedIn client secret", help: "Stored encrypted, never shown again." },
+      { key: "accessToken", label: "Access token (optional)", secret: true, placeholder: "OAuth access token, if pre-issued" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "ziprecruiter", name: "ZipRecruiter", abbr: "ZR", color: "var(--c-brand)", gate: "partner",
+    gateNote: "Requires a ZipRecruiter employer / partner API key. Issued with a paid posting plan.",
+    blurb: "Distribute postings to ZipRecruiter and its partner network.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your ZipRecruiter API key", help: "ZipRecruiter → Account → API. Stored encrypted." },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "seek", name: "SEEK", abbr: "SK", color: "var(--c-ai)", gate: "partner",
+    gateNote: "Requires a SEEK Hirer API partner account (AU / NZ). Approval is arranged with SEEK.",
+    blurb: "Post roles to SEEK across Australia and New Zealand.",
+    fields: [
+      { key: "clientId", label: "Client ID", secret: false, placeholder: "SEEK partner client_id", help: "SEEK Developer portal. Non-secret." },
+      { key: "clientSecret", label: "Client secret", secret: true, placeholder: "Paste your SEEK client secret", help: "Stored encrypted, never shown again." },
+      { key: "apiToken", label: "API token (optional)", secret: true, placeholder: "Hirer API token, if your account uses one" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "naukri", name: "Naukri", abbr: "NK", color: "var(--c-warn)", gate: "partner",
+    gateNote: "Requires a Naukri RMS / Hot Vacancy employer subscription (India). API credentials are issued by Naukri.",
+    blurb: "Distribute postings to Naukri.com across India.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your Naukri API key", help: "Naukri RMS → Integrations. Stored encrypted." },
+      { key: "apiToken", label: "API token (optional)", secret: true, placeholder: "Account token, if your plan uses one" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "dice", name: "Dice", abbr: "DC", color: "var(--c-danger)", gate: "partner",
+    gateNote: "Requires a Dice employer account with API access (US tech roles). Issued with a paid posting plan.",
+    blurb: "Distribute technology roles to Dice across the US.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your Dice API key", help: "Dice Employer → API. Stored encrypted." },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "wellfound", name: "Wellfound", abbr: "WF", color: "var(--c-ok)", gate: "partner",
+    gateNote: "Requires a Wellfound (AngelList Talent) recruiter API token. Granted on partner request.",
+    blurb: "Post startup roles to Wellfound and ingest applications back.",
+    fields: [
+      { key: "apiToken", label: "API token", secret: true, placeholder: "Paste your Wellfound API token", help: "Wellfound → Settings → API. Stored encrypted." },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "foundit", name: "Foundit", abbr: "FD", color: "var(--c-brand)", gate: "partner",
+    gateNote: "Requires a Foundit (formerly Monster APAC) employer subscription. API credentials are issued by Foundit.",
+    blurb: "Distribute postings to Foundit across Asia-Pacific and the Middle East.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your Foundit API key", help: "Foundit Employer → API. Stored encrypted." },
+      { key: "apiToken", label: "API token (optional)", secret: true, placeholder: "Account token, if your plan uses one" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "shine", name: "Shine", abbr: "SH", color: "var(--c-info)", gate: "partner",
+    gateNote: "Requires a Shine.com employer subscription (India). API credentials are issued by Shine.",
+    blurb: "Distribute postings to Shine.com across India.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your Shine API key", help: "Shine Employer → API. Stored encrypted." },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "adzuna", name: "Adzuna", abbr: "AZ", color: "var(--c-ai)", gate: "partner",
+    gateNote: "Requires a free Adzuna API app_id + app_key (self-serve). Posting placement depends on your Adzuna plan.",
+    blurb: "Aggregate and place postings via the Adzuna job search network.",
+    fields: [
+      { key: "appId", label: "App ID", secret: false, placeholder: "Adzuna app_id", help: "Adzuna Developer portal. Non-secret." },
+      { key: "apiKey", label: "App key", secret: true, placeholder: "Paste your Adzuna app_key", help: "Stored encrypted, never shown again." },
+      { key: "appKey", label: "API key (optional)", secret: true, placeholder: "Secondary key, if your app uses one" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "jooble", name: "Jooble", abbr: "JB", color: "var(--c-ok)", gate: "open",
+    blurb: "Index your postings into the Jooble aggregator. No partner approval needed.",
+    fields: [
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your Jooble API key", help: "Jooble → API access (self-serve). Stored encrypted." },
+      { key: "country", label: "Country (optional)", secret: false, placeholder: "e.g. us, uk, in" },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+  {
+    kind: "google-jobs", name: "Google Jobs", abbr: "GJ", color: "var(--c-brand)", gate: "open",
+    blurb: "Surface postings in Google Jobs via JSON-LD + the Indexing API. No partner approval needed.",
+    fields: [
+      { key: "apiKey", label: "Indexing API key", secret: true, placeholder: "Paste your Google Indexing API key", help: "Google Cloud → Indexing API (self-serve). Stored encrypted." },
+      { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Signing secret for inbound apply callbacks" },
+    ],
+  },
+];
+
 /* ----------------------------- one card ----------------------------- */
 function ConnectorCard({ c, connected, busy, onToggle }: { c: Connector; connected: boolean; busy: boolean; onToggle: () => void }) {
   return (
@@ -525,6 +698,260 @@ function AssessmentProvidersPanel() {
   );
 }
 
+/* ============================================================
+ * WF-I (I7): one hiring-board configuration card (live)
+ * ============================================================
+ * Reuses the assessment ProviderCard shape (write-only secrets, masked saved
+ * hint, blank-secret-preserves-saved-value) and adds the three-state board
+ * status (CONNECTED / PENDING_PARTNER_APPROVAL / AVAILABLE). */
+function BoardCard({
+  board, row, canEdit, onSaved,
+}: {
+  board: JobBoard;
+  row?: IntegrationRow;
+  canEdit: boolean;
+  onSaved: () => void;
+}) {
+  const connected = !!row;
+  const [open, setOpen] = useState(false);
+
+  // Draft seeds empty secrets (write-only) and saved non-secret routing values.
+  const initialDraft = () => {
+    const d: Record<string, string> = {};
+    for (const f of board.fields) {
+      if (f.secret) { d[f.key] = ""; continue; }
+      const v = row?.config?.[f.key];
+      d[f.key] = typeof v === "string" ? v : "";
+    }
+    return d;
+  };
+  const [draft, setDraft] = useState<Record<string, string>>(initialDraft);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function startEdit() {
+    setDraft(initialDraft());
+    setError(null);
+    setOpen(true);
+  }
+
+  // The server-returned masked hint for a saved secret (e.g. "…1234"), used as
+  // the placeholder so an admin can confirm a key is set without ever seeing it.
+  function savedHint(f: ProviderField): string | null {
+    if (!f.secret) return null;
+    const v = row?.config?.[f.key];
+    return typeof v === "string" && v.length > 0 ? v : null;
+  }
+
+  // Status badge: CONNECTED when creds exist; otherwise the board's onboarding
+  // gate — PENDING_PARTNER_APPROVAL (partner-gated) or AVAILABLE (open feed).
+  function statusBadge() {
+    if (connected) return <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">Connected</Pill>;
+    if (board.gate === "partner") return <Pill icon="clock" tone="var(--c-warn)" bg="var(--c-warn-tint)">Pending partner approval</Pill>;
+    return <Pill icon="plug" tone="var(--c-info)" bg="var(--c-info-tint)">Available</Pill>;
+  }
+
+  async function save() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    // Non-secret fields always go through (so routing config can be updated).
+    // Secret fields go through ONLY when newly typed; a blank secret is omitted
+    // so the stored secret is preserved untouched.
+    const config: Record<string, string> = {};
+    for (const f of board.fields) {
+      const val = (draft[f.key] ?? "").trim();
+      if (f.secret) { if (val) config[f.key] = val; }
+      else if (val) config[f.key] = val;
+    }
+    // First-time connect requires at least one credential secret.
+    if (!connected) {
+      const hasCred = board.fields.some((f) => f.secret && config[f.key]);
+      if (!hasCred) {
+        setError("Enter at least one credential to connect this board.");
+        setBusy(false);
+        return;
+      }
+    }
+    try {
+      await raw(`/integrations/${board.kind}`, {
+        method: "PUT",
+        body: JSON.stringify({ config, enabled: true }),
+      });
+      setOpen(false);
+      onSaved();
+    } catch (e: any) {
+      setError(e?.message?.includes("403") ? "You do not have permission to change integrations." : "Could not save. Check the credentials and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await raw(`/integrations/${board.kind}`, { method: "DELETE" });
+      setOpen(false);
+      onSaved();
+    } catch (e: any) {
+      setError("Could not remove this board.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", background: "var(--c-surface)", boxShadow: "var(--e1)", padding: 16 }}>
+      <div style={{ display: "flex", gap: 11, alignItems: "center" }}>
+        <span className="mono" style={{ width: 40, height: 40, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, fontWeight: 800, fontSize: 14, background: `color-mix(in oklab, ${board.color} 16%, var(--c-surface))`, color: board.color }}>{board.abbr}</span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>{board.name}</div>
+          <div style={{ fontSize: 11, color: "var(--c-ink-3)" }}>Hiring board</div>
+        </div>
+        {statusBadge()}
+      </div>
+      <p style={{ margin: "11px 0 0", fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.45 }}>{board.blurb}</p>
+
+      {/* Honest partner-approval / paid-subscription note (only when relevant
+          and not yet connected). */}
+      {!connected && board.gate === "partner" && board.gateNote && (
+        <div style={{ display: "flex", gap: 7, alignItems: "flex-start", marginTop: 10, padding: "8px 10px", borderRadius: "var(--r)", background: "var(--c-warn-tint)", color: "var(--c-warn)", fontSize: 11.5, lineHeight: 1.45 }}>
+          <Icon name="flag" size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>{board.gateNote}</span>
+        </div>
+      )}
+
+      {!open ? (
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+          {canEdit ? (
+            <Btn variant={connected ? "ghost" : "primary"} size="sm" icon={connected ? "settings" : "plug"} onClick={startEdit}>
+              {connected ? "Configure" : "Connect"}
+            </Btn>
+          ) : (
+            <span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>Admin only</span>
+          )}
+        </div>
+      ) : (
+        <div style={{ marginTop: 14, display: "grid", gap: 11 }}>
+          {board.fields.map((f) => {
+            const hint = savedHint(f);
+            return (
+              <label key={f.key} style={{ display: "grid", gap: 5 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--c-ink-2)" }}>{f.label}</span>
+                <input
+                  type={f.secret ? "password" : "text"}
+                  autoComplete="off"
+                  value={draft[f.key] ?? ""}
+                  onChange={(e) => setDraft((p) => ({ ...p, [f.key]: e.target.value }))}
+                  placeholder={hint ? `Saved (${hint}), leave blank to keep` : f.placeholder}
+                  style={{ height: 36, padding: "0 11px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", fontSize: "var(--fs-sm)", color: "var(--c-ink)", fontFamily: "var(--font-sans)", outline: "none" }}
+                />
+                {f.help && <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{f.help}</span>}
+              </label>
+            );
+          })}
+
+          {error && (
+            <div role="alert" style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 11px", borderRadius: "var(--r)", background: "var(--c-danger-tint)", color: "var(--c-danger)", fontSize: 12 }}>
+              <Icon name="x" size={14} />{error}
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
+            <div>
+              {connected && (
+                <Btn variant="ghost" size="sm" icon="x" onClick={remove} disabled={busy} style={{ color: "var(--c-danger)" }}>Remove</Btn>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Btn variant="ghost" size="sm" onClick={() => { setOpen(false); setError(null); }} disabled={busy}>Cancel</Btn>
+              <Btn variant="primary" size="sm" icon="check" onClick={save} disabled={busy}>{busy ? "Saving" : "Save"}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+ * WF-I (I7): the live "Hiring boards" panel
+ * ============================================================ */
+function JobBoardsPanel() {
+  const isAdmin = useIsAdmin();
+  const [rows, setRows] = useState<IntegrationRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await raw("/integrations");
+      const list: IntegrationRow[] = Array.isArray(data) ? data : [];
+      setRows(list);
+    } catch (e: any) {
+      setLoadError("Could not load hiring boards.");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  // Index saved rows for just the hiring-board kinds.
+  const byKind = useMemo(() => {
+    const m: Record<string, IntegrationRow> = {};
+    for (const r of rows) {
+      if (JOB_BOARDS.some((b) => b.kind === r.kind)) m[r.kind] = r;
+    }
+    return m;
+  }, [rows]);
+
+  const connectedCount = Object.keys(byKind).length;
+
+  return (
+    <div style={{ marginTop: 36, paddingTop: 28, borderTop: "1px solid var(--c-line)" }}>
+      <PanelHead
+        title="Hiring boards"
+        desc="Connect each job board's partner credentials so requisitions can be distributed and applications ingested back. Credentials are encrypted at rest and never shown again after saving."
+      />
+
+      {!isAdmin && (
+        <div role="note" style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-surface-2)", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)", marginBottom: 16, border: "1px solid var(--c-line-2)" }}>
+          <Icon name="shield" size={15} />Only workspace admins can add or change hiring-board credentials.
+        </div>
+      )}
+
+      {loadError && (
+        <div role="alert" style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 14px", borderRadius: "var(--r)", background: "var(--c-danger-tint)", color: "var(--c-danger)", fontSize: "var(--fs-sm)", marginBottom: 16 }}>
+          <Icon name="x" size={15} />{loadError}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ padding: "30px 0", textAlign: "center", color: "var(--c-ink-3)", fontSize: "var(--fs-sm)" }}>Loading hiring boards…</div>
+      ) : (
+        <>
+          {connectedCount === 0 && (
+            <div style={{ padding: "16px 18px", marginBottom: 16, borderRadius: "var(--r-lg)", border: "1px dashed var(--c-line-2)", background: "var(--c-surface-2)", color: "var(--c-ink-2)", fontSize: "var(--fs-sm)" }}>
+              No hiring board is connected yet.{isAdmin ? " Boards marked Available are zero-gating feeds you can connect now; partner boards need an approved partner account or paid subscription first." : " Ask a workspace admin to connect one."}
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {JOB_BOARDS.map((b) => (
+              <BoardCard key={b.kind} board={b} row={byKind[b.kind]} canEdit={isAdmin} onSaved={load} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function IntegrationsSettingsPage() {
   // Surface the assessment-provider panel ONLY when the oa-assessments module is
   // enabled for this tenant. useModules fails SOFT (allEnabled=true) when the
@@ -532,11 +959,16 @@ export default function IntegrationsSettingsPage() {
   // module resolution is not deployed, matching the gateway's fail-soft posture.
   const { enabledKeys, allEnabled } = useModules();
   const oaEnabled = allEnabled || (enabledKeys?.includes(OA_MODULE_KEY) ?? false);
+  // WF-I (I7): surface the per-board credential panel ONLY when the
+  // job-distribution module is enabled for this tenant. Same fail-soft posture
+  // as the OA panel: when gating is unresolved (allEnabled), show it.
+  const jobDistEnabled = allEnabled || (enabledKeys?.includes(JOB_DISTRIBUTION_MODULE_KEY) ?? false);
 
   return (
     <div style={{ animation: "rise .3s var(--ease-out)" }}>
       <MarketplacePanel />
       {oaEnabled && <AssessmentProvidersPanel />}
+      {jobDistEnabled && <JobBoardsPanel />}
     </div>
   );
 }

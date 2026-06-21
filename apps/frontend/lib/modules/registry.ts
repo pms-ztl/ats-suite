@@ -230,6 +230,14 @@ export const CLIENT_MODULE_REGISTRY: ClientModuleEntry[] = [
     requiresPlan: "ENTERPRISE",
     description: "Embed branded, chrome-less widgets into your own site with scoped tokens.",
   },
+  {
+    key: "ui-customization",
+    name: "UI Customization",
+    category: "platform",
+    type: "capability",
+    requiresPlan: "ENTERPRISE",
+    description: "Override the dashboard theme tokens, the per-role default layout, and which surface slots render across the in-app shell.",
+  },
 ];
 
 /** Human-readable label + order for each category bucket (display only). */

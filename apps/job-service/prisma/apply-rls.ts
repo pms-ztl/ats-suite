@@ -14,7 +14,18 @@ import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const STRICT_TABLES = ["Requisition", "JobPosting", "ApplicationFormSchema", "AgentRun"];
+const STRICT_TABLES = [
+  "Requisition",
+  "JobPosting",
+  "ApplicationFormSchema",
+  "AgentRun",
+  // WF-E: job-board distribution axis + public-apply idempotency ledger +
+  // per-tenant feed token. All carry a tenantId; the request-path routes use the
+  // RLS client. Background/feed resolution by token uses prismaAdmin.
+  "JobBoardDistribution",
+  "ApplicationIdempotency",
+  "JobFeedToken",
+];
 const NULLABLE_TABLES = ["Skill"]; // tenant rows isolated; NULL-tenant rows are global
 
 const run = (sql: string) => prisma.$executeRawUnsafe(sql);

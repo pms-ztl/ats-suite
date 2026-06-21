@@ -20,6 +20,8 @@
 import * as React from "react";
 import { Btn } from "../cd/aurora-ui";
 import { LiveStatus } from "../cd/dashboard-kit";
+import { Slot } from "@/lib/registry/slots";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 
 // The shared Btn has no `disabled` prop, so we model disabled locally: dim the
 // button and swallow the click. Keeps the shared primitive untouched (additive).
@@ -71,6 +73,11 @@ export function DashboardToolbar({
   updatedAt,
   error,
 }: DashboardToolbarProps) {
+  // D6 / WF-B slot seam — resolved per-tenant UiConfig (fail-soft) for the
+  // dashboard.toolbar. ctx hands a bound block the toolbar's real state (edit
+  // mode + which tier the board came from). Empty -> nothing (byte-identical).
+  const { config: uiConfig } = useUiConfig();
+  const slotCtx = { isEditing, source, dirty, saving, route: "dashboard" };
   return (
     <div style={{ marginBottom: 16 }}>
       <div
@@ -92,6 +99,9 @@ export function DashboardToolbar({
 
         {/* Right: the action set. */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {/* D6 — dashboard.toolbar: a custom block at the head of the toolbar's
+              action set. Empty -> nothing. */}
+          <Slot id="dashboard.toolbar" config={uiConfig} route="dashboard" ctx={slotCtx} />
           {!isEditing ? (
             <Btn variant="soft" icon="grid" onClick={onEdit}>
               Customize

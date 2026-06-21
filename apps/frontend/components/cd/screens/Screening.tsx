@@ -9,6 +9,8 @@ import { Icon, type IconName } from "../icon";
 import { Btn, EmptyHint } from "../aurora-ui";
 import { Pill, ScoreRing, Confidence, SectionCard } from "../aurora-kit";
 import { FlowRibbon, ArcMeter } from "@/components/shared/ribbon";
+import { Slot } from "@/lib/registry/slots";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 import type { ScreeningRow, ReqBreakdown, TraceStep, VerdictKind, ScreeningData } from "../types";
 import { useTableSort, SortHead } from "@/components/shared/sortable";
 import { toTitleCase } from "@/lib/utils";
@@ -46,6 +48,11 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
   useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }; document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const reqs = row.requirements ?? requirements;
   const tr = row.trace ?? trace;
+  // D6 / WF-B slot seam — resolved per-tenant UiConfig (fail-soft) for the
+  // screening.verdict.footer. ctx hands a bound block the REAL verdict row
+  // (candidate, score, kind, confidence). Empty -> nothing (byte-identical).
+  const { config: uiConfig } = useUiConfig();
+  const slotCtx = { candidateId: row.id, candidate: row.name, requisitionId: row.reqId, score: row.score, kind: row.kind, confidence: row.conf, verdict: row };
   return (
     <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", justifyContent: "flex-end", background: "color-mix(in oklab, var(--bg-deep) 45%, transparent)", animation: "fadein .2s" }}>
       <div style={{ width: "min(580px, 94vw)", height: "100%", background: "var(--surface)", borderLeft: "1px solid var(--line)", boxShadow: "var(--e3)", display: "flex", flexDirection: "column", animation: "slidein .3s var(--ease-out)" }}>
@@ -80,6 +87,10 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
               <div style={{ fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.55 }}>{row.reasoning}</div>
             </div>
           )}
+
+          {/* D6 — screening.verdict.footer: a custom block under the AI verdict,
+              before the requirement breakdown. Empty -> nothing. */}
+          <Slot id="screening.verdict.footer" config={uiConfig} route="screening" ctx={slotCtx} />
 
           <div style={{ marginTop: 16 }}>
             <div style={{ ...LABEL, marginBottom: 8 }}>Requirement breakdown</div>

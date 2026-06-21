@@ -43,6 +43,21 @@ export type Outbox = $Result.DefaultSelection<Prisma.$OutboxPayload>
  * 
  */
 export type AgentRun = $Result.DefaultSelection<Prisma.$AgentRunPayload>
+/**
+ * Model JobBoardDistribution
+ * 
+ */
+export type JobBoardDistribution = $Result.DefaultSelection<Prisma.$JobBoardDistributionPayload>
+/**
+ * Model ApplicationIdempotency
+ * 
+ */
+export type ApplicationIdempotency = $Result.DefaultSelection<Prisma.$ApplicationIdempotencyPayload>
+/**
+ * Model JobFeedToken
+ * 
+ */
+export type JobFeedToken = $Result.DefaultSelection<Prisma.$JobFeedTokenPayload>
 
 /**
  * Enums
@@ -60,6 +75,19 @@ export namespace $Enums {
 export type RequisitionStatus = (typeof RequisitionStatus)[keyof typeof RequisitionStatus]
 
 
+export const DistributionStatus: {
+  PENDING: 'PENDING',
+  POSTING: 'POSTING',
+  ACTIVE: 'ACTIVE',
+  FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
+  CLOSED: 'CLOSED',
+  PENDING_PARTNER_APPROVAL: 'PENDING_PARTNER_APPROVAL'
+};
+
+export type DistributionStatus = (typeof DistributionStatus)[keyof typeof DistributionStatus]
+
+
 export const OutboxStatus: {
   PENDING: 'PENDING',
   SENT: 'SENT',
@@ -73,6 +101,10 @@ export type OutboxStatus = (typeof OutboxStatus)[keyof typeof OutboxStatus]
 export type RequisitionStatus = $Enums.RequisitionStatus
 
 export const RequisitionStatus: typeof $Enums.RequisitionStatus
+
+export type DistributionStatus = $Enums.DistributionStatus
+
+export const DistributionStatus: typeof $Enums.DistributionStatus
 
 export type OutboxStatus = $Enums.OutboxStatus
 
@@ -255,6 +287,36 @@ export class PrismaClient<
     * ```
     */
   get agentRun(): Prisma.AgentRunDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.jobBoardDistribution`: Exposes CRUD operations for the **JobBoardDistribution** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more JobBoardDistributions
+    * const jobBoardDistributions = await prisma.jobBoardDistribution.findMany()
+    * ```
+    */
+  get jobBoardDistribution(): Prisma.JobBoardDistributionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.applicationIdempotency`: Exposes CRUD operations for the **ApplicationIdempotency** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ApplicationIdempotencies
+    * const applicationIdempotencies = await prisma.applicationIdempotency.findMany()
+    * ```
+    */
+  get applicationIdempotency(): Prisma.ApplicationIdempotencyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.jobFeedToken`: Exposes CRUD operations for the **JobFeedToken** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more JobFeedTokens
+    * const jobFeedTokens = await prisma.jobFeedToken.findMany()
+    * ```
+    */
+  get jobFeedToken(): Prisma.JobFeedTokenDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -701,7 +763,10 @@ export namespace Prisma {
     ApplicationFormSchema: 'ApplicationFormSchema',
     Skill: 'Skill',
     Outbox: 'Outbox',
-    AgentRun: 'AgentRun'
+    AgentRun: 'AgentRun',
+    JobBoardDistribution: 'JobBoardDistribution',
+    ApplicationIdempotency: 'ApplicationIdempotency',
+    JobFeedToken: 'JobFeedToken'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -720,7 +785,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "skill" | "outbox" | "agentRun"
+      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "skill" | "outbox" | "agentRun" | "jobBoardDistribution" | "applicationIdempotency" | "jobFeedToken"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1168,6 +1233,228 @@ export namespace Prisma {
           }
         }
       }
+      JobBoardDistribution: {
+        payload: Prisma.$JobBoardDistributionPayload<ExtArgs>
+        fields: Prisma.JobBoardDistributionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.JobBoardDistributionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.JobBoardDistributionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          findFirst: {
+            args: Prisma.JobBoardDistributionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.JobBoardDistributionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          findMany: {
+            args: Prisma.JobBoardDistributionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>[]
+          }
+          create: {
+            args: Prisma.JobBoardDistributionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          createMany: {
+            args: Prisma.JobBoardDistributionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.JobBoardDistributionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>[]
+          }
+          delete: {
+            args: Prisma.JobBoardDistributionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          update: {
+            args: Prisma.JobBoardDistributionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          deleteMany: {
+            args: Prisma.JobBoardDistributionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.JobBoardDistributionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.JobBoardDistributionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>[]
+          }
+          upsert: {
+            args: Prisma.JobBoardDistributionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobBoardDistributionPayload>
+          }
+          aggregate: {
+            args: Prisma.JobBoardDistributionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateJobBoardDistribution>
+          }
+          groupBy: {
+            args: Prisma.JobBoardDistributionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<JobBoardDistributionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.JobBoardDistributionCountArgs<ExtArgs>
+            result: $Utils.Optional<JobBoardDistributionCountAggregateOutputType> | number
+          }
+        }
+      }
+      ApplicationIdempotency: {
+        payload: Prisma.$ApplicationIdempotencyPayload<ExtArgs>
+        fields: Prisma.ApplicationIdempotencyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ApplicationIdempotencyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ApplicationIdempotencyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          findFirst: {
+            args: Prisma.ApplicationIdempotencyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ApplicationIdempotencyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          findMany: {
+            args: Prisma.ApplicationIdempotencyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>[]
+          }
+          create: {
+            args: Prisma.ApplicationIdempotencyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          createMany: {
+            args: Prisma.ApplicationIdempotencyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ApplicationIdempotencyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>[]
+          }
+          delete: {
+            args: Prisma.ApplicationIdempotencyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          update: {
+            args: Prisma.ApplicationIdempotencyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          deleteMany: {
+            args: Prisma.ApplicationIdempotencyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ApplicationIdempotencyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ApplicationIdempotencyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>[]
+          }
+          upsert: {
+            args: Prisma.ApplicationIdempotencyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ApplicationIdempotencyPayload>
+          }
+          aggregate: {
+            args: Prisma.ApplicationIdempotencyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateApplicationIdempotency>
+          }
+          groupBy: {
+            args: Prisma.ApplicationIdempotencyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ApplicationIdempotencyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ApplicationIdempotencyCountArgs<ExtArgs>
+            result: $Utils.Optional<ApplicationIdempotencyCountAggregateOutputType> | number
+          }
+        }
+      }
+      JobFeedToken: {
+        payload: Prisma.$JobFeedTokenPayload<ExtArgs>
+        fields: Prisma.JobFeedTokenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.JobFeedTokenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.JobFeedTokenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          findFirst: {
+            args: Prisma.JobFeedTokenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.JobFeedTokenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          findMany: {
+            args: Prisma.JobFeedTokenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>[]
+          }
+          create: {
+            args: Prisma.JobFeedTokenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          createMany: {
+            args: Prisma.JobFeedTokenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.JobFeedTokenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>[]
+          }
+          delete: {
+            args: Prisma.JobFeedTokenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          update: {
+            args: Prisma.JobFeedTokenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          deleteMany: {
+            args: Prisma.JobFeedTokenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.JobFeedTokenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.JobFeedTokenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>[]
+          }
+          upsert: {
+            args: Prisma.JobFeedTokenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$JobFeedTokenPayload>
+          }
+          aggregate: {
+            args: Prisma.JobFeedTokenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateJobFeedToken>
+          }
+          groupBy: {
+            args: Prisma.JobFeedTokenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<JobFeedTokenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.JobFeedTokenCountArgs<ExtArgs>
+            result: $Utils.Optional<JobFeedTokenCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1270,6 +1557,9 @@ export namespace Prisma {
     skill?: SkillOmit
     outbox?: OutboxOmit
     agentRun?: AgentRunOmit
+    jobBoardDistribution?: JobBoardDistributionOmit
+    applicationIdempotency?: ApplicationIdempotencyOmit
+    jobFeedToken?: JobFeedTokenOmit
   }
 
   /* Types for Logging */
@@ -1373,6 +1663,37 @@ export namespace Prisma {
    */
   export type RequisitionCountOutputTypeCountJobPostingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: JobPostingWhereInput
+  }
+
+
+  /**
+   * Count Type JobPostingCountOutputType
+   */
+
+  export type JobPostingCountOutputType = {
+    jobBoardDistributions: number
+  }
+
+  export type JobPostingCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobBoardDistributions?: boolean | JobPostingCountOutputTypeCountJobBoardDistributionsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * JobPostingCountOutputType without action
+   */
+  export type JobPostingCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobPostingCountOutputType
+     */
+    select?: JobPostingCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * JobPostingCountOutputType without action
+   */
+  export type JobPostingCountOutputTypeCountJobBoardDistributionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: JobBoardDistributionWhereInput
   }
 
 
@@ -3034,6 +3355,8 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     requisition?: boolean | RequisitionDefaultArgs<ExtArgs>
+    jobBoardDistributions?: boolean | JobPosting$jobBoardDistributionsArgs<ExtArgs>
+    _count?: boolean | JobPostingCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["jobPosting"]>
 
   export type JobPostingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -3092,6 +3415,8 @@ export namespace Prisma {
   export type JobPostingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "requisitionId" | "slug" | "title" | "description" | "requirements" | "isPublished" | "publishedAt" | "expiresAt" | "views" | "applicationCount" | "createdAt" | "updatedAt", ExtArgs["result"]["jobPosting"]>
   export type JobPostingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     requisition?: boolean | RequisitionDefaultArgs<ExtArgs>
+    jobBoardDistributions?: boolean | JobPosting$jobBoardDistributionsArgs<ExtArgs>
+    _count?: boolean | JobPostingCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type JobPostingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     requisition?: boolean | RequisitionDefaultArgs<ExtArgs>
@@ -3104,6 +3429,7 @@ export namespace Prisma {
     name: "JobPosting"
     objects: {
       requisition: Prisma.$RequisitionPayload<ExtArgs>
+      jobBoardDistributions: Prisma.$JobBoardDistributionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3515,6 +3841,7 @@ export namespace Prisma {
   export interface Prisma__JobPostingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     requisition<T extends RequisitionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RequisitionDefaultArgs<ExtArgs>>): Prisma__RequisitionClient<$Result.GetResult<Prisma.$RequisitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    jobBoardDistributions<T extends JobPosting$jobBoardDistributionsArgs<ExtArgs> = {}>(args?: Subset<T, JobPosting$jobBoardDistributionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3951,6 +4278,30 @@ export namespace Prisma {
      * Limit how many JobPostings to delete.
      */
     limit?: number
+  }
+
+  /**
+   * JobPosting.jobBoardDistributions
+   */
+  export type JobPosting$jobBoardDistributionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    where?: JobBoardDistributionWhereInput
+    orderBy?: JobBoardDistributionOrderByWithRelationInput | JobBoardDistributionOrderByWithRelationInput[]
+    cursor?: JobBoardDistributionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: JobBoardDistributionScalarFieldEnum | JobBoardDistributionScalarFieldEnum[]
   }
 
   /**
@@ -8486,6 +8837,3305 @@ export namespace Prisma {
 
 
   /**
+   * Model JobBoardDistribution
+   */
+
+  export type AggregateJobBoardDistribution = {
+    _count: JobBoardDistributionCountAggregateOutputType | null
+    _min: JobBoardDistributionMinAggregateOutputType | null
+    _max: JobBoardDistributionMaxAggregateOutputType | null
+  }
+
+  export type JobBoardDistributionMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    jobPostingId: string | null
+    board: string | null
+    externalPostingId: string | null
+    externalUrl: string | null
+    status: $Enums.DistributionStatus | null
+    lastError: string | null
+    lastSyncedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type JobBoardDistributionMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    jobPostingId: string | null
+    board: string | null
+    externalPostingId: string | null
+    externalUrl: string | null
+    status: $Enums.DistributionStatus | null
+    lastError: string | null
+    lastSyncedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type JobBoardDistributionCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    jobPostingId: number
+    board: number
+    externalPostingId: number
+    externalUrl: number
+    status: number
+    lastError: number
+    lastSyncedAt: number
+    raw: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type JobBoardDistributionMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    jobPostingId?: true
+    board?: true
+    externalPostingId?: true
+    externalUrl?: true
+    status?: true
+    lastError?: true
+    lastSyncedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type JobBoardDistributionMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    jobPostingId?: true
+    board?: true
+    externalPostingId?: true
+    externalUrl?: true
+    status?: true
+    lastError?: true
+    lastSyncedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type JobBoardDistributionCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    jobPostingId?: true
+    board?: true
+    externalPostingId?: true
+    externalUrl?: true
+    status?: true
+    lastError?: true
+    lastSyncedAt?: true
+    raw?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type JobBoardDistributionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which JobBoardDistribution to aggregate.
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobBoardDistributions to fetch.
+     */
+    orderBy?: JobBoardDistributionOrderByWithRelationInput | JobBoardDistributionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: JobBoardDistributionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobBoardDistributions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobBoardDistributions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned JobBoardDistributions
+    **/
+    _count?: true | JobBoardDistributionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: JobBoardDistributionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: JobBoardDistributionMaxAggregateInputType
+  }
+
+  export type GetJobBoardDistributionAggregateType<T extends JobBoardDistributionAggregateArgs> = {
+        [P in keyof T & keyof AggregateJobBoardDistribution]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateJobBoardDistribution[P]>
+      : GetScalarType<T[P], AggregateJobBoardDistribution[P]>
+  }
+
+
+
+
+  export type JobBoardDistributionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: JobBoardDistributionWhereInput
+    orderBy?: JobBoardDistributionOrderByWithAggregationInput | JobBoardDistributionOrderByWithAggregationInput[]
+    by: JobBoardDistributionScalarFieldEnum[] | JobBoardDistributionScalarFieldEnum
+    having?: JobBoardDistributionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: JobBoardDistributionCountAggregateInputType | true
+    _min?: JobBoardDistributionMinAggregateInputType
+    _max?: JobBoardDistributionMaxAggregateInputType
+  }
+
+  export type JobBoardDistributionGroupByOutputType = {
+    id: string
+    tenantId: string
+    jobPostingId: string
+    board: string
+    externalPostingId: string | null
+    externalUrl: string | null
+    status: $Enums.DistributionStatus
+    lastError: string | null
+    lastSyncedAt: Date | null
+    raw: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: JobBoardDistributionCountAggregateOutputType | null
+    _min: JobBoardDistributionMinAggregateOutputType | null
+    _max: JobBoardDistributionMaxAggregateOutputType | null
+  }
+
+  type GetJobBoardDistributionGroupByPayload<T extends JobBoardDistributionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<JobBoardDistributionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof JobBoardDistributionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], JobBoardDistributionGroupByOutputType[P]>
+            : GetScalarType<T[P], JobBoardDistributionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type JobBoardDistributionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    jobPostingId?: boolean
+    board?: boolean
+    externalPostingId?: boolean
+    externalUrl?: boolean
+    status?: boolean
+    lastError?: boolean
+    lastSyncedAt?: boolean
+    raw?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["jobBoardDistribution"]>
+
+  export type JobBoardDistributionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    jobPostingId?: boolean
+    board?: boolean
+    externalPostingId?: boolean
+    externalUrl?: boolean
+    status?: boolean
+    lastError?: boolean
+    lastSyncedAt?: boolean
+    raw?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["jobBoardDistribution"]>
+
+  export type JobBoardDistributionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    jobPostingId?: boolean
+    board?: boolean
+    externalPostingId?: boolean
+    externalUrl?: boolean
+    status?: boolean
+    lastError?: boolean
+    lastSyncedAt?: boolean
+    raw?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["jobBoardDistribution"]>
+
+  export type JobBoardDistributionSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    jobPostingId?: boolean
+    board?: boolean
+    externalPostingId?: boolean
+    externalUrl?: boolean
+    status?: boolean
+    lastError?: boolean
+    lastSyncedAt?: boolean
+    raw?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type JobBoardDistributionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "jobPostingId" | "board" | "externalPostingId" | "externalUrl" | "status" | "lastError" | "lastSyncedAt" | "raw" | "createdAt" | "updatedAt", ExtArgs["result"]["jobBoardDistribution"]>
+  export type JobBoardDistributionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }
+  export type JobBoardDistributionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }
+  export type JobBoardDistributionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobPosting?: boolean | JobPostingDefaultArgs<ExtArgs>
+  }
+
+  export type $JobBoardDistributionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "JobBoardDistribution"
+    objects: {
+      jobPosting: Prisma.$JobPostingPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      jobPostingId: string
+      board: string
+      externalPostingId: string | null
+      externalUrl: string | null
+      status: $Enums.DistributionStatus
+      lastError: string | null
+      lastSyncedAt: Date | null
+      raw: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["jobBoardDistribution"]>
+    composites: {}
+  }
+
+  type JobBoardDistributionGetPayload<S extends boolean | null | undefined | JobBoardDistributionDefaultArgs> = $Result.GetResult<Prisma.$JobBoardDistributionPayload, S>
+
+  type JobBoardDistributionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<JobBoardDistributionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: JobBoardDistributionCountAggregateInputType | true
+    }
+
+  export interface JobBoardDistributionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['JobBoardDistribution'], meta: { name: 'JobBoardDistribution' } }
+    /**
+     * Find zero or one JobBoardDistribution that matches the filter.
+     * @param {JobBoardDistributionFindUniqueArgs} args - Arguments to find a JobBoardDistribution
+     * @example
+     * // Get one JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends JobBoardDistributionFindUniqueArgs>(args: SelectSubset<T, JobBoardDistributionFindUniqueArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one JobBoardDistribution that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {JobBoardDistributionFindUniqueOrThrowArgs} args - Arguments to find a JobBoardDistribution
+     * @example
+     * // Get one JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends JobBoardDistributionFindUniqueOrThrowArgs>(args: SelectSubset<T, JobBoardDistributionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first JobBoardDistribution that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionFindFirstArgs} args - Arguments to find a JobBoardDistribution
+     * @example
+     * // Get one JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends JobBoardDistributionFindFirstArgs>(args?: SelectSubset<T, JobBoardDistributionFindFirstArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first JobBoardDistribution that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionFindFirstOrThrowArgs} args - Arguments to find a JobBoardDistribution
+     * @example
+     * // Get one JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends JobBoardDistributionFindFirstOrThrowArgs>(args?: SelectSubset<T, JobBoardDistributionFindFirstOrThrowArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more JobBoardDistributions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all JobBoardDistributions
+     * const jobBoardDistributions = await prisma.jobBoardDistribution.findMany()
+     * 
+     * // Get first 10 JobBoardDistributions
+     * const jobBoardDistributions = await prisma.jobBoardDistribution.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const jobBoardDistributionWithIdOnly = await prisma.jobBoardDistribution.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends JobBoardDistributionFindManyArgs>(args?: SelectSubset<T, JobBoardDistributionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a JobBoardDistribution.
+     * @param {JobBoardDistributionCreateArgs} args - Arguments to create a JobBoardDistribution.
+     * @example
+     * // Create one JobBoardDistribution
+     * const JobBoardDistribution = await prisma.jobBoardDistribution.create({
+     *   data: {
+     *     // ... data to create a JobBoardDistribution
+     *   }
+     * })
+     * 
+     */
+    create<T extends JobBoardDistributionCreateArgs>(args: SelectSubset<T, JobBoardDistributionCreateArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many JobBoardDistributions.
+     * @param {JobBoardDistributionCreateManyArgs} args - Arguments to create many JobBoardDistributions.
+     * @example
+     * // Create many JobBoardDistributions
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends JobBoardDistributionCreateManyArgs>(args?: SelectSubset<T, JobBoardDistributionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many JobBoardDistributions and returns the data saved in the database.
+     * @param {JobBoardDistributionCreateManyAndReturnArgs} args - Arguments to create many JobBoardDistributions.
+     * @example
+     * // Create many JobBoardDistributions
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many JobBoardDistributions and only return the `id`
+     * const jobBoardDistributionWithIdOnly = await prisma.jobBoardDistribution.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends JobBoardDistributionCreateManyAndReturnArgs>(args?: SelectSubset<T, JobBoardDistributionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a JobBoardDistribution.
+     * @param {JobBoardDistributionDeleteArgs} args - Arguments to delete one JobBoardDistribution.
+     * @example
+     * // Delete one JobBoardDistribution
+     * const JobBoardDistribution = await prisma.jobBoardDistribution.delete({
+     *   where: {
+     *     // ... filter to delete one JobBoardDistribution
+     *   }
+     * })
+     * 
+     */
+    delete<T extends JobBoardDistributionDeleteArgs>(args: SelectSubset<T, JobBoardDistributionDeleteArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one JobBoardDistribution.
+     * @param {JobBoardDistributionUpdateArgs} args - Arguments to update one JobBoardDistribution.
+     * @example
+     * // Update one JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends JobBoardDistributionUpdateArgs>(args: SelectSubset<T, JobBoardDistributionUpdateArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more JobBoardDistributions.
+     * @param {JobBoardDistributionDeleteManyArgs} args - Arguments to filter JobBoardDistributions to delete.
+     * @example
+     * // Delete a few JobBoardDistributions
+     * const { count } = await prisma.jobBoardDistribution.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends JobBoardDistributionDeleteManyArgs>(args?: SelectSubset<T, JobBoardDistributionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more JobBoardDistributions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many JobBoardDistributions
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends JobBoardDistributionUpdateManyArgs>(args: SelectSubset<T, JobBoardDistributionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more JobBoardDistributions and returns the data updated in the database.
+     * @param {JobBoardDistributionUpdateManyAndReturnArgs} args - Arguments to update many JobBoardDistributions.
+     * @example
+     * // Update many JobBoardDistributions
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more JobBoardDistributions and only return the `id`
+     * const jobBoardDistributionWithIdOnly = await prisma.jobBoardDistribution.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends JobBoardDistributionUpdateManyAndReturnArgs>(args: SelectSubset<T, JobBoardDistributionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one JobBoardDistribution.
+     * @param {JobBoardDistributionUpsertArgs} args - Arguments to update or create a JobBoardDistribution.
+     * @example
+     * // Update or create a JobBoardDistribution
+     * const jobBoardDistribution = await prisma.jobBoardDistribution.upsert({
+     *   create: {
+     *     // ... data to create a JobBoardDistribution
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the JobBoardDistribution we want to update
+     *   }
+     * })
+     */
+    upsert<T extends JobBoardDistributionUpsertArgs>(args: SelectSubset<T, JobBoardDistributionUpsertArgs<ExtArgs>>): Prisma__JobBoardDistributionClient<$Result.GetResult<Prisma.$JobBoardDistributionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of JobBoardDistributions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionCountArgs} args - Arguments to filter JobBoardDistributions to count.
+     * @example
+     * // Count the number of JobBoardDistributions
+     * const count = await prisma.jobBoardDistribution.count({
+     *   where: {
+     *     // ... the filter for the JobBoardDistributions we want to count
+     *   }
+     * })
+    **/
+    count<T extends JobBoardDistributionCountArgs>(
+      args?: Subset<T, JobBoardDistributionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], JobBoardDistributionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a JobBoardDistribution.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends JobBoardDistributionAggregateArgs>(args: Subset<T, JobBoardDistributionAggregateArgs>): Prisma.PrismaPromise<GetJobBoardDistributionAggregateType<T>>
+
+    /**
+     * Group by JobBoardDistribution.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobBoardDistributionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends JobBoardDistributionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: JobBoardDistributionGroupByArgs['orderBy'] }
+        : { orderBy?: JobBoardDistributionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, JobBoardDistributionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetJobBoardDistributionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the JobBoardDistribution model
+   */
+  readonly fields: JobBoardDistributionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for JobBoardDistribution.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__JobBoardDistributionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    jobPosting<T extends JobPostingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, JobPostingDefaultArgs<ExtArgs>>): Prisma__JobPostingClient<$Result.GetResult<Prisma.$JobPostingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the JobBoardDistribution model
+   */
+  interface JobBoardDistributionFieldRefs {
+    readonly id: FieldRef<"JobBoardDistribution", 'String'>
+    readonly tenantId: FieldRef<"JobBoardDistribution", 'String'>
+    readonly jobPostingId: FieldRef<"JobBoardDistribution", 'String'>
+    readonly board: FieldRef<"JobBoardDistribution", 'String'>
+    readonly externalPostingId: FieldRef<"JobBoardDistribution", 'String'>
+    readonly externalUrl: FieldRef<"JobBoardDistribution", 'String'>
+    readonly status: FieldRef<"JobBoardDistribution", 'DistributionStatus'>
+    readonly lastError: FieldRef<"JobBoardDistribution", 'String'>
+    readonly lastSyncedAt: FieldRef<"JobBoardDistribution", 'DateTime'>
+    readonly raw: FieldRef<"JobBoardDistribution", 'Json'>
+    readonly createdAt: FieldRef<"JobBoardDistribution", 'DateTime'>
+    readonly updatedAt: FieldRef<"JobBoardDistribution", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * JobBoardDistribution findUnique
+   */
+  export type JobBoardDistributionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter, which JobBoardDistribution to fetch.
+     */
+    where: JobBoardDistributionWhereUniqueInput
+  }
+
+  /**
+   * JobBoardDistribution findUniqueOrThrow
+   */
+  export type JobBoardDistributionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter, which JobBoardDistribution to fetch.
+     */
+    where: JobBoardDistributionWhereUniqueInput
+  }
+
+  /**
+   * JobBoardDistribution findFirst
+   */
+  export type JobBoardDistributionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter, which JobBoardDistribution to fetch.
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobBoardDistributions to fetch.
+     */
+    orderBy?: JobBoardDistributionOrderByWithRelationInput | JobBoardDistributionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for JobBoardDistributions.
+     */
+    cursor?: JobBoardDistributionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobBoardDistributions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobBoardDistributions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of JobBoardDistributions.
+     */
+    distinct?: JobBoardDistributionScalarFieldEnum | JobBoardDistributionScalarFieldEnum[]
+  }
+
+  /**
+   * JobBoardDistribution findFirstOrThrow
+   */
+  export type JobBoardDistributionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter, which JobBoardDistribution to fetch.
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobBoardDistributions to fetch.
+     */
+    orderBy?: JobBoardDistributionOrderByWithRelationInput | JobBoardDistributionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for JobBoardDistributions.
+     */
+    cursor?: JobBoardDistributionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobBoardDistributions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobBoardDistributions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of JobBoardDistributions.
+     */
+    distinct?: JobBoardDistributionScalarFieldEnum | JobBoardDistributionScalarFieldEnum[]
+  }
+
+  /**
+   * JobBoardDistribution findMany
+   */
+  export type JobBoardDistributionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter, which JobBoardDistributions to fetch.
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobBoardDistributions to fetch.
+     */
+    orderBy?: JobBoardDistributionOrderByWithRelationInput | JobBoardDistributionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing JobBoardDistributions.
+     */
+    cursor?: JobBoardDistributionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobBoardDistributions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobBoardDistributions.
+     */
+    skip?: number
+    distinct?: JobBoardDistributionScalarFieldEnum | JobBoardDistributionScalarFieldEnum[]
+  }
+
+  /**
+   * JobBoardDistribution create
+   */
+  export type JobBoardDistributionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a JobBoardDistribution.
+     */
+    data: XOR<JobBoardDistributionCreateInput, JobBoardDistributionUncheckedCreateInput>
+  }
+
+  /**
+   * JobBoardDistribution createMany
+   */
+  export type JobBoardDistributionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many JobBoardDistributions.
+     */
+    data: JobBoardDistributionCreateManyInput | JobBoardDistributionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * JobBoardDistribution createManyAndReturn
+   */
+  export type JobBoardDistributionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * The data used to create many JobBoardDistributions.
+     */
+    data: JobBoardDistributionCreateManyInput | JobBoardDistributionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * JobBoardDistribution update
+   */
+  export type JobBoardDistributionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a JobBoardDistribution.
+     */
+    data: XOR<JobBoardDistributionUpdateInput, JobBoardDistributionUncheckedUpdateInput>
+    /**
+     * Choose, which JobBoardDistribution to update.
+     */
+    where: JobBoardDistributionWhereUniqueInput
+  }
+
+  /**
+   * JobBoardDistribution updateMany
+   */
+  export type JobBoardDistributionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update JobBoardDistributions.
+     */
+    data: XOR<JobBoardDistributionUpdateManyMutationInput, JobBoardDistributionUncheckedUpdateManyInput>
+    /**
+     * Filter which JobBoardDistributions to update
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * Limit how many JobBoardDistributions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * JobBoardDistribution updateManyAndReturn
+   */
+  export type JobBoardDistributionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * The data used to update JobBoardDistributions.
+     */
+    data: XOR<JobBoardDistributionUpdateManyMutationInput, JobBoardDistributionUncheckedUpdateManyInput>
+    /**
+     * Filter which JobBoardDistributions to update
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * Limit how many JobBoardDistributions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * JobBoardDistribution upsert
+   */
+  export type JobBoardDistributionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the JobBoardDistribution to update in case it exists.
+     */
+    where: JobBoardDistributionWhereUniqueInput
+    /**
+     * In case the JobBoardDistribution found by the `where` argument doesn't exist, create a new JobBoardDistribution with this data.
+     */
+    create: XOR<JobBoardDistributionCreateInput, JobBoardDistributionUncheckedCreateInput>
+    /**
+     * In case the JobBoardDistribution was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<JobBoardDistributionUpdateInput, JobBoardDistributionUncheckedUpdateInput>
+  }
+
+  /**
+   * JobBoardDistribution delete
+   */
+  export type JobBoardDistributionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+    /**
+     * Filter which JobBoardDistribution to delete.
+     */
+    where: JobBoardDistributionWhereUniqueInput
+  }
+
+  /**
+   * JobBoardDistribution deleteMany
+   */
+  export type JobBoardDistributionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which JobBoardDistributions to delete
+     */
+    where?: JobBoardDistributionWhereInput
+    /**
+     * Limit how many JobBoardDistributions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * JobBoardDistribution without action
+   */
+  export type JobBoardDistributionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobBoardDistribution
+     */
+    select?: JobBoardDistributionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobBoardDistribution
+     */
+    omit?: JobBoardDistributionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: JobBoardDistributionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ApplicationIdempotency
+   */
+
+  export type AggregateApplicationIdempotency = {
+    _count: ApplicationIdempotencyCountAggregateOutputType | null
+    _avg: ApplicationIdempotencyAvgAggregateOutputType | null
+    _sum: ApplicationIdempotencySumAggregateOutputType | null
+    _min: ApplicationIdempotencyMinAggregateOutputType | null
+    _max: ApplicationIdempotencyMaxAggregateOutputType | null
+  }
+
+  export type ApplicationIdempotencyAvgAggregateOutputType = {
+    id: number | null
+    responseCode: number | null
+  }
+
+  export type ApplicationIdempotencySumAggregateOutputType = {
+    id: bigint | null
+    responseCode: number | null
+  }
+
+  export type ApplicationIdempotencyMinAggregateOutputType = {
+    id: bigint | null
+    tenantId: string | null
+    idempotencyKey: string | null
+    requestMethod: string | null
+    requestPath: string | null
+    responseCode: number | null
+    recoveryPoint: string | null
+    applicationId: string | null
+    candidateId: string | null
+    requisitionId: string | null
+    ingestStage: string | null
+    ingestError: string | null
+    lockedAt: Date | null
+    createdAt: Date | null
+    lastRunAt: Date | null
+  }
+
+  export type ApplicationIdempotencyMaxAggregateOutputType = {
+    id: bigint | null
+    tenantId: string | null
+    idempotencyKey: string | null
+    requestMethod: string | null
+    requestPath: string | null
+    responseCode: number | null
+    recoveryPoint: string | null
+    applicationId: string | null
+    candidateId: string | null
+    requisitionId: string | null
+    ingestStage: string | null
+    ingestError: string | null
+    lockedAt: Date | null
+    createdAt: Date | null
+    lastRunAt: Date | null
+  }
+
+  export type ApplicationIdempotencyCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    idempotencyKey: number
+    requestMethod: number
+    requestPath: number
+    responseCode: number
+    responseBody: number
+    recoveryPoint: number
+    applicationId: number
+    candidateId: number
+    requisitionId: number
+    ingestStage: number
+    ingestError: number
+    lockedAt: number
+    createdAt: number
+    lastRunAt: number
+    _all: number
+  }
+
+
+  export type ApplicationIdempotencyAvgAggregateInputType = {
+    id?: true
+    responseCode?: true
+  }
+
+  export type ApplicationIdempotencySumAggregateInputType = {
+    id?: true
+    responseCode?: true
+  }
+
+  export type ApplicationIdempotencyMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    idempotencyKey?: true
+    requestMethod?: true
+    requestPath?: true
+    responseCode?: true
+    recoveryPoint?: true
+    applicationId?: true
+    candidateId?: true
+    requisitionId?: true
+    ingestStage?: true
+    ingestError?: true
+    lockedAt?: true
+    createdAt?: true
+    lastRunAt?: true
+  }
+
+  export type ApplicationIdempotencyMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    idempotencyKey?: true
+    requestMethod?: true
+    requestPath?: true
+    responseCode?: true
+    recoveryPoint?: true
+    applicationId?: true
+    candidateId?: true
+    requisitionId?: true
+    ingestStage?: true
+    ingestError?: true
+    lockedAt?: true
+    createdAt?: true
+    lastRunAt?: true
+  }
+
+  export type ApplicationIdempotencyCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    idempotencyKey?: true
+    requestMethod?: true
+    requestPath?: true
+    responseCode?: true
+    responseBody?: true
+    recoveryPoint?: true
+    applicationId?: true
+    candidateId?: true
+    requisitionId?: true
+    ingestStage?: true
+    ingestError?: true
+    lockedAt?: true
+    createdAt?: true
+    lastRunAt?: true
+    _all?: true
+  }
+
+  export type ApplicationIdempotencyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ApplicationIdempotency to aggregate.
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ApplicationIdempotencies to fetch.
+     */
+    orderBy?: ApplicationIdempotencyOrderByWithRelationInput | ApplicationIdempotencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ApplicationIdempotencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ApplicationIdempotencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ApplicationIdempotencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ApplicationIdempotencies
+    **/
+    _count?: true | ApplicationIdempotencyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ApplicationIdempotencyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ApplicationIdempotencySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ApplicationIdempotencyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ApplicationIdempotencyMaxAggregateInputType
+  }
+
+  export type GetApplicationIdempotencyAggregateType<T extends ApplicationIdempotencyAggregateArgs> = {
+        [P in keyof T & keyof AggregateApplicationIdempotency]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateApplicationIdempotency[P]>
+      : GetScalarType<T[P], AggregateApplicationIdempotency[P]>
+  }
+
+
+
+
+  export type ApplicationIdempotencyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ApplicationIdempotencyWhereInput
+    orderBy?: ApplicationIdempotencyOrderByWithAggregationInput | ApplicationIdempotencyOrderByWithAggregationInput[]
+    by: ApplicationIdempotencyScalarFieldEnum[] | ApplicationIdempotencyScalarFieldEnum
+    having?: ApplicationIdempotencyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ApplicationIdempotencyCountAggregateInputType | true
+    _avg?: ApplicationIdempotencyAvgAggregateInputType
+    _sum?: ApplicationIdempotencySumAggregateInputType
+    _min?: ApplicationIdempotencyMinAggregateInputType
+    _max?: ApplicationIdempotencyMaxAggregateInputType
+  }
+
+  export type ApplicationIdempotencyGroupByOutputType = {
+    id: bigint
+    tenantId: string
+    idempotencyKey: string
+    requestMethod: string
+    requestPath: string
+    responseCode: number | null
+    responseBody: JsonValue | null
+    recoveryPoint: string
+    applicationId: string | null
+    candidateId: string | null
+    requisitionId: string | null
+    ingestStage: string | null
+    ingestError: string | null
+    lockedAt: Date | null
+    createdAt: Date
+    lastRunAt: Date | null
+    _count: ApplicationIdempotencyCountAggregateOutputType | null
+    _avg: ApplicationIdempotencyAvgAggregateOutputType | null
+    _sum: ApplicationIdempotencySumAggregateOutputType | null
+    _min: ApplicationIdempotencyMinAggregateOutputType | null
+    _max: ApplicationIdempotencyMaxAggregateOutputType | null
+  }
+
+  type GetApplicationIdempotencyGroupByPayload<T extends ApplicationIdempotencyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ApplicationIdempotencyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ApplicationIdempotencyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ApplicationIdempotencyGroupByOutputType[P]>
+            : GetScalarType<T[P], ApplicationIdempotencyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ApplicationIdempotencySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    idempotencyKey?: boolean
+    requestMethod?: boolean
+    requestPath?: boolean
+    responseCode?: boolean
+    responseBody?: boolean
+    recoveryPoint?: boolean
+    applicationId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    ingestStage?: boolean
+    ingestError?: boolean
+    lockedAt?: boolean
+    createdAt?: boolean
+    lastRunAt?: boolean
+  }, ExtArgs["result"]["applicationIdempotency"]>
+
+  export type ApplicationIdempotencySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    idempotencyKey?: boolean
+    requestMethod?: boolean
+    requestPath?: boolean
+    responseCode?: boolean
+    responseBody?: boolean
+    recoveryPoint?: boolean
+    applicationId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    ingestStage?: boolean
+    ingestError?: boolean
+    lockedAt?: boolean
+    createdAt?: boolean
+    lastRunAt?: boolean
+  }, ExtArgs["result"]["applicationIdempotency"]>
+
+  export type ApplicationIdempotencySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    idempotencyKey?: boolean
+    requestMethod?: boolean
+    requestPath?: boolean
+    responseCode?: boolean
+    responseBody?: boolean
+    recoveryPoint?: boolean
+    applicationId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    ingestStage?: boolean
+    ingestError?: boolean
+    lockedAt?: boolean
+    createdAt?: boolean
+    lastRunAt?: boolean
+  }, ExtArgs["result"]["applicationIdempotency"]>
+
+  export type ApplicationIdempotencySelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    idempotencyKey?: boolean
+    requestMethod?: boolean
+    requestPath?: boolean
+    responseCode?: boolean
+    responseBody?: boolean
+    recoveryPoint?: boolean
+    applicationId?: boolean
+    candidateId?: boolean
+    requisitionId?: boolean
+    ingestStage?: boolean
+    ingestError?: boolean
+    lockedAt?: boolean
+    createdAt?: boolean
+    lastRunAt?: boolean
+  }
+
+  export type ApplicationIdempotencyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "idempotencyKey" | "requestMethod" | "requestPath" | "responseCode" | "responseBody" | "recoveryPoint" | "applicationId" | "candidateId" | "requisitionId" | "ingestStage" | "ingestError" | "lockedAt" | "createdAt" | "lastRunAt", ExtArgs["result"]["applicationIdempotency"]>
+
+  export type $ApplicationIdempotencyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ApplicationIdempotency"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: bigint
+      tenantId: string
+      idempotencyKey: string
+      requestMethod: string
+      requestPath: string
+      responseCode: number | null
+      responseBody: Prisma.JsonValue | null
+      recoveryPoint: string
+      applicationId: string | null
+      candidateId: string | null
+      requisitionId: string | null
+      ingestStage: string | null
+      ingestError: string | null
+      lockedAt: Date | null
+      createdAt: Date
+      lastRunAt: Date | null
+    }, ExtArgs["result"]["applicationIdempotency"]>
+    composites: {}
+  }
+
+  type ApplicationIdempotencyGetPayload<S extends boolean | null | undefined | ApplicationIdempotencyDefaultArgs> = $Result.GetResult<Prisma.$ApplicationIdempotencyPayload, S>
+
+  type ApplicationIdempotencyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ApplicationIdempotencyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ApplicationIdempotencyCountAggregateInputType | true
+    }
+
+  export interface ApplicationIdempotencyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ApplicationIdempotency'], meta: { name: 'ApplicationIdempotency' } }
+    /**
+     * Find zero or one ApplicationIdempotency that matches the filter.
+     * @param {ApplicationIdempotencyFindUniqueArgs} args - Arguments to find a ApplicationIdempotency
+     * @example
+     * // Get one ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ApplicationIdempotencyFindUniqueArgs>(args: SelectSubset<T, ApplicationIdempotencyFindUniqueArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ApplicationIdempotency that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ApplicationIdempotencyFindUniqueOrThrowArgs} args - Arguments to find a ApplicationIdempotency
+     * @example
+     * // Get one ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ApplicationIdempotencyFindUniqueOrThrowArgs>(args: SelectSubset<T, ApplicationIdempotencyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ApplicationIdempotency that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyFindFirstArgs} args - Arguments to find a ApplicationIdempotency
+     * @example
+     * // Get one ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ApplicationIdempotencyFindFirstArgs>(args?: SelectSubset<T, ApplicationIdempotencyFindFirstArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ApplicationIdempotency that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyFindFirstOrThrowArgs} args - Arguments to find a ApplicationIdempotency
+     * @example
+     * // Get one ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ApplicationIdempotencyFindFirstOrThrowArgs>(args?: SelectSubset<T, ApplicationIdempotencyFindFirstOrThrowArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ApplicationIdempotencies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ApplicationIdempotencies
+     * const applicationIdempotencies = await prisma.applicationIdempotency.findMany()
+     * 
+     * // Get first 10 ApplicationIdempotencies
+     * const applicationIdempotencies = await prisma.applicationIdempotency.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const applicationIdempotencyWithIdOnly = await prisma.applicationIdempotency.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ApplicationIdempotencyFindManyArgs>(args?: SelectSubset<T, ApplicationIdempotencyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ApplicationIdempotency.
+     * @param {ApplicationIdempotencyCreateArgs} args - Arguments to create a ApplicationIdempotency.
+     * @example
+     * // Create one ApplicationIdempotency
+     * const ApplicationIdempotency = await prisma.applicationIdempotency.create({
+     *   data: {
+     *     // ... data to create a ApplicationIdempotency
+     *   }
+     * })
+     * 
+     */
+    create<T extends ApplicationIdempotencyCreateArgs>(args: SelectSubset<T, ApplicationIdempotencyCreateArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ApplicationIdempotencies.
+     * @param {ApplicationIdempotencyCreateManyArgs} args - Arguments to create many ApplicationIdempotencies.
+     * @example
+     * // Create many ApplicationIdempotencies
+     * const applicationIdempotency = await prisma.applicationIdempotency.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ApplicationIdempotencyCreateManyArgs>(args?: SelectSubset<T, ApplicationIdempotencyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ApplicationIdempotencies and returns the data saved in the database.
+     * @param {ApplicationIdempotencyCreateManyAndReturnArgs} args - Arguments to create many ApplicationIdempotencies.
+     * @example
+     * // Create many ApplicationIdempotencies
+     * const applicationIdempotency = await prisma.applicationIdempotency.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ApplicationIdempotencies and only return the `id`
+     * const applicationIdempotencyWithIdOnly = await prisma.applicationIdempotency.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ApplicationIdempotencyCreateManyAndReturnArgs>(args?: SelectSubset<T, ApplicationIdempotencyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ApplicationIdempotency.
+     * @param {ApplicationIdempotencyDeleteArgs} args - Arguments to delete one ApplicationIdempotency.
+     * @example
+     * // Delete one ApplicationIdempotency
+     * const ApplicationIdempotency = await prisma.applicationIdempotency.delete({
+     *   where: {
+     *     // ... filter to delete one ApplicationIdempotency
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ApplicationIdempotencyDeleteArgs>(args: SelectSubset<T, ApplicationIdempotencyDeleteArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ApplicationIdempotency.
+     * @param {ApplicationIdempotencyUpdateArgs} args - Arguments to update one ApplicationIdempotency.
+     * @example
+     * // Update one ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ApplicationIdempotencyUpdateArgs>(args: SelectSubset<T, ApplicationIdempotencyUpdateArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ApplicationIdempotencies.
+     * @param {ApplicationIdempotencyDeleteManyArgs} args - Arguments to filter ApplicationIdempotencies to delete.
+     * @example
+     * // Delete a few ApplicationIdempotencies
+     * const { count } = await prisma.applicationIdempotency.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ApplicationIdempotencyDeleteManyArgs>(args?: SelectSubset<T, ApplicationIdempotencyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ApplicationIdempotencies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ApplicationIdempotencies
+     * const applicationIdempotency = await prisma.applicationIdempotency.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ApplicationIdempotencyUpdateManyArgs>(args: SelectSubset<T, ApplicationIdempotencyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ApplicationIdempotencies and returns the data updated in the database.
+     * @param {ApplicationIdempotencyUpdateManyAndReturnArgs} args - Arguments to update many ApplicationIdempotencies.
+     * @example
+     * // Update many ApplicationIdempotencies
+     * const applicationIdempotency = await prisma.applicationIdempotency.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ApplicationIdempotencies and only return the `id`
+     * const applicationIdempotencyWithIdOnly = await prisma.applicationIdempotency.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ApplicationIdempotencyUpdateManyAndReturnArgs>(args: SelectSubset<T, ApplicationIdempotencyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ApplicationIdempotency.
+     * @param {ApplicationIdempotencyUpsertArgs} args - Arguments to update or create a ApplicationIdempotency.
+     * @example
+     * // Update or create a ApplicationIdempotency
+     * const applicationIdempotency = await prisma.applicationIdempotency.upsert({
+     *   create: {
+     *     // ... data to create a ApplicationIdempotency
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ApplicationIdempotency we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ApplicationIdempotencyUpsertArgs>(args: SelectSubset<T, ApplicationIdempotencyUpsertArgs<ExtArgs>>): Prisma__ApplicationIdempotencyClient<$Result.GetResult<Prisma.$ApplicationIdempotencyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ApplicationIdempotencies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyCountArgs} args - Arguments to filter ApplicationIdempotencies to count.
+     * @example
+     * // Count the number of ApplicationIdempotencies
+     * const count = await prisma.applicationIdempotency.count({
+     *   where: {
+     *     // ... the filter for the ApplicationIdempotencies we want to count
+     *   }
+     * })
+    **/
+    count<T extends ApplicationIdempotencyCountArgs>(
+      args?: Subset<T, ApplicationIdempotencyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ApplicationIdempotencyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ApplicationIdempotency.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ApplicationIdempotencyAggregateArgs>(args: Subset<T, ApplicationIdempotencyAggregateArgs>): Prisma.PrismaPromise<GetApplicationIdempotencyAggregateType<T>>
+
+    /**
+     * Group by ApplicationIdempotency.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ApplicationIdempotencyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ApplicationIdempotencyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ApplicationIdempotencyGroupByArgs['orderBy'] }
+        : { orderBy?: ApplicationIdempotencyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ApplicationIdempotencyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetApplicationIdempotencyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ApplicationIdempotency model
+   */
+  readonly fields: ApplicationIdempotencyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ApplicationIdempotency.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ApplicationIdempotencyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ApplicationIdempotency model
+   */
+  interface ApplicationIdempotencyFieldRefs {
+    readonly id: FieldRef<"ApplicationIdempotency", 'BigInt'>
+    readonly tenantId: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly idempotencyKey: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly requestMethod: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly requestPath: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly responseCode: FieldRef<"ApplicationIdempotency", 'Int'>
+    readonly responseBody: FieldRef<"ApplicationIdempotency", 'Json'>
+    readonly recoveryPoint: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly applicationId: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly candidateId: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly requisitionId: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly ingestStage: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly ingestError: FieldRef<"ApplicationIdempotency", 'String'>
+    readonly lockedAt: FieldRef<"ApplicationIdempotency", 'DateTime'>
+    readonly createdAt: FieldRef<"ApplicationIdempotency", 'DateTime'>
+    readonly lastRunAt: FieldRef<"ApplicationIdempotency", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ApplicationIdempotency findUnique
+   */
+  export type ApplicationIdempotencyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter, which ApplicationIdempotency to fetch.
+     */
+    where: ApplicationIdempotencyWhereUniqueInput
+  }
+
+  /**
+   * ApplicationIdempotency findUniqueOrThrow
+   */
+  export type ApplicationIdempotencyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter, which ApplicationIdempotency to fetch.
+     */
+    where: ApplicationIdempotencyWhereUniqueInput
+  }
+
+  /**
+   * ApplicationIdempotency findFirst
+   */
+  export type ApplicationIdempotencyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter, which ApplicationIdempotency to fetch.
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ApplicationIdempotencies to fetch.
+     */
+    orderBy?: ApplicationIdempotencyOrderByWithRelationInput | ApplicationIdempotencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ApplicationIdempotencies.
+     */
+    cursor?: ApplicationIdempotencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ApplicationIdempotencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ApplicationIdempotencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ApplicationIdempotencies.
+     */
+    distinct?: ApplicationIdempotencyScalarFieldEnum | ApplicationIdempotencyScalarFieldEnum[]
+  }
+
+  /**
+   * ApplicationIdempotency findFirstOrThrow
+   */
+  export type ApplicationIdempotencyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter, which ApplicationIdempotency to fetch.
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ApplicationIdempotencies to fetch.
+     */
+    orderBy?: ApplicationIdempotencyOrderByWithRelationInput | ApplicationIdempotencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ApplicationIdempotencies.
+     */
+    cursor?: ApplicationIdempotencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ApplicationIdempotencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ApplicationIdempotencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ApplicationIdempotencies.
+     */
+    distinct?: ApplicationIdempotencyScalarFieldEnum | ApplicationIdempotencyScalarFieldEnum[]
+  }
+
+  /**
+   * ApplicationIdempotency findMany
+   */
+  export type ApplicationIdempotencyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter, which ApplicationIdempotencies to fetch.
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ApplicationIdempotencies to fetch.
+     */
+    orderBy?: ApplicationIdempotencyOrderByWithRelationInput | ApplicationIdempotencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ApplicationIdempotencies.
+     */
+    cursor?: ApplicationIdempotencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ApplicationIdempotencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ApplicationIdempotencies.
+     */
+    skip?: number
+    distinct?: ApplicationIdempotencyScalarFieldEnum | ApplicationIdempotencyScalarFieldEnum[]
+  }
+
+  /**
+   * ApplicationIdempotency create
+   */
+  export type ApplicationIdempotencyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ApplicationIdempotency.
+     */
+    data: XOR<ApplicationIdempotencyCreateInput, ApplicationIdempotencyUncheckedCreateInput>
+  }
+
+  /**
+   * ApplicationIdempotency createMany
+   */
+  export type ApplicationIdempotencyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ApplicationIdempotencies.
+     */
+    data: ApplicationIdempotencyCreateManyInput | ApplicationIdempotencyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ApplicationIdempotency createManyAndReturn
+   */
+  export type ApplicationIdempotencyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * The data used to create many ApplicationIdempotencies.
+     */
+    data: ApplicationIdempotencyCreateManyInput | ApplicationIdempotencyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ApplicationIdempotency update
+   */
+  export type ApplicationIdempotencyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ApplicationIdempotency.
+     */
+    data: XOR<ApplicationIdempotencyUpdateInput, ApplicationIdempotencyUncheckedUpdateInput>
+    /**
+     * Choose, which ApplicationIdempotency to update.
+     */
+    where: ApplicationIdempotencyWhereUniqueInput
+  }
+
+  /**
+   * ApplicationIdempotency updateMany
+   */
+  export type ApplicationIdempotencyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ApplicationIdempotencies.
+     */
+    data: XOR<ApplicationIdempotencyUpdateManyMutationInput, ApplicationIdempotencyUncheckedUpdateManyInput>
+    /**
+     * Filter which ApplicationIdempotencies to update
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * Limit how many ApplicationIdempotencies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ApplicationIdempotency updateManyAndReturn
+   */
+  export type ApplicationIdempotencyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * The data used to update ApplicationIdempotencies.
+     */
+    data: XOR<ApplicationIdempotencyUpdateManyMutationInput, ApplicationIdempotencyUncheckedUpdateManyInput>
+    /**
+     * Filter which ApplicationIdempotencies to update
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * Limit how many ApplicationIdempotencies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ApplicationIdempotency upsert
+   */
+  export type ApplicationIdempotencyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ApplicationIdempotency to update in case it exists.
+     */
+    where: ApplicationIdempotencyWhereUniqueInput
+    /**
+     * In case the ApplicationIdempotency found by the `where` argument doesn't exist, create a new ApplicationIdempotency with this data.
+     */
+    create: XOR<ApplicationIdempotencyCreateInput, ApplicationIdempotencyUncheckedCreateInput>
+    /**
+     * In case the ApplicationIdempotency was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ApplicationIdempotencyUpdateInput, ApplicationIdempotencyUncheckedUpdateInput>
+  }
+
+  /**
+   * ApplicationIdempotency delete
+   */
+  export type ApplicationIdempotencyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+    /**
+     * Filter which ApplicationIdempotency to delete.
+     */
+    where: ApplicationIdempotencyWhereUniqueInput
+  }
+
+  /**
+   * ApplicationIdempotency deleteMany
+   */
+  export type ApplicationIdempotencyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ApplicationIdempotencies to delete
+     */
+    where?: ApplicationIdempotencyWhereInput
+    /**
+     * Limit how many ApplicationIdempotencies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ApplicationIdempotency without action
+   */
+  export type ApplicationIdempotencyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApplicationIdempotency
+     */
+    select?: ApplicationIdempotencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApplicationIdempotency
+     */
+    omit?: ApplicationIdempotencyOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model JobFeedToken
+   */
+
+  export type AggregateJobFeedToken = {
+    _count: JobFeedTokenCountAggregateOutputType | null
+    _min: JobFeedTokenMinAggregateOutputType | null
+    _max: JobFeedTokenMaxAggregateOutputType | null
+  }
+
+  export type JobFeedTokenMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    token: string | null
+    createdAt: Date | null
+  }
+
+  export type JobFeedTokenMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    token: string | null
+    createdAt: Date | null
+  }
+
+  export type JobFeedTokenCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    token: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type JobFeedTokenMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    token?: true
+    createdAt?: true
+  }
+
+  export type JobFeedTokenMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    token?: true
+    createdAt?: true
+  }
+
+  export type JobFeedTokenCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    token?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type JobFeedTokenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which JobFeedToken to aggregate.
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobFeedTokens to fetch.
+     */
+    orderBy?: JobFeedTokenOrderByWithRelationInput | JobFeedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: JobFeedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobFeedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobFeedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned JobFeedTokens
+    **/
+    _count?: true | JobFeedTokenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: JobFeedTokenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: JobFeedTokenMaxAggregateInputType
+  }
+
+  export type GetJobFeedTokenAggregateType<T extends JobFeedTokenAggregateArgs> = {
+        [P in keyof T & keyof AggregateJobFeedToken]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateJobFeedToken[P]>
+      : GetScalarType<T[P], AggregateJobFeedToken[P]>
+  }
+
+
+
+
+  export type JobFeedTokenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: JobFeedTokenWhereInput
+    orderBy?: JobFeedTokenOrderByWithAggregationInput | JobFeedTokenOrderByWithAggregationInput[]
+    by: JobFeedTokenScalarFieldEnum[] | JobFeedTokenScalarFieldEnum
+    having?: JobFeedTokenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: JobFeedTokenCountAggregateInputType | true
+    _min?: JobFeedTokenMinAggregateInputType
+    _max?: JobFeedTokenMaxAggregateInputType
+  }
+
+  export type JobFeedTokenGroupByOutputType = {
+    id: string
+    tenantId: string
+    token: string
+    createdAt: Date
+    _count: JobFeedTokenCountAggregateOutputType | null
+    _min: JobFeedTokenMinAggregateOutputType | null
+    _max: JobFeedTokenMaxAggregateOutputType | null
+  }
+
+  type GetJobFeedTokenGroupByPayload<T extends JobFeedTokenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<JobFeedTokenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof JobFeedTokenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], JobFeedTokenGroupByOutputType[P]>
+            : GetScalarType<T[P], JobFeedTokenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type JobFeedTokenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    token?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["jobFeedToken"]>
+
+  export type JobFeedTokenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    token?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["jobFeedToken"]>
+
+  export type JobFeedTokenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    token?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["jobFeedToken"]>
+
+  export type JobFeedTokenSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    token?: boolean
+    createdAt?: boolean
+  }
+
+  export type JobFeedTokenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "token" | "createdAt", ExtArgs["result"]["jobFeedToken"]>
+
+  export type $JobFeedTokenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "JobFeedToken"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      token: string
+      createdAt: Date
+    }, ExtArgs["result"]["jobFeedToken"]>
+    composites: {}
+  }
+
+  type JobFeedTokenGetPayload<S extends boolean | null | undefined | JobFeedTokenDefaultArgs> = $Result.GetResult<Prisma.$JobFeedTokenPayload, S>
+
+  type JobFeedTokenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<JobFeedTokenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: JobFeedTokenCountAggregateInputType | true
+    }
+
+  export interface JobFeedTokenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['JobFeedToken'], meta: { name: 'JobFeedToken' } }
+    /**
+     * Find zero or one JobFeedToken that matches the filter.
+     * @param {JobFeedTokenFindUniqueArgs} args - Arguments to find a JobFeedToken
+     * @example
+     * // Get one JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends JobFeedTokenFindUniqueArgs>(args: SelectSubset<T, JobFeedTokenFindUniqueArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one JobFeedToken that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {JobFeedTokenFindUniqueOrThrowArgs} args - Arguments to find a JobFeedToken
+     * @example
+     * // Get one JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends JobFeedTokenFindUniqueOrThrowArgs>(args: SelectSubset<T, JobFeedTokenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first JobFeedToken that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenFindFirstArgs} args - Arguments to find a JobFeedToken
+     * @example
+     * // Get one JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends JobFeedTokenFindFirstArgs>(args?: SelectSubset<T, JobFeedTokenFindFirstArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first JobFeedToken that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenFindFirstOrThrowArgs} args - Arguments to find a JobFeedToken
+     * @example
+     * // Get one JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends JobFeedTokenFindFirstOrThrowArgs>(args?: SelectSubset<T, JobFeedTokenFindFirstOrThrowArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more JobFeedTokens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all JobFeedTokens
+     * const jobFeedTokens = await prisma.jobFeedToken.findMany()
+     * 
+     * // Get first 10 JobFeedTokens
+     * const jobFeedTokens = await prisma.jobFeedToken.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const jobFeedTokenWithIdOnly = await prisma.jobFeedToken.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends JobFeedTokenFindManyArgs>(args?: SelectSubset<T, JobFeedTokenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a JobFeedToken.
+     * @param {JobFeedTokenCreateArgs} args - Arguments to create a JobFeedToken.
+     * @example
+     * // Create one JobFeedToken
+     * const JobFeedToken = await prisma.jobFeedToken.create({
+     *   data: {
+     *     // ... data to create a JobFeedToken
+     *   }
+     * })
+     * 
+     */
+    create<T extends JobFeedTokenCreateArgs>(args: SelectSubset<T, JobFeedTokenCreateArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many JobFeedTokens.
+     * @param {JobFeedTokenCreateManyArgs} args - Arguments to create many JobFeedTokens.
+     * @example
+     * // Create many JobFeedTokens
+     * const jobFeedToken = await prisma.jobFeedToken.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends JobFeedTokenCreateManyArgs>(args?: SelectSubset<T, JobFeedTokenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many JobFeedTokens and returns the data saved in the database.
+     * @param {JobFeedTokenCreateManyAndReturnArgs} args - Arguments to create many JobFeedTokens.
+     * @example
+     * // Create many JobFeedTokens
+     * const jobFeedToken = await prisma.jobFeedToken.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many JobFeedTokens and only return the `id`
+     * const jobFeedTokenWithIdOnly = await prisma.jobFeedToken.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends JobFeedTokenCreateManyAndReturnArgs>(args?: SelectSubset<T, JobFeedTokenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a JobFeedToken.
+     * @param {JobFeedTokenDeleteArgs} args - Arguments to delete one JobFeedToken.
+     * @example
+     * // Delete one JobFeedToken
+     * const JobFeedToken = await prisma.jobFeedToken.delete({
+     *   where: {
+     *     // ... filter to delete one JobFeedToken
+     *   }
+     * })
+     * 
+     */
+    delete<T extends JobFeedTokenDeleteArgs>(args: SelectSubset<T, JobFeedTokenDeleteArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one JobFeedToken.
+     * @param {JobFeedTokenUpdateArgs} args - Arguments to update one JobFeedToken.
+     * @example
+     * // Update one JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends JobFeedTokenUpdateArgs>(args: SelectSubset<T, JobFeedTokenUpdateArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more JobFeedTokens.
+     * @param {JobFeedTokenDeleteManyArgs} args - Arguments to filter JobFeedTokens to delete.
+     * @example
+     * // Delete a few JobFeedTokens
+     * const { count } = await prisma.jobFeedToken.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends JobFeedTokenDeleteManyArgs>(args?: SelectSubset<T, JobFeedTokenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more JobFeedTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many JobFeedTokens
+     * const jobFeedToken = await prisma.jobFeedToken.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends JobFeedTokenUpdateManyArgs>(args: SelectSubset<T, JobFeedTokenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more JobFeedTokens and returns the data updated in the database.
+     * @param {JobFeedTokenUpdateManyAndReturnArgs} args - Arguments to update many JobFeedTokens.
+     * @example
+     * // Update many JobFeedTokens
+     * const jobFeedToken = await prisma.jobFeedToken.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more JobFeedTokens and only return the `id`
+     * const jobFeedTokenWithIdOnly = await prisma.jobFeedToken.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends JobFeedTokenUpdateManyAndReturnArgs>(args: SelectSubset<T, JobFeedTokenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one JobFeedToken.
+     * @param {JobFeedTokenUpsertArgs} args - Arguments to update or create a JobFeedToken.
+     * @example
+     * // Update or create a JobFeedToken
+     * const jobFeedToken = await prisma.jobFeedToken.upsert({
+     *   create: {
+     *     // ... data to create a JobFeedToken
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the JobFeedToken we want to update
+     *   }
+     * })
+     */
+    upsert<T extends JobFeedTokenUpsertArgs>(args: SelectSubset<T, JobFeedTokenUpsertArgs<ExtArgs>>): Prisma__JobFeedTokenClient<$Result.GetResult<Prisma.$JobFeedTokenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of JobFeedTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenCountArgs} args - Arguments to filter JobFeedTokens to count.
+     * @example
+     * // Count the number of JobFeedTokens
+     * const count = await prisma.jobFeedToken.count({
+     *   where: {
+     *     // ... the filter for the JobFeedTokens we want to count
+     *   }
+     * })
+    **/
+    count<T extends JobFeedTokenCountArgs>(
+      args?: Subset<T, JobFeedTokenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], JobFeedTokenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a JobFeedToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends JobFeedTokenAggregateArgs>(args: Subset<T, JobFeedTokenAggregateArgs>): Prisma.PrismaPromise<GetJobFeedTokenAggregateType<T>>
+
+    /**
+     * Group by JobFeedToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {JobFeedTokenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends JobFeedTokenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: JobFeedTokenGroupByArgs['orderBy'] }
+        : { orderBy?: JobFeedTokenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, JobFeedTokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetJobFeedTokenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the JobFeedToken model
+   */
+  readonly fields: JobFeedTokenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for JobFeedToken.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__JobFeedTokenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the JobFeedToken model
+   */
+  interface JobFeedTokenFieldRefs {
+    readonly id: FieldRef<"JobFeedToken", 'String'>
+    readonly tenantId: FieldRef<"JobFeedToken", 'String'>
+    readonly token: FieldRef<"JobFeedToken", 'String'>
+    readonly createdAt: FieldRef<"JobFeedToken", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * JobFeedToken findUnique
+   */
+  export type JobFeedTokenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which JobFeedToken to fetch.
+     */
+    where: JobFeedTokenWhereUniqueInput
+  }
+
+  /**
+   * JobFeedToken findUniqueOrThrow
+   */
+  export type JobFeedTokenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which JobFeedToken to fetch.
+     */
+    where: JobFeedTokenWhereUniqueInput
+  }
+
+  /**
+   * JobFeedToken findFirst
+   */
+  export type JobFeedTokenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which JobFeedToken to fetch.
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobFeedTokens to fetch.
+     */
+    orderBy?: JobFeedTokenOrderByWithRelationInput | JobFeedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for JobFeedTokens.
+     */
+    cursor?: JobFeedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobFeedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobFeedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of JobFeedTokens.
+     */
+    distinct?: JobFeedTokenScalarFieldEnum | JobFeedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * JobFeedToken findFirstOrThrow
+   */
+  export type JobFeedTokenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which JobFeedToken to fetch.
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobFeedTokens to fetch.
+     */
+    orderBy?: JobFeedTokenOrderByWithRelationInput | JobFeedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for JobFeedTokens.
+     */
+    cursor?: JobFeedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobFeedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobFeedTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of JobFeedTokens.
+     */
+    distinct?: JobFeedTokenScalarFieldEnum | JobFeedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * JobFeedToken findMany
+   */
+  export type JobFeedTokenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter, which JobFeedTokens to fetch.
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of JobFeedTokens to fetch.
+     */
+    orderBy?: JobFeedTokenOrderByWithRelationInput | JobFeedTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing JobFeedTokens.
+     */
+    cursor?: JobFeedTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` JobFeedTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` JobFeedTokens.
+     */
+    skip?: number
+    distinct?: JobFeedTokenScalarFieldEnum | JobFeedTokenScalarFieldEnum[]
+  }
+
+  /**
+   * JobFeedToken create
+   */
+  export type JobFeedTokenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * The data needed to create a JobFeedToken.
+     */
+    data: XOR<JobFeedTokenCreateInput, JobFeedTokenUncheckedCreateInput>
+  }
+
+  /**
+   * JobFeedToken createMany
+   */
+  export type JobFeedTokenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many JobFeedTokens.
+     */
+    data: JobFeedTokenCreateManyInput | JobFeedTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * JobFeedToken createManyAndReturn
+   */
+  export type JobFeedTokenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * The data used to create many JobFeedTokens.
+     */
+    data: JobFeedTokenCreateManyInput | JobFeedTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * JobFeedToken update
+   */
+  export type JobFeedTokenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * The data needed to update a JobFeedToken.
+     */
+    data: XOR<JobFeedTokenUpdateInput, JobFeedTokenUncheckedUpdateInput>
+    /**
+     * Choose, which JobFeedToken to update.
+     */
+    where: JobFeedTokenWhereUniqueInput
+  }
+
+  /**
+   * JobFeedToken updateMany
+   */
+  export type JobFeedTokenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update JobFeedTokens.
+     */
+    data: XOR<JobFeedTokenUpdateManyMutationInput, JobFeedTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which JobFeedTokens to update
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * Limit how many JobFeedTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * JobFeedToken updateManyAndReturn
+   */
+  export type JobFeedTokenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * The data used to update JobFeedTokens.
+     */
+    data: XOR<JobFeedTokenUpdateManyMutationInput, JobFeedTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which JobFeedTokens to update
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * Limit how many JobFeedTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * JobFeedToken upsert
+   */
+  export type JobFeedTokenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * The filter to search for the JobFeedToken to update in case it exists.
+     */
+    where: JobFeedTokenWhereUniqueInput
+    /**
+     * In case the JobFeedToken found by the `where` argument doesn't exist, create a new JobFeedToken with this data.
+     */
+    create: XOR<JobFeedTokenCreateInput, JobFeedTokenUncheckedCreateInput>
+    /**
+     * In case the JobFeedToken was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<JobFeedTokenUpdateInput, JobFeedTokenUncheckedUpdateInput>
+  }
+
+  /**
+   * JobFeedToken delete
+   */
+  export type JobFeedTokenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+    /**
+     * Filter which JobFeedToken to delete.
+     */
+    where: JobFeedTokenWhereUniqueInput
+  }
+
+  /**
+   * JobFeedToken deleteMany
+   */
+  export type JobFeedTokenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which JobFeedTokens to delete
+     */
+    where?: JobFeedTokenWhereInput
+    /**
+     * Limit how many JobFeedTokens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * JobFeedToken without action
+   */
+  export type JobFeedTokenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the JobFeedToken
+     */
+    select?: JobFeedTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the JobFeedToken
+     */
+    omit?: JobFeedTokenOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -8613,6 +12263,56 @@ export namespace Prisma {
   export type AgentRunScalarFieldEnum = (typeof AgentRunScalarFieldEnum)[keyof typeof AgentRunScalarFieldEnum]
 
 
+  export const JobBoardDistributionScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    jobPostingId: 'jobPostingId',
+    board: 'board',
+    externalPostingId: 'externalPostingId',
+    externalUrl: 'externalUrl',
+    status: 'status',
+    lastError: 'lastError',
+    lastSyncedAt: 'lastSyncedAt',
+    raw: 'raw',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type JobBoardDistributionScalarFieldEnum = (typeof JobBoardDistributionScalarFieldEnum)[keyof typeof JobBoardDistributionScalarFieldEnum]
+
+
+  export const ApplicationIdempotencyScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    idempotencyKey: 'idempotencyKey',
+    requestMethod: 'requestMethod',
+    requestPath: 'requestPath',
+    responseCode: 'responseCode',
+    responseBody: 'responseBody',
+    recoveryPoint: 'recoveryPoint',
+    applicationId: 'applicationId',
+    candidateId: 'candidateId',
+    requisitionId: 'requisitionId',
+    ingestStage: 'ingestStage',
+    ingestError: 'ingestError',
+    lockedAt: 'lockedAt',
+    createdAt: 'createdAt',
+    lastRunAt: 'lastRunAt'
+  };
+
+  export type ApplicationIdempotencyScalarFieldEnum = (typeof ApplicationIdempotencyScalarFieldEnum)[keyof typeof ApplicationIdempotencyScalarFieldEnum]
+
+
+  export const JobFeedTokenScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    token: 'token',
+    createdAt: 'createdAt'
+  };
+
+  export type JobFeedTokenScalarFieldEnum = (typeof JobFeedTokenScalarFieldEnum)[keyof typeof JobFeedTokenScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -8626,6 +12326,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const QueryMode: {
@@ -8774,6 +12482,34 @@ export namespace Prisma {
    * Reference to a field of type 'Decimal[]'
    */
   export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DistributionStatus'
+   */
+  export type EnumDistributionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DistributionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'DistributionStatus[]'
+   */
+  export type ListEnumDistributionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DistributionStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt[]'
+   */
+  export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
     
   /**
    * Deep Input Types
@@ -8944,6 +12680,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"JobPosting"> | Date | string
     updatedAt?: DateTimeFilter<"JobPosting"> | Date | string
     requisition?: XOR<RequisitionScalarRelationFilter, RequisitionWhereInput>
+    jobBoardDistributions?: JobBoardDistributionListRelationFilter
   }
 
   export type JobPostingOrderByWithRelationInput = {
@@ -8962,6 +12699,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     requisition?: RequisitionOrderByWithRelationInput
+    jobBoardDistributions?: JobBoardDistributionOrderByRelationAggregateInput
   }
 
   export type JobPostingWhereUniqueInput = Prisma.AtLeast<{
@@ -8984,6 +12722,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"JobPosting"> | Date | string
     updatedAt?: DateTimeFilter<"JobPosting"> | Date | string
     requisition?: XOR<RequisitionScalarRelationFilter, RequisitionWhereInput>
+    jobBoardDistributions?: JobBoardDistributionListRelationFilter
   }, "id" | "tenantId_slug">
 
   export type JobPostingOrderByWithAggregationInput = {
@@ -9360,6 +13099,254 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
   }
 
+  export type JobBoardDistributionWhereInput = {
+    AND?: JobBoardDistributionWhereInput | JobBoardDistributionWhereInput[]
+    OR?: JobBoardDistributionWhereInput[]
+    NOT?: JobBoardDistributionWhereInput | JobBoardDistributionWhereInput[]
+    id?: StringFilter<"JobBoardDistribution"> | string
+    tenantId?: StringFilter<"JobBoardDistribution"> | string
+    jobPostingId?: StringFilter<"JobBoardDistribution"> | string
+    board?: StringFilter<"JobBoardDistribution"> | string
+    externalPostingId?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    externalUrl?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    status?: EnumDistributionStatusFilter<"JobBoardDistribution"> | $Enums.DistributionStatus
+    lastError?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"JobBoardDistribution"> | Date | string | null
+    raw?: JsonNullableFilter<"JobBoardDistribution">
+    createdAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
+    updatedAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
+    jobPosting?: XOR<JobPostingScalarRelationFilter, JobPostingWhereInput>
+  }
+
+  export type JobBoardDistributionOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    jobPostingId?: SortOrder
+    board?: SortOrder
+    externalPostingId?: SortOrderInput | SortOrder
+    externalUrl?: SortOrderInput | SortOrder
+    status?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    lastSyncedAt?: SortOrderInput | SortOrder
+    raw?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    jobPosting?: JobPostingOrderByWithRelationInput
+  }
+
+  export type JobBoardDistributionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId_jobPostingId_board?: JobBoardDistributionTenantIdJobPostingIdBoardCompoundUniqueInput
+    AND?: JobBoardDistributionWhereInput | JobBoardDistributionWhereInput[]
+    OR?: JobBoardDistributionWhereInput[]
+    NOT?: JobBoardDistributionWhereInput | JobBoardDistributionWhereInput[]
+    tenantId?: StringFilter<"JobBoardDistribution"> | string
+    jobPostingId?: StringFilter<"JobBoardDistribution"> | string
+    board?: StringFilter<"JobBoardDistribution"> | string
+    externalPostingId?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    externalUrl?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    status?: EnumDistributionStatusFilter<"JobBoardDistribution"> | $Enums.DistributionStatus
+    lastError?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"JobBoardDistribution"> | Date | string | null
+    raw?: JsonNullableFilter<"JobBoardDistribution">
+    createdAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
+    updatedAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
+    jobPosting?: XOR<JobPostingScalarRelationFilter, JobPostingWhereInput>
+  }, "id" | "tenantId_jobPostingId_board">
+
+  export type JobBoardDistributionOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    jobPostingId?: SortOrder
+    board?: SortOrder
+    externalPostingId?: SortOrderInput | SortOrder
+    externalUrl?: SortOrderInput | SortOrder
+    status?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    lastSyncedAt?: SortOrderInput | SortOrder
+    raw?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: JobBoardDistributionCountOrderByAggregateInput
+    _max?: JobBoardDistributionMaxOrderByAggregateInput
+    _min?: JobBoardDistributionMinOrderByAggregateInput
+  }
+
+  export type JobBoardDistributionScalarWhereWithAggregatesInput = {
+    AND?: JobBoardDistributionScalarWhereWithAggregatesInput | JobBoardDistributionScalarWhereWithAggregatesInput[]
+    OR?: JobBoardDistributionScalarWhereWithAggregatesInput[]
+    NOT?: JobBoardDistributionScalarWhereWithAggregatesInput | JobBoardDistributionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"JobBoardDistribution"> | string
+    tenantId?: StringWithAggregatesFilter<"JobBoardDistribution"> | string
+    jobPostingId?: StringWithAggregatesFilter<"JobBoardDistribution"> | string
+    board?: StringWithAggregatesFilter<"JobBoardDistribution"> | string
+    externalPostingId?: StringNullableWithAggregatesFilter<"JobBoardDistribution"> | string | null
+    externalUrl?: StringNullableWithAggregatesFilter<"JobBoardDistribution"> | string | null
+    status?: EnumDistributionStatusWithAggregatesFilter<"JobBoardDistribution"> | $Enums.DistributionStatus
+    lastError?: StringNullableWithAggregatesFilter<"JobBoardDistribution"> | string | null
+    lastSyncedAt?: DateTimeNullableWithAggregatesFilter<"JobBoardDistribution"> | Date | string | null
+    raw?: JsonNullableWithAggregatesFilter<"JobBoardDistribution">
+    createdAt?: DateTimeWithAggregatesFilter<"JobBoardDistribution"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"JobBoardDistribution"> | Date | string
+  }
+
+  export type ApplicationIdempotencyWhereInput = {
+    AND?: ApplicationIdempotencyWhereInput | ApplicationIdempotencyWhereInput[]
+    OR?: ApplicationIdempotencyWhereInput[]
+    NOT?: ApplicationIdempotencyWhereInput | ApplicationIdempotencyWhereInput[]
+    id?: BigIntFilter<"ApplicationIdempotency"> | bigint | number
+    tenantId?: StringFilter<"ApplicationIdempotency"> | string
+    idempotencyKey?: StringFilter<"ApplicationIdempotency"> | string
+    requestMethod?: StringFilter<"ApplicationIdempotency"> | string
+    requestPath?: StringFilter<"ApplicationIdempotency"> | string
+    responseCode?: IntNullableFilter<"ApplicationIdempotency"> | number | null
+    responseBody?: JsonNullableFilter<"ApplicationIdempotency">
+    recoveryPoint?: StringFilter<"ApplicationIdempotency"> | string
+    applicationId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    candidateId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    requisitionId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    ingestStage?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    ingestError?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    lockedAt?: DateTimeNullableFilter<"ApplicationIdempotency"> | Date | string | null
+    createdAt?: DateTimeFilter<"ApplicationIdempotency"> | Date | string
+    lastRunAt?: DateTimeNullableFilter<"ApplicationIdempotency"> | Date | string | null
+  }
+
+  export type ApplicationIdempotencyOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    idempotencyKey?: SortOrder
+    requestMethod?: SortOrder
+    requestPath?: SortOrder
+    responseCode?: SortOrderInput | SortOrder
+    responseBody?: SortOrderInput | SortOrder
+    recoveryPoint?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    requisitionId?: SortOrderInput | SortOrder
+    ingestStage?: SortOrderInput | SortOrder
+    ingestError?: SortOrderInput | SortOrder
+    lockedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    lastRunAt?: SortOrderInput | SortOrder
+  }
+
+  export type ApplicationIdempotencyWhereUniqueInput = Prisma.AtLeast<{
+    id?: bigint | number
+    tenantId_idempotencyKey?: ApplicationIdempotencyTenantIdIdempotencyKeyCompoundUniqueInput
+    AND?: ApplicationIdempotencyWhereInput | ApplicationIdempotencyWhereInput[]
+    OR?: ApplicationIdempotencyWhereInput[]
+    NOT?: ApplicationIdempotencyWhereInput | ApplicationIdempotencyWhereInput[]
+    tenantId?: StringFilter<"ApplicationIdempotency"> | string
+    idempotencyKey?: StringFilter<"ApplicationIdempotency"> | string
+    requestMethod?: StringFilter<"ApplicationIdempotency"> | string
+    requestPath?: StringFilter<"ApplicationIdempotency"> | string
+    responseCode?: IntNullableFilter<"ApplicationIdempotency"> | number | null
+    responseBody?: JsonNullableFilter<"ApplicationIdempotency">
+    recoveryPoint?: StringFilter<"ApplicationIdempotency"> | string
+    applicationId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    candidateId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    requisitionId?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    ingestStage?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    ingestError?: StringNullableFilter<"ApplicationIdempotency"> | string | null
+    lockedAt?: DateTimeNullableFilter<"ApplicationIdempotency"> | Date | string | null
+    createdAt?: DateTimeFilter<"ApplicationIdempotency"> | Date | string
+    lastRunAt?: DateTimeNullableFilter<"ApplicationIdempotency"> | Date | string | null
+  }, "id" | "tenantId_idempotencyKey">
+
+  export type ApplicationIdempotencyOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    idempotencyKey?: SortOrder
+    requestMethod?: SortOrder
+    requestPath?: SortOrder
+    responseCode?: SortOrderInput | SortOrder
+    responseBody?: SortOrderInput | SortOrder
+    recoveryPoint?: SortOrder
+    applicationId?: SortOrderInput | SortOrder
+    candidateId?: SortOrderInput | SortOrder
+    requisitionId?: SortOrderInput | SortOrder
+    ingestStage?: SortOrderInput | SortOrder
+    ingestError?: SortOrderInput | SortOrder
+    lockedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    lastRunAt?: SortOrderInput | SortOrder
+    _count?: ApplicationIdempotencyCountOrderByAggregateInput
+    _avg?: ApplicationIdempotencyAvgOrderByAggregateInput
+    _max?: ApplicationIdempotencyMaxOrderByAggregateInput
+    _min?: ApplicationIdempotencyMinOrderByAggregateInput
+    _sum?: ApplicationIdempotencySumOrderByAggregateInput
+  }
+
+  export type ApplicationIdempotencyScalarWhereWithAggregatesInput = {
+    AND?: ApplicationIdempotencyScalarWhereWithAggregatesInput | ApplicationIdempotencyScalarWhereWithAggregatesInput[]
+    OR?: ApplicationIdempotencyScalarWhereWithAggregatesInput[]
+    NOT?: ApplicationIdempotencyScalarWhereWithAggregatesInput | ApplicationIdempotencyScalarWhereWithAggregatesInput[]
+    id?: BigIntWithAggregatesFilter<"ApplicationIdempotency"> | bigint | number
+    tenantId?: StringWithAggregatesFilter<"ApplicationIdempotency"> | string
+    idempotencyKey?: StringWithAggregatesFilter<"ApplicationIdempotency"> | string
+    requestMethod?: StringWithAggregatesFilter<"ApplicationIdempotency"> | string
+    requestPath?: StringWithAggregatesFilter<"ApplicationIdempotency"> | string
+    responseCode?: IntNullableWithAggregatesFilter<"ApplicationIdempotency"> | number | null
+    responseBody?: JsonNullableWithAggregatesFilter<"ApplicationIdempotency">
+    recoveryPoint?: StringWithAggregatesFilter<"ApplicationIdempotency"> | string
+    applicationId?: StringNullableWithAggregatesFilter<"ApplicationIdempotency"> | string | null
+    candidateId?: StringNullableWithAggregatesFilter<"ApplicationIdempotency"> | string | null
+    requisitionId?: StringNullableWithAggregatesFilter<"ApplicationIdempotency"> | string | null
+    ingestStage?: StringNullableWithAggregatesFilter<"ApplicationIdempotency"> | string | null
+    ingestError?: StringNullableWithAggregatesFilter<"ApplicationIdempotency"> | string | null
+    lockedAt?: DateTimeNullableWithAggregatesFilter<"ApplicationIdempotency"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ApplicationIdempotency"> | Date | string
+    lastRunAt?: DateTimeNullableWithAggregatesFilter<"ApplicationIdempotency"> | Date | string | null
+  }
+
+  export type JobFeedTokenWhereInput = {
+    AND?: JobFeedTokenWhereInput | JobFeedTokenWhereInput[]
+    OR?: JobFeedTokenWhereInput[]
+    NOT?: JobFeedTokenWhereInput | JobFeedTokenWhereInput[]
+    id?: StringFilter<"JobFeedToken"> | string
+    tenantId?: StringFilter<"JobFeedToken"> | string
+    token?: StringFilter<"JobFeedToken"> | string
+    createdAt?: DateTimeFilter<"JobFeedToken"> | Date | string
+  }
+
+  export type JobFeedTokenOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    token?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type JobFeedTokenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenantId?: string
+    token?: string
+    AND?: JobFeedTokenWhereInput | JobFeedTokenWhereInput[]
+    OR?: JobFeedTokenWhereInput[]
+    NOT?: JobFeedTokenWhereInput | JobFeedTokenWhereInput[]
+    createdAt?: DateTimeFilter<"JobFeedToken"> | Date | string
+  }, "id" | "tenantId" | "token">
+
+  export type JobFeedTokenOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    token?: SortOrder
+    createdAt?: SortOrder
+    _count?: JobFeedTokenCountOrderByAggregateInput
+    _max?: JobFeedTokenMaxOrderByAggregateInput
+    _min?: JobFeedTokenMinOrderByAggregateInput
+  }
+
+  export type JobFeedTokenScalarWhereWithAggregatesInput = {
+    AND?: JobFeedTokenScalarWhereWithAggregatesInput | JobFeedTokenScalarWhereWithAggregatesInput[]
+    OR?: JobFeedTokenScalarWhereWithAggregatesInput[]
+    NOT?: JobFeedTokenScalarWhereWithAggregatesInput | JobFeedTokenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"JobFeedToken"> | string
+    tenantId?: StringWithAggregatesFilter<"JobFeedToken"> | string
+    token?: StringWithAggregatesFilter<"JobFeedToken"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"JobFeedToken"> | Date | string
+  }
+
   export type RequisitionCreateInput = {
     id?: string
     tenantId: string
@@ -9558,6 +13545,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     requisition: RequisitionCreateNestedOneWithoutJobPostingsInput
+    jobBoardDistributions?: JobBoardDistributionCreateNestedManyWithoutJobPostingInput
   }
 
   export type JobPostingUncheckedCreateInput = {
@@ -9575,6 +13563,7 @@ export namespace Prisma {
     applicationCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobBoardDistributions?: JobBoardDistributionUncheckedCreateNestedManyWithoutJobPostingInput
   }
 
   export type JobPostingUpdateInput = {
@@ -9592,6 +13581,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     requisition?: RequisitionUpdateOneRequiredWithoutJobPostingsNestedInput
+    jobBoardDistributions?: JobBoardDistributionUpdateManyWithoutJobPostingNestedInput
   }
 
   export type JobPostingUncheckedUpdateInput = {
@@ -9609,6 +13599,7 @@ export namespace Prisma {
     applicationCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobBoardDistributions?: JobBoardDistributionUncheckedUpdateManyWithoutJobPostingNestedInput
   }
 
   export type JobPostingCreateManyInput = {
@@ -10041,6 +14032,292 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type JobBoardDistributionCreateInput = {
+    id?: string
+    tenantId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobPosting: JobPostingCreateNestedOneWithoutJobBoardDistributionsInput
+  }
+
+  export type JobBoardDistributionUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    jobPostingId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobBoardDistributionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobPosting?: JobPostingUpdateOneRequiredWithoutJobBoardDistributionsNestedInput
+  }
+
+  export type JobBoardDistributionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    jobPostingId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobBoardDistributionCreateManyInput = {
+    id?: string
+    tenantId: string
+    jobPostingId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobBoardDistributionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobBoardDistributionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    jobPostingId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ApplicationIdempotencyCreateInput = {
+    id?: bigint | number
+    tenantId: string
+    idempotencyKey: string
+    requestMethod: string
+    requestPath: string
+    responseCode?: number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: string
+    applicationId?: string | null
+    candidateId?: string | null
+    requisitionId?: string | null
+    ingestStage?: string | null
+    ingestError?: string | null
+    lockedAt?: Date | string | null
+    createdAt?: Date | string
+    lastRunAt?: Date | string | null
+  }
+
+  export type ApplicationIdempotencyUncheckedCreateInput = {
+    id?: bigint | number
+    tenantId: string
+    idempotencyKey: string
+    requestMethod: string
+    requestPath: string
+    responseCode?: number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: string
+    applicationId?: string | null
+    candidateId?: string | null
+    requisitionId?: string | null
+    ingestStage?: string | null
+    ingestError?: string | null
+    lockedAt?: Date | string | null
+    createdAt?: Date | string
+    lastRunAt?: Date | string | null
+  }
+
+  export type ApplicationIdempotencyUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    tenantId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    requestMethod?: StringFieldUpdateOperationsInput | string
+    requestPath?: StringFieldUpdateOperationsInput | string
+    responseCode?: NullableIntFieldUpdateOperationsInput | number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestStage?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ApplicationIdempotencyUncheckedUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    tenantId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    requestMethod?: StringFieldUpdateOperationsInput | string
+    requestPath?: StringFieldUpdateOperationsInput | string
+    responseCode?: NullableIntFieldUpdateOperationsInput | number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestStage?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ApplicationIdempotencyCreateManyInput = {
+    id?: bigint | number
+    tenantId: string
+    idempotencyKey: string
+    requestMethod: string
+    requestPath: string
+    responseCode?: number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: string
+    applicationId?: string | null
+    candidateId?: string | null
+    requisitionId?: string | null
+    ingestStage?: string | null
+    ingestError?: string | null
+    lockedAt?: Date | string | null
+    createdAt?: Date | string
+    lastRunAt?: Date | string | null
+  }
+
+  export type ApplicationIdempotencyUpdateManyMutationInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    tenantId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    requestMethod?: StringFieldUpdateOperationsInput | string
+    requestPath?: StringFieldUpdateOperationsInput | string
+    responseCode?: NullableIntFieldUpdateOperationsInput | number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestStage?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ApplicationIdempotencyUncheckedUpdateManyInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    tenantId?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    requestMethod?: StringFieldUpdateOperationsInput | string
+    requestPath?: StringFieldUpdateOperationsInput | string
+    responseCode?: NullableIntFieldUpdateOperationsInput | number | null
+    responseBody?: NullableJsonNullValueInput | InputJsonValue
+    recoveryPoint?: StringFieldUpdateOperationsInput | string
+    applicationId?: NullableStringFieldUpdateOperationsInput | string | null
+    candidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestStage?: NullableStringFieldUpdateOperationsInput | string | null
+    ingestError?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type JobFeedTokenCreateInput = {
+    id?: string
+    tenantId: string
+    token: string
+    createdAt?: Date | string
+  }
+
+  export type JobFeedTokenUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    token: string
+    createdAt?: Date | string
+  }
+
+  export type JobFeedTokenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobFeedTokenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobFeedTokenCreateManyInput = {
+    id?: string
+    tenantId: string
+    token: string
+    createdAt?: Date | string
+  }
+
+  export type JobFeedTokenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobFeedTokenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -10400,6 +14677,16 @@ export namespace Prisma {
     isNot?: RequisitionWhereInput
   }
 
+  export type JobBoardDistributionListRelationFilter = {
+    every?: JobBoardDistributionWhereInput
+    some?: JobBoardDistributionWhereInput
+    none?: JobBoardDistributionWhereInput
+  }
+
+  export type JobBoardDistributionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type JobPostingTenantIdSlugCompoundUniqueInput = {
     tenantId: string
     slug: string
@@ -10716,6 +15003,271 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type EnumDistributionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DistributionStatus | EnumDistributionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDistributionStatusFilter<$PrismaModel> | $Enums.DistributionStatus
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type JobPostingScalarRelationFilter = {
+    is?: JobPostingWhereInput
+    isNot?: JobPostingWhereInput
+  }
+
+  export type JobBoardDistributionTenantIdJobPostingIdBoardCompoundUniqueInput = {
+    tenantId: string
+    jobPostingId: string
+    board: string
+  }
+
+  export type JobBoardDistributionCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    jobPostingId?: SortOrder
+    board?: SortOrder
+    externalPostingId?: SortOrder
+    externalUrl?: SortOrder
+    status?: SortOrder
+    lastError?: SortOrder
+    lastSyncedAt?: SortOrder
+    raw?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type JobBoardDistributionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    jobPostingId?: SortOrder
+    board?: SortOrder
+    externalPostingId?: SortOrder
+    externalUrl?: SortOrder
+    status?: SortOrder
+    lastError?: SortOrder
+    lastSyncedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type JobBoardDistributionMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    jobPostingId?: SortOrder
+    board?: SortOrder
+    externalPostingId?: SortOrder
+    externalUrl?: SortOrder
+    status?: SortOrder
+    lastError?: SortOrder
+    lastSyncedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumDistributionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DistributionStatus | EnumDistributionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDistributionStatusWithAggregatesFilter<$PrismaModel> | $Enums.DistributionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDistributionStatusFilter<$PrismaModel>
+    _max?: NestedEnumDistributionStatusFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type BigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type ApplicationIdempotencyTenantIdIdempotencyKeyCompoundUniqueInput = {
+    tenantId: string
+    idempotencyKey: string
+  }
+
+  export type ApplicationIdempotencyCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    idempotencyKey?: SortOrder
+    requestMethod?: SortOrder
+    requestPath?: SortOrder
+    responseCode?: SortOrder
+    responseBody?: SortOrder
+    recoveryPoint?: SortOrder
+    applicationId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    ingestStage?: SortOrder
+    ingestError?: SortOrder
+    lockedAt?: SortOrder
+    createdAt?: SortOrder
+    lastRunAt?: SortOrder
+  }
+
+  export type ApplicationIdempotencyAvgOrderByAggregateInput = {
+    id?: SortOrder
+    responseCode?: SortOrder
+  }
+
+  export type ApplicationIdempotencyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    idempotencyKey?: SortOrder
+    requestMethod?: SortOrder
+    requestPath?: SortOrder
+    responseCode?: SortOrder
+    recoveryPoint?: SortOrder
+    applicationId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    ingestStage?: SortOrder
+    ingestError?: SortOrder
+    lockedAt?: SortOrder
+    createdAt?: SortOrder
+    lastRunAt?: SortOrder
+  }
+
+  export type ApplicationIdempotencyMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    idempotencyKey?: SortOrder
+    requestMethod?: SortOrder
+    requestPath?: SortOrder
+    responseCode?: SortOrder
+    recoveryPoint?: SortOrder
+    applicationId?: SortOrder
+    candidateId?: SortOrder
+    requisitionId?: SortOrder
+    ingestStage?: SortOrder
+    ingestError?: SortOrder
+    lockedAt?: SortOrder
+    createdAt?: SortOrder
+    lastRunAt?: SortOrder
+  }
+
+  export type ApplicationIdempotencySumOrderByAggregateInput = {
+    id?: SortOrder
+    responseCode?: SortOrder
+  }
+
+  export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type JobFeedTokenCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    token?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type JobFeedTokenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    token?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type JobFeedTokenMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    token?: SortOrder
+    createdAt?: SortOrder
+  }
+
   export type JobPostingCreateNestedManyWithoutRequisitionInput = {
     create?: XOR<JobPostingCreateWithoutRequisitionInput, JobPostingUncheckedCreateWithoutRequisitionInput> | JobPostingCreateWithoutRequisitionInput[] | JobPostingUncheckedCreateWithoutRequisitionInput[]
     connectOrCreate?: JobPostingCreateOrConnectWithoutRequisitionInput | JobPostingCreateOrConnectWithoutRequisitionInput[]
@@ -10836,6 +15388,20 @@ export namespace Prisma {
     connect?: RequisitionWhereUniqueInput
   }
 
+  export type JobBoardDistributionCreateNestedManyWithoutJobPostingInput = {
+    create?: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput> | JobBoardDistributionCreateWithoutJobPostingInput[] | JobBoardDistributionUncheckedCreateWithoutJobPostingInput[]
+    connectOrCreate?: JobBoardDistributionCreateOrConnectWithoutJobPostingInput | JobBoardDistributionCreateOrConnectWithoutJobPostingInput[]
+    createMany?: JobBoardDistributionCreateManyJobPostingInputEnvelope
+    connect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+  }
+
+  export type JobBoardDistributionUncheckedCreateNestedManyWithoutJobPostingInput = {
+    create?: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput> | JobBoardDistributionCreateWithoutJobPostingInput[] | JobBoardDistributionUncheckedCreateWithoutJobPostingInput[]
+    connectOrCreate?: JobBoardDistributionCreateOrConnectWithoutJobPostingInput | JobBoardDistributionCreateOrConnectWithoutJobPostingInput[]
+    createMany?: JobBoardDistributionCreateManyJobPostingInputEnvelope
+    connect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+  }
+
   export type JobPostingUpdaterequirementsInput = {
     set?: string[]
     push?: string | string[]
@@ -10851,6 +15417,34 @@ export namespace Prisma {
     upsert?: RequisitionUpsertWithoutJobPostingsInput
     connect?: RequisitionWhereUniqueInput
     update?: XOR<XOR<RequisitionUpdateToOneWithWhereWithoutJobPostingsInput, RequisitionUpdateWithoutJobPostingsInput>, RequisitionUncheckedUpdateWithoutJobPostingsInput>
+  }
+
+  export type JobBoardDistributionUpdateManyWithoutJobPostingNestedInput = {
+    create?: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput> | JobBoardDistributionCreateWithoutJobPostingInput[] | JobBoardDistributionUncheckedCreateWithoutJobPostingInput[]
+    connectOrCreate?: JobBoardDistributionCreateOrConnectWithoutJobPostingInput | JobBoardDistributionCreateOrConnectWithoutJobPostingInput[]
+    upsert?: JobBoardDistributionUpsertWithWhereUniqueWithoutJobPostingInput | JobBoardDistributionUpsertWithWhereUniqueWithoutJobPostingInput[]
+    createMany?: JobBoardDistributionCreateManyJobPostingInputEnvelope
+    set?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    disconnect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    delete?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    connect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    update?: JobBoardDistributionUpdateWithWhereUniqueWithoutJobPostingInput | JobBoardDistributionUpdateWithWhereUniqueWithoutJobPostingInput[]
+    updateMany?: JobBoardDistributionUpdateManyWithWhereWithoutJobPostingInput | JobBoardDistributionUpdateManyWithWhereWithoutJobPostingInput[]
+    deleteMany?: JobBoardDistributionScalarWhereInput | JobBoardDistributionScalarWhereInput[]
+  }
+
+  export type JobBoardDistributionUncheckedUpdateManyWithoutJobPostingNestedInput = {
+    create?: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput> | JobBoardDistributionCreateWithoutJobPostingInput[] | JobBoardDistributionUncheckedCreateWithoutJobPostingInput[]
+    connectOrCreate?: JobBoardDistributionCreateOrConnectWithoutJobPostingInput | JobBoardDistributionCreateOrConnectWithoutJobPostingInput[]
+    upsert?: JobBoardDistributionUpsertWithWhereUniqueWithoutJobPostingInput | JobBoardDistributionUpsertWithWhereUniqueWithoutJobPostingInput[]
+    createMany?: JobBoardDistributionCreateManyJobPostingInputEnvelope
+    set?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    disconnect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    delete?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    connect?: JobBoardDistributionWhereUniqueInput | JobBoardDistributionWhereUniqueInput[]
+    update?: JobBoardDistributionUpdateWithWhereUniqueWithoutJobPostingInput | JobBoardDistributionUpdateWithWhereUniqueWithoutJobPostingInput[]
+    updateMany?: JobBoardDistributionUpdateManyWithWhereWithoutJobPostingInput | JobBoardDistributionUpdateManyWithWhereWithoutJobPostingInput[]
+    deleteMany?: JobBoardDistributionScalarWhereInput | JobBoardDistributionScalarWhereInput[]
   }
 
   export type RequisitionCreateNestedOneWithoutFormSchemaInput = {
@@ -10944,6 +15538,40 @@ export namespace Prisma {
     decrement?: Decimal | DecimalJsLike | number | string
     multiply?: Decimal | DecimalJsLike | number | string
     divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type JobPostingCreateNestedOneWithoutJobBoardDistributionsInput = {
+    create?: XOR<JobPostingCreateWithoutJobBoardDistributionsInput, JobPostingUncheckedCreateWithoutJobBoardDistributionsInput>
+    connectOrCreate?: JobPostingCreateOrConnectWithoutJobBoardDistributionsInput
+    connect?: JobPostingWhereUniqueInput
+  }
+
+  export type EnumDistributionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.DistributionStatus
+  }
+
+  export type JobPostingUpdateOneRequiredWithoutJobBoardDistributionsNestedInput = {
+    create?: XOR<JobPostingCreateWithoutJobBoardDistributionsInput, JobPostingUncheckedCreateWithoutJobBoardDistributionsInput>
+    connectOrCreate?: JobPostingCreateOrConnectWithoutJobBoardDistributionsInput
+    upsert?: JobPostingUpsertWithoutJobBoardDistributionsInput
+    connect?: JobPostingWhereUniqueInput
+    update?: XOR<XOR<JobPostingUpdateToOneWithWhereWithoutJobBoardDistributionsInput, JobPostingUpdateWithoutJobBoardDistributionsInput>, JobPostingUncheckedUpdateWithoutJobBoardDistributionsInput>
+  }
+
+  export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -11231,6 +15859,89 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type NestedEnumDistributionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DistributionStatus | EnumDistributionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDistributionStatusFilter<$PrismaModel> | $Enums.DistributionStatus
+  }
+
+  export type NestedEnumDistributionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DistributionStatus | EnumDistributionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DistributionStatus[] | ListEnumDistributionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDistributionStatusWithAggregatesFilter<$PrismaModel> | $Enums.DistributionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDistributionStatusFilter<$PrismaModel>
+    _max?: NestedEnumDistributionStatusFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedBigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
   export type JobPostingCreateWithoutRequisitionInput = {
     id?: string
     tenantId: string
@@ -11245,6 +15956,7 @@ export namespace Prisma {
     applicationCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobBoardDistributions?: JobBoardDistributionCreateNestedManyWithoutJobPostingInput
   }
 
   export type JobPostingUncheckedCreateWithoutRequisitionInput = {
@@ -11261,6 +15973,7 @@ export namespace Prisma {
     applicationCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobBoardDistributions?: JobBoardDistributionUncheckedCreateNestedManyWithoutJobPostingInput
   }
 
   export type JobPostingCreateOrConnectWithoutRequisitionInput = {
@@ -11418,6 +16131,44 @@ export namespace Prisma {
     create: XOR<RequisitionCreateWithoutJobPostingsInput, RequisitionUncheckedCreateWithoutJobPostingsInput>
   }
 
+  export type JobBoardDistributionCreateWithoutJobPostingInput = {
+    id?: string
+    tenantId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobBoardDistributionUncheckedCreateWithoutJobPostingInput = {
+    id?: string
+    tenantId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobBoardDistributionCreateOrConnectWithoutJobPostingInput = {
+    where: JobBoardDistributionWhereUniqueInput
+    create: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput>
+  }
+
+  export type JobBoardDistributionCreateManyJobPostingInputEnvelope = {
+    data: JobBoardDistributionCreateManyJobPostingInput | JobBoardDistributionCreateManyJobPostingInput[]
+    skipDuplicates?: boolean
+  }
+
   export type RequisitionUpsertWithoutJobPostingsInput = {
     update: XOR<RequisitionUpdateWithoutJobPostingsInput, RequisitionUncheckedUpdateWithoutJobPostingsInput>
     create: XOR<RequisitionCreateWithoutJobPostingsInput, RequisitionUncheckedCreateWithoutJobPostingsInput>
@@ -11479,6 +16230,40 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     closedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     formSchema?: ApplicationFormSchemaUncheckedUpdateOneWithoutRequisitionNestedInput
+  }
+
+  export type JobBoardDistributionUpsertWithWhereUniqueWithoutJobPostingInput = {
+    where: JobBoardDistributionWhereUniqueInput
+    update: XOR<JobBoardDistributionUpdateWithoutJobPostingInput, JobBoardDistributionUncheckedUpdateWithoutJobPostingInput>
+    create: XOR<JobBoardDistributionCreateWithoutJobPostingInput, JobBoardDistributionUncheckedCreateWithoutJobPostingInput>
+  }
+
+  export type JobBoardDistributionUpdateWithWhereUniqueWithoutJobPostingInput = {
+    where: JobBoardDistributionWhereUniqueInput
+    data: XOR<JobBoardDistributionUpdateWithoutJobPostingInput, JobBoardDistributionUncheckedUpdateWithoutJobPostingInput>
+  }
+
+  export type JobBoardDistributionUpdateManyWithWhereWithoutJobPostingInput = {
+    where: JobBoardDistributionScalarWhereInput
+    data: XOR<JobBoardDistributionUpdateManyMutationInput, JobBoardDistributionUncheckedUpdateManyWithoutJobPostingInput>
+  }
+
+  export type JobBoardDistributionScalarWhereInput = {
+    AND?: JobBoardDistributionScalarWhereInput | JobBoardDistributionScalarWhereInput[]
+    OR?: JobBoardDistributionScalarWhereInput[]
+    NOT?: JobBoardDistributionScalarWhereInput | JobBoardDistributionScalarWhereInput[]
+    id?: StringFilter<"JobBoardDistribution"> | string
+    tenantId?: StringFilter<"JobBoardDistribution"> | string
+    jobPostingId?: StringFilter<"JobBoardDistribution"> | string
+    board?: StringFilter<"JobBoardDistribution"> | string
+    externalPostingId?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    externalUrl?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    status?: EnumDistributionStatusFilter<"JobBoardDistribution"> | $Enums.DistributionStatus
+    lastError?: StringNullableFilter<"JobBoardDistribution"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"JobBoardDistribution"> | Date | string | null
+    raw?: JsonNullableFilter<"JobBoardDistribution">
+    createdAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
+    updatedAt?: DateTimeFilter<"JobBoardDistribution"> | Date | string
   }
 
   export type RequisitionCreateWithoutFormSchemaInput = {
@@ -11723,6 +16508,90 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Skill"> | Date | string
   }
 
+  export type JobPostingCreateWithoutJobBoardDistributionsInput = {
+    id?: string
+    tenantId: string
+    slug: string
+    title: string
+    description: string
+    requirements?: JobPostingCreaterequirementsInput | string[]
+    isPublished?: boolean
+    publishedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    views?: number
+    applicationCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    requisition: RequisitionCreateNestedOneWithoutJobPostingsInput
+  }
+
+  export type JobPostingUncheckedCreateWithoutJobBoardDistributionsInput = {
+    id?: string
+    tenantId: string
+    requisitionId: string
+    slug: string
+    title: string
+    description: string
+    requirements?: JobPostingCreaterequirementsInput | string[]
+    isPublished?: boolean
+    publishedAt?: Date | string | null
+    expiresAt?: Date | string | null
+    views?: number
+    applicationCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobPostingCreateOrConnectWithoutJobBoardDistributionsInput = {
+    where: JobPostingWhereUniqueInput
+    create: XOR<JobPostingCreateWithoutJobBoardDistributionsInput, JobPostingUncheckedCreateWithoutJobBoardDistributionsInput>
+  }
+
+  export type JobPostingUpsertWithoutJobBoardDistributionsInput = {
+    update: XOR<JobPostingUpdateWithoutJobBoardDistributionsInput, JobPostingUncheckedUpdateWithoutJobBoardDistributionsInput>
+    create: XOR<JobPostingCreateWithoutJobBoardDistributionsInput, JobPostingUncheckedCreateWithoutJobBoardDistributionsInput>
+    where?: JobPostingWhereInput
+  }
+
+  export type JobPostingUpdateToOneWithWhereWithoutJobBoardDistributionsInput = {
+    where?: JobPostingWhereInput
+    data: XOR<JobPostingUpdateWithoutJobBoardDistributionsInput, JobPostingUncheckedUpdateWithoutJobBoardDistributionsInput>
+  }
+
+  export type JobPostingUpdateWithoutJobBoardDistributionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    requirements?: JobPostingUpdaterequirementsInput | string[]
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    views?: IntFieldUpdateOperationsInput | number
+    applicationCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    requisition?: RequisitionUpdateOneRequiredWithoutJobPostingsNestedInput
+  }
+
+  export type JobPostingUncheckedUpdateWithoutJobBoardDistributionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    requisitionId?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    requirements?: JobPostingUpdaterequirementsInput | string[]
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    views?: IntFieldUpdateOperationsInput | number
+    applicationCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type JobPostingCreateManyRequisitionInput = {
     id?: string
     tenantId: string
@@ -11753,6 +16622,7 @@ export namespace Prisma {
     applicationCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobBoardDistributions?: JobBoardDistributionUpdateManyWithoutJobPostingNestedInput
   }
 
   export type JobPostingUncheckedUpdateWithoutRequisitionInput = {
@@ -11769,6 +16639,7 @@ export namespace Prisma {
     applicationCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobBoardDistributions?: JobBoardDistributionUncheckedUpdateManyWithoutJobPostingNestedInput
   }
 
   export type JobPostingUncheckedUpdateManyWithoutRequisitionInput = {
@@ -11783,6 +16654,62 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     views?: IntFieldUpdateOperationsInput | number
     applicationCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobBoardDistributionCreateManyJobPostingInput = {
+    id?: string
+    tenantId: string
+    board: string
+    externalPostingId?: string | null
+    externalUrl?: string | null
+    status?: $Enums.DistributionStatus
+    lastError?: string | null
+    lastSyncedAt?: Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type JobBoardDistributionUpdateWithoutJobPostingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobBoardDistributionUncheckedUpdateWithoutJobPostingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type JobBoardDistributionUncheckedUpdateManyWithoutJobPostingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    board?: StringFieldUpdateOperationsInput | string
+    externalPostingId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumDistributionStatusFieldUpdateOperationsInput | $Enums.DistributionStatus
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raw?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

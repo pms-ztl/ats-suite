@@ -217,12 +217,58 @@ exports.Prisma.AgentRunScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.JobBoardDistributionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  jobPostingId: 'jobPostingId',
+  board: 'board',
+  externalPostingId: 'externalPostingId',
+  externalUrl: 'externalUrl',
+  status: 'status',
+  lastError: 'lastError',
+  lastSyncedAt: 'lastSyncedAt',
+  raw: 'raw',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ApplicationIdempotencyScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  idempotencyKey: 'idempotencyKey',
+  requestMethod: 'requestMethod',
+  requestPath: 'requestPath',
+  responseCode: 'responseCode',
+  responseBody: 'responseBody',
+  recoveryPoint: 'recoveryPoint',
+  applicationId: 'applicationId',
+  candidateId: 'candidateId',
+  requisitionId: 'requisitionId',
+  ingestStage: 'ingestStage',
+  ingestError: 'ingestError',
+  lockedAt: 'lockedAt',
+  createdAt: 'createdAt',
+  lastRunAt: 'lastRunAt'
+};
+
+exports.Prisma.JobFeedTokenScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  token: 'token',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -256,13 +302,26 @@ exports.OutboxStatus = exports.$Enums.OutboxStatus = {
   FAILED: 'FAILED'
 };
 
+exports.DistributionStatus = exports.$Enums.DistributionStatus = {
+  PENDING: 'PENDING',
+  POSTING: 'POSTING',
+  ACTIVE: 'ACTIVE',
+  FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
+  CLOSED: 'CLOSED',
+  PENDING_PARTNER_APPROVAL: 'PENDING_PARTNER_APPROVAL'
+};
+
 exports.Prisma.ModelName = {
   Requisition: 'Requisition',
   JobPosting: 'JobPosting',
   ApplicationFormSchema: 'ApplicationFormSchema',
   Skill: 'Skill',
   Outbox: 'Outbox',
-  AgentRun: 'AgentRun'
+  AgentRun: 'AgentRun',
+  JobBoardDistribution: 'JobBoardDistribution',
+  ApplicationIdempotency: 'ApplicationIdempotency',
+  JobFeedToken: 'JobFeedToken'
 };
 
 /**

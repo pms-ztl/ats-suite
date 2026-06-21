@@ -6,6 +6,10 @@
 import { AppError, Errors } from "@cdc-ats/common";
 
 const SERVICE_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
+// WF-I / I5 — default gateway -> backend call timeout, aligned with the
+// resume-service 3s budget so a stuck backend frees the caller fast under load.
+// Per-call `timeoutMs` still overrides this (e.g. the super-admin fanout's 4s).
+const DEFAULT_INTER_SERVICE_TIMEOUT_MS = Number(process.env["GATEWAY_INTER_SERVICE_TIMEOUT_MS"] ?? 3000);
 
 const URLS = {
   identity: process.env["IDENTITY_SERVICE_URL"] ?? "http://localhost:4001",
@@ -69,24 +73,23 @@ export async function callService<T>(
   }
   if (opts.headers) Object.assign(headers, opts.headers);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 5000);
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_INTER_SERVICE_TIMEOUT_MS;
+  // AbortSignal.timeout is the idiomatic, leak-free way to bound a fetch (it
+  // self-clears; no dangling setTimeout handle to manage on the happy path).
   let res: Response;
   try {
     res = await fetch(url, {
       method: opts.method ?? "GET",
       headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
-      signal: controller.signal,
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    clearTimeout(timer);
-    if (err instanceof Error && err.name === "AbortError") {
-      throw Errors.upstreamFailure(service, `${service}-service timeout after ${opts.timeoutMs ?? 5000}ms`);
+    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+      throw Errors.upstreamFailure(service, `${service}-service timeout after ${timeoutMs}ms`);
     }
     throw Errors.upstreamFailure(service, `Network error calling ${service}: ${(err as Error).message}`);
   }
-  clearTimeout(timer);
 
   let body: ServiceResponse<T>;
   try {

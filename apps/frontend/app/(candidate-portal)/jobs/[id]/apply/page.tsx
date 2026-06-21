@@ -11,8 +11,16 @@
 // uses the --c-* full-color tokens; effect/size/motion tokens stay bare.
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { buildJobPostingJsonLd, jsonLdScriptText } from "@/lib/job-jsonld";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// Public site origin for the canonical apply URL embedded in the JSON-LD (the
+// only URL we own). Strips the trailing /api off the API base, else the explicit
+// site URL, else the browser origin at render time.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "") : "") ??
+  "";
 
 async function getJSON(path: string): Promise<any> {
   try {
@@ -21,6 +29,48 @@ async function getJSON(path: string): Promise<any> {
     return await r.json();
   } catch { return null; }
 }
+
+/* ---- WF-I — apply fast path helpers (presigned upload + status poll) ---- */
+// Map a file to the resume content type the upload-ticket route accepts. We send
+// the browser-reported MIME when it is one we accept, else fall back by extension
+// (some browsers report an empty / octet-stream type for .doc/.docx). An unknown
+// type returns null, which makes the caller use the multipart fallback.
+function resumeContentType(file: File): string | null {
+  const accepted = new Set([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ]);
+  if (file.type && accepted.has(file.type)) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (name.endsWith(".doc")) return "application/msword";
+  if (name.endsWith(".txt")) return "text/plain";
+  return null;
+}
+
+// A simple unique idempotency key for the apply POST (so a retry/double-submit
+// coalesces on the server). crypto.randomUUID is available in all modern browsers;
+// fall back to a timestamp+random string if it is not.
+function newIdempotencyKey(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  } catch { /* ignore */ }
+  return `apply-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+// Human-readable copy for each real pipeline stage the status route returns. These
+// describe the ACTUAL processing step — never a fabricated/optimistic stage.
+const STATUS_COPY: Record<string, string> = {
+  PENDING_INGEST: "Received your application. Preparing your resume...",
+  SCANNED: "Your resume was received and checked. Reading it now...",
+  PARSED: "We have read your resume. Reviewing your application...",
+  SCREENED: "Your application has been reviewed by our assistant. A person will take it from here.",
+  RECEIVED: "Your application has been received.",
+  REJECTED: "We could not process the uploaded file. You can re-apply with a different file.",
+};
 
 /* ---- icons (subset, ported verbatim from portal.jsx's PI map) ---- */
 const PI: Record<string, string> = {
@@ -107,13 +157,26 @@ function normalizeJob(raw: any): JobSummary {
   };
 }
 
-function Confirm({ title, reference }: { title: string; reference: string | null }) {
+function Confirm({ title, reference, liveStatus, statusCopy }: { title: string; reference: string | null; liveStatus: string | null; statusCopy: Record<string, string> }) {
+  // The progress line reflects the REAL pipeline stage from the status poll. It is
+  // shown ONLY when we actually have a live stage (fast path); the legacy multipart
+  // path has no async stage, so it simply omits this line (no fabricated progress).
+  const isRejected = liveStatus === "REJECTED";
+  const isScreened = liveStatus === "SCREENED";
+  const copy = liveStatus ? statusCopy[liveStatus] : null;
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "60px 24px", textAlign: "center", animation: "pop .4s var(--ease-spring)" }}>
-      <div style={{ width: 80, height: 80, borderRadius: "var(--r-2xl)", background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 22px" }}><I n="check" s={42} sw={2.2} /></div>
-      <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px" }}>Application received</h1>
+      <div style={{ width: 80, height: 80, borderRadius: "var(--r-2xl)", background: isRejected ? "var(--c-danger-tint)" : "var(--c-brand-tint)", color: isRejected ? "var(--c-danger)" : "var(--c-brand)", display: "grid", placeItems: "center", margin: "0 auto 22px" }}><I n={isRejected ? "shield" : "check"} s={42} sw={2.2} /></div>
+      <h1 style={{ fontSize: "var(--fs-3xl)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px" }}>{isRejected ? "We could not process your file" : "Application received"}</h1>
       <p style={{ fontSize: "var(--fs-md)", color: "var(--c-ink-2)", lineHeight: 1.6, margin: "0 0 8px" }}>Thanks for applying to <b style={{ color: "var(--c-ink)" }}>{title}</b>. We have emailed you a confirmation, and you can check your status anytime.</p>
       {reference && <p style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-3)", margin: "4px 0 0" }}>Your reference: <span className="mono" style={{ color: "var(--c-ink-2)", fontWeight: 600 }}>{reference}</span></p>}
+      {copy && (
+        <div role="status" aria-live="polite" style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", margin: "18px auto 0", maxWidth: 440, padding: "12px 16px", borderRadius: "var(--r-lg)", background: isRejected ? "var(--c-danger-tint)" : "var(--c-surface-2)", color: isRejected ? "var(--c-danger)" : "var(--c-ink-2)", fontSize: "var(--fs-sm)", lineHeight: 1.5 }}>
+          {!isRejected && !isScreened && <span aria-hidden="true" style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid var(--c-line-2)", borderTopColor: "var(--c-brand)", display: "inline-block", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />}
+          {(isScreened) && <I n="check" s={16} c="var(--c-brand)" style={{ flexShrink: 0 }} />}
+          <span>{copy}</span>
+        </div>
+      )}
       <div style={{ margin: "22px auto 0", maxWidth: 420 }}><AINotice compact /></div>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24 }}>
         <a href="/status" style={{ textDecoration: "none" }}><Btn kind="primary" icon="eye">Track my status</Btn></a>
@@ -126,6 +189,10 @@ function Confirm({ title, reference }: { title: string; reference: string | null
 export default function ApplyPage() {
   const { id: slug } = useParams<{ id: string }>();
   const [job, setJob] = useState<JobSummary>(EMPTY_JOB);
+  // The raw public-job payload, kept verbatim ONLY to build the schema.org
+  // JobPosting JSON-LD below. Null until a real, published job loads, so the
+  // structured-data <script> is emitted only for a genuine published role.
+  const [rawJob, setRawJob] = useState<unknown>(null);
   const [fields, setFields] = useState<FormField[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -136,7 +203,15 @@ export default function ApplyPage() {
   const [reference, setReference] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // WF-I — live pipeline status for the fast path. liveStatus is one of the real
+  // status enum values from /public/applications/:id/status; null on the legacy
+  // (multipart) path, which has no async stage to poll.
+  const [liveStatus, setLiveStatus] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Stop polling on unmount.
+  useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -146,7 +221,7 @@ export default function ApplyPage() {
       if (cancelled) return;
       // NEVER fall back to a fabricated job: if the job summary fails to load we
       // surface an honest error state instead of inventing a role / requirements.
-      if (j) setJob(normalizeJob(j));
+      if (j) { setJob(normalizeJob(j)); setRawJob(j); }
       else { setLoadFailed(true); setLoading(false); return; }
       const fl = (f?.data?.fields ?? f?.fields ?? []) as FormField[];
       setFields([...fl].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
@@ -157,31 +232,159 @@ export default function ApplyPage() {
 
   const set = (id: string, v: string | boolean) => setValues((s) => ({ ...s, [id]: v }));
 
+  // Poll the public status URL and reflect the REAL pipeline stage. Stops at a
+  // terminal stage (SCREENED / RECEIVED / REJECTED) or after a bounded number of
+  // attempts (the confirmation page stays useful regardless — polling is purely to
+  // show live progress, never required to consider the application submitted).
+  function pollStatus(applicationId: string, attempt = 0) {
+    if (attempt > 40) return; // ~40 * 3s ≈ 2 min, then stop polling silently.
+    const TERMINAL = new Set(["SCREENED", "RECEIVED", "REJECTED"]);
+    (async () => {
+      const res = await getJSON(`/public/applications/${applicationId}/status`);
+      const status: string | undefined = res?.data?.status;
+      if (status) setLiveStatus(status);
+      if (status && TERMINAL.has(status)) return; // done — no further polling.
+      pollRef.current = setTimeout(() => pollStatus(applicationId, attempt + 1), 3000);
+    })();
+  }
+
+  // The legacy multipart submit. Used directly when there is no resume file, and as
+  // the FALLBACK whenever the fast path cannot run (storage off, ticket error, or a
+  // direct-upload failure). Response contract unchanged (201 { applicationId, ... }).
+  async function submitMultipart(): Promise<boolean> {
+    const fd = new FormData();
+    for (const f of fields) {
+      if (f.type === "file" || f.type === "image") { const file = files[f.id]; if (file) fd.append(f.id, file); }
+      else { const v = values[f.id]; if (v !== undefined && v !== "") fd.append(f.id, String(v)); }
+    }
+    const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, { method: "POST", credentials: "include", body: fd });
+    const d = await r.json().catch(() => null);
+    if (r.ok) {
+      setReference(d?.data?.applicationId ?? null);
+      return true;
+    }
+    setError(d?.error?.message ?? "We could not submit your application just now. Please check your details and try again.");
+    return false;
+  }
+
+  // The accept-FAST submit (WF-I). 2 steps: (1) GET an upload ticket + POST the
+  // resume DIRECTLY to object storage; (2) POST the apply as JSON referencing the
+  // returned objectKey, with an Idempotency-Key, and on 202 poll the live status.
+  // Returns:
+  //   "ok"       -> accepted (202); we showed the confirmation + started polling
+  //   "fallback" -> the fast path is unavailable for a benign reason (storage off,
+  //                 ticket 503, unsupported type, upload failed) -> caller retries
+  //                 the legacy multipart submit so the application ALWAYS goes through
+  //   "error"    -> a real apply error (validation etc.) already surfaced to the user
+  async function submitFast(resumeField: FormField, resumeFile: File): Promise<"ok" | "fallback" | "error"> {
+    const contentType = resumeContentType(resumeFile);
+    if (!contentType) return "fallback"; // unknown type — let multipart handle it.
+
+    // Step 1a: ask for a presigned upload ticket. 503 / non-200 -> fall back.
+    let ticket: { postURL: string; formData: Record<string, string>; objectKey: string } | null = null;
+    try {
+      const r = await fetch(`${API_BASE}/public/jobs/${slug}/upload-ticket?type=${encodeURIComponent(contentType)}`, { credentials: "include" });
+      if (!r.ok) return "fallback"; // 503 STORAGE_UNAVAILABLE / 415 / etc. -> multipart.
+      const j = await r.json().catch(() => null);
+      const t = j?.data ?? j;
+      if (!t?.postURL || !t?.formData || !t?.objectKey) return "fallback";
+      ticket = t;
+    } catch { return "fallback"; }
+    if (!ticket) return "fallback"; // narrow for the upload step below.
+
+    // Step 1b: POST the file DIRECTLY to object storage. The signed form fields go
+    // FIRST and the file MUST be the LAST part (S3/MinIO POST policy requirement).
+    try {
+      const up = new FormData();
+      for (const [k, v] of Object.entries(ticket.formData)) up.append(k, v);
+      up.append("file", resumeFile); // file last.
+      const ur = await fetch(ticket.postURL, { method: "POST", body: up });
+      // S3/MinIO answer 204 (or 201) on success. Any non-2xx -> fall back to multipart.
+      if (!ur.ok) return "fallback";
+    } catch { return "fallback"; }
+
+    // Step 2: POST the apply as JSON referencing the objectKey, with Idempotency-Key.
+    const payload: Record<string, unknown> = {
+      firstName: (values["firstName"] as string) ?? "",
+      lastName: (values["lastName"] as string) ?? "",
+      email: (values["email"] as string) ?? "",
+      phone: (values["phone"] as string) || undefined,
+      linkedinUrl: (values["linkedinUrl"] as string) || undefined,
+      coverLetter: (values["coverLetter"] as string) || undefined,
+      resume: {
+        objectKey: ticket.objectKey,
+        filename: resumeFile.name,
+        contentType,
+        size: resumeFile.size,
+      },
+    };
+    // Any non-standard field (and any non-resume upload) becomes a form response so
+    // the tenant's custom schema is preserved exactly as the multipart path does.
+    const STD = new Set(["firstName", "lastName", "email", "phone", "linkedinUrl", "coverLetter"]);
+    const formResponses: Record<string, unknown> = {};
+    for (const f of fields) {
+      if (f.id === resumeField.id || STD.has(f.id)) continue;
+      if (f.type === "file" || f.type === "image") continue; // handled separately if present
+      const v = values[f.id];
+      if (v !== undefined && v !== "") formResponses[f.id] = v;
+    }
+    if (Object.keys(formResponses).length > 0) payload["formResponses"] = formResponses;
+
+    try {
+      const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey() },
+        body: JSON.stringify(payload),
+      });
+      const d = await r.json().catch(() => null);
+      if (r.status === 202 || r.ok) {
+        const applicationId: string | null = d?.data?.applicationId ?? null;
+        setReference(applicationId);
+        if (d?.data?.status) setLiveStatus(d.data.status);
+        if (applicationId) pollStatus(applicationId);
+        return "ok";
+      }
+      // 503 STORAGE_UNAVAILABLE at the accept step (storage went away between the
+      // ticket and the apply) -> fall back to multipart so it still goes through.
+      if (r.status === 503) return "fallback";
+      setError(d?.error?.message ?? "We could not submit your application just now. Please check your details and try again.");
+      return "error";
+    } catch { return "fallback"; }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
-    setError(null); setSubmitting(true);
+    setError(null); setLiveStatus(null); setSubmitting(true);
     try {
-      const fd = new FormData();
-      for (const f of fields) {
-        if (f.type === "file" || f.type === "image") { const file = files[f.id]; if (file) fd.append(f.id, file); }
-        else { const v = values[f.id]; if (v !== undefined && v !== "") fd.append(f.id, String(v)); }
+      // Identify the single resume file field (first file-type field with a chosen
+      // file). The fast path applies only when there is exactly one such resume to
+      // upload directly; otherwise the multipart path handles everything.
+      const resumeField = fields.find((f) => (f.type === "file" || f.type === "image") && files[f.id]);
+      const resumeFile = resumeField ? files[resumeField.id] : null;
+
+      let succeeded = false;
+      if (resumeField && resumeFile) {
+        const outcome = await submitFast(resumeField, resumeFile);
+        if (outcome === "ok") succeeded = true;
+        else if (outcome === "error") succeeded = false; // already surfaced.
+        else succeeded = await submitMultipart(); // "fallback" -> legacy path.
+      } else {
+        // No resume file to upload directly -> straight to the multipart submit.
+        succeeded = await submitMultipart();
       }
-      const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, { method: "POST", credentials: "include", body: fd });
-      const d = await r.json().catch(() => null);
-      if (r.ok) {
-        setReference(d?.data?.applicationId ?? null);
+
+      if (succeeded) {
         setDone(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        setError(d?.error?.message ?? "We could not submit your application just now. Please check your details and try again.");
       }
     } catch {
       setError("Something went wrong while submitting. Please try again in a moment.");
     } finally { setSubmitting(false); }
   }
 
-  if (done) return <Confirm title={job.title} reference={reference} />;
+  if (done) return <Confirm title={job.title} reference={reference} liveStatus={liveStatus} statusCopy={STATUS_COPY} />;
 
   const salary = job.min != null && job.max != null ? `₹${job.min}k to ₹${job.max}k` : null;
 
@@ -203,8 +406,21 @@ export default function ApplyPage() {
     );
   }
 
+  // schema.org JobPosting JSON-LD for Google for Jobs. Built from the REAL
+  // public job payload (omits any field the job does not actually carry) and
+  // emitted ONLY when a genuine published job loaded. The apply URL uses the
+  // site origin resolved above, else the live browser origin at render time.
+  const siteOrigin = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  const jobLd = rawJob && siteOrigin && slug
+    ? buildJobPostingJsonLd(rawJob, { appUrl: siteOrigin, slug })
+    : null;
+  const jobLdText = jsonLdScriptText(jobLd);
+
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", animation: "rise .4s var(--ease-out)" }}>
+      {jobLdText && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobLdText }} />
+      )}
       <a href="/jobs" style={{ display: "inline-flex", gap: 6, alignItems: "center", textDecoration: "none", color: "var(--c-ink-2)", fontWeight: 600, fontSize: "var(--fs-sm)", marginBottom: 16 }}><I n="chevL" s={16} /> All roles</a>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>

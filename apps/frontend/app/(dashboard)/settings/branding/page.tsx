@@ -19,6 +19,7 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon, Logo } from "@/components/aurora-icon";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { validateContrast } from "@/lib/theme/brand-ramp";
+import { UiCustomizationEditor } from "@/components/cd/ui-customization-editor";
 
 type CSS = React.CSSProperties;
 
@@ -118,7 +119,7 @@ async function uploadLogo(file: File): Promise<{ ok: boolean; status: number; lo
   }
 }
 
-export default function BrandingSettingsPage() {
+function BrandingPanel() {
   const { branding, refresh } = useTenantBranding();
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
@@ -333,6 +334,36 @@ export default function BrandingSettingsPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Page = two tabs over the SAME settings route:
+ *   • "Branding"          — the brand payload form (PUT /api/branding), unchanged.
+ *   • "UI customization"  — the UiConfig editor (PUT /api/me/ui-config), which
+ *                           writes the tenant theme / nav / route / copy overrides.
+ * The tab switch is additive: the Branding tab opens by default, so this route
+ * renders exactly as before until an admin opens the new tab.
+ * ------------------------------------------------------------------------- */
+const TABS: [("branding" | "ui"), string, string][] = [
+  ["branding", "Branding", "swatch"],
+  ["ui", "UI customization", "sparkles"],
+];
+
+export default function BrandingSettingsPage() {
+  const [tab, setTab] = useState<"branding" | "ui">("branding");
+  return (
+    <div style={{ animation: "rise .3s var(--ease-out)" }}>
+      <div role="tablist" aria-label="Branding settings sections" style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface-2)", marginBottom: 20 }}>
+        {TABS.map(([id, label, icon]) => (
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 15px", borderRadius: "var(--r-sm, 8px)", border: "none", cursor: "pointer", fontSize: "var(--fs-sm)", fontWeight: 600, fontFamily: "var(--font-sans)", background: tab === id ? "var(--c-surface)" : "transparent", color: tab === id ? "var(--c-ink)" : "var(--c-ink-2)", boxShadow: tab === id ? "var(--e1)" : "none" }}>
+            <Icon name={icon} size={15} />{label}
+          </button>
+        ))}
+      </div>
+      {tab === "branding" ? <BrandingPanel /> : <UiCustomizationEditor />}
     </div>
   );
 }

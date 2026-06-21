@@ -13,6 +13,7 @@ import { prisma } from "./lib/prisma.js";
 import tenantsRouter from "./routes/tenants.js";
 import planChangesRouter from "./routes/plan-changes.js";
 import brandingRouter from "./routes/branding.js";
+import uiConfigRouter from "./routes/ui-config.js";
 import onboardingRouter from "./routes/onboarding.js";
 import gdprRouter from "./routes/gdpr.js";
 
@@ -56,6 +57,11 @@ export function createApp(logger: Logger): Express {
   app.use("/internal/tenants", tenantsRouter);
   app.use("/internal/plan-changes", planChangesRouter);
   app.use("/internal", brandingRouter);
+  // WF-C (C3): developer-customizable UI config (GET/PUT /internal/ui-config).
+  // Mounted at /internal so it inherits the readAuthHeaders + tenantContext set
+  // up above (RLS client scopes to the caller's own Tenant row); the PUT is
+  // additionally gated by requireTenantAdmin inside the router.
+  app.use("/internal", uiConfigRouter);
   app.use("/internal/onboarding", onboardingRouter);
   app.use("/internal/gdpr", gdprRouter);
 

@@ -5,6 +5,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { ClientProviders } from "@/components/shared/client-providers";
 import { AuthProvider } from "@/lib/auth-context";
+import { UiConfigProvider } from "@/lib/config/ui-config-provider";
 
 // Sans = Plus Jakarta Sans, Mono = Geist Mono. These are the actual Aurora faces
 // from the Claude Design source (CDC ATS - System & Shell.html), so every glyph
@@ -74,10 +75,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <AuthProvider>
-          <div id="main" className="relative z-[2]">{children}</div>
-          <ClientProviders />
-        </AuthProvider>
+        {/* WF-C C2: resolved per-tenant UiConfig made available app-wide. This is
+            an additive wrap ABOVE the existing AuthProvider/ClientProviders tree
+            (provider order is otherwise unchanged), so useUiConfig() resolves the
+            real tenant config inside the logged-in subtree. UiConfigProvider reads
+            the session access token from sessionStorage (not from AuthContext), so
+            it has no dependency on AuthProvider and fails soft to the all-enabled
+            platform default on 404 / pre-auth / error, keeping every screen
+            byte-identical to today until a tenant override loads. */}
+        <UiConfigProvider>
+          <AuthProvider>
+            <div id="main" className="relative z-[2]">{children}</div>
+            <ClientProviders />
+          </AuthProvider>
+        </UiConfigProvider>
       </body>
     </html>
   );

@@ -15,12 +15,16 @@
 //   4. exposes the validated context + a token-authed data fetcher to the page
 //      via a render prop, so each page renders the real screen content.
 //
-// The brand-ramp injection is lifted VERBATIM from cd-shell.tsx (buildBrandStyle)
-// so the embed and the logged-in app re-skin from the same single brand hex with
-// identical token math.
+// The brand-ramp injection now goes through the SHARED buildThemeCss helper
+// (lib/theme/build-theme-css.ts, WF-B B5) -- the generalized successor to the
+// per-shell buildBrandStyle that previously lived here verbatim. Passing ONLY a
+// brandHex (and the default 'system' colorMode) makes buildThemeCss emit exactly
+// the brand ramp in both the --brand* and --c-brand* forms, light + dark, so the
+// embed and the logged-in app re-skin from the same single brand hex with
+// identical token math (byte-identical CSS to the old local copy).
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { brandRamp } from "@/lib/theme/brand-ramp";
+import { buildThemeCss } from "@/lib/theme/build-theme-css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -38,23 +42,15 @@ function isHex(hex: string | null | undefined): hex is string {
   return !!hex && /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(hex);
 }
 
-// The six brand-family token keys brandRamp() produces. Emitted in BOTH forms
-// cd-tokens.css reads inside .cd-scope: the bare `--brand*` and the `--c-brand*`
-// full-color companions. Lifted verbatim from cd-shell.tsx.
-const BRAND_KEYS = [
-  "--brand", "--brand-2", "--brand-ink", "--brand-tint", "--brand-tint-2", "--on-brand",
-] as const;
-
+// Build the scoped brand-only <style> body for this embed by delegating to the
+// shared buildThemeCss. We pass the per-mount scope as the FULL attribute matcher
+// `data-cd-brand="<scopeId>"`, so the helper's selector becomes
+// `.cd-scope[data-cd-brand="<scopeId>"]` (light) + `.dark .cd-scope[...]` (dark) --
+// the exact selectors + brand/--c-brand declarations the old local buildBrandStyle
+// emitted. Only brandHex is supplied (no ai/secondary/radius/density/font/fluid),
+// so the output is the brand ramp alone, byte-identical to before.
 function buildBrandStyle(hex: string, scopeId: string): string {
-  const ramp = brandRamp(hex);
-  const decls = (side: Record<string, string>): string =>
-    BRAND_KEYS.map((k) => {
-      const color = `oklch(${side[k]})`;
-      const cKey = k.replace(/^--/, "--c-");
-      return `${k}:${color};${cKey}:${color};`;
-    }).join("");
-  const sel = `.cd-scope[data-cd-brand="${scopeId}"]`;
-  return `${sel}{${decls(ramp.light)}}\n.dark ${sel}{${decls(ramp.dark)}}`;
+  return buildThemeCss({ brandHex: hex }, `data-cd-brand="${scopeId}"`);
 }
 
 type ValidateState =
