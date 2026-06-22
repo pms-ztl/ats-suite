@@ -283,6 +283,12 @@ export default function ApplyPage() {
         setReference(d.reference ?? d.id ?? d.applicationId ?? null);
         setDone(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (res?.status === 422) {
+        // Module A — eligibility gate. Surface the recruiter-authored message
+        // verbatim (e.g. "Only CSE candidates can apply for this job") instead of
+        // a generic failure, so an ineligible candidate understands why.
+        setError(res.data?.error?.message ?? "You do not meet the eligibility criteria for this job.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setError("We could not submit your application just now. Please check your details and try again, or contact the team if the problem continues.");
       }

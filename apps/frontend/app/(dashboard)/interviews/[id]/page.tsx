@@ -374,11 +374,11 @@ export default function InterviewDetailPage() {
                 {d.panel.length > 5 && <span className="mono" style={{ width: 26, height: 26, borderRadius: 99, marginLeft: -8, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, background: "var(--c-surface-3)", color: "var(--c-ink-3)", border: "2px solid var(--c-surface)" }}>+{d.panel.length - 5}</span>}
               </div>
             )}
-            {d.mode === "VIDEO" && (
-              <a style={{ display: "flex", gap: 7, alignItems: "center", justifyContent: "center", marginTop: 12, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--c-brand-tint)", color: "var(--c-brand-ink)", fontWeight: 600, fontSize: 12.5, textDecoration: "none", cursor: "pointer" }}>
-                <Icon name="enter" size={15} />Join video call
-              </a>
-            )}
+            {/* Module D — the built-in interview room (own-WebRTC video + live
+                notes/code/whiteboard) is always available; no external platform. */}
+            <a href={`/interviews/${id}/room`} style={{ display: "flex", gap: 7, alignItems: "center", justifyContent: "center", marginTop: 12, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--c-brand-tint)", color: "var(--c-brand-ink)", fontWeight: 600, fontSize: 12.5, textDecoration: "none", cursor: "pointer" }}>
+              <Icon name="enter" size={15} />Join interview room
+            </a>
           </div>
 
           {/* AI suggested questions - rendered only when present */}
