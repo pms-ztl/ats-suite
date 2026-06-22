@@ -39,6 +39,17 @@ function toRequirement(r: any): RequirementMatch {
 function toVerdict(s: any): ScreeningVerdict {
   const result = String(s?.result ?? "REVIEW").toUpperCase() as ScreeningResult;
   const findings = s?.requirementFindings ?? s?.signals ?? s?.findings ?? [];
+  const reqMatches: RequirementMatch[] = Array.isArray(findings) ? findings.map(toRequirement) : [];
+  // Strengths / missing skills — real data only. Prefer the screener's signals
+  // (bullets prefixed "MATCH:" / "GAP:"); fall back to met/not-met requirement findings.
+  const signals: string[] = Array.isArray(s?.signals) ? s.signals.filter((x: any) => typeof x === "string") : [];
+  const stripPrefix = (x: string) => x.replace(/^\s*(match|gap)\s*:\s*/i, "").trim();
+  const strengths = signals.length
+    ? signals.filter((x) => /^\s*match\s*:/i.test(x)).map(stripPrefix).filter(Boolean)
+    : reqMatches.filter((r) => r.met === true).map((r) => r.requirement);
+  const missing = signals.length
+    ? signals.filter((x) => /^\s*gap\s*:/i.test(x)).map(stripPrefix).filter(Boolean)
+    : reqMatches.filter((r) => r.met === false).map((r) => r.requirement);
   return {
     id: s?.id,
     candidateId: fullName(s?.candidate) || s?.candidateId || "Candidate",
@@ -48,7 +59,9 @@ function toVerdict(s: any): ScreeningVerdict {
     confidence: Number(s?.confidence ?? (s?.matchPercentage != null ? s.matchPercentage / 100 : 0.7)),
     agent: s?.agentType ?? s?.screeningType ?? "candidate-screener",
     summary: s?.reasoning ?? s?.summary ?? "No summary provided.",
-    requirements: Array.isArray(findings) ? findings.map(toRequirement) : [],
+    requirements: reqMatches,
+    strengths,
+    missing,
     reasoningTrace: s?.agentTrace?.steps ?? s?.agentTrace ?? undefined,
     createdAt: s?.createdAt ?? s?.startedAt ?? "",
   };

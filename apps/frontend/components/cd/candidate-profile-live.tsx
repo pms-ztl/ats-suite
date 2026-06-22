@@ -32,6 +32,8 @@ const STAGE_META: Record<string, { label: string; color: string }> = {
   PHONE_SCREEN: { label: "Phone screen", color: "var(--info)" },
   ASSESSMENT: { label: "Assessment", color: "var(--ai)" },
   INTERVIEW: { label: "Interview", color: "var(--ai)" },
+  TECHNICAL_ROUND: { label: "Technical round", color: "var(--ai)" },
+  HR_ROUND: { label: "HR round", color: "var(--brand-2)" },
   FINAL_REVIEW: { label: "Final review", color: "var(--brand)" },
   OFFER: { label: "Offer", color: "var(--brand)" },
   HIRED: { label: "Hired", color: "var(--ok)" },
@@ -90,8 +92,10 @@ export function CandidateProfileLive() {
         requirements: (v.requirements ?? []).map((r, i): ReqBreakdown => ({
           id: String(i), label: r.requirement, custom: false, state: reqState(r.met), note: r.evidence || "",
         })),
+        strengths: v.strengths ?? [],
+        missing: v.missing ?? [],
       }
-    : { score: 0, band: "Not screened yet", summary: "This candidate has not been screened yet. Open screening to produce an AI verdict.", confidence: 0, requirements: [] };
+    : { score: 0, band: "Not screened yet", summary: "This candidate has not been screened yet. Open screening to produce an AI verdict.", confidence: 0, requirements: [], strengths: [], missing: [] };
 
   const parsed: ParsedResume = {
     fields: [

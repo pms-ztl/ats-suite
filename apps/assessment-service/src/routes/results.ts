@@ -141,6 +141,58 @@ function buildQuestionDetail(grade: AnyObj, answer: AnyObj | undefined, question
 }
 
 /**
+ * Surface the EXTERNAL-vendor result summary that ingestVendorResult persisted on
+ * AssessmentResult.perQuestion (see lib/ingest-vendor-result.ts lines 134-145).
+ *
+ * A vendor result has NO native Attempt + NO native per-question grades; its
+ * perQuestion holds a SINGLE summary object `{ source, providerInvitationId,
+ * status, reportUrl?, sections?, plagiarismFlag?, normalized, raw }`. The native
+ * grader, by contrast, writes one entry per question (each carrying a
+ * `questionId`). We detect the vendor shape by the presence of `source` +
+ * `providerInvitationId` and the ABSENCE of `questionId`, and read every field
+ * back VERBATIM (never synthesized). Returns null for a native (non-vendor)
+ * result so the caller can omit the panel entirely (honest empty).
+ *
+ * The verbatim vendor `raw`/`normalized` provenance is intentionally NOT surfaced
+ * here: this is the recruiter-facing display summary, not the DSAR/provenance
+ * export (that already lives in routes/gdpr.ts). Sections are passed through as
+ * the vendor reported them (name + whatever real score/percentage existed).
+ */
+function buildVendorSummary(perQuestion: unknown): AnyObj | null {
+  const entries = asArray(perQuestion);
+  // The vendor summary is the lone entry that carries a `source` + a
+  // `providerInvitationId` and is NOT a per-question grade (no `questionId`).
+  const v = entries.find(
+    (e) =>
+      typeof e["source"] === "string" &&
+      typeof e["providerInvitationId"] === "string" &&
+      e["questionId"] === undefined,
+  );
+  if (!v) return null;
+
+  const sections = asArray(v["sections"]).map((s) => ({
+    name: typeof s["name"] === "string" ? s["name"] : null,
+    score: typeof s["score"] === "number" ? s["score"] : null,
+    maxScore: typeof s["maxScore"] === "number" ? s["maxScore"] : null,
+    percentage: typeof s["percentage"] === "number" ? s["percentage"] : null,
+  }));
+
+  return {
+    provider: v["source"] ?? null,
+    providerInvitationId: v["providerInvitationId"] ?? null,
+    // Vendor-reported completion status (e.g. "COMPLETED"); verbatim or null.
+    status: typeof v["status"] === "string" ? v["status"] : null,
+    // Vendor-hosted candidate report URL, when the vendor supplied one.
+    reportUrl: typeof v["reportUrl"] === "string" ? v["reportUrl"] : null,
+    // Vendor plagiarism/cheating verdict, when the vendor evaluated one. null
+    // (not false) when the vendor did not report it (honest unknown).
+    plagiarismFlag: typeof v["plagiarismFlag"] === "boolean" ? v["plagiarismFlag"] : null,
+    // Per-section breakdown the vendor reported (omitted when none).
+    ...(sections.length ? { sections } : {}),
+  };
+}
+
+/**
  * Deterministic, transparent proctoring risk score (0-100) derived from the
  * captured ProctorEvent timeline. NOT an LLM call and NOT a fabricated number:
  * it is a fixed-weight sum over real events, capped at 100, so the recruiter can
@@ -260,7 +312,19 @@ router.get("/:id/results", async (req: Request, res: Response, next: NextFunctio
     const results = await prisma.assessmentResult.findMany({
       where: { tenantId, assessmentId },
       orderBy: [{ pendingManualReview: "desc" }, { rawScore: "desc" }],
-      include: {
+      // `attempt` is null for an EXTERNAL-vendor result (it has a synthetic
+      // attemptId + no native Attempt row); `perQuestion` then carries the
+      // vendor summary instead (see buildVendorSummary).
+      select: {
+        id: true,
+        attemptId: true,
+        candidateId: true,
+        rawScore: true,
+        maxScore: true,
+        passed: true,
+        pendingManualReview: true,
+        gradedAt: true,
+        perQuestion: true,
         attempt: {
           select: {
             id: true,
@@ -282,6 +346,12 @@ router.get("/:id/results", async (req: Request, res: Response, next: NextFunctio
       total: results.length,
       results: results.map((r) => {
         const pct = r.maxScore > 0 ? Math.round((r.rawScore / r.maxScore) * 100) : null;
+        // EXTERNAL-vendor results (Codility/HackerEarth/iMocha/TestGorilla/
+        // HackerRank, ingested in real time) have no native attempt; their vendor
+        // summary lives on perQuestion. Surface it so the recruiter sees the
+        // provider, report link, per-section breakdown + plagiarism flag. Native
+        // results have no vendor summary → `vendor` is null (panel omitted).
+        const vendor = buildVendorSummary(r.perQuestion);
         return {
           id: r.id,
           attemptId: r.attemptId,
@@ -294,6 +364,8 @@ router.get("/:id/results", async (req: Request, res: Response, next: NextFunctio
           pendingManualReview: r.pendingManualReview,
           gradedAt: r.gradedAt,
           attempt: r.attempt,
+          // Real-time external-OA-vendor result summary, or null for native.
+          vendor,
         };
       }),
     });
@@ -312,6 +384,63 @@ router.get("/attempts/:attemptId", async (req: Request, res: Response, next: Nex
   try {
     const tenantId = getTenantId(req);
     const attemptId = req.params["attemptId"] as string;
+
+    // EXTERNAL-vendor results carry a SYNTHETIC attemptId ("provider:{inviteId}")
+    // and have NO native Attempt row (see lib/ingest-vendor-result.ts). The native
+    // attempt-detail join below would 404 for them, so resolve the vendor result
+    // directly by its unique attemptId FIRST and return a vendor-shaped detail
+    // bound to the persisted vendor summary (no native answers/proctoring to
+    // fabricate). Native attempts fall through unchanged.
+    if (attemptId.startsWith("provider:")) {
+      const vendorResult = await prisma.assessmentResult.findFirst({
+        where: { attemptId, tenantId },
+        include: { assessment: { select: { id: true, title: true, passingScore: true } } },
+      });
+      if (!vendorResult) throw Errors.notFound("Attempt");
+      const pct =
+        vendorResult.maxScore > 0 ? Math.round((vendorResult.rawScore / vendorResult.maxScore) * 100) : null;
+      ok(res, {
+        attempt: {
+          id: vendorResult.attemptId,
+          assessmentId: vendorResult.assessmentId,
+          candidateId: vendorResult.candidateId,
+          // No native attempt timeline exists for a vendor result (honest null).
+          inviteId: null,
+          status: vendorResult.pendingManualReview ? "AWAITING_REVIEW" : "GRADED",
+          startedAt: null,
+          submittedAt: vendorResult.gradedAt,
+          durationSeconds: null,
+          // Marks this as the external-vendor path (no native take session).
+          external: true,
+        },
+        assessment: vendorResult.assessment
+          ? {
+              id: vendorResult.assessment.id,
+              title: vendorResult.assessment.title,
+              passingScore: vendorResult.assessment.passingScore,
+            }
+          : null,
+        invite: null,
+        result: {
+          id: vendorResult.id,
+          rawScore: vendorResult.rawScore,
+          maxScore: vendorResult.maxScore,
+          scorePercent: pct,
+          passed: vendorResult.passed,
+          pendingManualReview: vendorResult.pendingManualReview,
+          gradedAt: vendorResult.gradedAt,
+          explainability: vendorResult.explainability ?? null,
+        },
+        // The vendor summary is the per-result breakdown for an external OA (in
+        // place of native per-question grades): provider, report link, sections,
+        // plagiarism flag. Read verbatim from perQuestion; null only if absent.
+        vendor: buildVendorSummary(vendorResult.perQuestion),
+        // No native per-question detail or proctoring for an external vendor.
+        questions: [],
+        proctoring: null,
+      });
+      return;
+    }
 
     const attempt = await prisma.attempt.findFirst({
       where: { id: attemptId, tenantId },
@@ -418,6 +547,10 @@ router.get("/attempts/:attemptId", async (req: Request, res: Response, next: Nex
           occurredAt: e.occurredAt,
         })),
       },
+      // null for a native attempt (the grader writes per-question entries, not a
+      // vendor summary). Kept here so the detail shape matches the external-vendor
+      // branch above, so a frontend panel can always read `detail.vendor`.
+      vendor: buildVendorSummary(attempt.result?.perQuestion),
     });
   } catch (err) {
     next(err);

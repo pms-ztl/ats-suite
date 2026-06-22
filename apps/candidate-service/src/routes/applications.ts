@@ -10,6 +10,7 @@ import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cd
 const requireRecruiterOrAdmin = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { ApplicationStageSchema, ApplicationStatusSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
+import { approveOfferInternal } from "../lib/offer-approve.js";
 import {
   resolveRequisitionContext,
   stakeholderIds,
@@ -227,6 +228,8 @@ router.post("/:id/hire", requireRecruiterOrAdmin, async (req: Request, res: Resp
 
       const ctx = await resolveRequisitionContext({ requisitionId: application.requisitionId, tenantId, userId, role });
       const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`.trim();
+      // Leg 1 + 2: application.hired drives the onboarding case (onboarding-service)
+      // and the stakeholder notice (notification-service).
       await publishApplicationHired(
         {
           tenantId,
@@ -241,6 +244,35 @@ router.post("/:id/hire", requireRecruiterOrAdmin, async (req: Request, res: Resp
         },
         logger,
       );
+
+      // Leg 3 (one-click): ensure an Offer exists for this application and run
+      // the SAME approve body as the Offers "Approve" button: render the
+      // offer-letter PDF and publish offer.approved, which is what makes
+      // notification-service email the CANDIDATE the offer + letter reference.
+      // Best-effort: a failure here never undoes the HIRED mark or the onboarding
+      // case, those already fired above.
+      try {
+        let offer = await prisma.offer.findFirst({ where: { tenantId, applicationId: id } });
+        if (!offer) {
+          // Minimal DRAFT so the letter renders. No requisition comp data is
+          // resolved here (we never fabricate a salary figure); a 0/USD
+          // placeholder is used and can be edited on the Offer record later.
+          offer = await prisma.offer.create({
+            data: {
+              tenantId,
+              candidateId: application.candidateId,
+              requisitionId: application.requisitionId,
+              applicationId: id,
+              baseSalary: 0,
+              currency: "USD",
+              status: "DRAFT",
+            },
+          });
+        }
+        await approveOfferInternal(offer.id, tenantId, userId, role, logger);
+      } catch (err) {
+        logger.warn({ err, applicationId: id }, "hire: auto offer-approve failed (HIRED + onboarding unaffected)");
+      }
     }
 
     ok(res, { id: updated.id, stage: updated.stage, status: updated.status, stageUpdatedAt: updated.stageUpdatedAt, alreadyHired });

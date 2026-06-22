@@ -7,10 +7,9 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { z } from "zod";
 import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
-import { maybeUploadOfferLetter } from "../lib/offer-letter.js";
+import { approveOfferInternal } from "../lib/offer-approve.js";
 import {
   resolveRequisitionContext,
-  publishOfferApproved,
   publishOfferAccepted,
 } from "../lib/decision-events.js";
 
@@ -111,63 +110,9 @@ router.post("/:id/approve", requireRecruiterOrAdmin, async (req: Request, res: R
     const userId = (req.headers["x-user-id"] as string) || null;
     const role = (req.headers["x-user-role"] as string) || "ADMIN";
 
-    const existing = await prisma.offer.findFirst({ where: { id, tenantId } });
-    if (!existing) throw Errors.notFound("Offer");
-
-    const candidate = await prisma.candidate.findFirst({
-      where: { id: existing.candidateId, tenantId },
-      select: { firstName: true, lastName: true, email: true },
-    });
-
-    // Resolve the job title from the requisition (best-effort, cross-service).
-    const ctx = await resolveRequisitionContext({ requisitionId: existing.requisitionId, tenantId, userId, role });
-
-    // Render the offer-letter PDF. Upload + key only when storage is wired up;
-    // otherwise offerLetterKey stays null (honest empty — see offer-letter.ts).
-    let offerLetterKey: string | null = existing.offerLetterKey ?? null;
-    if (candidate) {
-      const result = await maybeUploadOfferLetter(
-        {
-          offer: {
-            id: existing.id,
-            baseSalary: existing.baseSalary,
-            currency: existing.currency,
-            bonusPercent: existing.bonusPercent,
-            equity: existing.equity,
-            startDate: existing.startDate,
-            expiresAt: existing.expiresAt,
-          },
-          candidate,
-          jobTitle: ctx.title,
-        },
-        logger,
-      );
-      offerLetterKey = result.offerLetterKey;
-    } else {
-      logger.warn({ offerId: id, candidateId: existing.candidateId }, "candidate not found — offer letter not rendered");
-    }
-
-    const offer = await prisma.offer.update({
-      where: { id },
-      data: { status: "APPROVED", approvedBy: userId, offerLetterKey },
-    });
-
-    const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}`.trim() : null;
-    await publishOfferApproved(
-      {
-        tenantId,
-        offerId: offer.id,
-        applicationId: offer.applicationId ?? null,
-        candidateId: offer.candidateId,
-        candidateName: candidateName || null,
-        candidateEmail: candidate?.email ?? null,
-        jobTitle: ctx.title,
-        offerLetterKey,
-        approvedByUserId: userId,
-      },
-      logger,
-    );
-
+    // Shared with the one-click Hire flow: render letter, set APPROVED, publish
+    // offer.approved (candidate email). See lib/offer-approve.ts.
+    const offer = await approveOfferInternal(id, tenantId, userId, role, logger);
     ok(res, offer);
   } catch (err) { next(err); }
 });

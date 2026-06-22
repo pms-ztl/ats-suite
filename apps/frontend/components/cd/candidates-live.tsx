@@ -26,6 +26,8 @@ const DEFAULT_STAGES: CandStage[] = [
   { id: "PHONE_SCREEN", label: "Phone screen", color: "var(--info)" },
   { id: "ASSESSMENT", label: "Assessment", color: "var(--ai)" },
   { id: "INTERVIEW", label: "Interview", color: "var(--ai)" },
+  { id: "TECHNICAL_ROUND", label: "Technical round", color: "var(--ai)" },
+  { id: "HR_ROUND", label: "HR round", color: "var(--brand-2)" },
   { id: "FINAL_REVIEW", label: "Final review", color: "var(--brand-2)" },
   { id: "OFFER", label: "Offer", color: "var(--brand)" },
   { id: "HIRED", label: "Hired", color: "var(--ok)" },

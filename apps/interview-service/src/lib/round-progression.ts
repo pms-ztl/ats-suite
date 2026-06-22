@@ -4,10 +4,31 @@
  * identity-service to find active users with that role and round-robin
  * assigns ONE of them as panelist (least-recently-assigned wins).
  */
+import { publishEvent } from "@cdc-ats/nats-client";
+import { tenantSubject } from "@cdc-ats/contracts";
 import { prisma } from "./prisma.js";
 import { fetchActiveUsersByRole } from "./service-client.js";
 
 export type AdvanceTriggeredBy = "user" | "auto";
+
+/**
+ * Map the next round's InterviewType to the canonical ApplicationStage the
+ * pipeline should reflect once that round starts. TECHNICAL rounds land on the
+ * first-class TECHNICAL_ROUND stage; behavioral/panel rounds land on HR_ROUND;
+ * a FINAL round closes out on FINAL_REVIEW. PHONE_SCREEN keeps the existing
+ * PHONE_SCREEN stage. A candidate-service subscriber consumes the event and
+ * advances forward-only (terminal/past stages are never regressed).
+ */
+function canonicalStageForRoundType(interviewType: string): string {
+  switch (interviewType) {
+    case "PHONE_SCREEN": return "PHONE_SCREEN";
+    case "TECHNICAL":    return "TECHNICAL_ROUND";
+    case "FINAL":        return "FINAL_REVIEW";
+    case "BEHAVIORAL":
+    case "PANEL":
+    default:             return "HR_ROUND";
+  }
+}
 
 export interface AdvanceResult {
   interview: any;
@@ -52,6 +73,32 @@ export async function advanceApplicationToNextRound(args: {
       status: "SCHEDULED",
     },
   });
+
+  // ── Connect the interview leg to the canonical pipeline ──────────────
+  // Publish interview.round.started so candidate-service can advance the
+  // Application.stage to the canonical stage for this round type
+  // (TECHNICAL -> TECHNICAL_ROUND, BEHAVIORAL/PANEL -> HR_ROUND,
+  // FINAL -> FINAL_REVIEW). Best-effort: a NATS outage must not break the
+  // round progression itself. The subscriber forward-only advances, so a
+  // candidate already at/past the target stage is never regressed.
+  const targetStage = canonicalStageForRoundType(nextRound.interviewType);
+  await publishEvent({
+    subject: tenantSubject(tenantId, "interview", "round.started"),
+    type: "interview.round.started",
+    tenantId,
+    payload: {
+      tenantId,
+      applicationId,
+      candidateId,
+      requisitionId,
+      interviewId: interview.id,
+      roundId: nextRound.id,
+      roundNumber: nextRound.order,
+      roundName: nextRound.name,
+      interviewType: nextRound.interviewType,
+      targetStage,
+    },
+  }).catch(() => undefined);
 
   // ── Phase 6b: round-robin panelist auto-assign ──────────────────────
   let assignedPanelistId: string | null = null;

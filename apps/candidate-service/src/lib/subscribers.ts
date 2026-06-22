@@ -10,6 +10,11 @@
  *   tenant.{tenantId}.assessment.completed -> advance the candidate's application
  *                                            to ApplicationStage.ASSESSMENT
  *                                            (WF10/J1 - never auto-rejects)
+ *   tenant.{tenantId}.interview.round.started -> advance the candidate's
+ *                                            application to the canonical stage
+ *                                            for the started round
+ *                                            (TECHNICAL_ROUND / HR_ROUND /
+ *                                            FINAL_REVIEW), forward-only
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
 import type { Logger } from "pino";
@@ -46,6 +51,41 @@ const AssessmentCompletedPayload = z.object({
   score: z.number().nullable().optional(),
   needsReview: z.boolean().optional(),
 }).passthrough();
+
+// interview.round.started - published by interview-service round-progression
+// when a Technical/HR/Final round stub interview is created. Carries the
+// canonical targetStage the pipeline should reflect. applicationId may be
+// absent for ad-hoc interviews not tied to an application.
+const InterviewRoundStartedPayload = z.object({
+  tenantId: z.string(),
+  applicationId: z.string().nullable().optional(),
+  candidateId: z.string(),
+  requisitionId: z.string().optional(),
+  interviewId: z.string().optional(),
+  roundId: z.string().optional(),
+  roundNumber: z.number().optional(),
+  roundName: z.string().optional(),
+  interviewType: z.string().optional(),
+  targetStage: z.string(),
+}).passthrough();
+
+// Canonical ApplicationStage order for the forward-only guard. A higher index
+// is "later" in the pipeline; terminal stages sit at the end so they are never
+// regressed. Mirrors the prisma enum order (candidate-service schema.prisma).
+const STAGE_ORDER: Record<string, number> = {
+  APPLIED: 0,
+  SCREENED: 1,
+  PHONE_SCREEN: 2,
+  ASSESSMENT: 3,
+  INTERVIEW: 4,
+  TECHNICAL_ROUND: 5,
+  HR_ROUND: 6,
+  FINAL_REVIEW: 7,
+  OFFER: 8,
+  HIRED: 9,
+  REJECTED: 99,
+  WITHDRAWN: 99,
+};
 
 // Placeholder emails from bulk-upload look like:
 //   bulk-{8chars}-{idx}@pending.placeholder
@@ -222,5 +262,57 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
     },
   });
 
-  logger.info("candidate-service NATS subscribers started (resume.parsed + assessment.completed)");
+  // ── tenant.{tenantId}.interview.round.started ─────────────────────────────
+  // Connect the interview leg to the canonical pipeline: when interview-service
+  // starts a Technical/HR/Final round, advance the candidate's application to
+  // the canonical stage that round reports as (TECHNICAL_ROUND / HR_ROUND /
+  // FINAL_REVIEW). Forward-only + idempotent (mirrors assessment.completed):
+  // an application already AT_OR_PAST the target stage, or in a terminal stage,
+  // is never regressed. This is a STAGE ADVANCE only; it never rejects.
+  await subscribeToEvents({
+    stream: "INTERVIEW_EVENTS",
+    subject: "tenant.*.interview.round.started",
+    durable: "candidate-service:interview-round-started",
+    logger,
+    handler: async (envelope) => {
+      const p = InterviewRoundStartedPayload.parse(envelope.payload);
+      if (!p.applicationId) {
+        logger.info({ candidateId: p.candidateId, targetStage: p.targetStage }, "interview.round.started: no applicationId, no stage to advance");
+        return;
+      }
+      const target = STAGE_ORDER[p.targetStage];
+      if (target === undefined) {
+        logger.warn({ targetStage: p.targetStage }, "interview.round.started: unknown targetStage, skipping");
+        return;
+      }
+
+      const app = await prisma.application.findFirst({
+        where: { id: p.applicationId, tenantId: p.tenantId, candidateId: p.candidateId },
+        select: { id: true, stage: true },
+      });
+      if (!app) {
+        logger.warn({ applicationId: p.applicationId, tenantId: p.tenantId }, "interview.round.started: application not found");
+        return;
+      }
+
+      // Forward-only: do not regress an application already at/past the target
+      // stage (covers terminal stages, which sit at the end of STAGE_ORDER).
+      const current = STAGE_ORDER[app.stage] ?? 0;
+      if (current >= target) {
+        logger.info({ applicationId: app.id, stage: app.stage, targetStage: p.targetStage }, "interview.round.started: already at/past target, no advance");
+        return;
+      }
+
+      await prisma.application.updateMany({
+        where: { id: app.id, tenantId: p.tenantId },
+        data: { stage: p.targetStage as any, stageUpdatedAt: new Date() },
+      });
+      logger.info(
+        { applicationId: app.id, from: app.stage, to: p.targetStage, roundName: p.roundName, interviewType: p.interviewType },
+        "interview.round.started: advanced application to canonical round stage (forward-only)",
+      );
+    },
+  });
+
+  logger.info("candidate-service NATS subscribers started (resume.parsed + assessment.completed + interview.round.started)");
 }

@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export const CanonicalStageSchema = z.enum([
   "APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW",
-  "FINAL_REVIEW", "OFFER", "HIRED", "REJECTED", "WITHDRAWN",
+  "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED", "REJECTED", "WITHDRAWN",
 ]);
 export type CanonicalStage = z.infer<typeof CanonicalStageSchema>;
 

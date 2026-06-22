@@ -142,6 +142,34 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
                   </div>
                 ))}
               </div>
+              {canSee("alignmentScore") && (s.strengths.length > 0 || s.missing.length > 0) && (
+                <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+                  {s.strengths.length > 0 && (
+                    <div>
+                      <div style={{ ...LABEL, marginBottom: 7, display: "flex", gap: 6, alignItems: "center" }}>
+                        <Icon name="check" size={12} stroke={2.3} style={{ color: "var(--ok)" }} /> Strengths
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                        {s.strengths.map((t, i) => (
+                          <Pill key={i} tone="var(--ok)" bg="var(--ok-tint)" style={{ textTransform: "none" }}>{t}</Pill>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {s.missing.length > 0 && (
+                    <div>
+                      <div style={{ ...LABEL, marginBottom: 7, display: "flex", gap: 6, alignItems: "center" }}>
+                        <Icon name="x" size={12} stroke={2.3} style={{ color: "var(--danger)" }} /> Missing skills
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                        {s.missing.map((t, i) => (
+                          <Pill key={i} tone="var(--danger)" bg="var(--danger-tint)" style={{ textTransform: "none" }}>{t}</Pill>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </Zone>
 
             <Zone title="Interview scorecards" icon="fileText" action="All feedback">

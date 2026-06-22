@@ -85,6 +85,8 @@ export interface ScreeningVerdict {
   agent: string;        // e.g. "candidate-screener"
   summary: string;
   requirements: RequirementMatch[];
+  strengths?: string[];
+  missing?: string[];
   reasoningTrace?: { step: string; detail: string }[];
   createdAt: string;
 }

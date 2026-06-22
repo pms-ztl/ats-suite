@@ -21,6 +21,8 @@ const CANON: { id: string; label: string; color: string }[] = [
   { id: "PHONE_SCREEN", label: "Phone screen", color: "#3b82f6" },
   { id: "ASSESSMENT", label: "Assessment", color: "#8b5cf6" },
   { id: "INTERVIEW", label: "Interview", color: "#8b5cf6" },
+  { id: "TECHNICAL_ROUND", label: "Technical round", color: "#8b5cf6" },
+  { id: "HR_ROUND", label: "HR round", color: "#0ea5e9" },
   { id: "FINAL_REVIEW", label: "Final review", color: "#0ea5e9" },
   { id: "OFFER", label: "Offer", color: "#10b981" },
   { id: "HIRED", label: "Hired", color: "#22c55e" },

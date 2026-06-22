@@ -350,6 +350,8 @@ export interface ProfileVerdict {
   summary: string;               // one-line advisory summary
   confidence: number;            // 0..1 (0.70 threshold)
   requirements: ReqBreakdown[];  // per-requirement breakdown
+  strengths: string[];           // screener MATCH: signals (or met requirements)
+  missing: string[];             // screener GAP: signals (or not-met requirements)
 }
 export interface ParsedResume {
   fields: { k: string; v: string; c: number }[]; // parsed field: key, value, confidence 0..1 (<0.7 flags)

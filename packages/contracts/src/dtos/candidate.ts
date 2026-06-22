@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const ApplicationStageSchema = z.enum([
   "APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW",
-  "FINAL_REVIEW", "OFFER", "HIRED", "REJECTED", "WITHDRAWN",
+  "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED", "REJECTED", "WITHDRAWN",
 ]);
 export type ApplicationStage = z.infer<typeof ApplicationStageSchema>;
 

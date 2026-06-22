@@ -39,6 +39,26 @@ import { formatDate } from "@/lib/format-date";
 // unwrapped from the { success, data } envelope). All optional/nullable fields
 // reflect the service's honest-empty contract.
 // ─────────────────────────────────────────────────────────────────────────────
+// External-OA-vendor result summary (Codility / HackerEarth / iMocha /
+// TestGorilla / HackerRank). Present (non-null) ONLY on a vendor-ingested result;
+// null for a native take. Read verbatim from AssessmentResult.perQuestion by the
+// service's buildVendorSummary (never fabricated).
+type VendorSection = {
+  name: string | null;
+  score: number | null;
+  maxScore: number | null;
+  percentage: number | null;
+};
+
+type VendorSummary = {
+  provider: string | null;
+  providerInvitationId: string | null;
+  status: string | null;
+  reportUrl: string | null;
+  plagiarismFlag: boolean | null;
+  sections?: VendorSection[];
+};
+
 type ResultRow = {
   id: string;
   attemptId: string;
@@ -57,6 +77,8 @@ type ResultRow = {
     durationSeconds: number | null;
     inviteId: string;
   } | null;
+  // null for a native take; populated for an external-vendor result.
+  vendor: VendorSummary | null;
 };
 
 type ResultsList = {
@@ -109,11 +131,13 @@ type AttemptDetail = {
     id: string;
     assessmentId: string;
     candidateId: string;
-    inviteId: string;
+    inviteId: string | null;
     status: string;
     startedAt: string | null;
     submittedAt: string | null;
     durationSeconds: number | null;
+    // True on the external-vendor detail path (no native take session).
+    external?: boolean;
   };
   assessment: { id: string; title: string; passingScore: number | null } | null;
   invite: { id: string; email: string; status: string } | null;
@@ -127,7 +151,10 @@ type AttemptDetail = {
     gradedAt: string | null;
   } | null;
   questions: QuestionDetail[];
-  proctoring: { riskScore: number; byType: Record<string, number>; events: ProctorEvent[] };
+  // null on the external-vendor path (no native proctoring timeline).
+  proctoring: { riskScore: number; byType: Record<string, number>; events: ProctorEvent[] } | null;
+  // External-OA-vendor summary; null for a native attempt.
+  vendor: VendorSummary | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -225,6 +252,17 @@ const PROCTOR_LABEL: Record<string, string> = {
   NETWORK_LOSS: "Network loss",
 };
 const proctorLabel = (t: string) => PROCTOR_LABEL[(t || "").toUpperCase()] ?? t;
+
+// Friendly external-OA-vendor names (the provider registry key → label).
+const VENDOR_LABEL: Record<string, string> = {
+  hackerrank: "HackerRank",
+  codility: "Codility",
+  imocha: "iMocha",
+  testgorilla: "TestGorilla",
+  hackerearth: "HackerEarth",
+};
+const vendorLabel = (k: string | null | undefined) =>
+  (k && VENDOR_LABEL[k.toLowerCase()]) || (k ?? "External vendor");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
@@ -330,6 +368,17 @@ function AttemptRow({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
             <Pill mono>{row.candidateId}</Pill>
+            {/* External-OA-vendor provenance chip (real-time ingested result). */}
+            {row.vendor && (
+              <Pill icon="plug" tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">
+                {vendorLabel(row.vendor.provider)}
+              </Pill>
+            )}
+            {row.vendor?.plagiarismFlag === true && (
+              <Pill icon="flag" tone="var(--c-danger)" bg="var(--c-danger-tint)">
+                Plagiarism flagged
+              </Pill>
+            )}
             {pending ? (
               <StatusBadge kind="review" />
             ) : row.passed === true ? (
@@ -395,9 +444,8 @@ function AttemptDetailPane({ attemptId }: { attemptId: string }) {
 }
 
 function DetailContent({ data, reload }: { data: AttemptDetail; reload: () => void }) {
-  const { questions, proctoring, result } = data;
+  const { questions, proctoring, result, vendor } = data;
   const passingScore = data.assessment?.passingScore ?? null;
-  const risk = riskBand(proctoring.riskScore);
 
   // HITL grading panel state: per-question human point inputs + optional notes.
   const [points, setPoints] = useState<Record<string, string>>({});
@@ -488,80 +536,46 @@ function DetailContent({ data, reload }: { data: AttemptDetail; reload: () => vo
         )}
       </div>
 
-      {/* per-question breakdown */}
-      <SectionCard title="Question breakdown" icon="scroll" pad={0}>
-        {questions.length === 0 ? (
-          <div style={{ padding: 18 }}>
-            <EmptyState title="No answers recorded" body="This attempt has no per-question detail to display." />
-          </div>
-        ) : (
-          <div>
-            {questions.map((q, i) => (
-              <QuestionCard key={q.questionId} q={q} index={i} last={i === questions.length - 1} />
-            ))}
-          </div>
-        )}
-      </SectionCard>
+      {/* EXTERNAL-OA-vendor results panel. Rendered only when the result was
+          ingested from an external vendor (Codility / HackerEarth / iMocha /
+          TestGorilla / HackerRank). Bound to the vendor summary the service read
+          back from AssessmentResult.perQuestion (never fabricated). The native
+          per-question / proctoring / HITL sections below are skipped on this path
+          (a vendor result has no native take session, answers, or Attempt row). */}
+      {vendor && <VendorPanel vendor={vendor} />}
 
-      {/* proctoring timeline + deterministic risk score */}
-      <SectionCard
-        title="Proctoring"
-        icon="shield"
-        pad={0}
-        headRight={
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <Pill tone={risk.tone} bg={risk.bg}>{risk.label}</Pill>
-            <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: risk.tone }}>risk {proctoring.riskScore}/100</span>
-          </span>
-        }
-      >
-        <div style={{ padding: 18 }}>
-          {proctoring.events.length === 0 ? (
-            <div style={{ display: "flex", gap: 9, alignItems: "center", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
-              <Icon name="check" size={16} style={{ color: "var(--c-ok)" }} /> No proctoring signals captured for this attempt.
-            </div>
-          ) : (
-            <>
-              {/* by-type counts */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 14 }}>
-                {Object.entries(proctoring.byType).map(([t, n]) => (
-                  <Pill key={t} tone="var(--c-ink-2)" bg="var(--c-surface-2)">
-                    {proctorLabel(t)} <b style={{ marginLeft: 4 }}>{n}</b>
-                  </Pill>
+      {/* Native take detail: per-question breakdown, proctoring, HITL grading.
+          Omitted for a vendor result (none of these exist for it). */}
+      {!vendor && (
+        <>
+          {/* per-question breakdown */}
+          <SectionCard title="Question breakdown" icon="scroll" pad={0}>
+            {questions.length === 0 ? (
+              <div style={{ padding: 18 }}>
+                <EmptyState title="No answers recorded" body="This attempt has no per-question detail to display." />
+              </div>
+            ) : (
+              <div>
+                {questions.map((q, i) => (
+                  <QuestionCard key={q.questionId} q={q} index={i} last={i === questions.length - 1} />
                 ))}
               </div>
-              {/* timeline */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {proctoring.events.map((e, i) => (
-                  <div
-                    key={e.id}
-                    style={{ display: "flex", gap: 11, alignItems: "flex-start", padding: "9px 0", borderTop: i ? "1px solid var(--c-line)" : "none" }}
-                  >
-                    <Icon name="flag" size={14} style={{ color: "var(--c-warn)", flexShrink: 0, marginTop: 2 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>{proctorLabel(e.type)}</div>
-                      {Object.keys(e.metadata).length > 0 && (
-                        <div className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", marginTop: 2, wordBreak: "break-word" }}>
-                          {fmtAnswer(e.metadata)}
-                        </div>
-                      )}
-                    </div>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", whiteSpace: "nowrap" }}>
-                      {formatDate(e.occurredAt, { includeTime: true })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 12, fontSize: 11, color: "var(--c-ink-3)", lineHeight: 1.5 }}>
-                Risk is a deterministic, fixed-weight sum over the captured events (no model, no fabrication), so the recruiter can see exactly what drove it.
-              </div>
-            </>
-          )}
-        </div>
-      </SectionCard>
+            )}
+          </SectionCard>
+
+          {/* proctoring timeline + deterministic risk score */}
+          {proctoring && <ProctoringPanel proctoring={proctoring} />}
+        </>
+      )}
 
       {/* HITL human grading panel, clones the review-queue interaction:
-          structured per-question input + an audit-trail confirmation. */}
+          structured per-question input + an audit-trail confirmation. Omitted on
+          the vendor path: a vendor result has no native Attempt row, so the
+          per-question humanPoints override (PATCH .../grade) does not apply to it
+          (it would 409). The vendor result still routes to the existing HITL
+          review queue downstream via the assessment.completed event; this page
+          simply does not offer the native per-question override for it. */}
+      {!vendor && (
       <SectionCard title="Human grading (HITL)" icon="cpu">
         <div style={{ marginBottom: 12, padding: "10px 13px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 22%, transparent)", display: "flex", gap: 9, alignItems: "center" }}>
           <Icon name="shield" size={15} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
@@ -638,7 +652,171 @@ function DetailContent({ data, reload }: { data: AttemptDetail; reload: () => vo
           </div>
         )}
       </SectionCard>
+      )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// External-OA-vendor results panel. Renders the vendor summary the service read
+// back from AssessmentResult.perQuestion (provider, completion status, the
+// vendor-hosted report link, the per-section breakdown, and the plagiarism
+// verdict). Real data or honest empty ONLY: a field the vendor did not report is
+// shown as a dash / omitted, never a fabricated value. The verbatim raw vendor
+// payload is intentionally not surfaced here (it lives in the DSAR export).
+// ─────────────────────────────────────────────────────────────────────────────
+function VendorPanel({ vendor }: { vendor: VendorSummary }) {
+  const sections = vendor.sections ?? [];
+  const sectionPct = (s: VendorSection): number | null =>
+    s.percentage != null
+      ? Math.round(s.percentage)
+      : s.score != null && s.maxScore != null && s.maxScore > 0
+        ? Math.round((s.score / s.maxScore) * 100)
+        : null;
+
+  return (
+    <SectionCard
+      title="External assessment vendor"
+      icon="plug"
+      headRight={
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)">{vendorLabel(vendor.provider)}</Pill>
+          {vendor.status && <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{vendor.status}</Pill>}
+        </span>
+      }
+    >
+      <div className="grid gap-3" style={{ padding: 2 }}>
+        {/* vendor meta + report link */}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", fontSize: "var(--fs-sm)" }}>
+          {vendor.providerInvitationId && (
+            <span style={{ display: "inline-flex", gap: 6, alignItems: "center", color: "var(--c-ink-3)" }}>
+              Invitation
+              <span className="mono" style={{ color: "var(--c-ink-2)" }}>{vendor.providerInvitationId}</span>
+            </span>
+          )}
+          {vendor.plagiarismFlag === true ? (
+            <Pill icon="flag" tone="var(--c-danger)" bg="var(--c-danger-tint)">Plagiarism flagged by vendor</Pill>
+          ) : vendor.plagiarismFlag === false ? (
+            <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">No plagiarism flag</Pill>
+          ) : null}
+          {vendor.reportUrl && (
+            <a
+              href={vendor.reportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-flex", gap: 6, alignItems: "center", fontWeight: 600, color: "var(--c-ai-ink)", textDecoration: "none" }}
+            >
+              <Icon name="arrowUpRight" size={14} /> Open vendor report
+            </a>
+          )}
+        </div>
+
+        {/* per-section breakdown the vendor reported (honest empty otherwise) */}
+        {sections.length > 0 ? (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--c-ink-3)", marginBottom: 7 }}>
+              Section breakdown
+            </div>
+            <div className="grid gap-1.5">
+              {sections.map((s, i) => {
+                const pct = sectionPct(s);
+                return (
+                  <div
+                    key={i}
+                    style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", borderRadius: "var(--r)", border: "1px solid var(--c-line)", background: "var(--c-surface-2)", padding: "9px 12px" }}
+                  >
+                    <span style={{ fontSize: 12.5, fontWeight: 600 }}>{s.name ?? `Section ${i + 1}`}</span>
+                    <span className="mono" style={{ fontSize: 12, color: "var(--c-ink-2)", display: "inline-flex", gap: 10 }}>
+                      {s.score != null && s.maxScore != null && <span>{s.score} / {s.maxScore}</span>}
+                      {pct != null && <span style={{ fontWeight: 600 }}>{pct}%</span>}
+                      {s.score == null && pct == null && <span style={{ color: "var(--c-ink-3)" }}>not reported</span>}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12.5, color: "var(--c-ink-3)" }}>
+            The vendor did not report a per-section breakdown for this result.
+          </div>
+        )}
+
+        <div style={{ marginTop: 2, fontSize: 11, color: "var(--c-ink-3)", lineHeight: 1.5 }}>
+          Ingested in real time from the vendor. Every figure shown is read back verbatim from what the vendor reported; nothing is fabricated. The overall score and pass/fail above use the same record.
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Native proctoring timeline + the deterministic, transparent risk score the
+// service computed. Extracted from DetailContent so the vendor path (no native
+// proctoring) can simply not render it.
+// ─────────────────────────────────────────────────────────────────────────────
+function ProctoringPanel({
+  proctoring,
+}: {
+  proctoring: { riskScore: number; byType: Record<string, number>; events: ProctorEvent[] };
+}) {
+  const risk = riskBand(proctoring.riskScore);
+  return (
+    <SectionCard
+      title="Proctoring"
+      icon="shield"
+      pad={0}
+      headRight={
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <Pill tone={risk.tone} bg={risk.bg}>{risk.label}</Pill>
+          <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: risk.tone }}>risk {proctoring.riskScore}/100</span>
+        </span>
+      }
+    >
+      <div style={{ padding: 18 }}>
+        {proctoring.events.length === 0 ? (
+          <div style={{ display: "flex", gap: 9, alignItems: "center", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
+            <Icon name="check" size={16} style={{ color: "var(--c-ok)" }} /> No proctoring signals captured for this attempt.
+          </div>
+        ) : (
+          <>
+            {/* by-type counts */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 14 }}>
+              {Object.entries(proctoring.byType).map(([t, n]) => (
+                <Pill key={t} tone="var(--c-ink-2)" bg="var(--c-surface-2)">
+                  {proctorLabel(t)} <b style={{ marginLeft: 4 }}>{n}</b>
+                </Pill>
+              ))}
+            </div>
+            {/* timeline */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {proctoring.events.map((e, i) => (
+                <div
+                  key={e.id}
+                  style={{ display: "flex", gap: 11, alignItems: "flex-start", padding: "9px 0", borderTop: i ? "1px solid var(--c-line)" : "none" }}
+                >
+                  <Icon name="flag" size={14} style={{ color: "var(--c-warn)", flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600 }}>{proctorLabel(e.type)}</div>
+                    {Object.keys(e.metadata).length > 0 && (
+                      <div className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", marginTop: 2, wordBreak: "break-word" }}>
+                        {fmtAnswer(e.metadata)}
+                      </div>
+                    )}
+                  </div>
+                  <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)", whiteSpace: "nowrap" }}>
+                    {formatDate(e.occurredAt, { includeTime: true })}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 12, fontSize: 11, color: "var(--c-ink-3)", lineHeight: 1.5 }}>
+              Risk is a deterministic, fixed-weight sum over the captured events (no model, no fabrication), so the recruiter can see exactly what drove it.
+            </div>
+          </>
+        )}
+      </div>
+    </SectionCard>
   );
 }
 
