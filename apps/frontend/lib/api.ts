@@ -68,6 +68,7 @@ function toCandidate(c: any): Candidate {
     id: c?.id, name: fullName(c) || "Candidate", email: c?.email ?? "",
     location: c?.location ?? c?.country ?? "", source: c?.source ?? "",
     requisitionId: c?.requisitionId ?? app?.requisitionId ?? "",
+    applicationId: app?.id ?? c?.applicationId ?? undefined,
     stage: (c?.stage ?? app?.stage ?? "APPLIED") as ApplicationStage,
     aiScore: c?.aiScore ?? app?.screening?.score ?? c?.screening?.score ?? undefined,
     confidence: c?.confidence ?? undefined,

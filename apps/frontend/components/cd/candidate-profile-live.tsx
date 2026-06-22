@@ -10,6 +10,8 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CandidateProfile } from "./screens/CandidateProfile";
+import { CandidateSummaryExport } from "@/components/shared/candidate-summary-export";
+import { HireActions } from "@/components/shared/hire-actions";
 import { useData } from "@/lib/use-data";
 import { getCandidate, getVerdict, listCandidates, listRequisitions } from "@/lib/api";
 import type { Candidate as GwCandidate, ScreeningVerdict, ScreeningResult, RequirementMatch, Requisition } from "@/lib/types";
@@ -131,18 +133,42 @@ export function CandidateProfileLive() {
     if (next) router.push(`/candidates/${next.id}`);
   };
 
+  // Module E + G — a thin action bar over the full-bleed profile: the one-click
+  // Hire/Reject workflow and the professional candidate-summary export (PDF/Word).
+  const summary = {
+    name: c.name,
+    email: c.email,
+    location: c.location,
+    role: reqTitle,
+    stage: c.stage,
+    score: profileVerdict.score || null,
+    band: profileVerdict.band,
+    scoreSummary: profileVerdict.summary,
+    skills: (parsed?.skills ?? []).map((s: any) => (typeof s === "string" ? s : s?.n ?? s?.name ?? "")).filter(Boolean),
+    strengths: (profileVerdict.requirements ?? []).filter((r: any) => r.state === "pass").map((r: any) => r.label),
+    missing: (profileVerdict.requirements ?? []).filter((r: any) => r.state === "fail").map((r: any) => r.label),
+  };
+
   return (
-    <CandidateProfile
-      data={data}
-      stages={STAGES}
-      idx={idx >= 0 ? idx : 0}
-      total={list.length || 1}
-      blind={blind}
-      onBack={() => router.push("/candidates")}
-      onNav={onNav}
-      onToggleBlind={() => setBlind((b) => !b)}
-      onVerdict={() => router.push("/screening")}
-      onSchedule={() => router.push("/scheduling")}
-    />
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, padding: "8px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 }}>
+        <CandidateSummaryExport candidate={summary} />
+        <HireActions applicationId={(c as any).applicationId} stage={c.stage} />
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+        <CandidateProfile
+          data={data}
+          stages={STAGES}
+          idx={idx >= 0 ? idx : 0}
+          total={list.length || 1}
+          blind={blind}
+          onBack={() => router.push("/candidates")}
+          onNav={onNav}
+          onToggleBlind={() => setBlind((b) => !b)}
+          onVerdict={() => router.push("/screening")}
+          onSchedule={() => router.push("/scheduling")}
+        />
+      </div>
+    </div>
   );
 }

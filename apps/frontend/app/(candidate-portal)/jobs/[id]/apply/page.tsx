@@ -188,6 +188,13 @@ function Confirm({ title, reference, liveStatus, statusCopy }: { title: string; 
 
 export default function ApplyPage() {
   const { id: slug } = useParams<{ id: string }>();
+  // Module A — when arriving via a CDC/college share link, the college name rides
+  // the URL (?college=) so every application is stamped with it. Read from
+  // window.location (not useSearchParams) to avoid a Suspense build constraint.
+  const [college, setCollege] = useState("");
+  useEffect(() => {
+    try { setCollege(new URLSearchParams(window.location.search).get("college") ?? ""); } catch { /* */ }
+  }, []);
   const [job, setJob] = useState<JobSummary>(EMPTY_JOB);
   // The raw public-job payload, kept verbatim ONLY to build the schema.org
   // JobPosting JSON-LD below. Null until a real, published job loads, so the
@@ -257,6 +264,7 @@ export default function ApplyPage() {
       if (f.type === "file" || f.type === "image") { const file = files[f.id]; if (file) fd.append(f.id, file); }
       else { const v = values[f.id]; if (v !== undefined && v !== "") fd.append(f.id, String(v)); }
     }
+    if (college) fd.append("collegeName", college);
     const r = await fetch(`${API_BASE}/public/jobs/${slug}/apply-custom`, { method: "POST", credentials: "include", body: fd });
     const d = await r.json().catch(() => null);
     if (r.ok) {
@@ -328,6 +336,7 @@ export default function ApplyPage() {
       const v = values[f.id];
       if (v !== undefined && v !== "") formResponses[f.id] = v;
     }
+    if (college) formResponses["collegeName"] = college;
     if (Object.keys(formResponses).length > 0) payload["formResponses"] = formResponses;
 
     try {

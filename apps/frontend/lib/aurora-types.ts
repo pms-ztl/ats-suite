@@ -59,6 +59,7 @@ export interface Candidate {
   location?: string;
   source?: string;
   requisitionId?: string;
+  applicationId?: string;    // current application (for hire/reject actions)
   stage: ApplicationStage;
   aiScore?: number;          // 0..100, advisory
   confidence?: number;       // 0..1, vs 0.70 threshold
