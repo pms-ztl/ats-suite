@@ -12,6 +12,7 @@ import { Btn, StatusBadge } from "../aurora-ui";
 import { Pill, ScoreRing, Confidence, Timeline } from "../aurora-kit";
 import { Slot } from "@/lib/registry/slots";
 import { useUiConfig } from "@/lib/config/ui-config-provider";
+import { useFieldVisibility } from "@/lib/visibility";
 import type { CandidateProfileData, CandStage, TimelineItem } from "../types";
 
 const pStCol = (s: string) => (s === "pass" ? "var(--ok)" : s === "review" ? "var(--warn)" : "var(--danger)");
@@ -59,6 +60,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
   // fields, identity respects blind mode). An empty slot renders nothing, so the
   // screen is byte-identical until a tenant binds something.
   const { config: uiConfig } = useUiConfig();
+  const { canSee } = useFieldVisibility(); // Module I — gate score + notes by policy
   const pathname = usePathname() ?? "";
   const slotCtx = {
     candidateId: c.id,
@@ -119,7 +121,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <Zone title="AI screening verdict" icon="scan" ai action="Open full verdict" onAction={onVerdict}>
               <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-                <ScoreRing value={s.score} size={84} band="var(--ai)" label="match %" />
+                <ScoreRing value={canSee("alignmentScore") ? s.score : 0} size={84} band="var(--ai)" label={canSee("alignmentScore") ? "match %" : "hidden"} />
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
                     <span style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>{s.band}</span><StatusBadge kind="review" />
@@ -210,6 +212,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
                 ))}
               </Zone>
             )}
+            {canSee("recruiterNotes") && (
             <Zone title="Notes" icon="fileText">
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
                 <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} rows={2} placeholder="Add a private team note…" style={{ width: "100%", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: 12.5, fontFamily: "var(--font-sans)", resize: "vertical", outline: "none" }} />
@@ -224,6 +227,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
                 ))}
               </div>
             </Zone>
+            )}
             <Zone title="Suggested next steps" icon="sparkles" ai>
               <svg viewBox="0 0 240 96" style={{ width: "100%", height: "auto", display: "block", marginBottom: 12 }} aria-hidden="true">
                 <defs><linearGradient id="cpNs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--ai)" /><stop offset="1" stopColor="var(--brand)" /></linearGradient></defs>

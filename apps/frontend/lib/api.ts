@@ -150,6 +150,9 @@ export interface BulkImportItem {
   extractStatus: "extracted" | "ocr_empty" | "failed" | "unsupported";
   reviewStatus: "pending" | "approved" | "rejected";
   candidateId: string | null;
+  // Module C — ATS score (0-100) vs the bound requisition; null until scored.
+  score: number | null;
+  scoreStatus: "pending" | "scored" | "failed" | null;
 }
 function toBulkStatus(d: any): BulkUploadStatus {
   return {
@@ -177,16 +180,22 @@ function toBulkItem(d: any): BulkImportItem {
     extractStatus: (["extracted", "ocr_empty", "failed", "unsupported"] as const).includes(d?.extractStatus) ? d.extractStatus : "failed",
     reviewStatus: (["pending", "approved", "rejected"] as const).includes(d?.reviewStatus) ? d.reviewStatus : "pending",
     candidateId: d?.candidateId ?? null,
+    score: typeof d?.score === "number" ? d.score : null,
+    scoreStatus: (["pending", "scored", "failed"] as const).includes(d?.scoreStatus) ? d.scoreStatus : null,
   };
 }
 // POST /api/resume/bulk-archive (multipart, single field "archive"). Returns the
 // bulkUploadId once the zip is accepted; extraction continues in a worker.
 export async function uploadResumeArchive(
   file: File,
+  requisitionId?: string,
 ): Promise<{ bulkUploadId: string; statusUrl?: string }> {
   const t = authToken();
   const form = new FormData();
   form.append("archive", file, file.name);
+  // Module C — binding the batch to a requisition makes the worker score + rank
+  // every parsed resume against it (descending by ATS score).
+  if (requisitionId) form.append("requisitionId", requisitionId);
   const r = await fetch(`${API_BASE}/resume/bulk-archive`, {
     method: "POST", credentials: "include",
     headers: { ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: form,
@@ -203,11 +212,12 @@ export async function getBulkUpload(id: string): Promise<BulkUploadStatus> {
 }
 // GET /api/resume/bulk/:id/items?cursor=&limit= - paginated staging rows.
 export async function getBulkItems(
-  id: string, cursor?: string, limit = 50,
+  id: string, cursor?: string, limit = 50, sort?: "score",
 ): Promise<{ items: BulkImportItem[]; nextCursor: string | null }> {
   const qs = new URLSearchParams();
   qs.set("limit", String(limit));
   if (cursor) qs.set("cursor", cursor);
+  if (sort) qs.set("sort", sort); // Module C — server-side rank by ATS score desc
   const res: any = await raw("GET", `/resume/bulk/${id}/items?${qs.toString()}`);
   const d = res?.data ?? res;
   return {

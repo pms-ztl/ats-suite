@@ -9,6 +9,7 @@
 // best-effort POST with a graceful fallback to a local "submitted" state.
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Skeleton, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
@@ -144,6 +145,13 @@ const labelStyle = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", text
 
 export default function InterviewDetailPage() {
   const { id } = useParams<{ id: string }>();
+  // Module H — the recruiter's custom interview scorecard recommendations override
+  // the canonical 5-point scale; an unauthored tenant keeps REC_OPTIONS.
+  const { config: uiConfig } = useUiConfig();
+  const customRecs = uiConfig?.workflow?.scorecard?.recommendations ?? [];
+  const recOptions: [string, string][] = customRecs.length > 0
+    ? customRecs.map((r) => [r.value, r.label] as [string, string])
+    : REC_OPTIONS;
   const { data, loading, error, reload } = useData<IVDetail>(() => raw("GET", `/interviews/${id}`).then(mapDetail), [id]);
 
   // Controlled scorecard form + best-effort submit with graceful fallback.
@@ -328,7 +336,7 @@ export default function InterviewDetailPage() {
               ) : (
                 <>
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 10 }}>
-                    {REC_OPTIONS.map(([k, l]) => {
+                    {recOptions.map(([k, l]) => {
                       const on = rec === k;
                       const tone = recOf(k);
                       return (

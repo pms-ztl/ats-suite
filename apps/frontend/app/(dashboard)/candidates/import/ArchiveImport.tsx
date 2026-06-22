@@ -17,9 +17,11 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import {
   uploadResumeArchive, getBulkUpload, getBulkItems, patchBulkItem,
-  reviewAllBulk, commitBulkImport,
+  reviewAllBulk, commitBulkImport, listRequisitions,
   type BulkUploadStatus, type BulkImportItem,
 } from "@/lib/api";
+import { useData } from "@/lib/use-data";
+import type { Requisition } from "@/lib/types";
 
 const ARCHIVE_ACCEPT = ".zip,application/zip,application/x-zip-compressed";
 const POLL_MS = 2500;
@@ -34,6 +36,20 @@ function extractBadge(s: BulkImportItem["extractStatus"]) {
     case "unsupported": return { t: "Unsupported", icon: "x", tone: "var(--c-ink-3)", bg: "var(--c-surface-3)" };
     default: return { t: "Failed", icon: "flag", tone: "var(--c-danger)", bg: "var(--c-danger-tint)" };
   }
+}
+
+// Module C — render the ATS-score cell for a staged item: a color-banded score
+// once scored, an honest "scoring…" while pending, or "—" when unscored/failed
+// (no requisition bound, or a per-item scoring error). Never a fabricated number.
+function scoreCell(it: BulkImportItem) {
+  if (it.scoreStatus === "pending") return <span style={{ fontSize: 11, color: "var(--c-ink-3)" }}>scoring…</span>;
+  if (it.score == null) return <span style={{ fontSize: 12, color: "var(--c-ink-3)" }}>—</span>;
+  const tone = it.score >= 75 ? "var(--c-ok)" : it.score >= 45 ? "var(--c-warn)" : "var(--c-danger)";
+  return (
+    <span className="mono" style={{ fontWeight: 800, fontSize: 13, color: tone }} title="ATS match score vs the bound requisition">
+      {Math.round(it.score)}
+    </span>
+  );
 }
 
 function fileTypeLabel(name: string, mime: string): string {
@@ -67,6 +83,9 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
 
   // local edits for detected name/email (kept in a map; persisted on blur).
   const [edits, setEdits] = useState<Record<string, { name?: string; email?: string }>>({});
+  // Module C — optional requisition to rank the batch against (by ATS score desc).
+  const [reqId, setReqId] = useState<string>("");
+  const reqs = useData<Requisition[]>(listRequisitions, []);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const itemsLoadedFor = useRef<string | null>(null);
@@ -104,7 +123,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
   const loadFirstPage = useCallback(async (id: string) => {
     setItemsLoading(true);
     try {
-      const { items: rows, nextCursor: nc } = await getBulkItems(id, undefined, ITEMS_LIMIT);
+      const { items: rows, nextCursor: nc } = await getBulkItems(id, undefined, ITEMS_LIMIT, "score");
       setItems(rows); setNextCursor(nc); setError(null);
     } catch (e: any) {
       setError(e?.message || "Could not load the staging list.");
@@ -124,7 +143,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
     if (!bulkId || !nextCursor) return;
     setItemsLoading(true);
     try {
-      const { items: rows, nextCursor: nc } = await getBulkItems(bulkId, nextCursor, ITEMS_LIMIT);
+      const { items: rows, nextCursor: nc } = await getBulkItems(bulkId, nextCursor, ITEMS_LIMIT, "score");
       setItems((prev) => [...prev, ...rows]); setNextCursor(nc);
     } catch (e: any) {
       setError(e?.message || "Could not load more rows.");
@@ -140,7 +159,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
     if (!file) return;
     setUploading(true); setError(null);
     try {
-      const { bulkUploadId } = await uploadResumeArchive(file);
+      const { bulkUploadId } = await uploadResumeArchive(file, reqId || undefined);
       if (!bulkUploadId) throw new Error("The server did not return an upload id.");
       setBulkId(bulkUploadId);
       setStatus({ id: bulkUploadId, phase: "extracting", totalFiles: 0, extractedCount: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0, committedCount: 0, parsedFiles: 0, failedFiles: 0 });
@@ -255,6 +274,17 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
                 <Icon name="layers" size={15} style={{ color: "var(--c-ai-ink)" }} /><b>{file.name}</b> · {sizeMB.toFixed(1)} MB · extracted in the background, you review before importing
               </div>
             )}
+            {/* Module C — bind the batch to a requisition to rank resumes by ATS score. */}
+            <div style={{ marginTop: 18 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--c-ink-3)", marginBottom: 6 }}>
+                Rank against requisition <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — scores &amp; ranks every resume)</span>
+              </label>
+              <select value={reqId} onChange={(e) => setReqId(e.target.value)}
+                style={{ minWidth: 280, padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: 13 }}>
+                <option value="">No requisition (don’t rank)</option>
+                {(reqs.data ?? []).map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
+              </select>
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18 }}>
@@ -398,8 +428,8 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
           </div>
         ) : (
           <div style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1.3fr 1.5fr 0.8fr 0.9fr 1.4fr 0.9fr", gap: 10, padding: "9px 13px", background: "var(--c-surface-2)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--c-ink-3)" }}>
-              <span>File</span><span>Detected name</span><span>Detected email</span><span>Type</span><span>Extract</span><span>Snippet</span><span style={{ textAlign: "right" }}>Review</span>
+            <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1.3fr 1.5fr 0.8fr 0.9fr 0.8fr 1.3fr 0.9fr", gap: 10, padding: "9px 13px", background: "var(--c-surface-2)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--c-ink-3)" }}>
+              <span>File</span><span>Detected name</span><span>Detected email</span><span>Type</span><span>Extract</span><span>ATS score</span><span>Snippet</span><span style={{ textAlign: "right" }}>Review</span>
             </div>
             {items.map((it, i) => {
               const eb = extractBadge(it.extractStatus);
@@ -409,7 +439,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
               const emailVal = e.email !== undefined ? e.email : (it.detectedEmail ?? "");
               const rowBusy = busyItemId === it.id;
               return (
-                <div key={it.id} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.3fr 1.5fr 0.8fr 0.9fr 1.4fr 0.9fr", gap: 10, alignItems: "center", padding: "9px 13px", borderTop: i ? "1px solid var(--c-line)" : "none", fontSize: 12.5, opacity: it.reviewStatus === "rejected" ? 0.55 : 1, background: it.reviewStatus === "approved" ? "var(--c-ok-tint)" : "transparent" }}>
+                <div key={it.id} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.3fr 1.5fr 0.8fr 0.9fr 0.8fr 1.3fr 0.9fr", gap: 10, alignItems: "center", padding: "9px 13px", borderTop: i ? "1px solid var(--c-line)" : "none", fontSize: 12.5, opacity: it.reviewStatus === "rejected" ? 0.55 : 1, background: it.reviewStatus === "approved" ? "var(--c-ok-tint)" : "transparent" }}>
                   <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${it.fileName} · ${fmtBytes(it.sizeBytes)}`}>{it.fileName}</span>
                   <input value={nameVal} placeholder="(none)" disabled={rowBusy}
                     onChange={(ev) => setEdits((p) => ({ ...p, [it.id]: { ...p[it.id], name: ev.target.value } }))}
@@ -423,6 +453,8 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: eb.tone, fontWeight: 600, fontSize: 11 }} title={it.extractStatus}>
                     <Icon name={eb.icon} size={13} />{eb.t}
                   </span>
+                  {/* Module C — ATS score vs the bound requisition (ranked desc). */}
+                  {scoreCell(it)}
                   <span style={{ color: "var(--c-ink-3)", fontSize: 11.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={it.textSnippet ?? ""}>{it.textSnippet || "—"}</span>
                   <span style={{ display: "inline-flex", gap: 6, justifyContent: "flex-end" }}>
                     <button title="Approve" disabled={rowBusy} onClick={() => void setReview(it, "approved")} style={toggleBtn(it.reviewStatus === "approved", "var(--c-ok)", "var(--c-ok-tint)")}>

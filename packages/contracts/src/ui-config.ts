@@ -1,4 +1,10 @@
 import { z } from "zod";
+// Module H/I — the workflow + visibility customization blocks below reuse the
+// canonical-stage enum and the visibility field/role enums + resolver from the
+// dedicated DTOs, so a tenant's authored workflow/visibility round-trips inside
+// the same UiConfig blob (one store, one GET/PUT) with no new service code.
+import { CanonicalStageSchema } from "./dtos/workflow.js";
+import { VisibilityFieldSchema, VisibilityRoleSchema } from "./dtos/visibility.js";
 
 // Developer-customizable UI contract (WF-A). A UiConfig is the persisted,
 // per-tenant description of how the product chrome looks and behaves: brand
@@ -123,6 +129,42 @@ export const UiSurfaceSchema = z.object({
 });
 export type UiSurface = z.infer<typeof UiSurfaceSchema>;
 
+/* ─────────────────── Module H — workflow customization ─────────────────────── */
+// A tenant relabels/recolors its pipeline stages (each mapped to a canonical
+// stage so analytics + automation still understand it), customizes the interview
+// scorecard (rating dimensions + the allowed overall recommendations), and
+// declares which roles must approve a gated stage transition. All optional —
+// an unauthored tenant resolves to the canonical defaults (byte-identical today).
+export const UiWorkflowStageSchema = z.object({
+  id: z.string().min(1).max(50),
+  label: z.string().min(1).max(80),
+  canonical: CanonicalStageSchema,
+  color: z.string().regex(/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/).optional(),
+});
+export type UiWorkflowStage = z.infer<typeof UiWorkflowStageSchema>;
+
+export const UiScorecardSchema = z.object({
+  dimensions: z.array(z.object({ key: z.string().min(1).max(50), label: z.string().min(1).max(120) })).default([]),
+  recommendations: z.array(z.object({ value: z.string().min(1).max(40), label: z.string().min(1).max(60) })).default([]),
+});
+export type UiScorecard = z.infer<typeof UiScorecardSchema>;
+
+export const UiWorkflowSchema = z.object({
+  stages: z.array(UiWorkflowStageSchema).default([]),
+  scorecard: UiScorecardSchema.optional(),
+  // canonical gated stage (e.g. "OFFER"/"HIRED") → ordered approver role labels.
+  approvals: z.record(z.string(), z.array(z.string())).default({}),
+});
+export type UiWorkflow = z.infer<typeof UiWorkflowSchema>;
+
+/* ─────────────────── Module I — field-level visibility ─────────────────────── */
+// field → role → canSee. Absent entries default to VISIBLE (fail-open to today's
+// behavior); only an authored `false` hides a field. Enforced via canSeeField().
+export const UiVisibilitySchema = z.object({
+  rules: z.record(VisibilityFieldSchema, z.record(VisibilityRoleSchema, z.boolean())).default({}),
+});
+export type UiVisibility = z.infer<typeof UiVisibilitySchema>;
+
 /* ──────────────────────────────── document ────────────────────────────────── */
 
 export const UiConfigSchema = z.object({
@@ -137,6 +179,10 @@ export const UiConfigSchema = z.object({
   copy: z.record(z.string(), z.string()).default({}),
   surfaces: z.record(z.string(), UiSurfaceSchema).default({}),
   featureToggles: z.record(z.string(), z.boolean()).default({}),
+  // Module H/I — additive, defaulted blocks: a document missing them parses to
+  // the empty default, so every existing tenant config is byte-identical.
+  workflow: UiWorkflowSchema.default({}),
+  visibility: UiVisibilitySchema.default({}),
 });
 export type UiConfig = z.infer<typeof UiConfigSchema>;
 

@@ -11,6 +11,7 @@ import { Btn } from "../aurora-ui";
 import { Pill, CountUp, Timeline } from "../aurora-kit";
 import { Slot } from "@/lib/registry/slots";
 import { useUiConfig } from "@/lib/config/ui-config-provider";
+import { useFieldVisibility } from "@/lib/visibility";
 import type { ReqDetailData, ReqStatusMeta } from "../types";
 
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)" };
@@ -70,6 +71,7 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
   // for the requisition.detail.actions cluster. ctx hands a bound action block the
   // REAL requisition entity (id/title/status). Empty -> nothing (byte-identical).
   const { config: uiConfig } = useUiConfig();
+  const { canSee } = useFieldVisibility(); // Module I — gate salary by policy
   const pathname = usePathname() ?? "";
   const slotCtx = { requisitionId: d.id, requisition: d, status: d.status, title: d.title, route: pathname };
 
@@ -84,8 +86,8 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 11px 4px 9px", borderRadius: "var(--r-pill)", fontSize: "var(--fs-xs)", fontWeight: 600, color: m.tone, background: m.bg }}><Icon name={m.icon} size={12} stroke={2.4} />{m.label}</span>
             </div>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 7, fontSize: 12.5, color: "var(--ink-2)" }}>
-              <span className="mono">{d.id}</span><span>·</span><span>{d.dept}</span><span>·</span><span>{d.loc}</span><span>·</span>
-              <span className="mono" style={{ color: "var(--brand)", fontWeight: 600 }}>₹{d.min / 1000}k to ₹{d.max / 1000}k</span>
+              <span className="mono">{d.id}</span><span>·</span><span>{d.dept}</span><span>·</span><span>{d.loc}</span>
+              {canSee("salary") && <><span>·</span><span className="mono" style={{ color: "var(--brand)", fontWeight: 600 }}>₹{d.min / 1000}k to ₹{d.max / 1000}k</span></>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
@@ -141,7 +143,7 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
               <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
                 <div style={{ ...LABEL, marginBottom: 4 }}>Details</div>
                 <Fact k="Level" v={d.level} /><Fact k="Job family" v={d.family} /><Fact k="Location" v={d.loc} />
-                <Fact k="Salary" v={`₹${d.min / 1000}k to ₹${d.max / 1000}k`} mono /><Fact k="Headcount" v={`${d.filled} / ${d.head} filled`} mono />
+                {canSee("salary") && <Fact k="Salary" v={`₹${d.min / 1000}k to ${d.max / 1000}k`} mono />}<Fact k="Headcount" v={`${d.filled} / ${d.head} filled`} mono />
                 <Fact k="Target start" v={d.target} /><Fact k="Posted" v={d.posted} />
               </div>
               <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>

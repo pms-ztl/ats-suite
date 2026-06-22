@@ -9,6 +9,7 @@ import { Candidates } from "./screens/Candidates";
 import { Pill, SectionCard } from "./aurora-kit";
 import { FlowRibbon, HiveCells, PetalBloom } from "@/components/shared/ribbon";
 import { useData } from "@/lib/use-data";
+import { useUiConfig } from "@/lib/config/ui-config-provider";
 import { listCandidates, listRequisitions, listScreening, prettySource } from "@/lib/api";
 import type { Candidate as GwCandidate, Requisition, ScreeningResult, ScreeningVerdict } from "@/lib/types";
 import type { Candidate, CandStage, SavedView } from "./types";
@@ -16,8 +17,10 @@ import { initials, reqTitleMap } from "./wire-helpers";
 
 const KIND: Record<ScreeningResult, "pass" | "review" | "fail"> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
 
-// Pipeline columns (ids must match the gateway ApplicationStage values).
-const STAGES: CandStage[] = [
+// Module H — canonical pipeline columns (ids must match ApplicationStage values).
+// A tenant's authored workflow (UiConfig.workflow.stages) overrides labels/colors
+// at render; an unauthored tenant uses these defaults (byte-identical to today).
+const DEFAULT_STAGES: CandStage[] = [
   { id: "APPLIED", label: "Applied", color: "var(--ink-3)" },
   { id: "SCREENED", label: "Screened", color: "var(--info)", ai: true },
   { id: "PHONE_SCREEN", label: "Phone screen", color: "var(--info)" },
@@ -30,6 +33,17 @@ const STAGES: CandStage[] = [
 
 export function CandidatesLive() {
   const router = useRouter();
+  const { config: uiConfig } = useUiConfig();
+  // Module H — resolve the tenant's custom stages (label/color), keyed by the
+  // canonical id so the board's stage-by-id grouping is unchanged. Falls back to
+  // the canonical defaults when the tenant authored none.
+  const wf = uiConfig?.workflow?.stages ?? [];
+  const STAGES: CandStage[] = wf.length > 0
+    ? wf.map((s) => {
+        const def = DEFAULT_STAGES.find((d) => d.id === s.canonical);
+        return { id: s.canonical, label: s.label, color: s.color ?? def?.color ?? "var(--ink-3)", ai: def?.ai } as CandStage;
+      })
+    : DEFAULT_STAGES;
   const cands = useData<GwCandidate[]>(listCandidates);
   const reqs = useData<Requisition[]>(listRequisitions);
   const screen = useData<ScreeningVerdict[]>(listScreening);
