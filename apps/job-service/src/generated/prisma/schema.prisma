@@ -33,28 +33,32 @@ enum DistributionStatus {
 }
 
 model Requisition {
-  id              String            @id @default(uuid())
-  tenantId        String
-  title           String
-  department      String
-  location        String
-  country         String            @default("US")
-  jobFamily       String?
-  description     String?
-  requirements    Json              @default("[]")
-  customFields    Json              @default("[]")
-  salaryMin       Float?
-  salaryMax       Float?
-  salaryCurrency  String            @default("USD")
-  status          RequisitionStatus @default(DRAFT)
-  priority        Int               @default(3)
-  hiringManagerId String? // FK to identity-service User
-  recruiterId     String? // FK to identity-service User
-  headcount       Int               @default(1)
-  targetStartDate DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  closedAt        DateTime?
+  id               String            @id @default(uuid())
+  tenantId         String
+  title            String
+  department       String
+  location         String
+  country          String            @default("US")
+  jobFamily        String?
+  description      String?
+  requirements     Json              @default("[]")
+  customFields     Json              @default("[]")
+  // Module A — ordered eligibility rules (EligibilityRule[] from @cdc-ats/contracts)
+  // evaluated against the candidate's submitted answers on the public apply path.
+  // A failing rule short-circuits the apply with its own errorMessage. Empty = open.
+  eligibilityRules Json              @default("[]")
+  salaryMin        Float?
+  salaryMax        Float?
+  salaryCurrency   String            @default("USD")
+  status           RequisitionStatus @default(DRAFT)
+  priority         Int               @default(3)
+  hiringManagerId  String? // FK to identity-service User
+  recruiterId      String? // FK to identity-service User
+  headcount        Int               @default(1)
+  targetStartDate  DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  closedAt         DateTime?
 
   jobPostings JobPosting[]
   formSchema  ApplicationFormSchema?
@@ -98,6 +102,27 @@ model ApplicationFormSchema {
 
   requisition Requisition @relation(fields: [requisitionId], references: [id])
 
+  @@index([tenantId])
+}
+
+// Module A — College / CDC partner. A campus the tenant shares a job link with.
+// The shareToken yields a public landing (/cdc/<token>) listing the tenant's open
+// roles; every application made through it is stamped with this college's name so
+// resumes arrive WITH the college attached and recruiters can group by campus.
+model CollegePartner {
+  id             String   @id @default(uuid())
+  tenantId       String
+  name           String
+  slug           String
+  shareToken     String   @unique
+  contactEmail   String?
+  // Optional restriction: only these requisition ids are shown on the landing.
+  requisitionIds String[] @default([])
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, slug])
   @@index([tenantId])
 }
 

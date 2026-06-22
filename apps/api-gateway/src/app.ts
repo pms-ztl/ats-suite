@@ -774,6 +774,8 @@ export function createApp(logger: Logger): Express {
 
   app.use("/api/requisitions", gatewayAuth(), forwardHeaders(jobUrl, "/internal/requisitions"));
   app.use("/api/job-postings", gatewayAuth(), forwardHeaders(jobUrl, "/internal/job-postings"));
+  // Module A — CDC / college partners (recruiter/admin).
+  app.use("/api/colleges", gatewayAuth(), forwardHeaders(jobUrl, "/internal/colleges"));
   app.use("/api/jd-author", gatewayAuth(), requireAgentPlan("jd-author"), forwardHeaders(jobUrl, "/internal/jd-author"));
 
   // WF7 — Online Assessments authoring/invite/results surface (recruiter-side).

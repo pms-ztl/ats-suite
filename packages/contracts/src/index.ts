@@ -12,6 +12,11 @@ export * from "./dtos/bulk-upload.js";
 export * from "./dtos/assessment.js";
 export * from "./dtos/dashboard.js";
 export * from "./dtos/module.js";
+export * from "./dtos/eligibility.js";
+export * from "./dtos/onboarding.js";
+export * from "./dtos/workflow.js";
+export * from "./dtos/visibility.js";
+export * from "./dtos/interview-artifact.js";
 export * from "./ui-config.js";
 
 export * from "./events/event-base.js";
@@ -21,3 +26,4 @@ export * from "./events/resume-events.js";
 export * from "./events/screening-events.js";
 export * from "./events/interview-events.js";
 export * from "./events/agent-events.js";
+export * from "./events/hire-events.js";

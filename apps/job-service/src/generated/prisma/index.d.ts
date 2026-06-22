@@ -29,6 +29,11 @@ export type JobPosting = $Result.DefaultSelection<Prisma.$JobPostingPayload>
  */
 export type ApplicationFormSchema = $Result.DefaultSelection<Prisma.$ApplicationFormSchemaPayload>
 /**
+ * Model CollegePartner
+ * 
+ */
+export type CollegePartner = $Result.DefaultSelection<Prisma.$CollegePartnerPayload>
+/**
  * Model Skill
  * 
  */
@@ -257,6 +262,16 @@ export class PrismaClient<
     * ```
     */
   get applicationFormSchema(): Prisma.ApplicationFormSchemaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.collegePartner`: Exposes CRUD operations for the **CollegePartner** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CollegePartners
+    * const collegePartners = await prisma.collegePartner.findMany()
+    * ```
+    */
+  get collegePartner(): Prisma.CollegePartnerDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.skill`: Exposes CRUD operations for the **Skill** model.
@@ -761,6 +776,7 @@ export namespace Prisma {
     Requisition: 'Requisition',
     JobPosting: 'JobPosting',
     ApplicationFormSchema: 'ApplicationFormSchema',
+    CollegePartner: 'CollegePartner',
     Skill: 'Skill',
     Outbox: 'Outbox',
     AgentRun: 'AgentRun',
@@ -785,7 +801,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "skill" | "outbox" | "agentRun" | "jobBoardDistribution" | "applicationIdempotency" | "jobFeedToken"
+      modelProps: "requisition" | "jobPosting" | "applicationFormSchema" | "collegePartner" | "skill" | "outbox" | "agentRun" | "jobBoardDistribution" | "applicationIdempotency" | "jobFeedToken"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1008,6 +1024,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ApplicationFormSchemaCountArgs<ExtArgs>
             result: $Utils.Optional<ApplicationFormSchemaCountAggregateOutputType> | number
+          }
+        }
+      }
+      CollegePartner: {
+        payload: Prisma.$CollegePartnerPayload<ExtArgs>
+        fields: Prisma.CollegePartnerFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CollegePartnerFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CollegePartnerFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          findFirst: {
+            args: Prisma.CollegePartnerFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CollegePartnerFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          findMany: {
+            args: Prisma.CollegePartnerFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>[]
+          }
+          create: {
+            args: Prisma.CollegePartnerCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          createMany: {
+            args: Prisma.CollegePartnerCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CollegePartnerCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>[]
+          }
+          delete: {
+            args: Prisma.CollegePartnerDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          update: {
+            args: Prisma.CollegePartnerUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          deleteMany: {
+            args: Prisma.CollegePartnerDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CollegePartnerUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CollegePartnerUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>[]
+          }
+          upsert: {
+            args: Prisma.CollegePartnerUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollegePartnerPayload>
+          }
+          aggregate: {
+            args: Prisma.CollegePartnerAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCollegePartner>
+          }
+          groupBy: {
+            args: Prisma.CollegePartnerGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CollegePartnerGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CollegePartnerCountArgs<ExtArgs>
+            result: $Utils.Optional<CollegePartnerCountAggregateOutputType> | number
           }
         }
       }
@@ -1554,6 +1644,7 @@ export namespace Prisma {
     requisition?: RequisitionOmit
     jobPosting?: JobPostingOmit
     applicationFormSchema?: ApplicationFormSchemaOmit
+    collegePartner?: CollegePartnerOmit
     skill?: SkillOmit
     outbox?: OutboxOmit
     agentRun?: AgentRunOmit
@@ -1815,6 +1906,7 @@ export namespace Prisma {
     description: number
     requirements: number
     customFields: number
+    eligibilityRules: number
     salaryMin: number
     salaryMax: number
     salaryCurrency: number
@@ -1902,6 +1994,7 @@ export namespace Prisma {
     description?: true
     requirements?: true
     customFields?: true
+    eligibilityRules?: true
     salaryMin?: true
     salaryMax?: true
     salaryCurrency?: true
@@ -2014,6 +2107,7 @@ export namespace Prisma {
     description: string | null
     requirements: JsonValue
     customFields: JsonValue
+    eligibilityRules: JsonValue
     salaryMin: number | null
     salaryMax: number | null
     salaryCurrency: string
@@ -2058,6 +2152,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     customFields?: boolean
+    eligibilityRules?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -2086,6 +2181,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     customFields?: boolean
+    eligibilityRules?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -2111,6 +2207,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     customFields?: boolean
+    eligibilityRules?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -2136,6 +2233,7 @@ export namespace Prisma {
     description?: boolean
     requirements?: boolean
     customFields?: boolean
+    eligibilityRules?: boolean
     salaryMin?: boolean
     salaryMax?: boolean
     salaryCurrency?: boolean
@@ -2150,7 +2248,7 @@ export namespace Prisma {
     closedAt?: boolean
   }
 
-  export type RequisitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "title" | "department" | "location" | "country" | "jobFamily" | "description" | "requirements" | "customFields" | "salaryMin" | "salaryMax" | "salaryCurrency" | "status" | "priority" | "hiringManagerId" | "recruiterId" | "headcount" | "targetStartDate" | "createdAt" | "updatedAt" | "closedAt", ExtArgs["result"]["requisition"]>
+  export type RequisitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "title" | "department" | "location" | "country" | "jobFamily" | "description" | "requirements" | "customFields" | "eligibilityRules" | "salaryMin" | "salaryMax" | "salaryCurrency" | "status" | "priority" | "hiringManagerId" | "recruiterId" | "headcount" | "targetStartDate" | "createdAt" | "updatedAt" | "closedAt", ExtArgs["result"]["requisition"]>
   export type RequisitionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     jobPostings?: boolean | Requisition$jobPostingsArgs<ExtArgs>
     formSchema?: boolean | Requisition$formSchemaArgs<ExtArgs>
@@ -2176,6 +2274,7 @@ export namespace Prisma {
       description: string | null
       requirements: Prisma.JsonValue
       customFields: Prisma.JsonValue
+      eligibilityRules: Prisma.JsonValue
       salaryMin: number | null
       salaryMax: number | null
       salaryCurrency: string
@@ -2623,6 +2722,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Requisition", 'String'>
     readonly requirements: FieldRef<"Requisition", 'Json'>
     readonly customFields: FieldRef<"Requisition", 'Json'>
+    readonly eligibilityRules: FieldRef<"Requisition", 'Json'>
     readonly salaryMin: FieldRef<"Requisition", 'Float'>
     readonly salaryMax: FieldRef<"Requisition", 'Float'>
     readonly salaryCurrency: FieldRef<"Requisition", 'String'>
@@ -5400,6 +5500,1062 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ApplicationFormSchemaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CollegePartner
+   */
+
+  export type AggregateCollegePartner = {
+    _count: CollegePartnerCountAggregateOutputType | null
+    _min: CollegePartnerMinAggregateOutputType | null
+    _max: CollegePartnerMaxAggregateOutputType | null
+  }
+
+  export type CollegePartnerMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    slug: string | null
+    shareToken: string | null
+    contactEmail: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CollegePartnerMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    slug: string | null
+    shareToken: string | null
+    contactEmail: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CollegePartnerCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    slug: number
+    shareToken: number
+    contactEmail: number
+    requisitionIds: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CollegePartnerMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    slug?: true
+    shareToken?: true
+    contactEmail?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CollegePartnerMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    slug?: true
+    shareToken?: true
+    contactEmail?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CollegePartnerCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    slug?: true
+    shareToken?: true
+    contactEmail?: true
+    requisitionIds?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CollegePartnerAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CollegePartner to aggregate.
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollegePartners to fetch.
+     */
+    orderBy?: CollegePartnerOrderByWithRelationInput | CollegePartnerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CollegePartnerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollegePartners from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollegePartners.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CollegePartners
+    **/
+    _count?: true | CollegePartnerCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CollegePartnerMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CollegePartnerMaxAggregateInputType
+  }
+
+  export type GetCollegePartnerAggregateType<T extends CollegePartnerAggregateArgs> = {
+        [P in keyof T & keyof AggregateCollegePartner]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCollegePartner[P]>
+      : GetScalarType<T[P], AggregateCollegePartner[P]>
+  }
+
+
+
+
+  export type CollegePartnerGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CollegePartnerWhereInput
+    orderBy?: CollegePartnerOrderByWithAggregationInput | CollegePartnerOrderByWithAggregationInput[]
+    by: CollegePartnerScalarFieldEnum[] | CollegePartnerScalarFieldEnum
+    having?: CollegePartnerScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CollegePartnerCountAggregateInputType | true
+    _min?: CollegePartnerMinAggregateInputType
+    _max?: CollegePartnerMaxAggregateInputType
+  }
+
+  export type CollegePartnerGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    slug: string
+    shareToken: string
+    contactEmail: string | null
+    requisitionIds: string[]
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CollegePartnerCountAggregateOutputType | null
+    _min: CollegePartnerMinAggregateOutputType | null
+    _max: CollegePartnerMaxAggregateOutputType | null
+  }
+
+  type GetCollegePartnerGroupByPayload<T extends CollegePartnerGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CollegePartnerGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CollegePartnerGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CollegePartnerGroupByOutputType[P]>
+            : GetScalarType<T[P], CollegePartnerGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CollegePartnerSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    slug?: boolean
+    shareToken?: boolean
+    contactEmail?: boolean
+    requisitionIds?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["collegePartner"]>
+
+  export type CollegePartnerSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    slug?: boolean
+    shareToken?: boolean
+    contactEmail?: boolean
+    requisitionIds?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["collegePartner"]>
+
+  export type CollegePartnerSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    slug?: boolean
+    shareToken?: boolean
+    contactEmail?: boolean
+    requisitionIds?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["collegePartner"]>
+
+  export type CollegePartnerSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    slug?: boolean
+    shareToken?: boolean
+    contactEmail?: boolean
+    requisitionIds?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CollegePartnerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "slug" | "shareToken" | "contactEmail" | "requisitionIds" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["collegePartner"]>
+
+  export type $CollegePartnerPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CollegePartner"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      slug: string
+      shareToken: string
+      contactEmail: string | null
+      requisitionIds: string[]
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["collegePartner"]>
+    composites: {}
+  }
+
+  type CollegePartnerGetPayload<S extends boolean | null | undefined | CollegePartnerDefaultArgs> = $Result.GetResult<Prisma.$CollegePartnerPayload, S>
+
+  type CollegePartnerCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CollegePartnerFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CollegePartnerCountAggregateInputType | true
+    }
+
+  export interface CollegePartnerDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CollegePartner'], meta: { name: 'CollegePartner' } }
+    /**
+     * Find zero or one CollegePartner that matches the filter.
+     * @param {CollegePartnerFindUniqueArgs} args - Arguments to find a CollegePartner
+     * @example
+     * // Get one CollegePartner
+     * const collegePartner = await prisma.collegePartner.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CollegePartnerFindUniqueArgs>(args: SelectSubset<T, CollegePartnerFindUniqueArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CollegePartner that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CollegePartnerFindUniqueOrThrowArgs} args - Arguments to find a CollegePartner
+     * @example
+     * // Get one CollegePartner
+     * const collegePartner = await prisma.collegePartner.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CollegePartnerFindUniqueOrThrowArgs>(args: SelectSubset<T, CollegePartnerFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CollegePartner that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerFindFirstArgs} args - Arguments to find a CollegePartner
+     * @example
+     * // Get one CollegePartner
+     * const collegePartner = await prisma.collegePartner.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CollegePartnerFindFirstArgs>(args?: SelectSubset<T, CollegePartnerFindFirstArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CollegePartner that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerFindFirstOrThrowArgs} args - Arguments to find a CollegePartner
+     * @example
+     * // Get one CollegePartner
+     * const collegePartner = await prisma.collegePartner.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CollegePartnerFindFirstOrThrowArgs>(args?: SelectSubset<T, CollegePartnerFindFirstOrThrowArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CollegePartners that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CollegePartners
+     * const collegePartners = await prisma.collegePartner.findMany()
+     * 
+     * // Get first 10 CollegePartners
+     * const collegePartners = await prisma.collegePartner.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const collegePartnerWithIdOnly = await prisma.collegePartner.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CollegePartnerFindManyArgs>(args?: SelectSubset<T, CollegePartnerFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CollegePartner.
+     * @param {CollegePartnerCreateArgs} args - Arguments to create a CollegePartner.
+     * @example
+     * // Create one CollegePartner
+     * const CollegePartner = await prisma.collegePartner.create({
+     *   data: {
+     *     // ... data to create a CollegePartner
+     *   }
+     * })
+     * 
+     */
+    create<T extends CollegePartnerCreateArgs>(args: SelectSubset<T, CollegePartnerCreateArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CollegePartners.
+     * @param {CollegePartnerCreateManyArgs} args - Arguments to create many CollegePartners.
+     * @example
+     * // Create many CollegePartners
+     * const collegePartner = await prisma.collegePartner.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CollegePartnerCreateManyArgs>(args?: SelectSubset<T, CollegePartnerCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CollegePartners and returns the data saved in the database.
+     * @param {CollegePartnerCreateManyAndReturnArgs} args - Arguments to create many CollegePartners.
+     * @example
+     * // Create many CollegePartners
+     * const collegePartner = await prisma.collegePartner.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CollegePartners and only return the `id`
+     * const collegePartnerWithIdOnly = await prisma.collegePartner.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CollegePartnerCreateManyAndReturnArgs>(args?: SelectSubset<T, CollegePartnerCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CollegePartner.
+     * @param {CollegePartnerDeleteArgs} args - Arguments to delete one CollegePartner.
+     * @example
+     * // Delete one CollegePartner
+     * const CollegePartner = await prisma.collegePartner.delete({
+     *   where: {
+     *     // ... filter to delete one CollegePartner
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CollegePartnerDeleteArgs>(args: SelectSubset<T, CollegePartnerDeleteArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CollegePartner.
+     * @param {CollegePartnerUpdateArgs} args - Arguments to update one CollegePartner.
+     * @example
+     * // Update one CollegePartner
+     * const collegePartner = await prisma.collegePartner.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CollegePartnerUpdateArgs>(args: SelectSubset<T, CollegePartnerUpdateArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CollegePartners.
+     * @param {CollegePartnerDeleteManyArgs} args - Arguments to filter CollegePartners to delete.
+     * @example
+     * // Delete a few CollegePartners
+     * const { count } = await prisma.collegePartner.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CollegePartnerDeleteManyArgs>(args?: SelectSubset<T, CollegePartnerDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CollegePartners.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CollegePartners
+     * const collegePartner = await prisma.collegePartner.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CollegePartnerUpdateManyArgs>(args: SelectSubset<T, CollegePartnerUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CollegePartners and returns the data updated in the database.
+     * @param {CollegePartnerUpdateManyAndReturnArgs} args - Arguments to update many CollegePartners.
+     * @example
+     * // Update many CollegePartners
+     * const collegePartner = await prisma.collegePartner.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CollegePartners and only return the `id`
+     * const collegePartnerWithIdOnly = await prisma.collegePartner.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CollegePartnerUpdateManyAndReturnArgs>(args: SelectSubset<T, CollegePartnerUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CollegePartner.
+     * @param {CollegePartnerUpsertArgs} args - Arguments to update or create a CollegePartner.
+     * @example
+     * // Update or create a CollegePartner
+     * const collegePartner = await prisma.collegePartner.upsert({
+     *   create: {
+     *     // ... data to create a CollegePartner
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CollegePartner we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CollegePartnerUpsertArgs>(args: SelectSubset<T, CollegePartnerUpsertArgs<ExtArgs>>): Prisma__CollegePartnerClient<$Result.GetResult<Prisma.$CollegePartnerPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CollegePartners.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerCountArgs} args - Arguments to filter CollegePartners to count.
+     * @example
+     * // Count the number of CollegePartners
+     * const count = await prisma.collegePartner.count({
+     *   where: {
+     *     // ... the filter for the CollegePartners we want to count
+     *   }
+     * })
+    **/
+    count<T extends CollegePartnerCountArgs>(
+      args?: Subset<T, CollegePartnerCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CollegePartnerCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CollegePartner.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CollegePartnerAggregateArgs>(args: Subset<T, CollegePartnerAggregateArgs>): Prisma.PrismaPromise<GetCollegePartnerAggregateType<T>>
+
+    /**
+     * Group by CollegePartner.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollegePartnerGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CollegePartnerGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CollegePartnerGroupByArgs['orderBy'] }
+        : { orderBy?: CollegePartnerGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CollegePartnerGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCollegePartnerGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CollegePartner model
+   */
+  readonly fields: CollegePartnerFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CollegePartner.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CollegePartnerClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CollegePartner model
+   */
+  interface CollegePartnerFieldRefs {
+    readonly id: FieldRef<"CollegePartner", 'String'>
+    readonly tenantId: FieldRef<"CollegePartner", 'String'>
+    readonly name: FieldRef<"CollegePartner", 'String'>
+    readonly slug: FieldRef<"CollegePartner", 'String'>
+    readonly shareToken: FieldRef<"CollegePartner", 'String'>
+    readonly contactEmail: FieldRef<"CollegePartner", 'String'>
+    readonly requisitionIds: FieldRef<"CollegePartner", 'String[]'>
+    readonly isActive: FieldRef<"CollegePartner", 'Boolean'>
+    readonly createdAt: FieldRef<"CollegePartner", 'DateTime'>
+    readonly updatedAt: FieldRef<"CollegePartner", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CollegePartner findUnique
+   */
+  export type CollegePartnerFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter, which CollegePartner to fetch.
+     */
+    where: CollegePartnerWhereUniqueInput
+  }
+
+  /**
+   * CollegePartner findUniqueOrThrow
+   */
+  export type CollegePartnerFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter, which CollegePartner to fetch.
+     */
+    where: CollegePartnerWhereUniqueInput
+  }
+
+  /**
+   * CollegePartner findFirst
+   */
+  export type CollegePartnerFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter, which CollegePartner to fetch.
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollegePartners to fetch.
+     */
+    orderBy?: CollegePartnerOrderByWithRelationInput | CollegePartnerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CollegePartners.
+     */
+    cursor?: CollegePartnerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollegePartners from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollegePartners.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CollegePartners.
+     */
+    distinct?: CollegePartnerScalarFieldEnum | CollegePartnerScalarFieldEnum[]
+  }
+
+  /**
+   * CollegePartner findFirstOrThrow
+   */
+  export type CollegePartnerFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter, which CollegePartner to fetch.
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollegePartners to fetch.
+     */
+    orderBy?: CollegePartnerOrderByWithRelationInput | CollegePartnerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CollegePartners.
+     */
+    cursor?: CollegePartnerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollegePartners from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollegePartners.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CollegePartners.
+     */
+    distinct?: CollegePartnerScalarFieldEnum | CollegePartnerScalarFieldEnum[]
+  }
+
+  /**
+   * CollegePartner findMany
+   */
+  export type CollegePartnerFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter, which CollegePartners to fetch.
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollegePartners to fetch.
+     */
+    orderBy?: CollegePartnerOrderByWithRelationInput | CollegePartnerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CollegePartners.
+     */
+    cursor?: CollegePartnerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollegePartners from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollegePartners.
+     */
+    skip?: number
+    distinct?: CollegePartnerScalarFieldEnum | CollegePartnerScalarFieldEnum[]
+  }
+
+  /**
+   * CollegePartner create
+   */
+  export type CollegePartnerCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * The data needed to create a CollegePartner.
+     */
+    data: XOR<CollegePartnerCreateInput, CollegePartnerUncheckedCreateInput>
+  }
+
+  /**
+   * CollegePartner createMany
+   */
+  export type CollegePartnerCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CollegePartners.
+     */
+    data: CollegePartnerCreateManyInput | CollegePartnerCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CollegePartner createManyAndReturn
+   */
+  export type CollegePartnerCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * The data used to create many CollegePartners.
+     */
+    data: CollegePartnerCreateManyInput | CollegePartnerCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CollegePartner update
+   */
+  export type CollegePartnerUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * The data needed to update a CollegePartner.
+     */
+    data: XOR<CollegePartnerUpdateInput, CollegePartnerUncheckedUpdateInput>
+    /**
+     * Choose, which CollegePartner to update.
+     */
+    where: CollegePartnerWhereUniqueInput
+  }
+
+  /**
+   * CollegePartner updateMany
+   */
+  export type CollegePartnerUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CollegePartners.
+     */
+    data: XOR<CollegePartnerUpdateManyMutationInput, CollegePartnerUncheckedUpdateManyInput>
+    /**
+     * Filter which CollegePartners to update
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * Limit how many CollegePartners to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CollegePartner updateManyAndReturn
+   */
+  export type CollegePartnerUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * The data used to update CollegePartners.
+     */
+    data: XOR<CollegePartnerUpdateManyMutationInput, CollegePartnerUncheckedUpdateManyInput>
+    /**
+     * Filter which CollegePartners to update
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * Limit how many CollegePartners to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CollegePartner upsert
+   */
+  export type CollegePartnerUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * The filter to search for the CollegePartner to update in case it exists.
+     */
+    where: CollegePartnerWhereUniqueInput
+    /**
+     * In case the CollegePartner found by the `where` argument doesn't exist, create a new CollegePartner with this data.
+     */
+    create: XOR<CollegePartnerCreateInput, CollegePartnerUncheckedCreateInput>
+    /**
+     * In case the CollegePartner was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CollegePartnerUpdateInput, CollegePartnerUncheckedUpdateInput>
+  }
+
+  /**
+   * CollegePartner delete
+   */
+  export type CollegePartnerDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
+    /**
+     * Filter which CollegePartner to delete.
+     */
+    where: CollegePartnerWhereUniqueInput
+  }
+
+  /**
+   * CollegePartner deleteMany
+   */
+  export type CollegePartnerDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CollegePartners to delete
+     */
+    where?: CollegePartnerWhereInput
+    /**
+     * Limit how many CollegePartners to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CollegePartner without action
+   */
+  export type CollegePartnerDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollegePartner
+     */
+    select?: CollegePartnerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollegePartner
+     */
+    omit?: CollegePartnerOmit<ExtArgs> | null
   }
 
 
@@ -12160,6 +13316,7 @@ export namespace Prisma {
     description: 'description',
     requirements: 'requirements',
     customFields: 'customFields',
+    eligibilityRules: 'eligibilityRules',
     salaryMin: 'salaryMin',
     salaryMax: 'salaryMax',
     salaryCurrency: 'salaryCurrency',
@@ -12208,6 +13365,22 @@ export namespace Prisma {
   };
 
   export type ApplicationFormSchemaScalarFieldEnum = (typeof ApplicationFormSchemaScalarFieldEnum)[keyof typeof ApplicationFormSchemaScalarFieldEnum]
+
+
+  export const CollegePartnerScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    slug: 'slug',
+    shareToken: 'shareToken',
+    contactEmail: 'contactEmail',
+    requisitionIds: 'requisitionIds',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CollegePartnerScalarFieldEnum = (typeof CollegePartnerScalarFieldEnum)[keyof typeof CollegePartnerScalarFieldEnum]
 
 
   export const SkillScalarFieldEnum: {
@@ -12530,6 +13703,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Requisition"> | string | null
     requirements?: JsonFilter<"Requisition">
     customFields?: JsonFilter<"Requisition">
+    eligibilityRules?: JsonFilter<"Requisition">
     salaryMin?: FloatNullableFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableFilter<"Requisition"> | number | null
     salaryCurrency?: StringFilter<"Requisition"> | string
@@ -12557,6 +13731,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     requirements?: SortOrder
     customFields?: SortOrder
+    eligibilityRules?: SortOrder
     salaryMin?: SortOrderInput | SortOrder
     salaryMax?: SortOrderInput | SortOrder
     salaryCurrency?: SortOrder
@@ -12587,6 +13762,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Requisition"> | string | null
     requirements?: JsonFilter<"Requisition">
     customFields?: JsonFilter<"Requisition">
+    eligibilityRules?: JsonFilter<"Requisition">
     salaryMin?: FloatNullableFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableFilter<"Requisition"> | number | null
     salaryCurrency?: StringFilter<"Requisition"> | string
@@ -12614,6 +13790,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     requirements?: SortOrder
     customFields?: SortOrder
+    eligibilityRules?: SortOrder
     salaryMin?: SortOrderInput | SortOrder
     salaryMax?: SortOrderInput | SortOrder
     salaryCurrency?: SortOrder
@@ -12647,6 +13824,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Requisition"> | string | null
     requirements?: JsonWithAggregatesFilter<"Requisition">
     customFields?: JsonWithAggregatesFilter<"Requisition">
+    eligibilityRules?: JsonWithAggregatesFilter<"Requisition">
     salaryMin?: FloatNullableWithAggregatesFilter<"Requisition"> | number | null
     salaryMax?: FloatNullableWithAggregatesFilter<"Requisition"> | number | null
     salaryCurrency?: StringWithAggregatesFilter<"Requisition"> | string
@@ -12830,6 +14008,84 @@ export namespace Prisma {
     fields?: JsonWithAggregatesFilter<"ApplicationFormSchema">
     createdAt?: DateTimeWithAggregatesFilter<"ApplicationFormSchema"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ApplicationFormSchema"> | Date | string
+  }
+
+  export type CollegePartnerWhereInput = {
+    AND?: CollegePartnerWhereInput | CollegePartnerWhereInput[]
+    OR?: CollegePartnerWhereInput[]
+    NOT?: CollegePartnerWhereInput | CollegePartnerWhereInput[]
+    id?: StringFilter<"CollegePartner"> | string
+    tenantId?: StringFilter<"CollegePartner"> | string
+    name?: StringFilter<"CollegePartner"> | string
+    slug?: StringFilter<"CollegePartner"> | string
+    shareToken?: StringFilter<"CollegePartner"> | string
+    contactEmail?: StringNullableFilter<"CollegePartner"> | string | null
+    requisitionIds?: StringNullableListFilter<"CollegePartner">
+    isActive?: BoolFilter<"CollegePartner"> | boolean
+    createdAt?: DateTimeFilter<"CollegePartner"> | Date | string
+    updatedAt?: DateTimeFilter<"CollegePartner"> | Date | string
+  }
+
+  export type CollegePartnerOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    shareToken?: SortOrder
+    contactEmail?: SortOrderInput | SortOrder
+    requisitionIds?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollegePartnerWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    shareToken?: string
+    tenantId_slug?: CollegePartnerTenantIdSlugCompoundUniqueInput
+    AND?: CollegePartnerWhereInput | CollegePartnerWhereInput[]
+    OR?: CollegePartnerWhereInput[]
+    NOT?: CollegePartnerWhereInput | CollegePartnerWhereInput[]
+    tenantId?: StringFilter<"CollegePartner"> | string
+    name?: StringFilter<"CollegePartner"> | string
+    slug?: StringFilter<"CollegePartner"> | string
+    contactEmail?: StringNullableFilter<"CollegePartner"> | string | null
+    requisitionIds?: StringNullableListFilter<"CollegePartner">
+    isActive?: BoolFilter<"CollegePartner"> | boolean
+    createdAt?: DateTimeFilter<"CollegePartner"> | Date | string
+    updatedAt?: DateTimeFilter<"CollegePartner"> | Date | string
+  }, "id" | "shareToken" | "tenantId_slug">
+
+  export type CollegePartnerOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    shareToken?: SortOrder
+    contactEmail?: SortOrderInput | SortOrder
+    requisitionIds?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CollegePartnerCountOrderByAggregateInput
+    _max?: CollegePartnerMaxOrderByAggregateInput
+    _min?: CollegePartnerMinOrderByAggregateInput
+  }
+
+  export type CollegePartnerScalarWhereWithAggregatesInput = {
+    AND?: CollegePartnerScalarWhereWithAggregatesInput | CollegePartnerScalarWhereWithAggregatesInput[]
+    OR?: CollegePartnerScalarWhereWithAggregatesInput[]
+    NOT?: CollegePartnerScalarWhereWithAggregatesInput | CollegePartnerScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CollegePartner"> | string
+    tenantId?: StringWithAggregatesFilter<"CollegePartner"> | string
+    name?: StringWithAggregatesFilter<"CollegePartner"> | string
+    slug?: StringWithAggregatesFilter<"CollegePartner"> | string
+    shareToken?: StringWithAggregatesFilter<"CollegePartner"> | string
+    contactEmail?: StringNullableWithAggregatesFilter<"CollegePartner"> | string | null
+    requisitionIds?: StringNullableListFilter<"CollegePartner">
+    isActive?: BoolWithAggregatesFilter<"CollegePartner"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CollegePartner"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CollegePartner"> | Date | string
   }
 
   export type SkillWhereInput = {
@@ -13358,6 +14614,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -13385,6 +14642,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -13412,6 +14670,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -13439,6 +14698,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -13466,6 +14726,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -13491,6 +14752,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -13516,6 +14778,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -13717,6 +14980,97 @@ export namespace Prisma {
     requisitionId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     fields?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollegePartnerCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    slug: string
+    shareToken: string
+    contactEmail?: string | null
+    requisitionIds?: CollegePartnerCreaterequisitionIdsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollegePartnerUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    slug: string
+    shareToken: string
+    contactEmail?: string | null
+    requisitionIds?: CollegePartnerCreaterequisitionIdsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollegePartnerUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionIds?: CollegePartnerUpdaterequisitionIdsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollegePartnerUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionIds?: CollegePartnerUpdaterequisitionIdsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollegePartnerCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    slug: string
+    shareToken: string
+    contactEmail?: string | null
+    requisitionIds?: CollegePartnerCreaterequisitionIdsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollegePartnerUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionIds?: CollegePartnerUpdaterequisitionIdsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollegePartnerUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    contactEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    requisitionIds?: CollegePartnerUpdaterequisitionIdsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14453,6 +15807,7 @@ export namespace Prisma {
     description?: SortOrder
     requirements?: SortOrder
     customFields?: SortOrder
+    eligibilityRules?: SortOrder
     salaryMin?: SortOrder
     salaryMax?: SortOrder
     salaryCurrency?: SortOrder
@@ -14783,6 +16138,48 @@ export namespace Prisma {
     tenantId?: SortOrder
     requisitionId?: SortOrder
     name?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollegePartnerTenantIdSlugCompoundUniqueInput = {
+    tenantId: string
+    slug: string
+  }
+
+  export type CollegePartnerCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    shareToken?: SortOrder
+    contactEmail?: SortOrder
+    requisitionIds?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollegePartnerMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    shareToken?: SortOrder
+    contactEmail?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollegePartnerMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    shareToken?: SortOrder
+    contactEmail?: SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15461,6 +16858,15 @@ export namespace Prisma {
     update?: XOR<XOR<RequisitionUpdateToOneWithWhereWithoutFormSchemaInput, RequisitionUpdateWithoutFormSchemaInput>, RequisitionUncheckedUpdateWithoutFormSchemaInput>
   }
 
+  export type CollegePartnerCreaterequisitionIdsInput = {
+    set: string[]
+  }
+
+  export type CollegePartnerUpdaterequisitionIdsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
   export type SkillCreatealiasesInput = {
     set: string[]
   }
@@ -16085,6 +17491,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -16111,6 +17518,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -16191,6 +17599,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -16217,6 +17626,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -16277,6 +17687,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -16303,6 +17714,7 @@ export namespace Prisma {
     description?: string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: number | null
     salaryMax?: number | null
     salaryCurrency?: string
@@ -16345,6 +17757,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string
@@ -16371,6 +17784,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     requirements?: JsonNullValueInput | InputJsonValue
     customFields?: JsonNullValueInput | InputJsonValue
+    eligibilityRules?: JsonNullValueInput | InputJsonValue
     salaryMin?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryMax?: NullableFloatFieldUpdateOperationsInput | number | null
     salaryCurrency?: StringFieldUpdateOperationsInput | string

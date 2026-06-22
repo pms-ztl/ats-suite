@@ -7,7 +7,7 @@ import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: requisitions are admin/recruiter/hiring-manager managed.
 const requireReqEditor = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
-import { RequisitionStatusSchema, FormFieldSchema } from "@cdc-ats/contracts";
+import { RequisitionStatusSchema, FormFieldSchema, EligibilityRuleSchema } from "@cdc-ats/contracts";
 import { prisma, prismaAdmin } from "../lib/prisma.js";
 import { fetchPlanLimits } from "../lib/service-client.js";
 import { ensurePublishedPosting } from "../lib/ensure-posting.js";
@@ -38,6 +38,8 @@ const CreateReqSchema = z.object({
   salaryCurrency: z.string().default("USD"),
   status: RequisitionStatusSchema.optional(),
   headcount: z.number().int().min(1).default(1),
+  // Module A — eligibility rules authored in the requisition builder.
+  eligibilityRules: z.array(EligibilityRuleSchema).max(20).optional(),
 });
 
 // Phase 5 — pay-transparency publish gate (advisory, non-blocking). Many US
@@ -131,6 +133,7 @@ router.post("/", requireReqEditor, async (req: Request, res: Response, next: Nex
         tenantId, ...body,
         requirements: (body.requirements ?? []) as any,
         customFields: (body.customFields ?? []) as any,
+        eligibilityRules: (body.eligibilityRules ?? []) as any,
       },
     });
     // Best-effort: a requisition opened on create gets a published career-portal
@@ -166,6 +169,7 @@ router.patch("/:id", requireReqEditor, async (req: Request, res: Response, next:
     const data: any = { ...body };
     if (body.requirements) data.requirements = body.requirements;
     if (body.customFields) data.customFields = body.customFields;
+    if (body.eligibilityRules) data.eligibilityRules = body.eligibilityRules;
     const { count } = await prisma.requisition.updateMany({ where: { id, tenantId }, data });
     if (count === 0) throw Errors.notFound("Requisition");
     const updated = await prisma.requisition.findUnique({ where: { id } });

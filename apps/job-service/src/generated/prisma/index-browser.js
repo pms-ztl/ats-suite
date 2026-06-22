@@ -132,6 +132,7 @@ exports.Prisma.RequisitionScalarFieldEnum = {
   description: 'description',
   requirements: 'requirements',
   customFields: 'customFields',
+  eligibilityRules: 'eligibilityRules',
   salaryMin: 'salaryMin',
   salaryMax: 'salaryMax',
   salaryCurrency: 'salaryCurrency',
@@ -169,6 +170,19 @@ exports.Prisma.ApplicationFormSchemaScalarFieldEnum = {
   requisitionId: 'requisitionId',
   name: 'name',
   fields: 'fields',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CollegePartnerScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  name: 'name',
+  slug: 'slug',
+  shareToken: 'shareToken',
+  contactEmail: 'contactEmail',
+  requisitionIds: 'requisitionIds',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -316,6 +330,7 @@ exports.Prisma.ModelName = {
   Requisition: 'Requisition',
   JobPosting: 'JobPosting',
   ApplicationFormSchema: 'ApplicationFormSchema',
+  CollegePartner: 'CollegePartner',
   Skill: 'Skill',
   Outbox: 'Outbox',
   AgentRun: 'AgentRun',

@@ -35,3 +35,9 @@ scripts/audit-frontend-coverage.cjs
 scripts/build-design-prompt.cjs
 scripts/digest-recon.cjs
 scripts/split-recon.cjs
+
+# Prisma platform-specific query engine binaries generated at build/runtime
+# (the repo tracks the dev Windows engine; Linux/Docker engines are produced by
+# `prisma generate` during the image build and must not bloat the repo).
+**/src/generated/prisma/libquery_engine-*.so.node
+**/src/generated/prisma/*.dylib.node

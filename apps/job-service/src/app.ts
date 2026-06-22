@@ -12,6 +12,7 @@ import feedRouter from "./routes/feed.js";
 import jdAuthorRouter from "./routes/jd-author.js";
 import gdprRouter from "./routes/gdpr.js";
 import jobDistributionRouter from "./routes/job-distribution.js";
+import collegesRouter from "./routes/colleges.js";
 import { createInboundJobApplicationRouter } from "./routes/inbound-job-application.js";
 
 export function createApp(logger: Logger): Express {
@@ -78,6 +79,8 @@ export function createApp(logger: Logger): Express {
   // post (202 + PENDING rows), GET reads the REAL per-board status, DELETE queues a
   // board close + marks the row CLOSED.
   app.use("/internal/job-distribution", readAuthHeaders(), jobDistributionRouter);
+  // Module A — CDC / college partner management (recruiter/admin).
+  app.use("/internal/colleges", readAuthHeaders(), collegesRouter);
 
   // Public routes — NO auth required (gateway forwards /api/public/* unauthenticated)
   // The per-tenant XML/JSON job feed (WF-F / F2) mounts at /public/feed so the

@@ -14,6 +14,7 @@ import { createHash } from "node:crypto";
 import multer from "multer";
 import { z } from "zod";
 import { ok, Errors, createLogger } from "@cdc-ats/common";
+import { evaluateEligibility, type EligibilityRule } from "@cdc-ats/contracts";
 // Public (unauthenticated) routes look up postings/forms by slug with no tenant
 // in context, so they use the admin (non-RLS) client.
 import { prismaAdmin as prisma } from "../lib/prisma.js";
@@ -47,6 +48,33 @@ router.get("/jobs", async (_req: Request, res: Response, next: NextFunction) => 
       take: 100,
     });
     ok(res, postings);
+  } catch (err) { next(err); }
+});
+
+// Module A — public CDC landing data. A college/CDC opens /cdc/<shareToken>; this
+// resolves the partner, returns its name (so the frontend can stamp applications
+// with the college) and the tenant's published roles, optionally restricted to the
+// partner's requisitionIds. No auth: the opaque token IS the credential.
+router.get("/cdc/:token", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.params["token"] as string;
+    const college = await prisma.collegePartner.findFirst({
+      where: { shareToken: token, isActive: true },
+      select: { id: true, name: true, tenantId: true, requisitionIds: true },
+    });
+    if (!college) throw Errors.notFound("College link");
+    const restrict = (college.requisitionIds ?? []).filter(Boolean);
+    const postings = await prisma.jobPosting.findMany({
+      where: {
+        tenantId: college.tenantId,
+        isPublished: true,
+        ...(restrict.length > 0 ? { requisitionId: { in: restrict } } : {}),
+      },
+      include: { requisition: { select: { id: true, title: true, department: true, location: true, salaryMin: true, salaryMax: true, salaryCurrency: true } } },
+      orderBy: { publishedAt: "desc" },
+      take: 100,
+    });
+    ok(res, { college: { id: college.id, name: college.name }, postings });
   } catch (err) { next(err); }
 });
 
@@ -261,6 +289,41 @@ router.post("/jobs/:slug/apply", async (req: Request, res: Response, next: NextF
 //   multer as before.
 const STD_FIELDS = new Set(["firstName", "lastName", "email", "phone", "linkedinUrl", "coverLetter"]);
 
+// Module A — flatten the submitted application into a single field→answer map the
+// eligibility evaluator reads. Works for BOTH apply paths: multipart text fields
+// land at the top level of req.body; the accept-fast JSON nests custom answers
+// under `formResponses`. Reserved keys (resume blob, formResponses container) are
+// excluded; everything else (department, branch, cgpa, graduationYear, college…)
+// becomes a candidate-supplied answer.
+function collectAnswers(body: Record<string, unknown>): Record<string, unknown> {
+  const answers: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(body)) {
+    if (k === "resume" || k === "formResponses") continue;
+    answers[k] = v;
+  }
+  const fr = body["formResponses"];
+  if (fr && typeof fr === "object") Object.assign(answers, fr as Record<string, unknown>);
+  return answers;
+}
+
+// Module A — load the requisition's eligibility rules and evaluate them against
+// the candidate's answers. Returns null when eligible (or no rules); otherwise the
+// 422 payload to return. Uses the admin client (public path, no tenant context).
+async function checkEligibility(
+  requisitionId: string,
+  body: Record<string, unknown>,
+): Promise<{ message: string; field: string | null } | null> {
+  const req = await prisma.requisition.findUnique({
+    where: { id: requisitionId },
+    select: { eligibilityRules: true },
+  });
+  const rules = (req?.eligibilityRules as EligibilityRule[] | undefined) ?? [];
+  if (!Array.isArray(rules) || rules.length === 0) return null;
+  const result = evaluateEligibility(rules, collectAnswers(body));
+  if (result.eligible) return null;
+  return { message: result.errorMessage ?? "You do not meet the eligibility criteria for this job.", field: result.field };
+}
+
 router.post("/jobs/:slug/apply-custom", applyUpload.any(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const slug = req.params["slug"] as string;
@@ -272,6 +335,15 @@ router.post("/jobs/:slug/apply-custom", applyUpload.any(), async (req: Request, 
 
     const body = (req.body ?? {}) as Record<string, unknown>;
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+
+    // Module A — eligibility gate. Evaluated BEFORE we create any rows or touch the
+    // resume bytes, so an ineligible applicant gets a clean 422 with the recruiter-
+    // authored message and nothing is persisted. Applies to both apply paths.
+    const ineligible = await checkEligibility(posting.requisitionId, body);
+    if (ineligible) {
+      res.status(422).json({ success: false, error: { code: "NOT_ELIGIBLE", message: ineligible.message, field: ineligible.field } });
+      return;
+    }
     const isAcceptFast =
       files.length === 0 &&
       typeof body["resume"] === "object" &&
