@@ -81,6 +81,12 @@ model BulkImportItem {
   extractStatus String   @default("extracted")
   // pending | approved | rejected
   reviewStatus  String   @default("pending")
+  // ATS score (0-100) of this resume against the BulkUpload's requisition, set
+  // by the bulk-archive-extract worker after a service-to-service screen.
+  // Null when the BulkUpload has no requisitionId (unranked import).
+  score         Float?
+  // null/"pending" (not yet scored) | "scored" | "failed". Never fabricated.
+  scoreStatus   String?
   candidateId   String?
   createdAt     DateTime @default(now())
 

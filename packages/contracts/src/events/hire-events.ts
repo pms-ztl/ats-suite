@@ -7,39 +7,39 @@ import { z } from "zod";
 // onboarding case. All payloads are tenant-scoped (the subject also encodes it).
 
 export const ApplicationHiredPayloadSchema = z.object({
-  tenantId: z.string().uuid(),
-  applicationId: z.string().uuid(),
-  candidateId: z.string().uuid(),
-  requisitionId: z.string().uuid().nullable(),
+  tenantId: z.string(),
+  applicationId: z.string(),
+  candidateId: z.string(),
+  requisitionId: z.string().nullable(),
   candidateName: z.string().nullable(),
   candidateEmail: z.string().email().nullable(),
   jobTitle: z.string().nullable(),
   /** User id of the recruiter/hiring manager who approved. */
-  decidedByUserId: z.string().uuid().nullable(),
+  decidedByUserId: z.string().nullable(),
   /** Stakeholder user ids to notify (hiring manager, recruiter, …). */
-  stakeholderUserIds: z.array(z.string().uuid()).default([]),
+  stakeholderUserIds: z.array(z.string()).default([]),
 });
 export type ApplicationHiredPayload = z.infer<typeof ApplicationHiredPayloadSchema>;
 
 export const OfferApprovedPayloadSchema = z.object({
-  tenantId: z.string().uuid(),
-  offerId: z.string().uuid(),
-  applicationId: z.string().uuid().nullable(),
-  candidateId: z.string().uuid(),
+  tenantId: z.string(),
+  offerId: z.string(),
+  applicationId: z.string().nullable(),
+  candidateId: z.string(),
   candidateName: z.string().nullable(),
   candidateEmail: z.string().email().nullable(),
   jobTitle: z.string().nullable(),
   /** Object-storage key of the rendered offer-letter PDF, if generated. */
   offerLetterKey: z.string().nullable(),
-  approvedByUserId: z.string().uuid().nullable(),
+  approvedByUserId: z.string().nullable(),
 });
 export type OfferApprovedPayload = z.infer<typeof OfferApprovedPayloadSchema>;
 
 export const OfferAcceptedPayloadSchema = z.object({
-  tenantId: z.string().uuid(),
-  offerId: z.string().uuid(),
-  applicationId: z.string().uuid().nullable(),
-  candidateId: z.string().uuid(),
+  tenantId: z.string(),
+  offerId: z.string(),
+  applicationId: z.string().nullable(),
+  candidateId: z.string(),
   candidateName: z.string().nullable(),
   candidateEmail: z.string().email().nullable(),
   jobTitle: z.string().nullable(),
@@ -49,14 +49,14 @@ export const OfferAcceptedPayloadSchema = z.object({
 export type OfferAcceptedPayload = z.infer<typeof OfferAcceptedPayloadSchema>;
 
 export const ApplicationRejectedPayloadSchema = z.object({
-  tenantId: z.string().uuid(),
-  applicationId: z.string().uuid(),
-  candidateId: z.string().uuid(),
+  tenantId: z.string(),
+  applicationId: z.string(),
+  candidateId: z.string(),
   candidateName: z.string().nullable(),
   candidateEmail: z.string().email().nullable(),
   jobTitle: z.string().nullable(),
   /** Reason-code label surfaced to the candidate-experience layer (never raw notes). */
   reason: z.string().nullable(),
-  decidedByUserId: z.string().uuid().nullable(),
+  decidedByUserId: z.string().nullable(),
 });
 export type ApplicationRejectedPayload = z.infer<typeof ApplicationRejectedPayloadSchema>;

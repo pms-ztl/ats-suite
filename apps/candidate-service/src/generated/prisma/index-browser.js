@@ -196,6 +196,8 @@ exports.Prisma.OfferScalarFieldEnum = {
   expiresAt: 'expiresAt',
   status: 'status',
   approvedBy: 'approvedBy',
+  offerLetterKey: 'offerLetterKey',
+  acceptedAt: 'acceptedAt',
   notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

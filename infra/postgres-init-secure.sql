@@ -24,6 +24,7 @@ CREATE DATABASE interview_db;
 CREATE DATABASE resume_db;
 CREATE DATABASE screening_db;
 CREATE DATABASE notification_db;
+CREATE DATABASE onboarding_db;
 
 -- ─── Per-service roles ────────────────────────────────────────────────────
 -- Each service connects with its own role; NOLOGIN-by-default + ALTER ROLE
@@ -40,6 +41,7 @@ CREATE ROLE interview_user     LOGIN PASSWORD 'CHANGE_ME_interview';
 CREATE ROLE resume_user        LOGIN PASSWORD 'CHANGE_ME_resume';
 CREATE ROLE screening_user     LOGIN PASSWORD 'CHANGE_ME_screening';
 CREATE ROLE notification_user  LOGIN PASSWORD 'CHANGE_ME_notification';
+CREATE ROLE onboarding_user    LOGIN PASSWORD 'CHANGE_ME_onboarding';
 
 -- ─── Grant each role its own DB ───────────────────────────────────────────
 GRANT ALL PRIVILEGES ON DATABASE identity_db      TO identity_user;
@@ -51,6 +53,7 @@ GRANT ALL PRIVILEGES ON DATABASE interview_db     TO interview_user;
 GRANT ALL PRIVILEGES ON DATABASE resume_db        TO resume_user;
 GRANT ALL PRIVILEGES ON DATABASE screening_db     TO screening_user;
 GRANT ALL PRIVILEGES ON DATABASE notification_db  TO notification_user;
+GRANT ALL PRIVILEGES ON DATABASE onboarding_db    TO onboarding_user;
 
 -- ─── Set public schema owner per DB ───────────────────────────────────────
 -- Required so the service's role can run prisma migrate against its DB.
@@ -91,3 +94,7 @@ GRANT ALL ON SCHEMA public TO screening_user;
 \c notification_db
 ALTER SCHEMA public OWNER TO notification_user;
 GRANT ALL ON SCHEMA public TO notification_user;
+
+\c onboarding_db
+ALTER SCHEMA public OWNER TO onboarding_user;
+GRANT ALL ON SCHEMA public TO onboarding_user;

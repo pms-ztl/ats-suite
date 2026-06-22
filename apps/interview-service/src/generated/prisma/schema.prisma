@@ -117,3 +117,30 @@ model InterviewPanelMember {
   @@unique([interviewId, userId])
   @@index([userId])
 }
+
+// Module D — built-in interview room artifacts. The co-edited Notes, Code, and
+// Whiteboard from the live room are snapshotted here so they outlive the call,
+// become part of the candidate's record, and can be exported to PDF as hiring
+// justification. One artifact row per interview (upserted as the room saves).
+model InterviewArtifact {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  interviewId        String   @unique
+  roundId            String?
+  // Tiptap/ProseMirror JSON document for the collaborative notes.
+  notes              Json?
+  // Plain-text notes fallback (rendered into the PDF + searchable).
+  notesText          String?
+  // Live code editor contents + language.
+  code               String?
+  codeLanguage       String   @default("typescript")
+  // tldraw/whiteboard snapshot JSON.
+  whiteboard         Json?
+  // Optional rasterized whiteboard (storage key / data URL) for the PDF bundle.
+  whiteboardImageKey String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([interviewId])
+}

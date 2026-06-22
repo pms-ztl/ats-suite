@@ -1,8 +1,84 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, Errors, getTenantId } from "@cdc-ats/common";
-import { prisma } from "../lib/prisma.js";
+import { z } from "zod";
+import { ok, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { runAgent, type ScreeningInput, type ScreeningOutput, type AgentRunSnapshot } from "@cdc-ats/ai-engine";
+import { prisma, prismaAdmin } from "../lib/prisma.js";
+import { fetchRequisition } from "../lib/service-client.js";
 
 const router = Router();
+
+// ── POST /internal/screening/score ───────────────────────────────────────
+// Synchronous, candidate-LESS scoring: score raw resume TEXT against a
+// requisition's requirements and return the verdict inline (no Screening row,
+// no Candidate needed). Used by resume-service's bulk-archive worker to rank
+// staging items by ATS score BEFORE any candidate is created. Reuses the same
+// `candidate-screener` agent + requisition fetch as the async worker.
+const ScoreBodySchema = z.object({
+  requisitionId: z.string().min(1),
+  resumeText: z.string(),
+  resumeSkills: z.array(z.string()).optional(),
+});
+router.post("/score", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const userId = getUserId(req);
+    const body = ScoreBodySchema.parse(req.body);
+
+    const resumeText = body.resumeText?.trim() ?? "";
+    if (resumeText.length === 0) {
+      throw Errors.validation("resumeText is required to score a resume");
+    }
+
+    const requisition = await fetchRequisition(body.requisitionId, tenantId);
+    if (!requisition) throw Errors.notFound("Requisition");
+
+    const jobRequirements = Array.isArray(requisition.requirements)
+      ? (requisition.requirements as string[])
+      : ["general experience"]; // same fallback as the async screening worker
+    const jobTitle = requisition.title ?? "Unknown Role";
+
+    // Persist the AgentRun (cost/usage audit) to this service's DB — mirrors
+    // the screening worker's persistRun. Background-style write → admin client.
+    const persistRun = async (run: AgentRunSnapshot) => {
+      try {
+        await prismaAdmin.agentRun.create({
+          data: {
+            id: run.agentRunId,
+            tenantId: run.tenantId,
+            agentType: run.agentType,
+            status: run.status,
+            inputHash: run.inputHash,
+            tokensIn: run.tokensIn,
+            tokensOut: run.tokensOut,
+            costUsd: run.costUsd,
+            latencyMs: run.latencyMs,
+            modelName: run.modelName,
+            triggeredByUserId: run.userId,
+            errorMessage: run.errorMessage ?? null,
+          },
+        });
+      } catch {
+        /* audit write is best-effort; the score itself is the deliverable */
+      }
+    };
+
+    const result = await runAgent<ScreeningInput, ScreeningOutput>({
+      agentType: "candidate-screener",
+      input: { resumeText, resumeSkills: body.resumeSkills, jobRequirements, jobTitle },
+      context: { tenantId, userId, persistRun },
+    });
+
+    ok(res, {
+      requisitionId: body.requisitionId,
+      score: result.output.score,
+      matchPercentage: result.output.matchPercentage,
+      result: result.output.result,
+      signals: result.output.signals,
+      reasoning: result.output.reasoning,
+      agentRunId: result.agentRunId,
+    });
+  } catch (err) { next(err); }
+});
 
 // GET /internal/screening?requisitionId=&status=
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {

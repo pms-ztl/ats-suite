@@ -24,6 +24,7 @@ import { createWorker } from "@cdc-ats/nats-client";
 import { prismaAdmin as prisma } from "../lib/prisma.js";
 import { extractResumeText } from "../lib/extract.js";
 import { guessIdentity } from "../lib/guess.js";
+import { scoreResumeAgainstRequisition } from "../lib/service-client.js";
 import type { BulkArchiveExtractJob } from "../lib/queue.js";
 import type { Logger } from "pino";
 
@@ -53,6 +54,18 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
     async (job) => {
       const { bulkUploadId, zipPath, tenantId } = job.data;
       logger.info({ jobId: job.id, bulkUploadId, zipPath }, "Extracting bulk archive");
+
+      // If this archive was uploaded against a requisition, every extracted
+      // resume is scored against it so the staging list can be ranked by ATS
+      // score (descending). No requisition bound → items stay unranked (null
+      // score) — honest, never fabricated. userId is needed for the internal
+      // screening call's auth headers.
+      const upload = await prisma.bulkUpload.findUnique({
+        where: { id: bulkUploadId },
+        select: { requisitionId: true, userId: true },
+      });
+      const requisitionId = upload?.requisitionId ?? null;
+      const scoreUserId = upload?.userId ?? "system";
 
       let extractedCount = 0;
       let pendingCount = 0;
@@ -126,7 +139,13 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
             );
           }
 
-          await prisma.bulkImportItem.create({
+          // Mark items "pending" scoring up front ONLY when there's a
+          // requisition to score against AND we actually extracted text;
+          // otherwise leave score/scoreStatus null (unranked / unscoreable).
+          const willScore =
+            requisitionId !== null && extractStatus === "extracted" && extractedText.trim().length > 0;
+
+          const item = await prisma.bulkImportItem.create({
             data: {
               tenantId,
               bulkUploadId,
@@ -139,11 +158,44 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
               extractedText,
               extractStatus,
               reviewStatus: "pending",
+              ...(willScore ? { scoreStatus: "pending" } : {}),
             },
           });
           extractedCount += 1;
           pendingCount += 1;
           await bumpExtractCounters(bulkUploadId);
+
+          // Per-item ATS scoring against the requisition. Fully isolated: a
+          // scoring failure marks ONLY this item failed and never aborts the
+          // archive. No fabricated score — null score on failure.
+          if (willScore && requisitionId) {
+            try {
+              const scored = await scoreResumeAgainstRequisition(
+                { requisitionId, resumeText: extractedText },
+                tenantId,
+                scoreUserId,
+              );
+              if (scored && typeof scored.score === "number") {
+                await prisma.bulkImportItem.update({
+                  where: { id: item.id },
+                  data: { score: scored.score, scoreStatus: "scored" },
+                });
+              } else {
+                await prisma.bulkImportItem.update({
+                  where: { id: item.id },
+                  data: { scoreStatus: "failed" },
+                });
+              }
+            } catch (err) {
+              logger.warn(
+                { err, fileName, bulkUploadId, requisitionId },
+                "resume scoring failed — marking item scoreStatus=failed",
+              );
+              await prisma.bulkImportItem
+                .update({ where: { id: item.id }, data: { scoreStatus: "failed" } })
+                .catch(() => {});
+            }
+          }
         }
 
         await prisma.bulkUpload.update({

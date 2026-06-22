@@ -179,12 +179,32 @@ exports.Prisma.InterviewPanelMemberScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.InterviewArtifactScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  interviewId: 'interviewId',
+  roundId: 'roundId',
+  notes: 'notes',
+  notesText: 'notesText',
+  code: 'code',
+  codeLanguage: 'codeLanguage',
+  whiteboard: 'whiteboard',
+  whiteboardImageKey: 'whiteboardImageKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -233,7 +253,8 @@ exports.Prisma.ModelName = {
   Interview: 'Interview',
   InterviewRound: 'InterviewRound',
   InterviewFeedback: 'InterviewFeedback',
-  InterviewPanelMember: 'InterviewPanelMember'
+  InterviewPanelMember: 'InterviewPanelMember',
+  InterviewArtifact: 'InterviewArtifact'
 };
 
 /**

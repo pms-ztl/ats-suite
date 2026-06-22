@@ -173,6 +173,8 @@ exports.Prisma.BulkImportItemScalarFieldEnum = {
   extractedText: 'extractedText',
   extractStatus: 'extractStatus',
   reviewStatus: 'reviewStatus',
+  score: 'score',
+  scoreStatus: 'scoreStatus',
   candidateId: 'candidateId',
   createdAt: 'createdAt'
 };

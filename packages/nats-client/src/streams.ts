@@ -62,6 +62,22 @@ export const CORE_STREAMS: StreamSpec[] = [
     retentionDays: 30,
   },
   {
+    // Module E — hire/approve/offer/reject lifecycle. notification-service sends
+    // the candidate + stakeholder comms; onboarding-service opens a case on
+    // offer.accepted / application.hired.
+    name: "CANDIDATE_EVENTS",
+    subjects: ["tenant.*.application.>", "tenant.*.offer.>"],
+    description: "Application hired/rejected, offer approved/accepted",
+    retentionDays: 90,
+  },
+  {
+    // Module F — onboarding case lifecycle (opened, task completed, completed).
+    name: "ONBOARDING_EVENTS",
+    subjects: ["tenant.*.onboarding.>"],
+    description: "Onboarding case opened, task completed, case completed",
+    retentionDays: 90,
+  },
+  {
     name: "AGENT_EVENTS",
     subjects: ["tenant.*.agent.>"],
     description: "Agent run completed (cost + outcome) — billing-service consumes",

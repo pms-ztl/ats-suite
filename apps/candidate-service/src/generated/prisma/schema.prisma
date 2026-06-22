@@ -146,22 +146,27 @@ enum OfferStatus {
 // offer-LETTER generator lives separately (agent-offer.ts); this is the
 // plain offer RECORD that the Offers board reads + the approval flow updates.
 model Offer {
-  id            String      @id @default(uuid())
-  tenantId      String
-  candidateId   String
-  requisitionId String // FK to job-service Requisition (cross-service, no relation)
-  applicationId String?
-  baseSalary    Int
-  currency      String      @default("USD")
-  bonusPercent  Int?
-  equity        String?
-  startDate     DateTime?
-  expiresAt     DateTime?
-  status        OfferStatus @default(DRAFT)
-  approvedBy    String? // identity-service userId who approved
-  notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  tenantId       String
+  candidateId    String
+  requisitionId  String // FK to job-service Requisition (cross-service, no relation)
+  applicationId  String?
+  baseSalary     Int
+  currency       String      @default("USD")
+  bonusPercent   Int?
+  equity         String?
+  startDate      DateTime?
+  expiresAt      DateTime?
+  status         OfferStatus @default(DRAFT)
+  approvedBy     String? // identity-service userId who approved
+  // Module E — object-storage key of the rendered offer-letter PDF, set on
+  // approve when storage is configured. NULL when storage is not wired up
+  // (we never fabricate a key) or before approval.
+  offerLetterKey String?
+  acceptedAt     DateTime? // when the candidate accepted the offer (Module E)
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])

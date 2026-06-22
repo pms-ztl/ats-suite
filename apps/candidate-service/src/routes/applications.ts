@@ -3,15 +3,23 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: candidate-facing operations need ADMIN/RECRUITER/HIRING_MANAGER.
 // INTERVIEWER cannot create/update applications or upload attachments.
 const requireRecruiterOrAdmin = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 import { ApplicationStageSchema, ApplicationStatusSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
+import {
+  resolveRequisitionContext,
+  stakeholderIds,
+  publishApplicationHired,
+  publishApplicationRejected,
+  rejectionReasonLabel,
+} from "../lib/decision-events.js";
 
 const router = Router();
+const logger = createLogger({ serviceName: "candidate-service:decisions" });
 
 const CreateApplicationSchema = z.object({
   candidateId: z.string().uuid(),
@@ -181,6 +189,117 @@ router.post("/attachments", requireRecruiterOrAdmin, async (req: Request, res: R
       data: { tenantId, ...body },
     });
     created(res, att);
+  } catch (err) { next(err); }
+});
+
+// ── Module E — hire / reject decision flow ──────────────────────────────────
+// These drive the terminal decision on an application and publish the lifecycle
+// events notification-service + onboarding-service subscribe to.
+
+// POST /internal/applications/:id/hire
+// Marks the application HIRED (idempotent) and publishes application.hired with
+// the candidate + job context and the stakeholder user ids to notify.
+router.post("/:id/hire", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const userId = (req.headers["x-user-id"] as string) || null;
+    const role = (req.headers["x-user-role"] as string) || "ADMIN";
+
+    const application = await prisma.application.findFirst({
+      where: { id, tenantId },
+      include: { candidate: { select: { firstName: true, lastName: true, email: true } } },
+    });
+    if (!application) throw Errors.notFound("Application");
+
+    // Idempotent: if already HIRED, do not re-stamp or re-publish.
+    const alreadyHired = application.stage === "HIRED";
+    let updated = application;
+    if (!alreadyHired) {
+      const now = new Date();
+      // defense-in-depth: scope the mutation by tenantId too.
+      const { count } = await prisma.application.updateMany({
+        where: { id, tenantId },
+        data: { stage: "HIRED", status: "HIRED", stageUpdatedAt: now },
+      });
+      if (count === 0) throw Errors.notFound("Application");
+      updated = { ...application, stage: "HIRED", status: "HIRED", stageUpdatedAt: now };
+
+      const ctx = await resolveRequisitionContext({ requisitionId: application.requisitionId, tenantId, userId, role });
+      const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`.trim();
+      await publishApplicationHired(
+        {
+          tenantId,
+          applicationId: application.id,
+          candidateId: application.candidateId,
+          requisitionId: application.requisitionId,
+          candidateName: candidateName || null,
+          candidateEmail: application.candidate.email ?? null,
+          jobTitle: ctx.title,
+          decidedByUserId: userId,
+          stakeholderUserIds: stakeholderIds(ctx),
+        },
+        logger,
+      );
+    }
+
+    ok(res, { id: updated.id, stage: updated.stage, status: updated.status, stageUpdatedAt: updated.stageUpdatedAt, alreadyHired });
+  } catch (err) { next(err); }
+});
+
+// POST /internal/applications/:id/reject  { reasonCode?: string }
+// Marks the application REJECTED (idempotent) and publishes application.rejected.
+// The candidate-facing reason is a reason-code LABEL — never raw notes.
+const RejectSchema = z.object({
+  // A stable reason CODE (mapped to a courteous label); free-text notes are
+  // NOT surfaced to the candidate.
+  reasonCode: z.string().max(64).optional(),
+  reason: z.string().max(64).optional(), // accepted alias for reasonCode
+});
+router.post("/:id/reject", requireRecruiterOrAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const userId = (req.headers["x-user-id"] as string) || null;
+    const role = (req.headers["x-user-role"] as string) || "ADMIN";
+    const body = RejectSchema.parse(req.body ?? {});
+    const reasonLabel = rejectionReasonLabel(body.reasonCode ?? body.reason ?? null);
+
+    const application = await prisma.application.findFirst({
+      where: { id, tenantId },
+      include: { candidate: { select: { firstName: true, lastName: true, email: true } } },
+    });
+    if (!application) throw Errors.notFound("Application");
+
+    const alreadyRejected = application.stage === "REJECTED";
+    let updated = application;
+    if (!alreadyRejected) {
+      const now = new Date();
+      const { count } = await prisma.application.updateMany({
+        where: { id, tenantId },
+        data: { stage: "REJECTED", status: "REJECTED", stageUpdatedAt: now },
+      });
+      if (count === 0) throw Errors.notFound("Application");
+      updated = { ...application, stage: "REJECTED", status: "REJECTED", stageUpdatedAt: now };
+
+      const ctx = await resolveRequisitionContext({ requisitionId: application.requisitionId, tenantId, userId, role });
+      const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`.trim();
+      await publishApplicationRejected(
+        {
+          tenantId,
+          applicationId: application.id,
+          candidateId: application.candidateId,
+          candidateName: candidateName || null,
+          candidateEmail: application.candidate.email ?? null,
+          jobTitle: ctx.title,
+          reason: reasonLabel,
+          decidedByUserId: userId,
+        },
+        logger,
+      );
+    }
+
+    ok(res, { id: updated.id, stage: updated.stage, status: updated.status, stageUpdatedAt: updated.stageUpdatedAt, alreadyRejected });
   } catch (err) { next(err); }
 });
 

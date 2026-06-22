@@ -393,9 +393,18 @@ router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunc
     const limit = Math.min(200, Math.max(1, Number(req.query["limit"]) || 50));
     const cursor = typeof req.query["cursor"] === "string" ? req.query["cursor"] : undefined;
 
+    // sort=score → rank by ATS score DESC so the frontend renders the ranked
+    // list (score 100 first); nulls/unscored sink to the bottom. `id` is the
+    // deterministic tiebreaker so keyset (cursor) pagination is stable even
+    // when many rows share a score. Default stays createdAt asc (import order).
+    const sortByScore = req.query["sort"] === "score";
+    const orderBy = sortByScore
+      ? ([{ score: { sort: "desc", nulls: "last" } }, { id: "asc" }] as const)
+      : ([{ createdAt: "asc" }, { id: "asc" }] as const);
+
     const rows = await prisma.bulkImportItem.findMany({
       where: { bulkUploadId: id, tenantId },
-      orderBy: { createdAt: "asc" },
+      orderBy: orderBy as any,
       take: limit + 1, // fetch one extra to compute nextCursor
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
@@ -415,6 +424,8 @@ router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunc
         textSnippet: it.textSnippet,
         extractStatus: it.extractStatus,
         reviewStatus: it.reviewStatus,
+        score: it.score,
+        scoreStatus: it.scoreStatus,
         candidateId: it.candidateId,
         createdAt: it.createdAt,
       })),

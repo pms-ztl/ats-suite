@@ -41,6 +41,13 @@ x-service-env: &service-env
   RESUME_SERVICE_URL: http://resume-service:4007
   SCREENING_SERVICE_URL: http://screening-service:4008
   NOTIFICATION_SERVICE_URL: http://notification-service:4009
+  # Module F — onboarding-service. Module D — collab-service (interview realtime hub).
+  ONBOARDING_SERVICE_URL: http://onboarding-service:4015
+  COLLAB_SERVICE_URL: http://collab-service:4016
+  # interview-service mints collab tokens; collab-service verifies them with the
+  # SAME secret. The browser connects to the collab WS at this public URL.
+  COLLAB_TOKEN_SECRET: ${COLLAB_TOKEN_SECRET:-local-dev-collab-secret}
+  COLLAB_WS_PUBLIC_URL: ${COLLAB_WS_PUBLIC_URL:-ws://localhost:4016/rt}
 
 networks:
   ats_net:
@@ -285,6 +292,34 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/notification_db
     ports: ["4009:4009"]
 
+  # Module F — onboarding-service (Workday-style post-offer onboarding).
+  onboarding-service:
+    <<: *service-defaults
+    container_name: ats-onboarding-service
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.service
+      args: {SERVICE: onboarding-service}
+    environment:
+      <<: *service-env
+      PORT: "4015"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/onboarding_db
+    ports: ["4015:4015"]
+
+  # Module D — collab-service (interview realtime hub: WebRTC signaling + Yjs relay).
+  # Stateless, no database; the WS endpoint is /rt.
+  collab-service:
+    <<: *service-defaults
+    container_name: ats-collab-service
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.service
+      args: {SERVICE: collab-service}
+    environment:
+      <<: *service-env
+      PORT: "4016"
+    ports: ["4016:4016"]
+
   # ═════════════════════════════════════════════════════════════════════════
   # FRONTEND
   # ═════════════════════════════════════════════════════════════════════════
@@ -296,9 +331,11 @@ services:
       dockerfile: infra/Dockerfile.frontend
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_COLLAB_WS_URL: ${NEXT_PUBLIC_COLLAB_WS_URL:-ws://localhost:4016/rt}
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_COLLAB_WS_URL: ${NEXT_PUBLIC_COLLAB_WS_URL:-ws://localhost:4016/rt}
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     ports: ["3000:3000"]

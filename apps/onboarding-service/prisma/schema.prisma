@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ONBOARDING_DATABASE_URL")
+}
+
+// Module F — Onboarding (Workday-style). An OnboardingCase is opened when an
+// offer is accepted (NATS offer.accepted / application.hired). The candidate
+// completes it from a tokenized portal: profile, document uploads, and PAN/bank
+// verifications routed through a pluggable KYC provider (stub by default — an
+// honest "needs API key" state, never a fabricated pass).
+
+enum OnboardingCaseStatus {
+  PENDING
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum OnboardingTaskStatus {
+  TODO
+  SUBMITTED
+  DONE
+  WAIVED
+}
+
+enum OnboardingTaskKind {
+  PROFILE
+  DOCUMENT
+  VERIFICATION
+  ACKNOWLEDGE
+  FIRST_DAY
+}
+
+enum VerificationType {
+  PAN
+  BANK_ACCOUNT
+  ID
+}
+
+enum VerificationStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  FAILED
+  NEEDS_PROVIDER
+}
+
+model OnboardingCase {
+  id             String               @id @default(uuid())
+  tenantId       String
+  candidateId    String
+  applicationId  String?
+  offerId        String?
+  candidateName  String?
+  candidateEmail String?
+  jobTitle       String?
+  status         OnboardingCaseStatus @default(PENDING)
+  // Opaque token for the candidate-facing portal (no auth).
+  portalToken    String               @unique
+  startDate      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  tasks         OnboardingTask[]
+  documents     OnboardingDocument[]
+  verifications Verification[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([candidateId])
+}
+
+model OnboardingTask {
+  id          String               @id @default(uuid())
+  tenantId    String
+  caseId      String
+  kind        OnboardingTaskKind
+  title       String
+  description String?
+  required    Boolean              @default(true)
+  status      OnboardingTaskStatus @default(TODO)
+  order       Int                  @default(0)
+  completedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  case OnboardingCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([caseId])
+}
+
+model OnboardingDocument {
+  id         String   @id @default(uuid())
+  tenantId   String
+  caseId     String
+  label      String
+  storageKey String?
+  fileName   String?
+  uploadedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  case OnboardingCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([caseId])
+}
+
+model Verification {
+  id          String             @id @default(uuid())
+  tenantId    String
+  caseId      String
+  type        VerificationType
+  status      VerificationStatus @default(NOT_STARTED)
+  // Provider correlation id + the provider name actually used ("stub" by default).
+  providerRef String?
+  provider    String?
+  // Masked identifier surfaced back to the UI (e.g. "•••• 4321"). Never the raw value.
+  maskedValue String?
+  // Encrypted raw payload (AES-GCM) kept only for a real provider re-check; null in stub mode.
+  encryptedPayload String?
+  message     String?
+  verifiedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  case OnboardingCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, type])
+  @@index([tenantId])
+  @@index([caseId])
+}
+
+// Transactional outbox — same pattern as the other services.
+enum OutboxStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Outbox {
+  id           String       @id @default(uuid())
+  subject      String
+  type         String
+  tenantId     String?
+  payload      Json
+  status       OutboxStatus @default(PENDING)
+  attemptCount Int          @default(0)
+  lastError    String?
+  sentAt       DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@index([tenantId])
+}

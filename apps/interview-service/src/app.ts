@@ -6,6 +6,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import interviewsRouter from "./routes/interviews.js";
+import artifactsRouter from "./routes/artifacts.js";
 import roundsRouter from "./routes/rounds.js";
 import intelligenceRouter from "./routes/agent-intelligence.js";
 import schedulingRouter from "./routes/agent-scheduling.js";
@@ -26,6 +27,10 @@ export function createApp(logger: Logger): Express {
     res.end(await metrics.registry.metrics());
   });
   app.use(tenantContext); // bind request tenant for RLS-scoped queries
+  // Module D — artifact + collab-token routes ride the same /internal/interviews
+  // mount (gateway /api/interviews). Registered BEFORE the main router so the
+  // /:id/artifact + /:id/collab-token sub-paths resolve here first.
+  app.use("/internal/interviews", readAuthHeaders(), artifactsRouter);
   app.use("/internal/interviews", readAuthHeaders(), interviewsRouter);
   app.use("/internal/rounds", readAuthHeaders(), roundsRouter);
   app.use("/internal/interview-intelligence", readAuthHeaders(), intelligenceRouter);

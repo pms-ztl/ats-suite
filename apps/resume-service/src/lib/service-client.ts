@@ -6,6 +6,7 @@ import { AppError } from "@cdc-ats/common";
 
 const CANDIDATE_URL = process.env["CANDIDATE_SERVICE_URL"] ?? "http://localhost:4005";
 const BILLING_URL = process.env["BILLING_SERVICE_URL"] ?? "http://localhost:4003";
+const SCREENING_URL = process.env["SCREENING_SERVICE_URL"] ?? "http://localhost:4008";
 const INTERNAL_TOKEN = process.env["INTERNAL_SERVICE_TOKEN"];
 
 export interface UpsertCandidateResult {
@@ -96,5 +97,63 @@ export async function checkResumeQuota(
   } catch {
     clearTimeout(timer);
     return FAIL_OPEN;
+  }
+}
+
+export interface ResumeScore {
+  score: number;
+  matchPercentage: number;
+  result: string;
+  signals: string[];
+}
+
+/**
+ * Score raw resume text against a requisition via screening-service's
+ * synchronous /internal/screening/score endpoint (reuses the same
+ * candidate-screener agent as the async auto-screen path). Returns null on any
+ * failure — the bulk-archive worker treats null as "scoring failed" and marks
+ * that item failed WITHOUT fabricating a score. No retry/throw: one bad item
+ * must never fail the whole archive.
+ *
+ * Longer timeout than the other internal calls because this triggers an LLM
+ * call (the agent), which is slower than a plain DB read.
+ */
+export async function scoreResumeAgainstRequisition(
+  input: { requisitionId: string; resumeText: string; resumeSkills?: string[] },
+  tenantId: string,
+  userId: string
+): Promise<ResumeScore | null> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Tenant-Id": tenantId,
+    "X-User-Id": userId,
+    "X-User-Role": "ADMIN",
+  };
+  if (INTERNAL_TOKEN) headers["X-Internal-Service"] = INTERNAL_TOKEN;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const res = await fetch(`${SCREENING_URL}/internal/screening/score`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(input),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const body: any = await res.json();
+    const data = body?.data ?? body;
+    if (data == null || typeof data.score !== "number") return null;
+    return {
+      score: data.score,
+      matchPercentage: Number(data.matchPercentage ?? data.score),
+      result: String(data.result ?? ""),
+      signals: Array.isArray(data.signals) ? data.signals : [],
+    };
+  } catch {
+    clearTimeout(timer);
+    return null;
   }
 }

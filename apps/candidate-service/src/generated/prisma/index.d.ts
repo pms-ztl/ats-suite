@@ -6085,6 +6085,8 @@ export namespace Prisma {
     expiresAt: Date | null
     status: $Enums.OfferStatus | null
     approvedBy: string | null
+    offerLetterKey: string | null
+    acceptedAt: Date | null
     notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6104,6 +6106,8 @@ export namespace Prisma {
     expiresAt: Date | null
     status: $Enums.OfferStatus | null
     approvedBy: string | null
+    offerLetterKey: string | null
+    acceptedAt: Date | null
     notes: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6123,6 +6127,8 @@ export namespace Prisma {
     expiresAt: number
     status: number
     approvedBy: number
+    offerLetterKey: number
+    acceptedAt: number
     notes: number
     createdAt: number
     updatedAt: number
@@ -6154,6 +6160,8 @@ export namespace Prisma {
     expiresAt?: true
     status?: true
     approvedBy?: true
+    offerLetterKey?: true
+    acceptedAt?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6173,6 +6181,8 @@ export namespace Prisma {
     expiresAt?: true
     status?: true
     approvedBy?: true
+    offerLetterKey?: true
+    acceptedAt?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6192,6 +6202,8 @@ export namespace Prisma {
     expiresAt?: true
     status?: true
     approvedBy?: true
+    offerLetterKey?: true
+    acceptedAt?: true
     notes?: true
     createdAt?: true
     updatedAt?: true
@@ -6298,6 +6310,8 @@ export namespace Prisma {
     expiresAt: Date | null
     status: $Enums.OfferStatus
     approvedBy: string | null
+    offerLetterKey: string | null
+    acceptedAt: Date | null
     notes: string | null
     createdAt: Date
     updatedAt: Date
@@ -6336,6 +6350,8 @@ export namespace Prisma {
     expiresAt?: boolean
     status?: boolean
     approvedBy?: boolean
+    offerLetterKey?: boolean
+    acceptedAt?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6355,6 +6371,8 @@ export namespace Prisma {
     expiresAt?: boolean
     status?: boolean
     approvedBy?: boolean
+    offerLetterKey?: boolean
+    acceptedAt?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6374,6 +6392,8 @@ export namespace Prisma {
     expiresAt?: boolean
     status?: boolean
     approvedBy?: boolean
+    offerLetterKey?: boolean
+    acceptedAt?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -6393,12 +6413,14 @@ export namespace Prisma {
     expiresAt?: boolean
     status?: boolean
     approvedBy?: boolean
+    offerLetterKey?: boolean
+    acceptedAt?: boolean
     notes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "candidateId" | "requisitionId" | "applicationId" | "baseSalary" | "currency" | "bonusPercent" | "equity" | "startDate" | "expiresAt" | "status" | "approvedBy" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
+  export type OfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "candidateId" | "requisitionId" | "applicationId" | "baseSalary" | "currency" | "bonusPercent" | "equity" | "startDate" | "expiresAt" | "status" | "approvedBy" | "offerLetterKey" | "acceptedAt" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
 
   export type $OfferPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Offer"
@@ -6417,6 +6439,8 @@ export namespace Prisma {
       expiresAt: Date | null
       status: $Enums.OfferStatus
       approvedBy: string | null
+      offerLetterKey: string | null
+      acceptedAt: Date | null
       notes: string | null
       createdAt: Date
       updatedAt: Date
@@ -6856,6 +6880,8 @@ export namespace Prisma {
     readonly expiresAt: FieldRef<"Offer", 'DateTime'>
     readonly status: FieldRef<"Offer", 'OfferStatus'>
     readonly approvedBy: FieldRef<"Offer", 'String'>
+    readonly offerLetterKey: FieldRef<"Offer", 'String'>
+    readonly acceptedAt: FieldRef<"Offer", 'DateTime'>
     readonly notes: FieldRef<"Offer", 'String'>
     readonly createdAt: FieldRef<"Offer", 'DateTime'>
     readonly updatedAt: FieldRef<"Offer", 'DateTime'>
@@ -7326,6 +7352,8 @@ export namespace Prisma {
     expiresAt: 'expiresAt',
     status: 'status',
     approvedBy: 'approvedBy',
+    offerLetterKey: 'offerLetterKey',
+    acceptedAt: 'acceptedAt',
     notes: 'notes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -7893,6 +7921,8 @@ export namespace Prisma {
     expiresAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
     status?: EnumOfferStatusFilter<"Offer"> | $Enums.OfferStatus
     approvedBy?: StringNullableFilter<"Offer"> | string | null
+    offerLetterKey?: StringNullableFilter<"Offer"> | string | null
+    acceptedAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
     notes?: StringNullableFilter<"Offer"> | string | null
     createdAt?: DateTimeFilter<"Offer"> | Date | string
     updatedAt?: DateTimeFilter<"Offer"> | Date | string
@@ -7912,6 +7942,8 @@ export namespace Prisma {
     expiresAt?: SortOrderInput | SortOrder
     status?: SortOrder
     approvedBy?: SortOrderInput | SortOrder
+    offerLetterKey?: SortOrderInput | SortOrder
+    acceptedAt?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7934,6 +7966,8 @@ export namespace Prisma {
     expiresAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
     status?: EnumOfferStatusFilter<"Offer"> | $Enums.OfferStatus
     approvedBy?: StringNullableFilter<"Offer"> | string | null
+    offerLetterKey?: StringNullableFilter<"Offer"> | string | null
+    acceptedAt?: DateTimeNullableFilter<"Offer"> | Date | string | null
     notes?: StringNullableFilter<"Offer"> | string | null
     createdAt?: DateTimeFilter<"Offer"> | Date | string
     updatedAt?: DateTimeFilter<"Offer"> | Date | string
@@ -7953,6 +7987,8 @@ export namespace Prisma {
     expiresAt?: SortOrderInput | SortOrder
     status?: SortOrder
     approvedBy?: SortOrderInput | SortOrder
+    offerLetterKey?: SortOrderInput | SortOrder
+    acceptedAt?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7980,6 +8016,8 @@ export namespace Prisma {
     expiresAt?: DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
     status?: EnumOfferStatusWithAggregatesFilter<"Offer"> | $Enums.OfferStatus
     approvedBy?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    offerLetterKey?: StringNullableWithAggregatesFilter<"Offer"> | string | null
+    acceptedAt?: DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
     notes?: StringNullableWithAggregatesFilter<"Offer"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Offer"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Offer"> | Date | string
@@ -8435,6 +8473,8 @@ export namespace Prisma {
     expiresAt?: Date | string | null
     status?: $Enums.OfferStatus
     approvedBy?: string | null
+    offerLetterKey?: string | null
+    acceptedAt?: Date | string | null
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8454,6 +8494,8 @@ export namespace Prisma {
     expiresAt?: Date | string | null
     status?: $Enums.OfferStatus
     approvedBy?: string | null
+    offerLetterKey?: string | null
+    acceptedAt?: Date | string | null
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8473,6 +8515,8 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    offerLetterKey?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8492,6 +8536,8 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    offerLetterKey?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8511,6 +8557,8 @@ export namespace Prisma {
     expiresAt?: Date | string | null
     status?: $Enums.OfferStatus
     approvedBy?: string | null
+    offerLetterKey?: string | null
+    acceptedAt?: Date | string | null
     notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8530,6 +8578,8 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    offerLetterKey?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8549,6 +8599,8 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     approvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    offerLetterKey?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9052,6 +9104,8 @@ export namespace Prisma {
     expiresAt?: SortOrder
     status?: SortOrder
     approvedBy?: SortOrder
+    offerLetterKey?: SortOrder
+    acceptedAt?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9076,6 +9130,8 @@ export namespace Prisma {
     expiresAt?: SortOrder
     status?: SortOrder
     approvedBy?: SortOrder
+    offerLetterKey?: SortOrder
+    acceptedAt?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9095,6 +9151,8 @@ export namespace Prisma {
     expiresAt?: SortOrder
     status?: SortOrder
     approvedBy?: SortOrder
+    offerLetterKey?: SortOrder
+    acceptedAt?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder

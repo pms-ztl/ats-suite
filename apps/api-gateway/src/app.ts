@@ -394,6 +394,8 @@ export function createApp(logger: Logger): Express {
   // the first time here (it ran un-proxied since WF3); see the /api/assessments +
   // /api/public/assessment + Judge0-callback mounts below.
   const assessmentUrl = process.env["ASSESSMENT_SERVICE_URL"] ?? "http://localhost:4014";
+  // Module F — onboarding-service (Workday-style post-offer onboarding), port 4015.
+  const onboardingUrl = process.env["ONBOARDING_SERVICE_URL"] ?? "http://localhost:4015";
 
   // WF7 — PUBLIC candidate take surface (no auth). The candidate opens an
   // assessment from a single-use invite token, so there is NO JWT and NO tenant
@@ -474,6 +476,22 @@ export function createApp(logger: Logger): Express {
       target: jobUrl,
       changeOrigin: true,
       pathRewrite: (path) => `/internal/inbound-job-application${path}`,
+      logger,
+    })
+  );
+
+  // Module F — PUBLIC candidate onboarding portal. The opaque portalToken in the
+  // path IS the credential (no JWT, no tenant header); onboarding-service resolves
+  // the tenant from the case row. Same posture as the assessment public-take proxy
+  // and mounted BEFORE the generic /api/public job-service catch-all so this exact
+  // sub-path wins.
+  //   /api/public/onboarding/*  → onboarding-service /public/onboarding/*
+  app.use(
+    "/api/public/onboarding",
+    createProxyMiddleware({
+      target: onboardingUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/public/onboarding${path}`,
       logger,
     })
   );
@@ -1439,6 +1457,10 @@ export function createApp(logger: Logger): Express {
   // posts steps/dismiss/reset as the user progresses. requireTenantAdmin is
   // enforced inside the route handlers themselves for the mutating endpoints.
   app.use("/api/onboarding", gatewayAuth(), forwardHeaders(tenantUrl, "/internal/onboarding"));
+  // Module F — onboarding CASES (post-offer execution: PAN/bank/docs/tasks) live in
+  // the dedicated onboarding-service. Distinct from /api/onboarding above, which is
+  // the tenant's onboarding CONFIG in tenant-service.
+  app.use("/api/onboarding-cases", gatewayAuth(), forwardHeaders(onboardingUrl, "/internal/onboarding-cases"));
 
   // Phase 30 — Stripe self-serve plan purchases.
   // - /api/stripe/webhook is PUBLIC + raw-body (Stripe's signature IS the auth).

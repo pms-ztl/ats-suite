@@ -29,6 +29,10 @@ export type NotificationType =
   | "BULK_UPLOAD_COMPLETED"
   | "SEAT_LIMIT_REACHED"
   | "INTERVIEW_FEEDBACK_NEW"
+  // Module E — hire / offer / reject candidate comms.
+  | "OFFER_APPROVED"
+  | "APPLICATION_HIRED"
+  | "APPLICATION_REJECTED"
   | "SYSTEM";
 
 export type DeliveryChannel = "in_app" | "email" | "slack";
@@ -43,6 +47,14 @@ export interface NotificationInput {
   metadata?: Record<string, unknown>;
   /** Defaults to ["in_app"]. */
   channels?: DeliveryChannel[];
+  /**
+   * Explicit email recipient address(es). When set, the EMAIL channel sends to
+   * exactly these addresses and SKIPS the identity-service tenant-user lookup.
+   * Used for candidate-facing comms (offer/rejection) where the recipient is an
+   * external candidate, not a tenant user. Honest empty: if the array is empty,
+   * no email is sent (we do not fall back to broadcasting to the whole tenant).
+   */
+  explicitEmailRecipients?: string[];
 }
 
 export async function emitNotification(input: NotificationInput) {
@@ -69,7 +81,12 @@ export async function emitNotification(input: NotificationInput) {
   // ── email: resolve recipient + create delivery row + enqueue ──────────────
   if (channels.includes("email")) {
     try {
-      const recipients = await resolveEmailRecipients(input);
+      // Explicit recipients (e.g. an external candidate) bypass the tenant-user
+      // lookup. An explicitly-empty array means "no valid recipient" — send to
+      // nobody rather than broadcasting to the whole tenant.
+      const recipients = input.explicitEmailRecipients
+        ? Array.from(new Set(input.explicitEmailRecipients.filter((e) => !!e)))
+        : await resolveEmailRecipients(input);
       for (const email of recipients) {
         const delivery = await prisma.notificationDelivery.create({
           data: {

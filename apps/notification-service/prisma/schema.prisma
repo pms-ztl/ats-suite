@@ -16,6 +16,10 @@ enum NotificationType {
   BULK_UPLOAD_COMPLETED
   SEAT_LIMIT_REACHED
   INTERVIEW_FEEDBACK_NEW
+  // Module E — hire / offer / reject candidate comms.
+  OFFER_APPROVED
+  APPLICATION_HIRED
+  APPLICATION_REJECTED
   SYSTEM
 }
 

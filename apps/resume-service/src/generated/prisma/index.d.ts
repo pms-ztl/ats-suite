@@ -3545,10 +3545,12 @@ export namespace Prisma {
 
   export type BulkImportItemAvgAggregateOutputType = {
     sizeBytes: number | null
+    score: number | null
   }
 
   export type BulkImportItemSumAggregateOutputType = {
     sizeBytes: number | null
+    score: number | null
   }
 
   export type BulkImportItemMinAggregateOutputType = {
@@ -3564,6 +3566,8 @@ export namespace Prisma {
     extractedText: string | null
     extractStatus: string | null
     reviewStatus: string | null
+    score: number | null
+    scoreStatus: string | null
     candidateId: string | null
     createdAt: Date | null
   }
@@ -3581,6 +3585,8 @@ export namespace Prisma {
     extractedText: string | null
     extractStatus: string | null
     reviewStatus: string | null
+    score: number | null
+    scoreStatus: string | null
     candidateId: string | null
     createdAt: Date | null
   }
@@ -3598,6 +3604,8 @@ export namespace Prisma {
     extractedText: number
     extractStatus: number
     reviewStatus: number
+    score: number
+    scoreStatus: number
     candidateId: number
     createdAt: number
     _all: number
@@ -3606,10 +3614,12 @@ export namespace Prisma {
 
   export type BulkImportItemAvgAggregateInputType = {
     sizeBytes?: true
+    score?: true
   }
 
   export type BulkImportItemSumAggregateInputType = {
     sizeBytes?: true
+    score?: true
   }
 
   export type BulkImportItemMinAggregateInputType = {
@@ -3625,6 +3635,8 @@ export namespace Prisma {
     extractedText?: true
     extractStatus?: true
     reviewStatus?: true
+    score?: true
+    scoreStatus?: true
     candidateId?: true
     createdAt?: true
   }
@@ -3642,6 +3654,8 @@ export namespace Prisma {
     extractedText?: true
     extractStatus?: true
     reviewStatus?: true
+    score?: true
+    scoreStatus?: true
     candidateId?: true
     createdAt?: true
   }
@@ -3659,6 +3673,8 @@ export namespace Prisma {
     extractedText?: true
     extractStatus?: true
     reviewStatus?: true
+    score?: true
+    scoreStatus?: true
     candidateId?: true
     createdAt?: true
     _all?: true
@@ -3763,6 +3779,8 @@ export namespace Prisma {
     extractedText: string | null
     extractStatus: string
     reviewStatus: string
+    score: number | null
+    scoreStatus: string | null
     candidateId: string | null
     createdAt: Date
     _count: BulkImportItemCountAggregateOutputType | null
@@ -3799,6 +3817,8 @@ export namespace Prisma {
     extractedText?: boolean
     extractStatus?: boolean
     reviewStatus?: boolean
+    score?: boolean
+    scoreStatus?: boolean
     candidateId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["bulkImportItem"]>
@@ -3816,6 +3836,8 @@ export namespace Prisma {
     extractedText?: boolean
     extractStatus?: boolean
     reviewStatus?: boolean
+    score?: boolean
+    scoreStatus?: boolean
     candidateId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["bulkImportItem"]>
@@ -3833,6 +3855,8 @@ export namespace Prisma {
     extractedText?: boolean
     extractStatus?: boolean
     reviewStatus?: boolean
+    score?: boolean
+    scoreStatus?: boolean
     candidateId?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["bulkImportItem"]>
@@ -3850,11 +3874,13 @@ export namespace Prisma {
     extractedText?: boolean
     extractStatus?: boolean
     reviewStatus?: boolean
+    score?: boolean
+    scoreStatus?: boolean
     candidateId?: boolean
     createdAt?: boolean
   }
 
-  export type BulkImportItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "bulkUploadId" | "fileName" | "mimeType" | "sizeBytes" | "detectedName" | "detectedEmail" | "textSnippet" | "extractedText" | "extractStatus" | "reviewStatus" | "candidateId" | "createdAt", ExtArgs["result"]["bulkImportItem"]>
+  export type BulkImportItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "bulkUploadId" | "fileName" | "mimeType" | "sizeBytes" | "detectedName" | "detectedEmail" | "textSnippet" | "extractedText" | "extractStatus" | "reviewStatus" | "score" | "scoreStatus" | "candidateId" | "createdAt", ExtArgs["result"]["bulkImportItem"]>
 
   export type $BulkImportItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BulkImportItem"
@@ -3872,6 +3898,8 @@ export namespace Prisma {
       extractedText: string | null
       extractStatus: string
       reviewStatus: string
+      score: number | null
+      scoreStatus: string | null
       candidateId: string | null
       createdAt: Date
     }, ExtArgs["result"]["bulkImportItem"]>
@@ -4309,6 +4337,8 @@ export namespace Prisma {
     readonly extractedText: FieldRef<"BulkImportItem", 'String'>
     readonly extractStatus: FieldRef<"BulkImportItem", 'String'>
     readonly reviewStatus: FieldRef<"BulkImportItem", 'String'>
+    readonly score: FieldRef<"BulkImportItem", 'Float'>
+    readonly scoreStatus: FieldRef<"BulkImportItem", 'String'>
     readonly candidateId: FieldRef<"BulkImportItem", 'String'>
     readonly createdAt: FieldRef<"BulkImportItem", 'DateTime'>
   }
@@ -5894,6 +5924,8 @@ export namespace Prisma {
     extractedText: 'extractedText',
     extractStatus: 'extractStatus',
     reviewStatus: 'reviewStatus',
+    score: 'score',
+    scoreStatus: 'scoreStatus',
     candidateId: 'candidateId',
     createdAt: 'createdAt'
   };
@@ -6044,20 +6076,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Decimal'
-   */
-  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
-    
-
-
-  /**
-   * Reference to a field of type 'Decimal[]'
-   */
-  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
-    
-
-
-  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -6068,6 +6086,20 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Decimal'
+   */
+  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+  /**
+   * Reference to a field of type 'Decimal[]'
+   */
+  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
     
   /**
    * Deep Input Types
@@ -6313,6 +6345,8 @@ export namespace Prisma {
     extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
     extractStatus?: StringFilter<"BulkImportItem"> | string
     reviewStatus?: StringFilter<"BulkImportItem"> | string
+    score?: FloatNullableFilter<"BulkImportItem"> | number | null
+    scoreStatus?: StringNullableFilter<"BulkImportItem"> | string | null
     candidateId?: StringNullableFilter<"BulkImportItem"> | string | null
     createdAt?: DateTimeFilter<"BulkImportItem"> | Date | string
   }
@@ -6330,6 +6364,8 @@ export namespace Prisma {
     extractedText?: SortOrderInput | SortOrder
     extractStatus?: SortOrder
     reviewStatus?: SortOrder
+    score?: SortOrderInput | SortOrder
+    scoreStatus?: SortOrderInput | SortOrder
     candidateId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
   }
@@ -6350,6 +6386,8 @@ export namespace Prisma {
     extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
     extractStatus?: StringFilter<"BulkImportItem"> | string
     reviewStatus?: StringFilter<"BulkImportItem"> | string
+    score?: FloatNullableFilter<"BulkImportItem"> | number | null
+    scoreStatus?: StringNullableFilter<"BulkImportItem"> | string | null
     candidateId?: StringNullableFilter<"BulkImportItem"> | string | null
     createdAt?: DateTimeFilter<"BulkImportItem"> | Date | string
   }, "id">
@@ -6367,6 +6405,8 @@ export namespace Prisma {
     extractedText?: SortOrderInput | SortOrder
     extractStatus?: SortOrder
     reviewStatus?: SortOrder
+    score?: SortOrderInput | SortOrder
+    scoreStatus?: SortOrderInput | SortOrder
     candidateId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: BulkImportItemCountOrderByAggregateInput
@@ -6392,6 +6432,8 @@ export namespace Prisma {
     extractedText?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     extractStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
     reviewStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    score?: FloatNullableWithAggregatesFilter<"BulkImportItem"> | number | null
+    scoreStatus?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     candidateId?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"BulkImportItem"> | Date | string
   }
@@ -6776,6 +6818,8 @@ export namespace Prisma {
     extractedText?: string | null
     extractStatus?: string
     reviewStatus?: string
+    score?: number | null
+    scoreStatus?: string | null
     candidateId?: string | null
     createdAt?: Date | string
   }
@@ -6793,6 +6837,8 @@ export namespace Prisma {
     extractedText?: string | null
     extractStatus?: string
     reviewStatus?: string
+    score?: number | null
+    scoreStatus?: string | null
     candidateId?: string | null
     createdAt?: Date | string
   }
@@ -6810,6 +6856,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
     reviewStatus?: StringFieldUpdateOperationsInput | string
+    score?: NullableFloatFieldUpdateOperationsInput | number | null
+    scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
     candidateId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6827,6 +6875,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
     reviewStatus?: StringFieldUpdateOperationsInput | string
+    score?: NullableFloatFieldUpdateOperationsInput | number | null
+    scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
     candidateId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6844,6 +6894,8 @@ export namespace Prisma {
     extractedText?: string | null
     extractStatus?: string
     reviewStatus?: string
+    score?: number | null
+    scoreStatus?: string | null
     candidateId?: string | null
     createdAt?: Date | string
   }
@@ -6861,6 +6913,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
     reviewStatus?: StringFieldUpdateOperationsInput | string
+    score?: NullableFloatFieldUpdateOperationsInput | number | null
+    scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
     candidateId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6878,6 +6932,8 @@ export namespace Prisma {
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
     reviewStatus?: StringFieldUpdateOperationsInput | string
+    score?: NullableFloatFieldUpdateOperationsInput | number | null
+    scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
     candidateId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7400,6 +7456,17 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type BulkImportItemCountOrderByAggregateInput = {
     id?: SortOrder
     tenantId?: SortOrder
@@ -7413,12 +7480,15 @@ export namespace Prisma {
     extractedText?: SortOrder
     extractStatus?: SortOrder
     reviewStatus?: SortOrder
+    score?: SortOrder
+    scoreStatus?: SortOrder
     candidateId?: SortOrder
     createdAt?: SortOrder
   }
 
   export type BulkImportItemAvgOrderByAggregateInput = {
     sizeBytes?: SortOrder
+    score?: SortOrder
   }
 
   export type BulkImportItemMaxOrderByAggregateInput = {
@@ -7434,6 +7504,8 @@ export namespace Prisma {
     extractedText?: SortOrder
     extractStatus?: SortOrder
     reviewStatus?: SortOrder
+    score?: SortOrder
+    scoreStatus?: SortOrder
     candidateId?: SortOrder
     createdAt?: SortOrder
   }
@@ -7451,12 +7523,31 @@ export namespace Prisma {
     extractedText?: SortOrder
     extractStatus?: SortOrder
     reviewStatus?: SortOrder
+    score?: SortOrder
+    scoreStatus?: SortOrder
     candidateId?: SortOrder
     createdAt?: SortOrder
   }
 
   export type BulkImportItemSumOrderByAggregateInput = {
     sizeBytes?: SortOrder
+    score?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type DecimalFilter<$PrismaModel = never> = {
@@ -7574,6 +7665,14 @@ export namespace Prisma {
 
   export type EnumBulkUploadStatusFieldUpdateOperationsInput = {
     set?: $Enums.BulkUploadStatus
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type DecimalFieldUpdateOperationsInput = {
@@ -7806,6 +7905,33 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type NestedDecimalFilter<$PrismaModel = never> = {

@@ -33,6 +33,11 @@ export type InterviewFeedback = $Result.DefaultSelection<Prisma.$InterviewFeedba
  * 
  */
 export type InterviewPanelMember = $Result.DefaultSelection<Prisma.$InterviewPanelMemberPayload>
+/**
+ * Model InterviewArtifact
+ * 
+ */
+export type InterviewArtifact = $Result.DefaultSelection<Prisma.$InterviewArtifactPayload>
 
 /**
  * Enums
@@ -243,6 +248,16 @@ export class PrismaClient<
     * ```
     */
   get interviewPanelMember(): Prisma.InterviewPanelMemberDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.interviewArtifact`: Exposes CRUD operations for the **InterviewArtifact** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InterviewArtifacts
+    * const interviewArtifacts = await prisma.interviewArtifact.findMany()
+    * ```
+    */
+  get interviewArtifact(): Prisma.InterviewArtifactDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -687,7 +702,8 @@ export namespace Prisma {
     Interview: 'Interview',
     InterviewRound: 'InterviewRound',
     InterviewFeedback: 'InterviewFeedback',
-    InterviewPanelMember: 'InterviewPanelMember'
+    InterviewPanelMember: 'InterviewPanelMember',
+    InterviewArtifact: 'InterviewArtifact'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -706,7 +722,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "interview" | "interviewRound" | "interviewFeedback" | "interviewPanelMember"
+      modelProps: "interview" | "interviewRound" | "interviewFeedback" | "interviewPanelMember" | "interviewArtifact"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1006,6 +1022,80 @@ export namespace Prisma {
           }
         }
       }
+      InterviewArtifact: {
+        payload: Prisma.$InterviewArtifactPayload<ExtArgs>
+        fields: Prisma.InterviewArtifactFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InterviewArtifactFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InterviewArtifactFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          findFirst: {
+            args: Prisma.InterviewArtifactFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InterviewArtifactFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          findMany: {
+            args: Prisma.InterviewArtifactFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>[]
+          }
+          create: {
+            args: Prisma.InterviewArtifactCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          createMany: {
+            args: Prisma.InterviewArtifactCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InterviewArtifactCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>[]
+          }
+          delete: {
+            args: Prisma.InterviewArtifactDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          update: {
+            args: Prisma.InterviewArtifactUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          deleteMany: {
+            args: Prisma.InterviewArtifactDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InterviewArtifactUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InterviewArtifactUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>[]
+          }
+          upsert: {
+            args: Prisma.InterviewArtifactUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InterviewArtifactPayload>
+          }
+          aggregate: {
+            args: Prisma.InterviewArtifactAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInterviewArtifact>
+          }
+          groupBy: {
+            args: Prisma.InterviewArtifactGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InterviewArtifactGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InterviewArtifactCountArgs<ExtArgs>
+            result: $Utils.Optional<InterviewArtifactCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1106,6 +1196,7 @@ export namespace Prisma {
     interviewRound?: InterviewRoundOmit
     interviewFeedback?: InterviewFeedbackOmit
     interviewPanelMember?: InterviewPanelMemberOmit
+    interviewArtifact?: InterviewArtifactOmit
   }
 
   /* Types for Logging */
@@ -6018,6 +6109,1084 @@ export namespace Prisma {
 
 
   /**
+   * Model InterviewArtifact
+   */
+
+  export type AggregateInterviewArtifact = {
+    _count: InterviewArtifactCountAggregateOutputType | null
+    _min: InterviewArtifactMinAggregateOutputType | null
+    _max: InterviewArtifactMaxAggregateOutputType | null
+  }
+
+  export type InterviewArtifactMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    interviewId: string | null
+    roundId: string | null
+    notesText: string | null
+    code: string | null
+    codeLanguage: string | null
+    whiteboardImageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewArtifactMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    interviewId: string | null
+    roundId: string | null
+    notesText: string | null
+    code: string | null
+    codeLanguage: string | null
+    whiteboardImageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type InterviewArtifactCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    interviewId: number
+    roundId: number
+    notes: number
+    notesText: number
+    code: number
+    codeLanguage: number
+    whiteboard: number
+    whiteboardImageKey: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type InterviewArtifactMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    interviewId?: true
+    roundId?: true
+    notesText?: true
+    code?: true
+    codeLanguage?: true
+    whiteboardImageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewArtifactMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    interviewId?: true
+    roundId?: true
+    notesText?: true
+    code?: true
+    codeLanguage?: true
+    whiteboardImageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type InterviewArtifactCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    interviewId?: true
+    roundId?: true
+    notes?: true
+    notesText?: true
+    code?: true
+    codeLanguage?: true
+    whiteboard?: true
+    whiteboardImageKey?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type InterviewArtifactAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewArtifact to aggregate.
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewArtifacts to fetch.
+     */
+    orderBy?: InterviewArtifactOrderByWithRelationInput | InterviewArtifactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InterviewArtifactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewArtifacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewArtifacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InterviewArtifacts
+    **/
+    _count?: true | InterviewArtifactCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InterviewArtifactMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InterviewArtifactMaxAggregateInputType
+  }
+
+  export type GetInterviewArtifactAggregateType<T extends InterviewArtifactAggregateArgs> = {
+        [P in keyof T & keyof AggregateInterviewArtifact]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInterviewArtifact[P]>
+      : GetScalarType<T[P], AggregateInterviewArtifact[P]>
+  }
+
+
+
+
+  export type InterviewArtifactGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InterviewArtifactWhereInput
+    orderBy?: InterviewArtifactOrderByWithAggregationInput | InterviewArtifactOrderByWithAggregationInput[]
+    by: InterviewArtifactScalarFieldEnum[] | InterviewArtifactScalarFieldEnum
+    having?: InterviewArtifactScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InterviewArtifactCountAggregateInputType | true
+    _min?: InterviewArtifactMinAggregateInputType
+    _max?: InterviewArtifactMaxAggregateInputType
+  }
+
+  export type InterviewArtifactGroupByOutputType = {
+    id: string
+    tenantId: string
+    interviewId: string
+    roundId: string | null
+    notes: JsonValue | null
+    notesText: string | null
+    code: string | null
+    codeLanguage: string
+    whiteboard: JsonValue | null
+    whiteboardImageKey: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: InterviewArtifactCountAggregateOutputType | null
+    _min: InterviewArtifactMinAggregateOutputType | null
+    _max: InterviewArtifactMaxAggregateOutputType | null
+  }
+
+  type GetInterviewArtifactGroupByPayload<T extends InterviewArtifactGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InterviewArtifactGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InterviewArtifactGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InterviewArtifactGroupByOutputType[P]>
+            : GetScalarType<T[P], InterviewArtifactGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InterviewArtifactSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    interviewId?: boolean
+    roundId?: boolean
+    notes?: boolean
+    notesText?: boolean
+    code?: boolean
+    codeLanguage?: boolean
+    whiteboard?: boolean
+    whiteboardImageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["interviewArtifact"]>
+
+  export type InterviewArtifactSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    interviewId?: boolean
+    roundId?: boolean
+    notes?: boolean
+    notesText?: boolean
+    code?: boolean
+    codeLanguage?: boolean
+    whiteboard?: boolean
+    whiteboardImageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["interviewArtifact"]>
+
+  export type InterviewArtifactSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    interviewId?: boolean
+    roundId?: boolean
+    notes?: boolean
+    notesText?: boolean
+    code?: boolean
+    codeLanguage?: boolean
+    whiteboard?: boolean
+    whiteboardImageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["interviewArtifact"]>
+
+  export type InterviewArtifactSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    interviewId?: boolean
+    roundId?: boolean
+    notes?: boolean
+    notesText?: boolean
+    code?: boolean
+    codeLanguage?: boolean
+    whiteboard?: boolean
+    whiteboardImageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type InterviewArtifactOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "interviewId" | "roundId" | "notes" | "notesText" | "code" | "codeLanguage" | "whiteboard" | "whiteboardImageKey" | "createdAt" | "updatedAt", ExtArgs["result"]["interviewArtifact"]>
+
+  export type $InterviewArtifactPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InterviewArtifact"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      interviewId: string
+      roundId: string | null
+      notes: Prisma.JsonValue | null
+      notesText: string | null
+      code: string | null
+      codeLanguage: string
+      whiteboard: Prisma.JsonValue | null
+      whiteboardImageKey: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["interviewArtifact"]>
+    composites: {}
+  }
+
+  type InterviewArtifactGetPayload<S extends boolean | null | undefined | InterviewArtifactDefaultArgs> = $Result.GetResult<Prisma.$InterviewArtifactPayload, S>
+
+  type InterviewArtifactCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InterviewArtifactFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InterviewArtifactCountAggregateInputType | true
+    }
+
+  export interface InterviewArtifactDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InterviewArtifact'], meta: { name: 'InterviewArtifact' } }
+    /**
+     * Find zero or one InterviewArtifact that matches the filter.
+     * @param {InterviewArtifactFindUniqueArgs} args - Arguments to find a InterviewArtifact
+     * @example
+     * // Get one InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InterviewArtifactFindUniqueArgs>(args: SelectSubset<T, InterviewArtifactFindUniqueArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InterviewArtifact that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InterviewArtifactFindUniqueOrThrowArgs} args - Arguments to find a InterviewArtifact
+     * @example
+     * // Get one InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InterviewArtifactFindUniqueOrThrowArgs>(args: SelectSubset<T, InterviewArtifactFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InterviewArtifact that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactFindFirstArgs} args - Arguments to find a InterviewArtifact
+     * @example
+     * // Get one InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InterviewArtifactFindFirstArgs>(args?: SelectSubset<T, InterviewArtifactFindFirstArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InterviewArtifact that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactFindFirstOrThrowArgs} args - Arguments to find a InterviewArtifact
+     * @example
+     * // Get one InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InterviewArtifactFindFirstOrThrowArgs>(args?: SelectSubset<T, InterviewArtifactFindFirstOrThrowArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InterviewArtifacts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InterviewArtifacts
+     * const interviewArtifacts = await prisma.interviewArtifact.findMany()
+     * 
+     * // Get first 10 InterviewArtifacts
+     * const interviewArtifacts = await prisma.interviewArtifact.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const interviewArtifactWithIdOnly = await prisma.interviewArtifact.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InterviewArtifactFindManyArgs>(args?: SelectSubset<T, InterviewArtifactFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InterviewArtifact.
+     * @param {InterviewArtifactCreateArgs} args - Arguments to create a InterviewArtifact.
+     * @example
+     * // Create one InterviewArtifact
+     * const InterviewArtifact = await prisma.interviewArtifact.create({
+     *   data: {
+     *     // ... data to create a InterviewArtifact
+     *   }
+     * })
+     * 
+     */
+    create<T extends InterviewArtifactCreateArgs>(args: SelectSubset<T, InterviewArtifactCreateArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InterviewArtifacts.
+     * @param {InterviewArtifactCreateManyArgs} args - Arguments to create many InterviewArtifacts.
+     * @example
+     * // Create many InterviewArtifacts
+     * const interviewArtifact = await prisma.interviewArtifact.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InterviewArtifactCreateManyArgs>(args?: SelectSubset<T, InterviewArtifactCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InterviewArtifacts and returns the data saved in the database.
+     * @param {InterviewArtifactCreateManyAndReturnArgs} args - Arguments to create many InterviewArtifacts.
+     * @example
+     * // Create many InterviewArtifacts
+     * const interviewArtifact = await prisma.interviewArtifact.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InterviewArtifacts and only return the `id`
+     * const interviewArtifactWithIdOnly = await prisma.interviewArtifact.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InterviewArtifactCreateManyAndReturnArgs>(args?: SelectSubset<T, InterviewArtifactCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InterviewArtifact.
+     * @param {InterviewArtifactDeleteArgs} args - Arguments to delete one InterviewArtifact.
+     * @example
+     * // Delete one InterviewArtifact
+     * const InterviewArtifact = await prisma.interviewArtifact.delete({
+     *   where: {
+     *     // ... filter to delete one InterviewArtifact
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InterviewArtifactDeleteArgs>(args: SelectSubset<T, InterviewArtifactDeleteArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InterviewArtifact.
+     * @param {InterviewArtifactUpdateArgs} args - Arguments to update one InterviewArtifact.
+     * @example
+     * // Update one InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InterviewArtifactUpdateArgs>(args: SelectSubset<T, InterviewArtifactUpdateArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InterviewArtifacts.
+     * @param {InterviewArtifactDeleteManyArgs} args - Arguments to filter InterviewArtifacts to delete.
+     * @example
+     * // Delete a few InterviewArtifacts
+     * const { count } = await prisma.interviewArtifact.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InterviewArtifactDeleteManyArgs>(args?: SelectSubset<T, InterviewArtifactDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InterviewArtifacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InterviewArtifacts
+     * const interviewArtifact = await prisma.interviewArtifact.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InterviewArtifactUpdateManyArgs>(args: SelectSubset<T, InterviewArtifactUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InterviewArtifacts and returns the data updated in the database.
+     * @param {InterviewArtifactUpdateManyAndReturnArgs} args - Arguments to update many InterviewArtifacts.
+     * @example
+     * // Update many InterviewArtifacts
+     * const interviewArtifact = await prisma.interviewArtifact.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InterviewArtifacts and only return the `id`
+     * const interviewArtifactWithIdOnly = await prisma.interviewArtifact.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InterviewArtifactUpdateManyAndReturnArgs>(args: SelectSubset<T, InterviewArtifactUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InterviewArtifact.
+     * @param {InterviewArtifactUpsertArgs} args - Arguments to update or create a InterviewArtifact.
+     * @example
+     * // Update or create a InterviewArtifact
+     * const interviewArtifact = await prisma.interviewArtifact.upsert({
+     *   create: {
+     *     // ... data to create a InterviewArtifact
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InterviewArtifact we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InterviewArtifactUpsertArgs>(args: SelectSubset<T, InterviewArtifactUpsertArgs<ExtArgs>>): Prisma__InterviewArtifactClient<$Result.GetResult<Prisma.$InterviewArtifactPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InterviewArtifacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactCountArgs} args - Arguments to filter InterviewArtifacts to count.
+     * @example
+     * // Count the number of InterviewArtifacts
+     * const count = await prisma.interviewArtifact.count({
+     *   where: {
+     *     // ... the filter for the InterviewArtifacts we want to count
+     *   }
+     * })
+    **/
+    count<T extends InterviewArtifactCountArgs>(
+      args?: Subset<T, InterviewArtifactCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InterviewArtifactCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InterviewArtifact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InterviewArtifactAggregateArgs>(args: Subset<T, InterviewArtifactAggregateArgs>): Prisma.PrismaPromise<GetInterviewArtifactAggregateType<T>>
+
+    /**
+     * Group by InterviewArtifact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InterviewArtifactGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InterviewArtifactGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InterviewArtifactGroupByArgs['orderBy'] }
+        : { orderBy?: InterviewArtifactGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InterviewArtifactGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInterviewArtifactGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InterviewArtifact model
+   */
+  readonly fields: InterviewArtifactFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InterviewArtifact.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InterviewArtifactClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InterviewArtifact model
+   */
+  interface InterviewArtifactFieldRefs {
+    readonly id: FieldRef<"InterviewArtifact", 'String'>
+    readonly tenantId: FieldRef<"InterviewArtifact", 'String'>
+    readonly interviewId: FieldRef<"InterviewArtifact", 'String'>
+    readonly roundId: FieldRef<"InterviewArtifact", 'String'>
+    readonly notes: FieldRef<"InterviewArtifact", 'Json'>
+    readonly notesText: FieldRef<"InterviewArtifact", 'String'>
+    readonly code: FieldRef<"InterviewArtifact", 'String'>
+    readonly codeLanguage: FieldRef<"InterviewArtifact", 'String'>
+    readonly whiteboard: FieldRef<"InterviewArtifact", 'Json'>
+    readonly whiteboardImageKey: FieldRef<"InterviewArtifact", 'String'>
+    readonly createdAt: FieldRef<"InterviewArtifact", 'DateTime'>
+    readonly updatedAt: FieldRef<"InterviewArtifact", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InterviewArtifact findUnique
+   */
+  export type InterviewArtifactFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter, which InterviewArtifact to fetch.
+     */
+    where: InterviewArtifactWhereUniqueInput
+  }
+
+  /**
+   * InterviewArtifact findUniqueOrThrow
+   */
+  export type InterviewArtifactFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter, which InterviewArtifact to fetch.
+     */
+    where: InterviewArtifactWhereUniqueInput
+  }
+
+  /**
+   * InterviewArtifact findFirst
+   */
+  export type InterviewArtifactFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter, which InterviewArtifact to fetch.
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewArtifacts to fetch.
+     */
+    orderBy?: InterviewArtifactOrderByWithRelationInput | InterviewArtifactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewArtifacts.
+     */
+    cursor?: InterviewArtifactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewArtifacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewArtifacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewArtifacts.
+     */
+    distinct?: InterviewArtifactScalarFieldEnum | InterviewArtifactScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewArtifact findFirstOrThrow
+   */
+  export type InterviewArtifactFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter, which InterviewArtifact to fetch.
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewArtifacts to fetch.
+     */
+    orderBy?: InterviewArtifactOrderByWithRelationInput | InterviewArtifactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InterviewArtifacts.
+     */
+    cursor?: InterviewArtifactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewArtifacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewArtifacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InterviewArtifacts.
+     */
+    distinct?: InterviewArtifactScalarFieldEnum | InterviewArtifactScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewArtifact findMany
+   */
+  export type InterviewArtifactFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter, which InterviewArtifacts to fetch.
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InterviewArtifacts to fetch.
+     */
+    orderBy?: InterviewArtifactOrderByWithRelationInput | InterviewArtifactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InterviewArtifacts.
+     */
+    cursor?: InterviewArtifactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InterviewArtifacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InterviewArtifacts.
+     */
+    skip?: number
+    distinct?: InterviewArtifactScalarFieldEnum | InterviewArtifactScalarFieldEnum[]
+  }
+
+  /**
+   * InterviewArtifact create
+   */
+  export type InterviewArtifactCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * The data needed to create a InterviewArtifact.
+     */
+    data: XOR<InterviewArtifactCreateInput, InterviewArtifactUncheckedCreateInput>
+  }
+
+  /**
+   * InterviewArtifact createMany
+   */
+  export type InterviewArtifactCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InterviewArtifacts.
+     */
+    data: InterviewArtifactCreateManyInput | InterviewArtifactCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InterviewArtifact createManyAndReturn
+   */
+  export type InterviewArtifactCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * The data used to create many InterviewArtifacts.
+     */
+    data: InterviewArtifactCreateManyInput | InterviewArtifactCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InterviewArtifact update
+   */
+  export type InterviewArtifactUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * The data needed to update a InterviewArtifact.
+     */
+    data: XOR<InterviewArtifactUpdateInput, InterviewArtifactUncheckedUpdateInput>
+    /**
+     * Choose, which InterviewArtifact to update.
+     */
+    where: InterviewArtifactWhereUniqueInput
+  }
+
+  /**
+   * InterviewArtifact updateMany
+   */
+  export type InterviewArtifactUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InterviewArtifacts.
+     */
+    data: XOR<InterviewArtifactUpdateManyMutationInput, InterviewArtifactUncheckedUpdateManyInput>
+    /**
+     * Filter which InterviewArtifacts to update
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * Limit how many InterviewArtifacts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InterviewArtifact updateManyAndReturn
+   */
+  export type InterviewArtifactUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * The data used to update InterviewArtifacts.
+     */
+    data: XOR<InterviewArtifactUpdateManyMutationInput, InterviewArtifactUncheckedUpdateManyInput>
+    /**
+     * Filter which InterviewArtifacts to update
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * Limit how many InterviewArtifacts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InterviewArtifact upsert
+   */
+  export type InterviewArtifactUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * The filter to search for the InterviewArtifact to update in case it exists.
+     */
+    where: InterviewArtifactWhereUniqueInput
+    /**
+     * In case the InterviewArtifact found by the `where` argument doesn't exist, create a new InterviewArtifact with this data.
+     */
+    create: XOR<InterviewArtifactCreateInput, InterviewArtifactUncheckedCreateInput>
+    /**
+     * In case the InterviewArtifact was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InterviewArtifactUpdateInput, InterviewArtifactUncheckedUpdateInput>
+  }
+
+  /**
+   * InterviewArtifact delete
+   */
+  export type InterviewArtifactDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+    /**
+     * Filter which InterviewArtifact to delete.
+     */
+    where: InterviewArtifactWhereUniqueInput
+  }
+
+  /**
+   * InterviewArtifact deleteMany
+   */
+  export type InterviewArtifactDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InterviewArtifacts to delete
+     */
+    where?: InterviewArtifactWhereInput
+    /**
+     * Limit how many InterviewArtifacts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InterviewArtifact without action
+   */
+  export type InterviewArtifactDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InterviewArtifact
+     */
+    select?: InterviewArtifactSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InterviewArtifact
+     */
+    omit?: InterviewArtifactOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -6101,6 +7270,24 @@ export namespace Prisma {
   export type InterviewPanelMemberScalarFieldEnum = (typeof InterviewPanelMemberScalarFieldEnum)[keyof typeof InterviewPanelMemberScalarFieldEnum]
 
 
+  export const InterviewArtifactScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    interviewId: 'interviewId',
+    roundId: 'roundId',
+    notes: 'notes',
+    notesText: 'notesText',
+    code: 'code',
+    codeLanguage: 'codeLanguage',
+    whiteboard: 'whiteboard',
+    whiteboardImageKey: 'whiteboardImageKey',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type InterviewArtifactScalarFieldEnum = (typeof InterviewArtifactScalarFieldEnum)[keyof typeof InterviewArtifactScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -6114,6 +7301,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const QueryMode: {
@@ -6633,6 +7828,93 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"InterviewPanelMember"> | Date | string
   }
 
+  export type InterviewArtifactWhereInput = {
+    AND?: InterviewArtifactWhereInput | InterviewArtifactWhereInput[]
+    OR?: InterviewArtifactWhereInput[]
+    NOT?: InterviewArtifactWhereInput | InterviewArtifactWhereInput[]
+    id?: StringFilter<"InterviewArtifact"> | string
+    tenantId?: StringFilter<"InterviewArtifact"> | string
+    interviewId?: StringFilter<"InterviewArtifact"> | string
+    roundId?: StringNullableFilter<"InterviewArtifact"> | string | null
+    notes?: JsonNullableFilter<"InterviewArtifact">
+    notesText?: StringNullableFilter<"InterviewArtifact"> | string | null
+    code?: StringNullableFilter<"InterviewArtifact"> | string | null
+    codeLanguage?: StringFilter<"InterviewArtifact"> | string
+    whiteboard?: JsonNullableFilter<"InterviewArtifact">
+    whiteboardImageKey?: StringNullableFilter<"InterviewArtifact"> | string | null
+    createdAt?: DateTimeFilter<"InterviewArtifact"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewArtifact"> | Date | string
+  }
+
+  export type InterviewArtifactOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    interviewId?: SortOrder
+    roundId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    notesText?: SortOrderInput | SortOrder
+    code?: SortOrderInput | SortOrder
+    codeLanguage?: SortOrder
+    whiteboard?: SortOrderInput | SortOrder
+    whiteboardImageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewArtifactWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    interviewId?: string
+    AND?: InterviewArtifactWhereInput | InterviewArtifactWhereInput[]
+    OR?: InterviewArtifactWhereInput[]
+    NOT?: InterviewArtifactWhereInput | InterviewArtifactWhereInput[]
+    tenantId?: StringFilter<"InterviewArtifact"> | string
+    roundId?: StringNullableFilter<"InterviewArtifact"> | string | null
+    notes?: JsonNullableFilter<"InterviewArtifact">
+    notesText?: StringNullableFilter<"InterviewArtifact"> | string | null
+    code?: StringNullableFilter<"InterviewArtifact"> | string | null
+    codeLanguage?: StringFilter<"InterviewArtifact"> | string
+    whiteboard?: JsonNullableFilter<"InterviewArtifact">
+    whiteboardImageKey?: StringNullableFilter<"InterviewArtifact"> | string | null
+    createdAt?: DateTimeFilter<"InterviewArtifact"> | Date | string
+    updatedAt?: DateTimeFilter<"InterviewArtifact"> | Date | string
+  }, "id" | "interviewId">
+
+  export type InterviewArtifactOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    interviewId?: SortOrder
+    roundId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    notesText?: SortOrderInput | SortOrder
+    code?: SortOrderInput | SortOrder
+    codeLanguage?: SortOrder
+    whiteboard?: SortOrderInput | SortOrder
+    whiteboardImageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: InterviewArtifactCountOrderByAggregateInput
+    _max?: InterviewArtifactMaxOrderByAggregateInput
+    _min?: InterviewArtifactMinOrderByAggregateInput
+  }
+
+  export type InterviewArtifactScalarWhereWithAggregatesInput = {
+    AND?: InterviewArtifactScalarWhereWithAggregatesInput | InterviewArtifactScalarWhereWithAggregatesInput[]
+    OR?: InterviewArtifactScalarWhereWithAggregatesInput[]
+    NOT?: InterviewArtifactScalarWhereWithAggregatesInput | InterviewArtifactScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InterviewArtifact"> | string
+    tenantId?: StringWithAggregatesFilter<"InterviewArtifact"> | string
+    interviewId?: StringWithAggregatesFilter<"InterviewArtifact"> | string
+    roundId?: StringNullableWithAggregatesFilter<"InterviewArtifact"> | string | null
+    notes?: JsonNullableWithAggregatesFilter<"InterviewArtifact">
+    notesText?: StringNullableWithAggregatesFilter<"InterviewArtifact"> | string | null
+    code?: StringNullableWithAggregatesFilter<"InterviewArtifact"> | string | null
+    codeLanguage?: StringWithAggregatesFilter<"InterviewArtifact"> | string
+    whiteboard?: JsonNullableWithAggregatesFilter<"InterviewArtifact">
+    whiteboardImageKey?: StringNullableWithAggregatesFilter<"InterviewArtifact"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"InterviewArtifact"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"InterviewArtifact"> | Date | string
+  }
+
   export type InterviewCreateInput = {
     id?: string
     tenantId: string
@@ -7046,6 +8328,111 @@ export namespace Prisma {
     isRequired?: BoolFieldUpdateOperationsInput | boolean
     confirmed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewArtifactCreateInput = {
+    id?: string
+    tenantId: string
+    interviewId: string
+    roundId?: string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: string | null
+    code?: string | null
+    codeLanguage?: string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewArtifactUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    interviewId: string
+    roundId?: string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: string | null
+    code?: string | null
+    codeLanguage?: string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewArtifactUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    interviewId?: StringFieldUpdateOperationsInput | string
+    roundId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: NullableStringFieldUpdateOperationsInput | string | null
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    codeLanguage?: StringFieldUpdateOperationsInput | string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewArtifactUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    interviewId?: StringFieldUpdateOperationsInput | string
+    roundId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: NullableStringFieldUpdateOperationsInput | string | null
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    codeLanguage?: StringFieldUpdateOperationsInput | string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewArtifactCreateManyInput = {
+    id?: string
+    tenantId: string
+    interviewId: string
+    roundId?: string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: string | null
+    code?: string | null
+    codeLanguage?: string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type InterviewArtifactUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    interviewId?: StringFieldUpdateOperationsInput | string
+    roundId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: NullableStringFieldUpdateOperationsInput | string | null
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    codeLanguage?: StringFieldUpdateOperationsInput | string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InterviewArtifactUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    interviewId?: StringFieldUpdateOperationsInput | string
+    roundId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableJsonNullValueInput | InputJsonValue
+    notesText?: NullableStringFieldUpdateOperationsInput | string | null
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    codeLanguage?: StringFieldUpdateOperationsInput | string
+    whiteboard?: NullableJsonNullValueInput | InputJsonValue
+    whiteboardImageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -7605,6 +8992,96 @@ export namespace Prisma {
     confirmed?: SortOrder
     createdAt?: SortOrder
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type InterviewArtifactCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    interviewId?: SortOrder
+    roundId?: SortOrder
+    notes?: SortOrder
+    notesText?: SortOrder
+    code?: SortOrder
+    codeLanguage?: SortOrder
+    whiteboard?: SortOrder
+    whiteboardImageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewArtifactMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    interviewId?: SortOrder
+    roundId?: SortOrder
+    notesText?: SortOrder
+    code?: SortOrder
+    codeLanguage?: SortOrder
+    whiteboardImageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type InterviewArtifactMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    interviewId?: SortOrder
+    roundId?: SortOrder
+    notesText?: SortOrder
+    code?: SortOrder
+    codeLanguage?: SortOrder
+    whiteboardImageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
 
   export type InterviewRoundCreateNestedOneWithoutInterviewsInput = {
     create?: XOR<InterviewRoundCreateWithoutInterviewsInput, InterviewRoundUncheckedCreateWithoutInterviewsInput>
@@ -8104,6 +9581,29 @@ export namespace Prisma {
     | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
 
   export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
     equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
     path?: string[]
     mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>

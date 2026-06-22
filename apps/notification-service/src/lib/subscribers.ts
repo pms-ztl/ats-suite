@@ -322,8 +322,174 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
-  logger.info("notification-service NATS subscribers started (7 subjects)");
+  // ── Module E — tenant.{*}.offer.approved ──────────────────────────────────
+  // An offer was approved in candidate-service. Email the candidate an offer
+  // notification referencing the offer letter. The PDF itself is delivered out
+  // of band (storage); we carry offerLetterKey in metadata so a future
+  // attachment step (or the candidate portal) can fetch it.
+  await subscribeToEvents({
+    stream: "CANDIDATE_EVENTS",
+    subject: "tenant.*.offer.approved",
+    durable: "notification-service:offer-approved",
+    logger,
+    handler: async (envelope) => {
+      const p = OfferApprovedEvent.parse(envelope.payload);
+      if (!p.candidateEmail) {
+        logger.warn({ offerId: p.offerId }, "offer.approved has no candidate email — skipping email");
+        return;
+      }
+      const jobTitle = p.jobTitle ?? "the role";
+      // Recipient is the external CANDIDATE, not a tenant user — address the
+      // email explicitly so emit doesn't broadcast to the whole tenant.
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,
+        type: "OFFER_APPROVED",
+        title: `Your offer for ${jobTitle}`,
+        body:
+          `Congratulations${p.candidateName ? `, ${p.candidateName}` : ""}! ` +
+          `Your offer for ${jobTitle} has been approved. ` +
+          `Please review your offer letter and confirm through your candidate portal.`,
+        link: "/portal/offers",
+        explicitEmailRecipients: [p.candidateEmail],
+        metadata: {
+          offerId: p.offerId,
+          applicationId: p.applicationId,
+          candidateId: p.candidateId,
+          candidateName: p.candidateName,
+          candidateEmail: p.candidateEmail,
+          jobTitle: p.jobTitle,
+          // null when storage isn't configured (candidate-service is honest
+          // about this); an attachment step can use it when present.
+          offerLetterKey: p.offerLetterKey,
+        },
+        channels: ["email"],
+      }).catch((err) => logger.warn({ err, offerId: p.offerId }, "offer.approved notification failed"));
+      await auditAndDeliver("offer.approved", p as any, { logger });
+    },
+  });
+
+  // ── Module E — tenant.{*}.application.hired ────────────────────────────────
+  // Notify the stakeholders (hiring manager, recruiter) that the candidate was
+  // hired, via in_app + email. Each stakeholder gets a direct push.
+  await subscribeToEvents({
+    stream: "CANDIDATE_EVENTS",
+    subject: "tenant.*.application.hired",
+    durable: "notification-service:application-hired",
+    logger,
+    handler: async (envelope) => {
+      const p = ApplicationHiredEvent.parse(envelope.payload);
+      const who = p.candidateName ?? "A candidate";
+      const jobTitle = p.jobTitle ?? "the role";
+      if (p.stakeholderUserIds.length === 0) {
+        logger.info({ applicationId: p.applicationId }, "application.hired has no stakeholders to notify");
+      }
+      for (const userId of p.stakeholderUserIds) {
+        await emitNotification({
+          tenantId: p.tenantId,
+          userId,                            // direct push to each stakeholder
+          type: "APPLICATION_HIRED",
+          title: `${who} hired for ${jobTitle}`,
+          body: `${who} has been marked as hired for ${jobTitle}.`,
+          link: p.applicationId ? `/applications/${p.applicationId}` : "/candidates",
+          metadata: {
+            applicationId: p.applicationId,
+            candidateId: p.candidateId,
+            candidateName: p.candidateName,
+            jobTitle: p.jobTitle,
+            decidedByUserId: p.decidedByUserId,
+          },
+          channels: ["in_app", "email"],
+        }).catch((err) => logger.warn({ err, applicationId: p.applicationId, userId }, "application.hired notification failed"));
+      }
+      await auditAndDeliver("application.hired", p as any, { logger });
+    },
+  });
+
+  // ── Module E — tenant.{*}.application.rejected ─────────────────────────────
+  // Send a courteous rejection email to the candidate. `reason` is already a
+  // reason-code LABEL (never raw notes) — safe to surface.
+  await subscribeToEvents({
+    stream: "CANDIDATE_EVENTS",
+    subject: "tenant.*.application.rejected",
+    durable: "notification-service:application-rejected",
+    logger,
+    handler: async (envelope) => {
+      const p = ApplicationRejectedEvent.parse(envelope.payload);
+      if (!p.candidateEmail) {
+        logger.warn({ applicationId: p.applicationId }, "application.rejected has no candidate email — skipping email");
+        return;
+      }
+      const jobTitle = p.jobTitle ?? "the role";
+      const reasonLine = p.reason ? ` ${p.reason}.` : "";
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,                        // recipient is the external candidate
+        type: "APPLICATION_REJECTED",
+        title: `Update on your application for ${jobTitle}`,
+        body:
+          `Dear${p.candidateName ? ` ${p.candidateName}` : ""},\n\n` +
+          `Thank you for your interest in ${jobTitle} and for the time you invested in our ` +
+          `process. After careful consideration, we will not be moving forward with your ` +
+          `application at this time.${reasonLine}\n\n` +
+          `We were genuinely impressed by your background, and we hope you'll consider future ` +
+          `opportunities with us. We wish you every success in your search.`,
+        link: "/portal/applications",
+        explicitEmailRecipients: [p.candidateEmail],
+        metadata: {
+          applicationId: p.applicationId,
+          candidateId: p.candidateId,
+          candidateName: p.candidateName,
+          jobTitle: p.jobTitle,
+          reason: p.reason,
+        },
+        channels: ["email"],
+      }).catch((err) => logger.warn({ err, applicationId: p.applicationId }, "application.rejected notification failed"));
+      await auditAndDeliver("application.rejected", p as any, { logger });
+    },
+  });
+
+  logger.info("notification-service NATS subscribers started (10 subjects)");
 }
+
+// ── Module E event payloads ────────────────────────────────────────────────
+// Lenient local schemas (ids as z.string(), not .uuid()) so a cuid Application.id
+// — valid in candidate-service — is not rejected on receipt. Shapes mirror the
+// @cdc-ats/contracts hire-events payloads; .passthrough() keeps forward-compat.
+const OfferApprovedEvent = z.object({
+  tenantId: z.string(),
+  offerId: z.string(),
+  applicationId: z.string().nullable(),
+  candidateId: z.string(),
+  candidateName: z.string().nullable(),
+  candidateEmail: z.string().nullable(),
+  jobTitle: z.string().nullable(),
+  offerLetterKey: z.string().nullable(),
+  approvedByUserId: z.string().nullable(),
+}).passthrough();
+
+const ApplicationHiredEvent = z.object({
+  tenantId: z.string(),
+  applicationId: z.string(),
+  candidateId: z.string(),
+  requisitionId: z.string().nullable(),
+  candidateName: z.string().nullable(),
+  candidateEmail: z.string().nullable(),
+  jobTitle: z.string().nullable(),
+  decidedByUserId: z.string().nullable(),
+  stakeholderUserIds: z.array(z.string()).default([]),
+}).passthrough();
+
+const ApplicationRejectedEvent = z.object({
+  tenantId: z.string(),
+  applicationId: z.string(),
+  candidateId: z.string(),
+  candidateName: z.string().nullable(),
+  candidateEmail: z.string().nullable(),
+  jobTitle: z.string().nullable(),
+  reason: z.string().nullable(),
+  decidedByUserId: z.string().nullable(),
+}).passthrough();
 
 // WF10/J1 - assessment.completed payload (grading worker). passed is null while a
 // human review is pending; applicationId may be null for a standalone assessment.

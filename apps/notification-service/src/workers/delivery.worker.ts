@@ -189,6 +189,12 @@ function iconForType(type: string): string {
       return ":no_entry:";
     case "INTERVIEW_FEEDBACK_NEW":
       return ":speech_balloon:";
+    case "OFFER_APPROVED":
+      return ":handshake:";
+    case "APPLICATION_HIRED":
+      return ":tada:";
+    case "APPLICATION_REJECTED":
+      return ":envelope:";
     default:
       return ":bell:";
   }
