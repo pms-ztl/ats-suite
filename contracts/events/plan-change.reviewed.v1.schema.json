@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/plan-change.reviewed.v1.schema.json",
+  "title": "plan-change.reviewed payload (v1)",
+  "description": "Emitted when a super-admin reviews (approves/rejects) a plan-change request. Producer: tenant-service (apps/tenant-service/src/routes/plan-changes.ts). IMPORTANT: the REAL payload does NOT match the typed PlanChangeReviewedPayloadSchema in packages/contracts (which lists status/decisionNote/reviewedByUserId). The actual publish sends action/toPlan/paymentMethod/requiresStripePayment/note/requestedByUserId/reviewedByUserId. Documented from the real call site. No subscriber consumes this subject today (honest gap).",
+  "type": "object",
+  "x-event-type": "plan-change.reviewed",
+  "x-subject": "tenant.{tenantId}.plan-change.reviewed",
+  "x-stream": "PLAN_CHANGE_EVENTS",
+  "x-producer": "tenant-service (review plan-change request)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "requestId",
+    "action",
+    "toPlan",
+    "paymentMethod",
+    "requiresStripePayment",
+    "note",
+    "requestedByUserId",
+    "reviewedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "requestId": { "type": "string", "format": "uuid", "description": "The reviewed PlanChangeRequest id." },
+    "action": {
+      "type": "string",
+      "description": "Review action, e.g. APPROVE / REJECT (as sent by the review route body)."
+    },
+    "toPlan": {
+      "type": "string",
+      "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"],
+      "description": "The plan requested."
+    },
+    "paymentMethod": {
+      "type": ["string", "null"],
+      "description": "Resolved payment method (e.g. STRIPE), or null."
+    },
+    "requiresStripePayment": {
+      "type": "boolean",
+      "description": "True when the approval still needs a Stripe payment before activation."
+    },
+    "note": { "type": ["string", "null"], "description": "Reviewer note, or null." },
+    "requestedByUserId": { "type": "string", "description": "Original requester user id." },
+    "reviewedByUserId": { "type": "string", "description": "Reviewing super-admin user id." }
+  }
+}

@@ -63,6 +63,7 @@ import type {
   ProviderCapabilities,
 } from "./types.js";
 import { buildSourceFeed } from "./feed.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "dice" as const;
 
@@ -114,12 +115,16 @@ export const diceProvider: HiringPlatformProvider = {
     job: NormalizedJob,
     _creds: PlatformCredentials,
   ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
+    // STUB path: no board API is called (Dice ATS Direct is partner-addendum gated,
+    // no public REST surface). Warn at runtime.
+    warnStub(PROVIDER, "no-public-api");
     return {
       // The ATS JobPosting id is the only real correlation handle we have (Dice has
       // issued no posting id - there is no API to issue one). NEVER a fake board id.
       externalId: job.id,
       status: "PENDING_PARTNER_APPROVAL",
       raw: {
+        stub: true,
         provider: PROVIDER,
         pending: "PARTNER_ADDENDUM_REQUIRED",
         partnerAddendumRequired: DICE_PARTNER_ADDENDUM_REQUIRED,

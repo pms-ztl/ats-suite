@@ -1,0 +1,52 @@
+# Kustomization for the CDC ATS stack, derived from docker-compose.demo.yml.
+#
+# `kubectl apply -k deploy/k8s/` renders every resource below. NOTE: kustomize
+# applies all resources at once and does NOT wait for Jobs, so the ordering
+# concerns (migrator must finish before the app services start; minio-setup
+# before job/resume; seeder after the gateway) are NOT enforced here. For a clean
+# first bring-up follow the ordered apply recipe in README.md instead of a single
+# `apply -k`. This file is the convenient "everything" manifest + the inventory.
+#
+# The 11-secrets.example.yaml is intentionally NOT listed — copy it to
+# 11-secrets.yaml with real values and either add it here or apply it separately.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cdc-ats
+
+commonLabels:
+  app.kubernetes.io/part-of: cdc-ats
+
+resources:
+  # ── Namespace + shared config ──────────────────────────────────────────────
+  - 00-namespace.yaml
+  - 10-config.yaml
+  # 11-secrets.example.yaml is a template — copy to 11-secrets.yaml (real values)
+  # and add it here (or `kubectl apply -f 11-secrets.yaml`) before the rest.
+  # ── Infrastructure (StatefulSets + one-shot setup) ─────────────────────────
+  - 20-postgres.yaml
+  - 21-redis.yaml
+  - 22-nats.yaml
+  - 23-minio.yaml
+  # ── One-shot Jobs (schema migrate + demo seed) ─────────────────────────────
+  - 30-migrator-job.yaml
+  - 31-seeder-job.yaml
+  # ── Backend services (15) ──────────────────────────────────────────────────
+  - 40-api-gateway.yaml
+  - 41-identity-service.yaml
+  - 42-tenant-service.yaml
+  - 43-billing-service.yaml
+  - 44-job-service.yaml
+  - 45-candidate-service.yaml
+  - 46-interview-service.yaml
+  - 47-resume-service.yaml
+  - 48-screening-service.yaml
+  - 49-notification-service.yaml
+  - 50-search-service.yaml
+  - 51-agent-service.yaml
+  - 52-analytics-service.yaml
+  - 53-compliance-service.yaml
+  - 54-assessment-service.yaml
+  # ── Frontend + Ingress ─────────────────────────────────────────────────────
+  - 60-frontend.yaml
+  - 70-ingress.yaml

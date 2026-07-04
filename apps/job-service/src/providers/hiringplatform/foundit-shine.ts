@@ -50,6 +50,7 @@ import type {
   ProviderCapabilities,
   ProviderKey,
 } from "./types.js";
+import { warnStub } from "./stub-logger.js";
 
 /**
  * A credential-stored connector with no documented public API exposes no real
@@ -87,10 +88,14 @@ function makeNoPublicApiProvider(id: ProviderKey, displayName: string): HiringPl
       _job: NormalizedJob,
       _creds: PlatformCredentials,
     ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
+      // STUB path: no board API is called ({@link displayName} has no public employer
+      // API; distribution is a manual partner contract). Warn at runtime.
+      warnStub(id, "no-public-api");
       return {
         externalId: "",
         status: "PENDING_PARTNER_APPROVAL",
         raw: {
+          stub: true,
           reason: "no-public-api",
           provider: id,
           note: `${displayName} has no documented public employer job-posting API. Distribution requires a manual partner contract (a privately-issued endpoint + credentials configured out of band); this connector ships no baked-in endpoint and posts nothing automatically.`,

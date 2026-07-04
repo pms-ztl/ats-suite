@@ -1,0 +1,179 @@
+# Shared OpenAPI 3.1 components reused by every per-service contract in this
+# directory. These are hand-authored to mirror the ACTUAL runtime primitives in
+# packages/common:
+#   - the success/error response envelope   (packages/common/src/lib/response.ts)
+#   - the error handler's error shape + codes (packages/common/src/middleware/error-handler.ts)
+#   - the gateway-stamped auth headers        (packages/common/src/middleware/auth-headers.ts)
+#   - the health endpoints                    (packages/common/src/lib/health.ts)
+#
+# Every backend service ($ref this file's components) is reached on its INTERNAL
+# port under /internal/*; each also exposes /healthz, /livez, /readyz and
+# /metrics via @cdc-ats/common. The api-gateway is the only public surface; its
+# spec (api-gateway.yaml) maps public /api/* paths onto these internal routes.
+#
+# OpenAPI tooling note: $ref across files (e.g. "./_shared.yaml#/components/...")
+# is resolved by a bundler (redocly/swagger-cli). Each service file also inlines
+# the envelope wrapper for readability where a bundler is not used.
+openapi: 3.1.0
+info:
+  title: CDC ATS — shared components
+  version: 0.0.1
+  description: >-
+    Not a servable spec on its own. Holds the common schemas, parameters, and
+    responses referenced by the per-service contracts.
+paths: {}
+components:
+  parameters:
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: true
+      description: >-
+        Verified user id, stamped by the api-gateway from the JWT after
+        gatewayAuth(). Backend services TRUST this header (readAuthHeaders).
+      schema: { type: string }
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      description: Verified tenant id, stamped by the gateway from the JWT.
+      schema: { type: string }
+    XUserRole:
+      name: X-User-Role
+      in: header
+      required: true
+      description: >-
+        Verified role. One of SUPER_ADMIN, ADMIN, RECRUITER, HIRING_MANAGER,
+        COMPLIANCE_OFFICER, INTERVIEWER, CANDIDATE
+        (packages/common/src/types/auth.ts).
+      schema:
+        type: string
+        enum: [SUPER_ADMIN, ADMIN, RECRUITER, HIRING_MANAGER, COMPLIANCE_OFFICER, INTERVIEWER, CANDIDATE]
+    XUserEmail:
+      name: X-User-Email
+      in: header
+      required: false
+      description: Verified email, best-effort (may be empty). Stamped by the gateway.
+      schema: { type: string }
+    XInternalService:
+      name: X-Internal-Service
+      in: header
+      required: false
+      description: >-
+        Shared secret stamped by the gateway on every internal call. When
+        INTERNAL_SERVICE_TOKEN is set, readAuthHeaders REQUIRES it (403 without),
+        so a request cannot reach an internal port without passing through the
+        gateway. publicWebhook routes (Stripe/Twilio/Judge0/vendor callbacks) opt
+        out and verify a provider signature instead.
+      schema: { type: string }
+    XRequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Correlation id echoed back by the request-id middleware.
+      schema: { type: string }
+  headers:
+    XRequestId:
+      description: Correlation id echoed on every response.
+      schema: { type: string }
+  schemas:
+    # ── Response envelope (packages/common/src/lib/response.ts) ──────────────
+    SuccessEnvelope:
+      type: object
+      description: >-
+        Every 2xx from a CDC ATS service is { success: true, data: <T> }.
+        `data` shape varies per route; individual routes narrow it.
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: {}
+    PaginatedEnvelope:
+      type: object
+      description: >-
+        Shape returned by the shared paginated() helper. `data.data` is the row
+        array.
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          type: object
+          required: [data, total, page, pages]
+          properties:
+            data:
+              type: array
+              items: {}
+            total: { type: integer }
+            page: { type: integer }
+            pages: { type: integer }
+    ErrorEnvelope:
+      type: object
+      description: >-
+        Every non-2xx carries this shape (createErrorHandler /
+        notFoundHandler). `code` is a stable machine token; `details` is present
+        for validation errors.
+      required: [success, error]
+      properties:
+        success: { type: boolean, const: false }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: >-
+                Stable error code. Common values: VALIDATION_ERROR,
+                UNAUTHORIZED, FORBIDDEN, NOT_FOUND, ROUTE_NOT_FOUND,
+                PLAN_LIMIT, RATE_LIMITED, INTERNAL_ERROR.
+            message: { type: string }
+            details:
+              description: >-
+                Present on VALIDATION_ERROR — array of { field, message } from
+                the ZodError issues.
+    HealthOk:
+      type: object
+      properties:
+        status: { type: string, example: ok }
+        version: { type: string }
+        uptimeSeconds: { type: integer }
+    ReadyStatus:
+      type: object
+      properties:
+        status: { type: string, enum: [ready, degraded] }
+        dependencies:
+          type: object
+          additionalProperties: { type: string, enum: [ok, fail] }
+  responses:
+    ValidationError:
+      description: Request failed zod validation (VALIDATION_ERROR).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Unauthorized:
+      description: >-
+        Missing/invalid auth headers — the request did not pass through the
+        gateway, or no active session.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Forbidden:
+      description: Role not permitted, or missing internal-service token.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    NotFound:
+      description: Resource or route not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    PlanLimit:
+      description: >-
+        Plan/module gate rejected the request (HTTP 402, code PLAN_LIMIT) — not
+        on plan, over a cap, or kill-switched.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    InternalError:
+      description: Unhandled error (INTERNAL_ERROR).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }

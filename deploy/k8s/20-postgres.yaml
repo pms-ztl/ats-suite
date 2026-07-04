@@ -1,0 +1,149 @@
+# Postgres 16 — StatefulSet (mirrors the `postgres` service in
+# docker-compose.demo.yml:109-155).
+#
+# The init SQL creates one database per service. It is a VERBATIM copy of
+# infra/postgres-init.sql (which the demo compose mounts at
+# /docker-entrypoint-initdb.d). It runs ONLY on an empty data directory, exactly
+# like the compose bind-mount. The tuning flags on the postgres command are the
+# same ones the demo compose passes (max_connections=400, larger WAL, etc.).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+data:
+  00-create-dbs.sql: |
+    -- Create one database per service (DB-per-service architecture).
+    -- Run once at first start (empty data dir only).
+    CREATE DATABASE identity_db;
+    CREATE DATABASE tenant_db;
+    CREATE DATABASE billing_db;
+    CREATE DATABASE job_db;
+    CREATE DATABASE candidate_db;
+    CREATE DATABASE interview_db;
+    CREATE DATABASE resume_db;
+    CREATE DATABASE screening_db;
+    CREATE DATABASE notification_db;
+    CREATE DATABASE search_db;
+    CREATE DATABASE agent_db;
+    CREATE DATABASE analytics_db;
+    CREATE DATABASE compliance_db;
+    CREATE DATABASE assessment_db;
+    CREATE DATABASE onboarding_db;
+    -- All services use the same `postgres` superuser for local dev.
+    -- Production should create per-service users with limited grants.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  # Headless Service for the StatefulSet's stable network identity.
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          # Same tuning flags the demo compose passes on the postgres command.
+          args:
+            - "postgres"
+            - "-c"
+            - "max_connections=400"
+            - "-c"
+            - "shared_buffers=512MB"
+            - "-c"
+            - "work_mem=8MB"
+            - "-c"
+            - "maintenance_work_mem=128MB"
+            - "-c"
+            - "wal_buffers=32MB"
+            - "-c"
+            - "max_wal_size=4GB"
+            - "-c"
+            - "min_wal_size=1GB"
+            - "-c"
+            - "checkpoint_completion_target=0.9"
+            - "-c"
+            - "effective_cache_size=2GB"
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cdc-ats-secrets
+                  key: POSTGRES_PASSWORD
+            # Point Postgres at a subdir so the initdb scripts run on an empty
+            # PGDATA even though the mounted PVC root may contain lost+found.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          # Compose healthcheck: pg_isready -U postgres.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U postgres"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U postgres"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits:   { cpu: "2",  memory: 2Gi }
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

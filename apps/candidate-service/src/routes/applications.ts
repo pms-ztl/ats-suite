@@ -16,8 +16,10 @@ import {
   stakeholderIds,
   publishApplicationHired,
   publishApplicationRejected,
+  publishStageChanged,
   rejectionReasonLabel,
 } from "../lib/decision-events.js";
+import { assertLegalTransition, clampInitialStage } from "../lib/stage-machine.js";
 
 const router = Router();
 const logger = createLogger({ serviceName: "candidate-service:decisions" });
@@ -42,6 +44,9 @@ router.post("/", requireRecruiterOrAdmin, async (req: Request, res: Response, ne
     });
     if (!candidate) throw Errors.notFound("Candidate");
 
+    // Clamp the initial stage: a create may only open at APPLIED (default) or
+    // SCREENED (pre-screened imports). Any other requested stage falls back to
+    // APPLIED so a create can never jump into the middle/end of the pipeline.
     const app = await prisma.application.create({
       data: {
         tenantId,
@@ -49,7 +54,7 @@ router.post("/", requireRecruiterOrAdmin, async (req: Request, res: Response, ne
         requisitionId: body.requisitionId,
         notes: body.notes ?? null,
         formResponses: body.formResponses as any,
-        stage: body.stage ?? "APPLIED",
+        stage: clampInitialStage(body.stage) as any,
         status: "ACTIVE",
       },
     });
@@ -163,11 +168,37 @@ router.patch("/:id", requireRecruiterOrAdmin, async (req: Request, res: Response
     const existing = await prisma.application.findFirst({ where: { id, tenantId } });
     if (!existing) throw Errors.notFound("Application");
     const data: any = { ...body };
-    if (body.stage) data.stageUpdatedAt = new Date();
+    // Validate the stage transition when the request carries a new stage. This
+    // rejects illegal jumps (out of a terminal state, to an unknown stage, or
+    // into HIRED from anything but OFFER) with a clear VALIDATION_ERROR while
+    // keeping the board's existing permissive forward/backward moves. A no-op
+    // re-save of the same stage is allowed and simply does not re-stamp/emit.
+    const stageChanged = !!body.stage && body.stage !== existing.stage;
+    if (body.stage) {
+      assertLegalTransition(existing.stage, body.stage);
+      data.stageUpdatedAt = new Date();
+    }
     // defense-in-depth: updateMany with tenantId filter on the mutation itself.
     const { count } = await prisma.application.updateMany({ where: { id, tenantId }, data });
     if (count === 0) throw Errors.notFound("Application");
     const updated = await prisma.application.findUnique({ where: { id } });
+
+    if (stageChanged) {
+      const userId = (req.headers["x-user-id"] as string) || null;
+      await publishStageChanged(
+        {
+          tenantId,
+          applicationId: existing.id,
+          candidateId: existing.candidateId,
+          requisitionId: existing.requisitionId ?? null,
+          fromStage: existing.stage,
+          toStage: body.stage!,
+          changedByUserId: userId,
+          source: "api",
+        },
+        logger,
+      );
+    }
     ok(res, updated);
   } catch (err) { next(err); }
 });
@@ -218,6 +249,7 @@ router.post("/:id/hire", requireRecruiterOrAdmin, async (req: Request, res: Resp
     let updated = application;
     if (!alreadyHired) {
       const now = new Date();
+      const fromStage = application.stage;
       // defense-in-depth: scope the mutation by tenantId too.
       const { count } = await prisma.application.updateMany({
         where: { id, tenantId },
@@ -225,6 +257,21 @@ router.post("/:id/hire", requireRecruiterOrAdmin, async (req: Request, res: Resp
       });
       if (count === 0) throw Errors.notFound("Application");
       updated = { ...application, stage: "HIRED", status: "HIRED", stageUpdatedAt: now };
+
+      // Emit the stage transition alongside the terminal application.hired event.
+      await publishStageChanged(
+        {
+          tenantId,
+          applicationId: application.id,
+          candidateId: application.candidateId,
+          requisitionId: application.requisitionId ?? null,
+          fromStage,
+          toStage: "HIRED",
+          changedByUserId: userId,
+          source: "api",
+        },
+        logger,
+      );
 
       const ctx = await resolveRequisitionContext({ requisitionId: application.requisitionId, tenantId, userId, role });
       const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`.trim();
@@ -307,12 +354,28 @@ router.post("/:id/reject", requireRecruiterOrAdmin, async (req: Request, res: Re
     let updated = application;
     if (!alreadyRejected) {
       const now = new Date();
+      const fromStage = application.stage;
       const { count } = await prisma.application.updateMany({
         where: { id, tenantId },
         data: { stage: "REJECTED", status: "REJECTED", stageUpdatedAt: now },
       });
       if (count === 0) throw Errors.notFound("Application");
       updated = { ...application, stage: "REJECTED", status: "REJECTED", stageUpdatedAt: now };
+
+      // Emit the stage transition alongside the terminal application.rejected event.
+      await publishStageChanged(
+        {
+          tenantId,
+          applicationId: application.id,
+          candidateId: application.candidateId,
+          requisitionId: application.requisitionId ?? null,
+          fromStage,
+          toStage: "REJECTED",
+          changedByUserId: userId,
+          source: "api",
+        },
+        logger,
+      );
 
       const ctx = await resolveRequisitionContext({ requisitionId: application.requisitionId, tenantId, userId, role });
       const candidateName = `${application.candidate.firstName} ${application.candidate.lastName}`.trim();

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/agent.completed.v1.schema.json",
+  "title": "agent.completed payload (v1)",
+  "description": "Emitted whenever an AI agent run finishes (cost + outcome). Published from MULTIPLE producers that all share the SAME shape: the shared ai-engine persist hook (packages/ai-engine/src/persist.ts, used by every service that runs an agent), plus the resume-service parse pipeline and the screening worker. Matches the typed AgentRunCompletedPayloadSchema. `triggeredByUserId` is a LAX nullable string — a real user UUID for user-triggered runs, or a sentinel like \"system\"/\"public\" for event-driven runs.",
+  "type": "object",
+  "x-event-type": "agent.completed",
+  "x-subject": "tenant.{tenantId}.agent.completed",
+  "x-stream": "AGENT_EVENTS",
+  "x-producer": "ai-engine persist hook (shared by all agent-running services), resume-service parse pipeline, screening-service worker, job-service jd-author route",
+  "x-consumers": [
+    "billing-service (upsert AgentRunCost — per-run cost projection keyed on agentRunId)"
+  ],
+  "required": [
+    "tenantId",
+    "agentRunId",
+    "agentType",
+    "status",
+    "tokensIn",
+    "tokensOut",
+    "costUsd",
+    "latencyMs",
+    "triggeredByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "agentRunId": { "type": "string", "format": "uuid", "description": "Agent run id — the billing upsert key." },
+    "agentType": { "type": "string", "description": "Agent that ran (e.g. resume-parser, candidate-screener)." },
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETED", "FAILED", "BUDGET_EXCEEDED", "HITL_PENDING", "REPAIR_FAILED"],
+      "description": "Terminal status of the run."
+    },
+    "tokensIn": { "type": "integer", "description": "Prompt tokens." },
+    "tokensOut": { "type": "integer", "description": "Completion tokens." },
+    "costUsd": { "type": "number", "description": "Run cost in USD." },
+    "latencyMs": { "type": "integer", "description": "Run latency in ms." },
+    "modelName": {
+      "type": "string",
+      "description": "Model used. Optional — older publishers may omit it; consumer stores null when absent."
+    },
+    "iterations": {
+      "type": "integer",
+      "description": "ReAct loop iteration count. Optional — single-shot runs / older publishers may omit it."
+    },
+    "triggeredByUserId": {
+      "type": ["string", "null"],
+      "description": "User UUID for user-triggered runs, a sentinel (\"system\"/\"public\") for event-driven runs, or null."
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/user.deactivated.v1.schema.json",
+  "title": "user.deactivated payload (v1)",
+  "description": "A user was deactivated in a tenant. HONEST STATUS: DECLARED-BUT-UNUSED, same as user.invited. The USER_EVENTS stream and the typed UserDeactivatedPayloadSchema exist, but no service publishes or subscribes to user.deactivated today. This schema documents the typed contract shape for when the event is wired.",
+  "type": "object",
+  "x-event-type": "user.deactivated",
+  "x-subject": "tenant.{tenantId}.user.deactivated",
+  "x-stream": "USER_EVENTS",
+  "x-producer": "(none active — typed contract exists; not published today)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "userId",
+    "deactivatedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "userId": { "type": "string", "format": "uuid", "description": "The deactivated user's id." },
+    "deactivatedByUserId": { "type": "string", "format": "uuid", "description": "User who performed the deactivation." }
+  }
+}

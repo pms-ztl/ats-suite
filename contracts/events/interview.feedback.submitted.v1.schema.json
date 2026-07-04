@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/interview.feedback.submitted.v1.schema.json",
+  "title": "interview.feedback.submitted payload (v1)",
+  "description": "Interview feedback submitted. Shape follows the typed FeedbackSubmittedPayloadSchema in packages/contracts. HONEST STATUS: notification-service subscribes to tenant.*.interview.feedback.submitted, but NO producer publishes this subject today — apps/interview-service/src/routes/interviews.ts persists InterviewFeedback and may auto-advance the round, but does not call publishEvent for feedback. This schema documents the CONTRACT the existing consumer expects; the leaf is `feedback.submitted` (domain=interview).",
+  "type": "object",
+  "x-event-type": "interview.feedback.submitted",
+  "x-subject": "tenant.{tenantId}.interview.feedback.submitted",
+  "x-stream": "INTERVIEW_EVENTS",
+  "x-producer": "(none active — consumer-only contract; interview-service does not publish it today)",
+  "x-consumers": [
+    "notification-service (INTERVIEW_FEEDBACK_NEW tenant broadcast; audit + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "feedbackId",
+    "interviewId",
+    "candidateId",
+    "interviewerId",
+    "recommendation",
+    "roundId",
+    "roundNumber"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "feedbackId": { "type": "string", "format": "uuid", "description": "Feedback record id." },
+    "interviewId": { "type": "string", "format": "uuid", "description": "Interview the feedback is for." },
+    "candidateId": { "type": "string", "format": "uuid", "description": "Candidate." },
+    "interviewerId": { "type": "string", "format": "uuid", "description": "Interviewer who left the feedback." },
+    "recommendation": {
+      "type": "string",
+      "description": "Interview recommendation (InterviewRecommendation enum, e.g. STRONG_HIRE / HIRE / NO_HIRE / STRONG_NO_HIRE)."
+    },
+    "roundId": { "type": ["string", "null"], "format": "uuid", "description": "Round id, or null." },
+    "roundNumber": { "type": ["integer", "null"], "description": "Round number, or null." }
+  }
+}

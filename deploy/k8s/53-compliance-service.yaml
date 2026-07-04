@@ -1,0 +1,83 @@
+# compliance-service — Deployment + Service (docker-compose.demo.yml:411-417).
+# Image: infra/Dockerfile.service --build-arg SERVICE=compliance-service. Port 4013.
+# Owns AuditRecord / RetentionPolicy; DATABASE_URL -> compliance_db.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: compliance-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: compliance-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: compliance-service
+        app.kubernetes.io/part-of: cdc-ats
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4013"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: compliance-service
+          image: ghcr.io/cdc-ats/compliance-service:latest
+          ports:
+            - name: http
+              containerPort: 4013
+          envFrom:
+            - configMapRef: { name: cdc-ats-common }
+          env:
+            - name: PORT
+              value: "4013"
+            - name: SERVICE_NAME
+              value: "compliance-service"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: COMPLIANCE_DATABASE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENROUTER_API_KEY, optional: true } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENAI_API_KEY, optional: true } }
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: "1",  memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: compliance-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: compliance-service
+  ports:
+    - name: http
+      port: 4013
+      targetPort: http

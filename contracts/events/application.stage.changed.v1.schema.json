@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/application.stage.changed.v1.schema.json",
+  "title": "application.stage.changed payload (v1)",
+  "description": "Emitted on EVERY application stage transition — the PATCH stage-update route, the hire route, the reject route, and BOTH candidate-service NATS subscriber advances (assessment.completed -> ASSESSMENT, interview.round.started -> canonical round stage). Producer: candidate-service (apps/candidate-service/src/lib/decision-events.ts publishStageChanged). The payload shape is owned by candidate-service (StageChangedPayload), NOT packages/contracts. Ids are plain strings (Application.id is a cuid). Subject leaf is `stage.changed` (domain=application). No subscriber consumes this subject today — it is an audit-trail event.",
+  "type": "object",
+  "x-event-type": "application.stage.changed",
+  "x-subject": "tenant.{tenantId}.application.stage.changed",
+  "x-stream": "CANDIDATE_EVENTS",
+  "x-producer": "candidate-service (stage-update route, hire route, reject route, assessment + interview subscriber advances)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "applicationId",
+    "candidateId",
+    "requisitionId",
+    "fromStage",
+    "toStage",
+    "changedByUserId",
+    "source"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "description": "Owning tenant (mandatory)." },
+    "applicationId": { "type": "string", "description": "Application whose stage changed (cuid)." },
+    "candidateId": { "type": "string", "description": "Candidate." },
+    "requisitionId": { "type": ["string", "null"], "description": "Requisition, or null." },
+    "fromStage": { "type": "string", "description": "Previous Application.stage." },
+    "toStage": { "type": "string", "description": "New Application.stage." },
+    "changedByUserId": {
+      "type": ["string", "null"],
+      "description": "User who drove the change, or null for subscriber-driven advances."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["api", "assessment", "interview"],
+      "description": "Which write path drove the change: `api` (route), `assessment` (assessment.completed advance), `interview` (interview.round.started advance)."
+    }
+  }
+}

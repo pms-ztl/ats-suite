@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — assessment-service
+  version: 0.0.1
+  description: >-
+    Online assessments / OA (default port 4014). Authoring + invites + results
+    under /internal/assessments/*; the public candidate take surface under
+    /internal/public/assessment/* (resolved from the invite token, no JWT);
+    Judge0 code-execution callbacks under /internal/judge0/*; and inbound
+    OA-vendor result webhooks under /internal/inbound-assessment/* (raw body,
+    HMAC-verified). RLS-scoped request client; public + webhook paths use the
+    admin client. Publishes assessment.invited/.started/.submitted/.completed.
+    Gateway is module-gated (requireModule('oa-assessments')) on
+    /api/assessments; public take -> /api/public/assessment; Judge0 ->
+    /api/internal/judge0; vendor webhook -> /api/inbound-assessment.
+servers:
+  - url: http://localhost:4014
+    description: Internal service port
+tags:
+  - name: assessments
+  - name: invites
+  - name: results
+  - name: take
+  - name: webhooks
+  - name: gdpr
+  - name: health
+paths:
+  # ─── Authoring (routes/assessments.ts) ────────────────────────────────────
+  /internal/assessments:
+    get:
+      tags: [assessments]
+      summary: List assessments
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Assessments., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+    post:
+      tags: [assessments]
+      summary: Create an assessment (requireAuthor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/assessments/{id}:
+    get:
+      tags: [assessments]
+      summary: Get one assessment
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Assessment., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    put:
+      tags: [assessments]
+      summary: Update an assessment (requireAuthor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/assessments/{id}/schema:
+    get:
+      tags: [assessments]
+      summary: Get an assessment's question schema
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Schema., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [assessments]
+      summary: Update the question schema (requireAuthor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Invites (routes/invites.ts) ──────────────────────────────────────────
+  /internal/assessments/{id}/invite:
+    post:
+      tags: [invites]
+      summary: Invite a candidate to an assessment (requireInviter) — publishes assessment.invited
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Invite created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/assessments/{id}/invites:
+    get:
+      tags: [invites]
+      summary: List invites for an assessment (requireInviter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Invites., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Results (routes/results.ts) ──────────────────────────────────────────
+  /internal/assessments/{id}/results:
+    get:
+      tags: [results]
+      summary: Results for an assessment
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Results., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/assessments/attempts/{attemptId}:
+    get:
+      tags: [results]
+      summary: Get an attempt's detail
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Attempt., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/assessments/attempts/{attemptId}/grade:
+    patch:
+      tags: [results]
+      summary: Manually grade an attempt
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Graded., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Public take (routes/public-take.ts) — UNAUTHENTICATED, token IS the auth
+  /internal/public/assessment/start:
+    post:
+      tags: [take]
+      summary: Start / resume an attempt (StartSchema { token }) — publishes attempt.started
+      description: >-
+        Resolves the tenant + invite from the token (no JWT). Resumes an
+        IN_PROGRESS attempt on reload; freezes a snapshot + mints a session
+        token on a fresh start.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string, minLength: 1 } } } } }
+      responses:
+        "200": { description: Attempt session (session token + frozen schema)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+  /internal/public/assessment/{attemptId}/answer:
+    put:
+      tags: [take]
+      summary: Save an answer for an in-progress attempt
+      parameters:
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Answer saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/public/assessment/{attemptId}/heartbeat:
+    post:
+      tags: [take]
+      summary: Keep-alive heartbeat for an attempt
+      parameters:
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Heartbeat ack., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/public/assessment/{attemptId}/proctor-events:
+    post:
+      tags: [take]
+      summary: Report proctoring events (tab-switch, focus loss, etc.)
+      parameters:
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Recorded., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/public/assessment/{attemptId}/submit:
+    post:
+      tags: [take]
+      summary: Submit an attempt — publishes assessment.submitted
+      parameters:
+        - { name: attemptId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Submitted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Judge0 callback (routes/judge0-callback.ts) — PUBLIC, token is the auth
+  /internal/judge0/callback:
+    put:
+      tags: [webhooks]
+      summary: Judge0 verdict callback (PUT) — opaque submission token IS the credential
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Verdict recorded (or no-op on unknown token). }
+    post:
+      tags: [webhooks]
+      summary: Judge0 verdict callback (POST)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Verdict recorded. }
+  # ─── Inbound OA-vendor webhook (routes/inbound-assessment.ts) — HMAC-verified
+  /internal/inbound-assessment/{provider}/{inviteId}:
+    post:
+      tags: [webhooks]
+      summary: Inbound OA-vendor completion webhook (raw body, HMAC-verified)
+      description: >-
+        No JWT / no X-Internal-Service. The provider's HMAC signature over the
+        raw bytes IS the auth; {inviteId} is the correlation handle. Publishes
+        assessment.completed (lib/ingest-vendor-result.ts). Unknown/forged
+        correlation safely no-ops.
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string } }
+        - { name: inviteId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { description: Accepted (or no-op). }
+        "400": { description: Invalid signature/body. }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/candidates/{id}/export:
+    get:
+      tags: [gdpr]
+      summary: Export a candidate's OA data (Attempt/Answer/Result/ProctorEvent/Invite)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: OA export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/gdpr/candidates/{id}:
+    delete:
+      tags: [gdpr]
+      summary: Erase a candidate's OA data
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Erased., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

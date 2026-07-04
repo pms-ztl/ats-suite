@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/assessment.invited.v1.schema.json",
+  "title": "assessment.invited payload (v1)",
+  "description": "Emitted when an assessment invite is created and the candidate should be emailed a take link. TWO producers publish this same subject: the native invite route (apps/assessment-service/src/routes/invites.ts) and the vendor provider-invite worker (apps/assessment-service/src/workers/provider-invite.worker.ts). The vendor path additionally carries `provider` + `providerInvitationId`; those are marked optional here since the native path omits them.",
+  "type": "object",
+  "x-event-type": "assessment.invited",
+  "x-subject": "tenant.{tenantId}.assessment.invited",
+  "x-stream": "ASSESSMENT_EVENTS",
+  "x-producer": "assessment-service (native invite route + vendor provider-invite worker)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "inviteId",
+    "assessmentId",
+    "candidateId",
+    "email",
+    "rawTokenUrl"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "inviteId": { "type": "string", "description": "Invite record id." },
+    "assessmentId": { "type": "string", "description": "Assessment being taken." },
+    "candidateId": { "type": "string", "description": "Invited candidate." },
+    "email": { "type": "string", "format": "email", "description": "Candidate email the link goes to." },
+    "rawTokenUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Absolute take URL. Native: {APP_URL}/assessment/take/{rawToken}. Vendor: the vendor candidateTestUrl, else the native invite fallback."
+    },
+    "provider": {
+      "type": "string",
+      "description": "Vendor path only: assessment provider key (e.g. hackerrank, codesignal). Absent on the native path."
+    },
+    "providerInvitationId": {
+      "type": "string",
+      "description": "Vendor path only: the vendor's invitation id. Absent on the native path."
+    }
+  }
+}

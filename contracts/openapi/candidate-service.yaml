@@ -1,0 +1,516 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — candidate-service
+  version: 0.0.1
+  description: >-
+    Candidates, applications (incl. hire/reject/advance), offers + offer approval
+    chain, three AI agents (sourcing, offer, candidate-experience), CSV/Excel
+    import, and the interview-question generator (default port 4005). All routes
+    mount under /internal/*. RLS-scoped request client. Publishes
+    tenant.{t}.application.hired / .rejected and tenant.{t}.offer.approved /
+    .accepted (lib/decision-events.ts). Subscribes to tenant.*.resume.parsed,
+    assessment.completed, interview.round.started.
+
+    Gateway mapping: /api/candidates -> /internal/candidates; /api/applications ->
+    /internal/applications; /api/offers -> /internal/offers; /api/sourcing (AI) ->
+    /internal/sourcing; /api/offer (AI) -> /internal/offer;
+    /api/candidate-experience (AI) -> /internal/candidate-experience.
+servers:
+  - url: http://localhost:4005
+    description: Internal service port
+tags:
+  - name: candidates
+  - name: applications
+  - name: offers
+  - name: agents
+  - name: import
+  - name: gdpr
+  - name: health
+paths:
+  # ─── Candidates (routes/candidates.ts) ────────────────────────────────────
+  /internal/candidates:
+    get:
+      tags: [candidates]
+      summary: List candidates (tenant-scoped)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Candidates., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+    post:
+      tags: [candidates]
+      summary: Create a candidate (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/candidates/overview:
+    get:
+      tags: [candidates]
+      summary: Candidate overview + weekly sparkline series
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Overview., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/candidates/platform-stats:
+    get:
+      tags: [candidates]
+      summary: Cross-tenant candidate counts (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: "{ total, byTenant }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/candidates/upsert-from-application:
+    post:
+      tags: [candidates]
+      summary: Upsert a candidate from a public application (INTERNAL, no role gate)
+      description: Called by job-service's public apply flow.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Upserted candidate., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/candidates/{id}:
+    get:
+      tags: [candidates]
+      summary: Get one candidate
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Candidate., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    patch:
+      tags: [candidates]
+      summary: Update a candidate (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/candidates/{id}/applications:
+    get:
+      tags: [candidates]
+      summary: A candidate's applications
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Applications., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/candidates/{id}/attachments:
+    get:
+      tags: [candidates]
+      summary: A candidate's application attachments
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Attachments., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/candidates/{id}/interview-questions:
+    post:
+      tags: [candidates]
+      summary: Generate interview questions for a candidate (AI)
+      description: interview-questions.ts router mounted on the /internal/candidates base.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Generated questions., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+  # ─── Import (routes/import.ts, mounted /internal/candidates/import) ───────
+  /internal/candidates/import/preview:
+    post:
+      tags: [import]
+      summary: Preview a CSV/Excel candidate import (requireImporter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Parsed rows + validation preview., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/candidates/import/commit:
+    post:
+      tags: [import]
+      summary: Commit a candidate import (requireImporter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Import result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Applications (routes/applications.ts) ────────────────────────────────
+  /internal/applications:
+    get:
+      tags: [applications]
+      summary: List applications (filter by requisition / stage)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: requisitionId, in: query, required: false, schema: { type: string } }
+        - { name: stage, in: query, required: false, schema: { type: string } }
+      responses:
+        "200": { description: Applications (includes applicationsByStage source)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    post:
+      tags: [applications]
+      summary: Create an application (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/applications/time-to-hire:
+    get:
+      tags: [applications]
+      summary: Time-to-hire metric series
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Time-to-hire data., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/applications/attachments:
+    post:
+      tags: [applications]
+      summary: Record file-attachment metadata (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Recorded., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/applications/{id}:
+    patch:
+      tags: [applications]
+      summary: Update application stage/status (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/applications/{id}/hire:
+    post:
+      tags: [applications]
+      summary: Hire (idempotent; publishes application.hired)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Hired (no re-stamp if already hired)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/applications/{id}/reject:
+    post:
+      tags: [applications]
+      summary: Reject (publishes application.rejected)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Rejected., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Offers (routes/offers.ts) ────────────────────────────────────────────
+  /internal/offers:
+    get:
+      tags: [offers]
+      summary: List offers
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Offers., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    post:
+      tags: [offers]
+      summary: Create an offer (requireRecruiterOrAdmin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/offers/{id}:
+    get:
+      tags: [offers]
+      summary: Get one offer
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Offer., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    patch:
+      tags: [offers]
+      summary: Update an offer (requireRecruiterOrAdmin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/offers/{id}/approve:
+    post:
+      tags: [offers]
+      summary: Approve an offer (publishes offer.approved)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Approved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/offers/{id}/accept:
+    post:
+      tags: [offers]
+      summary: Mark an offer accepted (publishes offer.accepted)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Accepted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── AI agents (routes/agent-sourcing.ts, agent-offer.ts, agent-experience.ts)
+  /internal/sourcing:
+    post:
+      tags: [agents]
+      summary: Sourcing agent — talent-pool discovery (ADMIN/RECRUITER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Sourcing result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/sourcing/search:
+    post:
+      tags: [agents]
+      summary: Sourcing search (ADMIN/RECRUITER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Search results., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/sourcing/match:
+    post:
+      tags: [agents]
+      summary: Sourcing match/rank (ADMIN/RECRUITER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Match results., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/sourcing/embed-backfill:
+    post:
+      tags: [agents]
+      summary: Backfill candidate embeddings (ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Backfill result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/offer:
+    post:
+      tags: [agents]
+      summary: Offer agent — draft an offer package (ADMIN/RECRUITER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Offer draft., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/candidate-experience:
+    post:
+      tags: [agents]
+      summary: Candidate-experience agent (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Experience response., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/candidates/{id}/export:
+    get:
+      tags: [gdpr]
+      summary: Export a candidate's data (DSR)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Candidate export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/gdpr/candidates/{id}:
+    delete:
+      tags: [gdpr]
+      summary: Erase a candidate (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Erased., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export all candidate data for the tenant (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Tenant export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

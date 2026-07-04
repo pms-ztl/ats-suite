@@ -1,0 +1,351 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — interview-service
+  version: 0.0.1
+  description: >-
+    Interviews, panels, feedback, rounds config, collaboration artifacts +
+    collab tokens, two AI agents (interview-intelligence, interview-scheduler),
+    and calendar OAuth (default port 4006). All routes mount under /internal/*.
+    RLS-scoped request client. Publishes tenant.{t}.interview.scheduled and
+    tenant.{t}.interview.round.started (round-progression advances the pipeline
+    forward-only). Rounds mutations require the configurableRounds plan flag.
+
+    Gateway mapping: /api/interviews -> /internal/interviews (artifacts +
+    interviews share this base); /api/rounds -> /internal/rounds;
+    /api/interview-intelligence (AI) -> /internal/interview-intelligence;
+    /api/scheduling (AI) -> /internal/scheduling. Calendar OAuth
+    (/internal/calendar) has no /api proxy and is reached in-process.
+servers:
+  - url: http://localhost:4006
+    description: Internal service port
+tags:
+  - name: interviews
+  - name: rounds
+  - name: artifacts
+  - name: agents
+  - name: calendar
+  - name: gdpr
+  - name: health
+paths:
+  # ─── Interviews (routes/interviews.ts) ────────────────────────────────────
+  /internal/interviews:
+    get:
+      tags: [interviews]
+      summary: List interviews
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Interviews., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+    post:
+      tags: [interviews]
+      summary: Schedule an interview (requireScheduler) — publishes interview.scheduled
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Scheduled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/{id}:
+    get:
+      tags: [interviews]
+      summary: Get one interview
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Interview., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/interviews/{id}/feedback:
+    post:
+      tags: [interviews]
+      summary: Submit interview feedback (requireFeedbackSubmitter)
+      description: >-
+        Consumes the 5-point recommendation scale (STRONG_HIRE..STRONG_NO_HIRE).
+        The FeedbackSubmittedPayloadSchema exists but is not published today.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Feedback saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/{id}/panel:
+    get:
+      tags: [interviews]
+      summary: Get the interview panel
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Panel members., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    post:
+      tags: [interviews]
+      summary: Add a panel member (requireScheduler)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Panel updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/{id}/panel/{userId}:
+    delete:
+      tags: [interviews]
+      summary: Remove a panel member (requireScheduler)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: userId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Removed., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/applications/{id}/advance-round:
+    post:
+      tags: [interviews]
+      summary: Advance an application to the next round (requireScheduler)
+      description: Forward-only pipeline advance; publishes interview.round.started.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Advanced., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Artifacts (routes/artifacts.ts, mounted /internal/interviews) ────────
+  /internal/interviews/{id}/artifact:
+    get:
+      tags: [artifacts]
+      summary: Get the interview's collaborative artifact (notes/code/whiteboard)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Artifact document., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [artifacts]
+      summary: Save the artifact (requireRoomMember)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/{id}/collab-token:
+    post:
+      tags: [artifacts]
+      summary: Mint a collab-service WebSocket token for the room (requireRoomMember)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "{ token, ... } for collab-service /rt", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/interviews/{id}/artifact/export:
+    get:
+      tags: [artifacts]
+      summary: Export the artifact (e.g. PDF)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Exported artifact file. }
+  # ─── Rounds (routes/rounds.ts) ────────────────────────────────────────────
+  /internal/rounds:
+    get:
+      tags: [rounds]
+      summary: List round definitions
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Rounds., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [rounds]
+      summary: Replace the round set (requireRoundEditor + configurableRounds)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    post:
+      tags: [rounds]
+      summary: Add a round (requireRoundEditor + configurableRounds)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/rounds/{id}:
+    patch:
+      tags: [rounds]
+      summary: Update a round (requireRoundEditor + configurableRounds)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [rounds]
+      summary: Delete a round (requireRoundEditor + configurableRounds)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deleted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── AI agents (routes/agent-intelligence.ts, agent-scheduling.ts) ────────
+  /internal/interview-intelligence:
+    post:
+      tags: [agents]
+      summary: Interview-intelligence agent (ADMIN/RECRUITER/HIRING_MANAGER/INTERVIEWER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Intelligence output., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/scheduling:
+    post:
+      tags: [agents]
+      summary: Interview-scheduler agent (ADMIN/RECRUITER)
+      description: Publishes interview.scheduled on a successful schedule (lib/scheduling-tools.ts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Scheduling result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Calendar OAuth (routes/calendar-oauth.ts) ────────────────────────────
+  /internal/calendar/connect/{provider}:
+    get:
+      tags: [calendar]
+      summary: Begin calendar OAuth for a provider
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: provider, in: path, required: true, schema: { type: string } }
+      responses:
+        "302": { description: Redirect to the provider's consent screen. }
+  /internal/calendar/callback/{provider}:
+    get:
+      tags: [calendar]
+      summary: Calendar OAuth callback
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string } }
+        - { name: code, in: query, required: false, schema: { type: string } }
+        - { name: state, in: query, required: false, schema: { type: string } }
+      responses:
+        "200": { description: Connected. }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export tenant interview data (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

@@ -1,0 +1,583 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — identity-service
+  version: 0.0.1
+  description: >-
+    Users, auth-polish (password/MFA), SSO, dashboards/preferences, audit log,
+    and tenant API keys (default port 4001). All routes mount under /internal/*.
+    Predominantly cross-tenant (auth + user registry), so RLS is OPT-IN: the
+    default prisma client is admin; a `prismaRls` client scopes only the pure
+    per-tenant handlers (assignable list, role change, deactivate, dashboards).
+    readAuthHeaders is OPTIONAL on most mounts because several routes run before a
+    JWT exists (verify-credentials during login, register saga, accept-invite);
+    role-guarded routes still require req.user per-handler.
+
+    Gateway mapping (api-gateway.yaml): /api/users -> /internal/users;
+    /api/me/dashboards + /api/tenant/dashboards + /api/me/preferences ->
+    /internal/users/me|tenant/*; /api/api-keys -> /internal/api-keys;
+    /api/sso/config -> /internal/sso/tenants; /api/super-admin/audit ->
+    /internal/audit; /api/super-admin/operators -> /internal/users/platform/operators.
+    Auth-polish (/internal/auth) is reached in-process by the gateway auth router,
+    not by a public /api mount.
+servers:
+  - url: http://localhost:4001
+    description: Internal service port
+tags:
+  - name: users
+  - name: dashboards
+  - name: auth-polish
+  - name: sso
+  - name: audit
+  - name: api-keys
+  - name: gdpr
+  - name: health
+components:
+  parameters:
+    Auth:
+      # convenience group note — the four gateway-stamped headers apply to every
+      # authenticated route below; listed individually per-route.
+      name: _authHeaders
+      in: header
+      required: false
+      schema: { type: string }
+paths:
+  # ─── Users (routes/users.ts) ──────────────────────────────────────────────
+  /internal/users/verify-credentials:
+    post:
+      tags: [users]
+      summary: Verify email+password (login step, UNAUTHENTICATED)
+      description: Called by the gateway auth router during login. No gateway headers required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Verified user (or error envelope on bad credentials).
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/users:
+    post:
+      tags: [users]
+      summary: Create user (register-company saga, UNAUTHENTICATED)
+      description: Internal saga step during company registration.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201":
+          description: User created.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+    get:
+      tags: [users]
+      summary: List users (SUPER_ADMIN or ADMIN) — tenantId query for cross-tenant
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Users list.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/seats:
+    get:
+      tags: [users]
+      summary: Seat usage vs plan cap
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: query, required: false, schema: { type: string } }
+        - { name: plan, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: "{ used, limit, ... }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+  /internal/users/platform-stats:
+    get:
+      tags: [users]
+      summary: Cross-tenant user counts (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: "{ total, byTenant }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/platform/operators:
+    get:
+      tags: [users]
+      summary: Platform operator roster — all SUPER_ADMIN users
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Operators list.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/platform/security:
+    get:
+      tags: [users]
+      summary: Platform security telemetry (active sessions, MFA adoption)
+      description: Aggregated by the gateway /api/super-admin/security fan-out. (users.ts ~line 191/240 GET group.)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: "{ activeSessions, totalUsers, mfaEnabledUsers, mfaAdoptionPct, sessions[] }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/invite:
+    post:
+      tags: [users]
+      summary: Invite a user (ADMIN, HIRING_MANAGER, or RECRUITER)
+      description: >-
+        ROLE_HIERARCHY gate — each role may only add roles strictly beneath it.
+        Sets the new user's managerId to the inviter and returns inviteToken +
+        inviterManagerId (the gateway strips both before returning to the client).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                firstName: { type: string }
+                lastName: { type: string }
+                role:
+                  type: string
+                  enum: [ADMIN, HIRING_MANAGER, RECRUITER, INTERVIEWER, COMPLIANCE_OFFICER]
+                tenantId: { type: string, description: injected by the gateway }
+                plan: { type: string, description: injected by the gateway }
+                invitedByUserId: { type: string, description: injected by the gateway }
+      responses:
+        "201":
+          description: Invited user (with inviteToken for the gateway).
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/my-team:
+    get:
+      tags: [users]
+      summary: Caller's org subtree (BFS over managerId)
+      description: ADMIN/HIRING_MANAGER/RECRUITER. Uses the admin client scoped by tenantId.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Subtree of reports.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/{id}:
+    get:
+      tags: [users]
+      summary: Get one user
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The user.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    delete:
+      tags: [users]
+      summary: Delete a user
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deleted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/{id}/role:
+    patch:
+      tags: [users]
+      summary: Change a user's role (tenant admin, RLS-scoped)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [role], properties: { role: { type: string } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/users/{id}/deactivate:
+    patch:
+      tags: [users]
+      summary: Deactivate a user (tenant admin, RLS-scoped)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deactivated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Dashboards + preferences (routes/dashboards.ts) ─────────────────────
+  /internal/users/me/dashboards/{dashboardKey}:
+    get:
+      tags: [dashboards]
+      summary: Resolve caller's active layout (user -> tenant-default -> 404)
+      description: >-
+        404 is the CONTRACT — the client falls back to its seeded default so an
+        untouched tenant is byte-identical to pre-customization.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: dashboardKey, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: "{ dashboardKey, document, source: user|tenant, updatedAt }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    put:
+      tags: [dashboards]
+      summary: Copy-on-write the caller's personal layout
+      description: Body validated by DashboardDocumentSchema (packages/contracts/src/dtos/dashboard.ts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: dashboardKey, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: DashboardDocumentSchema — widget grid layout document.
+              additionalProperties: true
+      responses:
+        "200": { description: Saved layout., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+    delete:
+      tags: [dashboards]
+      summary: Delete the caller's personal layout (revert to tenant default)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: dashboardKey, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Reverted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/users/me/preferences:
+    get:
+      tags: [dashboards]
+      summary: Get caller's UI preferences
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Preferences., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    patch:
+      tags: [dashboards]
+      summary: Update caller's UI preferences
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+  /internal/users/tenant/dashboards/{dashboardKey}:
+    get:
+      tags: [dashboards]
+      summary: Get the tenant-default layout
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: dashboardKey, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Tenant-default layout., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    put:
+      tags: [dashboards]
+      summary: Set the tenant-default layout (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: dashboardKey, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Auth polish (routes/auth-polish.ts, mounted /internal/auth) ─────────
+  /internal/auth/forgot-password:
+    post: { tags: [auth-polish], summary: Request password reset (unauthenticated), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email } } } } } }, responses: { "200": { description: Reset email sent if the account exists., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/reset-password:
+    post: { tags: [auth-polish], summary: Reset password with token (unauthenticated), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string } } } } } }, responses: { "200": { description: Password reset., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }, "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" } } }
+  /internal/auth/request-email-verification:
+    post: { tags: [auth-polish], summary: Send email-verification link, requestBody: { required: false, content: { application/json: { schema: { type: object, additionalProperties: true } } } }, responses: { "200": { description: Sent., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/verify-email:
+    post: { tags: [auth-polish], summary: Verify email with token, requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string } } } } } }, responses: { "200": { description: Verified., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/invite-info:
+    get: { tags: [auth-polish], summary: Look up invite metadata by token, parameters: [ { name: token, in: query, required: true, schema: { type: string } } ], responses: { "200": { description: Invite info., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }, "404": { $ref: "./_shared.yaml#/components/responses/NotFound" } } }
+  /internal/auth/accept-invite:
+    post: { tags: [auth-polish], summary: Accept an invite + set password, requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string } } } } } }, responses: { "200": { description: Invite accepted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }, "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" } } }
+  /internal/auth/change-password:
+    post:
+      tags: [auth-polish]
+      summary: Change password (authenticated)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string } } } } }
+      responses:
+        "200": { description: Changed., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/auth/mfa/setup:
+    post: { tags: [auth-polish], summary: Begin MFA enrollment, parameters: [ { $ref: "./_shared.yaml#/components/parameters/XUserId" }, { $ref: "./_shared.yaml#/components/parameters/XTenantId" }, { $ref: "./_shared.yaml#/components/parameters/XUserRole" } ], responses: { "200": { description: MFA secret/QR., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/mfa/verify:
+    post: { tags: [auth-polish], summary: Confirm MFA enrollment code, parameters: [ { $ref: "./_shared.yaml#/components/parameters/XUserId" }, { $ref: "./_shared.yaml#/components/parameters/XTenantId" }, { $ref: "./_shared.yaml#/components/parameters/XUserRole" } ], requestBody: { required: true, content: { application/json: { schema: { type: object, required: [code], properties: { code: { type: string } } } } } }, responses: { "200": { description: MFA enabled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/mfa/disable:
+    post: { tags: [auth-polish], summary: Disable MFA, parameters: [ { $ref: "./_shared.yaml#/components/parameters/XUserId" }, { $ref: "./_shared.yaml#/components/parameters/XTenantId" }, { $ref: "./_shared.yaml#/components/parameters/XUserRole" } ], responses: { "200": { description: MFA disabled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/auth/mfa/challenge:
+    post: { tags: [auth-polish], summary: Verify an MFA challenge during login, requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: true } } } }, responses: { "200": { description: Challenge result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  # ─── SSO (routes/sso.ts) ──────────────────────────────────────────────────
+  /internal/sso/discover:
+    post: { tags: [sso], summary: Discover a tenant's SSO config by email domain (public), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string } } } } } }, responses: { "200": { description: SSO discovery result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/sso/saml/{tenantId}/initiate:
+    get: { tags: [sso], summary: Begin SAML SSO (public redirect), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } } ], responses: { "302": { description: Redirect to IdP } } }
+  /internal/sso/saml/{tenantId}/callback:
+    post: { tags: [sso], summary: SAML assertion consumer (public, form-urlencoded), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } } ], requestBody: { required: true, content: { application/x-www-form-urlencoded: { schema: { type: object, additionalProperties: true } } } }, responses: { "200": { description: SSO login result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/sso/oidc/{tenantId}/initiate:
+    get: { tags: [sso], summary: Begin OIDC SSO (public redirect), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } } ], responses: { "302": { description: Redirect to IdP } } }
+  /internal/sso/oidc/{tenantId}/callback:
+    get: { tags: [sso], summary: OIDC callback (public), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } }, { name: code, in: query, required: false, schema: { type: string } }, { name: state, in: query, required: false, schema: { type: string } } ], responses: { "200": { description: SSO login result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } } } }
+  /internal/sso/tenants/{tenantId}/sso:
+    get:
+      tags: [sso]
+      summary: Read tenant SSO config (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: SSO config., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    put:
+      tags: [sso]
+      summary: Upsert tenant SSO config (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [sso]
+      summary: Delete tenant SSO config (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deleted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/sso/tenants/{tenantId}/sso/audit:
+    get:
+      tags: [sso]
+      summary: SSO login audit (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: SSO audit rows., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/sso/tenants/{tenantId}/sso/metadata:
+    get:
+      tags: [sso]
+      summary: SP metadata XML (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: SP metadata. }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Audit (routes/audit.ts) ──────────────────────────────────────────────
+  /internal/audit:
+    post:
+      tags: [audit]
+      summary: Write an audit entry (internal, no role check)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Audit row created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    get:
+      tags: [audit]
+      summary: List audit entries (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Audit rows., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/audit/export.csv:
+    get:
+      tags: [audit]
+      summary: Export audit log as CSV (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: text/csv audit export. }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── API keys (routes/api-keys.ts) ────────────────────────────────────────
+  /internal/api-keys:
+    get:
+      tags: [api-keys]
+      summary: List tenant API keys (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: API keys (redacted)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    post:
+      tags: [api-keys]
+      summary: Create an API key (tenant admin) — returns the plaintext key ONCE
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [name], properties: { name: { type: string } } } } }
+      responses:
+        "201": { description: Created key (plaintext once)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/api-keys/{id}:
+    delete:
+      tags: [api-keys]
+      summary: Revoke an API key (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Revoked., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/api-keys/verify:
+    post:
+      tags: [api-keys]
+      summary: Verify a bearer API key (UNAUTHENTICATED — the key IS the auth)
+      description: Called by the gateway public-ingest router to authenticate /api/v1/* calls.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [key], properties: { key: { type: string } } } } }
+      responses:
+        "200": { description: "{ valid, tenantId, ... }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export tenant user data (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Tenant user export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

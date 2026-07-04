@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/job.published.v1.schema.json",
+  "title": "job.published payload (v1)",
+  "description": "A job posting was published — the google-indexing worker re-indexes the public listing (Indexing API URL_UPDATED). HONEST STATUS: this is a CONSUMER-ONLY contract. The worker (apps/job-service/src/workers/google-indexing.worker.ts) subscribes to tenant.*.job.published on a JOB_EVENTS stream, but NO producer publishes it today and JOB_EVENTS is NOT in CORE_STREAMS — the worker explicitly logs \"idle - publisher slice not deployed\" and stays quiet when the stream is absent. This schema documents the MINIMAL shape the consumer reads (it only needs a job-posting id off the payload).",
+  "type": "object",
+  "x-event-type": "job.published",
+  "x-subject": "tenant.{tenantId}.job.published",
+  "x-stream": "JOB_EVENTS (not declared in CORE_STREAMS)",
+  "x-producer": "(none active — consumer-only contract; publisher slice not deployed)",
+  "x-consumers": [
+    "job-service google-indexing worker (enqueue Google Indexing API URL_UPDATED for the listing)"
+  ],
+  "required": [
+    "tenantId",
+    "jobPostingId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory; also on the envelope)." },
+    "jobPostingId": {
+      "type": "string",
+      "description": "The published JobPosting id. The worker reads this off the payload (readJobPostingId) to resolve the public URL; without it the event is ignored."
+    }
+  }
+}

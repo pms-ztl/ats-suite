@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/application.hired.v1.schema.json",
+  "title": "application.hired payload (v1)",
+  "description": "Emitted when a recruiter/hiring-manager marks an application HIRED. Producer: candidate-service (apps/candidate-service/src/lib/decision-events.ts). Ids are plain strings (Application.id is a cuid, NOT a uuid) — do NOT constrain to uuid format. Matches the typed ApplicationHiredPayloadSchema.",
+  "type": "object",
+  "x-event-type": "application.hired",
+  "x-subject": "tenant.{tenantId}.application.hired",
+  "x-stream": "CANDIDATE_EVENTS",
+  "x-producer": "candidate-service (decision flow)",
+  "x-consumers": [
+    "notification-service (APPLICATION_HIRED direct push to each stakeholder; audit + webhook fan-out)",
+    "onboarding-service (open an onboarding case — fallback when there is no separate offer.accepted)"
+  ],
+  "required": [
+    "tenantId",
+    "applicationId",
+    "candidateId",
+    "requisitionId",
+    "candidateName",
+    "candidateEmail",
+    "jobTitle",
+    "decidedByUserId",
+    "stakeholderUserIds"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "description": "Owning tenant (mandatory)." },
+    "applicationId": { "type": "string", "description": "Application marked hired (cuid)." },
+    "candidateId": { "type": "string", "description": "Hired candidate." },
+    "requisitionId": { "type": ["string", "null"], "description": "Requisition, or null." },
+    "candidateName": { "type": ["string", "null"], "description": "Candidate display name, or null." },
+    "candidateEmail": { "type": ["string", "null"], "format": "email", "description": "Candidate email, or null." },
+    "jobTitle": { "type": ["string", "null"], "description": "Resolved job title, or null (best-effort cross-service lookup)." },
+    "decidedByUserId": { "type": ["string", "null"], "description": "User who approved the hire, or null." },
+    "stakeholderUserIds": {
+      "type": "array",
+      "description": "Stakeholder user ids to notify (hiring manager, recruiter). May be empty when none resolved.",
+      "items": { "type": "string" }
+    }
+  }
+}

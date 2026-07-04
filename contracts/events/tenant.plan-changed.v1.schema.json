@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/tenant.plan-changed.v1.schema.json",
+  "title": "tenant.plan-changed payload (v1)",
+  "description": "Emitted when a tenant's plan actually changes. Producer: tenant-service — published from THREE call sites (apps/tenant-service/src/routes/tenants.ts stripe-status flip, and apps/tenant-service/src/routes/plan-changes.ts on manual approve + on stripe-webhook activate). The payloads DIVERGE across call sites, so only tenantId/fromPlan/toPlan are always present: the stripe-flip path sends `source`+`stripeStatus` (no changedByUserId/requestId); the approve/activate paths send `changedByUserId`+`requestId` (and `source:\"stripe\"` on activate). All the variant fields are therefore OPTIONAL here. Note the subject leaf is domain=tenant, event=plan-changed (subject tenant.{tenantId}.tenant.plan-changed).",
+  "type": "object",
+  "x-event-type": "tenant.plan-changed",
+  "x-subject": "tenant.{tenantId}.tenant.plan-changed",
+  "x-stream": "TENANT_EVENTS",
+  "x-producer": "tenant-service (stripe-status flip route, plan-change approve, plan-change stripe activate)",
+  "x-consumers": [
+    "billing-service (sync TenantPlanCache + auto-disable agents the new plan no longer allows)",
+    "notification-service (PLAN_CHANGE_APPROVED to the tenant + super-admins; source flag distinguishes stripe vs manual)"
+  ],
+  "required": [
+    "tenantId",
+    "fromPlan",
+    "toPlan"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "fromPlan": {
+      "type": "string",
+      "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"],
+      "description": "Previous plan."
+    },
+    "toPlan": {
+      "type": "string",
+      "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"],
+      "description": "New plan."
+    },
+    "changedByUserId": {
+      "type": "string",
+      "description": "Reviewer/actor who changed the plan. Present on the approve/activate paths (activate uses \"stripe-webhook\" when no reviewer). ABSENT on the stripe-status-flip route."
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Originating PlanChangeRequest id. Present on the approve/activate paths; ABSENT on the stripe-status-flip route."
+    },
+    "source": {
+      "type": "string",
+      "description": "\"stripe\" when the change came from a Stripe payment/flip; omitted (treated as \"manual\") otherwise. Consumers key stripe-vs-manual copy off this."
+    },
+    "stripeStatus": {
+      "type": "string",
+      "description": "Stripe subscription status. Present only on the stripe-status-flip route."
+    }
+  }
+}

@@ -1,0 +1,68 @@
+# Migrator — one-shot Job (mirrors the `migrator` service in
+# docker-compose.demo.yml:201-222).
+#
+# Runs `bash infra/migrate.sh` from the tools image (infra/Dockerfile.tools),
+# which `prisma migrate deploy`s the 9 core services and `db push`es the rest,
+# against the per-service DATABASE_URLs. In compose every app service
+# depends_on the migrator with condition service_completed_successfully; on k8s
+# that ordering is not automatic, so run this Job to completion BEFORE applying
+# the service Deployments (the README documents the apply order). Idempotent:
+# migrate deploy + db push are safe to re-run.
+#
+# IMAGE: build the tools image and push it as ghcr.io/cdc-ats/tools:<tag>:
+#   docker build -f infra/Dockerfile.tools -t ghcr.io/cdc-ats/tools:latest .
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrator
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: migrator
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: migrator
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrator
+          image: ghcr.io/cdc-ats/tools:latest
+          command: ["bash", "infra/migrate.sh"]
+          # migrate.sh reads each <SVC>_DATABASE_URL. All come from the Secret,
+          # exactly as the compose migrator lists them inline.
+          env:
+            - name: IDENTITY_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: IDENTITY_DATABASE_URL } }
+            - name: TENANT_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: TENANT_DATABASE_URL } }
+            - name: BILLING_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: BILLING_DATABASE_URL } }
+            - name: JOB_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JOB_DATABASE_URL } }
+            - name: CANDIDATE_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: CANDIDATE_DATABASE_URL } }
+            - name: INTERVIEW_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERVIEW_DATABASE_URL } }
+            - name: RESUME_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: RESUME_DATABASE_URL } }
+            - name: SCREENING_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: SCREENING_DATABASE_URL } }
+            - name: NOTIFICATION_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: NOTIFICATION_DATABASE_URL } }
+            - name: SEARCH_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: SEARCH_DATABASE_URL } }
+            - name: AGENT_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: AGENT_DATABASE_URL } }
+            - name: ANALYTICS_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANALYTICS_DATABASE_URL } }
+            - name: COMPLIANCE_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: COMPLIANCE_DATABASE_URL } }
+            - name: ASSESSMENT_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ASSESSMENT_DATABASE_URL } }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits:   { cpu: "1",  memory: 1Gi }

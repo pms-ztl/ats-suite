@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — onboarding-service
+  version: 0.0.1
+  description: >-
+    Post-offer onboarding execution (PAN/bank/docs/tasks), default port 4015.
+    Recruiter/admin case management under /internal/onboarding-cases/*
+    (RLS-scoped); the PUBLIC candidate portal under /public/onboarding/* where
+    the opaque portalToken in the path IS the credential (no JWT, tenant resolved
+    from the case row via the admin client). Subscribes to
+    tenant.*.application.hired and tenant.*.offer.accepted to open cases.
+    Gateway mapping: /api/onboarding-cases -> /internal/onboarding-cases;
+    /api/public/onboarding -> /public/onboarding. NOTE: deployed via prisma db
+    push (no versioned migrations dir yet).
+servers:
+  - url: http://localhost:4015
+    description: Internal service port
+tags:
+  - name: onboarding-cases
+  - name: portal
+  - name: health
+paths:
+  # ─── Recruiter cases (routes/onboarding.ts) ───────────────────────────────
+  /internal/onboarding-cases:
+    get:
+      tags: [onboarding-cases]
+      summary: List onboarding cases
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Cases., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+    post:
+      tags: [onboarding-cases]
+      summary: Open an onboarding case (requireRecruiter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Case created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/onboarding-cases/{id}:
+    get:
+      tags: [onboarding-cases]
+      summary: Get one onboarding case
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Case., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  # ─── Candidate portal (routes/portal.ts) — PUBLIC, portalToken IS the auth ─
+  /public/onboarding/{token}:
+    get:
+      tags: [portal]
+      summary: Load the candidate's onboarding case by portal token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Case view (tasks, required docs)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /public/onboarding/{token}/pan:
+    post:
+      tags: [portal]
+      summary: Submit PAN details
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /public/onboarding/{token}/bank:
+    post:
+      tags: [portal]
+      summary: Submit bank details
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /public/onboarding/{token}/tasks/{taskId}/complete:
+    post:
+      tags: [portal]
+      summary: Mark an onboarding task complete
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+        - { name: taskId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Task completed., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/_envelope.schema.json",
+  "title": "EventEnvelope",
+  "description": "The wire envelope that wraps EVERY NATS event on this platform. Built by publishEvent() in packages/nats-client/src/publisher.ts; validated on the consumer side by EventEnvelopeSchema in packages/contracts/src/events/event-base.ts. The per-type <type>.v1.schema.json files in this directory describe the `payload` field only.",
+  "type": "object",
+  "required": ["eventId", "type", "tenantId", "emittedAt", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID v4 minted by publishEvent(). Used as the JetStream msgID (publish dedup) AND as the subscriber idempotency key."
+    },
+    "type": {
+      "type": "string",
+      "description": "Event type string. Matches the `type` field in each per-type schema and (by convention) the domain.event leaf of the subject."
+    },
+    "tenantId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Tenant this event belongs to. null ONLY for platform-scoped events (tenant.created, platform.agent.kill-switch.toggled) whose subject starts with `platform.`. For every tenant-scoped event this is the tenant UUID and the payload ALSO carries tenantId (the multi-tenancy mandate)."
+    },
+    "emittedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp set by publishEvent() at publish time."
+    },
+    "traceparent": {
+      "type": "string",
+      "description": "Optional W3C traceparent for OTel trace correlation. Omitted by every current call site (no producer passes it today) but accepted by the envelope."
+    },
+    "payload": {
+      "description": "The event body. Shape is defined by the matching <type>.v1.schema.json in this directory."
+    }
+  }
+}

@@ -1,0 +1,44 @@
+# Seeder — one-shot Job (mirrors the `seeder` service in
+# docker-compose.demo.yml:533-546).
+#
+# Runs `bash infra/seed.sh` from the SAME tools image as the migrator. It seeds
+# the demo tenant + users over the gateway API (API_URL) and writes a couple of
+# rows directly (TENANT/BILLING/IDENTITY DB URLs). In compose it depends_on the
+# api-gateway being started; on k8s apply this Job AFTER the gateway Deployment
+# is Ready (README documents the order). OPTIONAL for a production deploy — it
+# only creates the DEMO tenant/data; skip it if you provision tenants yourself.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seeder
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: seeder
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seeder
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seeder
+          image: ghcr.io/cdc-ats/tools:latest
+          command: ["bash", "infra/seed.sh"]
+          env:
+            # Compose: API_URL=http://api-gateway:4000/api (in-cluster the
+            # gateway Service resolves to the same name + port).
+            - name: API_URL
+              value: "http://api-gateway:4000/api"
+            - name: TENANT_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: TENANT_DATABASE_URL } }
+            - name: BILLING_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: BILLING_DATABASE_URL } }
+            - name: IDENTITY_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: IDENTITY_DATABASE_URL } }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: 500m, memory: 512Mi }

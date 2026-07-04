@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/assessment.submitted.v1.schema.json",
+  "title": "assessment.submitted payload (v1)",
+  "description": "Emitted when a candidate submits an assessment attempt (before grading finalizes). Producer: assessment-service public-take submit route (apps/assessment-service/src/routes/public-take.ts). Notify-only; no subscriber consumes this subject today. Carries NO grade/score (grading may still be pending).",
+  "type": "object",
+  "x-event-type": "assessment.submitted",
+  "x-subject": "tenant.{tenantId}.assessment.submitted",
+  "x-stream": "ASSESSMENT_EVENTS",
+  "x-producer": "assessment-service (public-take submit route)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "attemptId",
+    "assessmentId",
+    "inviteId",
+    "candidateId",
+    "pendingManualReview"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "attemptId": { "type": "string", "description": "The submitted attempt." },
+    "assessmentId": { "type": "string", "description": "Assessment taken." },
+    "inviteId": { "type": "string", "description": "Invite this attempt came from." },
+    "candidateId": { "type": "string", "description": "Candidate who submitted." },
+    "pendingManualReview": {
+      "type": "boolean",
+      "description": "True when the attempt has open-ended items or otherwise needs a human grade before a verdict."
+    }
+  }
+}

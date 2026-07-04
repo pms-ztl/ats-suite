@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/interview.round.started.v1.schema.json",
+  "title": "interview.round.started payload (v1)",
+  "description": "Emitted when interview-service starts a Technical/HR/Final round (creates a stub interview for the next round). Producer: interview-service (apps/interview-service/src/lib/round-progression.ts). Note the subject uses domain=interview, event=round.started, so the leaf is `round.started` (subject tenant.{tenantId}.interview.round.started). Carries the canonical targetStage the pipeline should reflect so candidate-service can forward-only advance the Application.stage.",
+  "type": "object",
+  "x-event-type": "interview.round.started",
+  "x-subject": "tenant.{tenantId}.interview.round.started",
+  "x-stream": "INTERVIEW_EVENTS",
+  "x-producer": "interview-service (round progression)",
+  "x-consumers": [
+    "candidate-service (forward-only advance Application.stage to targetStage TECHNICAL_ROUND / HR_ROUND / FINAL_REVIEW)"
+  ],
+  "required": [
+    "tenantId",
+    "applicationId",
+    "candidateId",
+    "requisitionId",
+    "interviewId",
+    "roundId",
+    "roundNumber",
+    "roundName",
+    "interviewType",
+    "targetStage"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "applicationId": {
+      "type": ["string", "null"],
+      "description": "Application to advance. The producer sends the id it has; consumer no-ops when absent (ad-hoc interviews)."
+    },
+    "candidateId": { "type": "string", "description": "Candidate." },
+    "requisitionId": { "type": "string", "description": "Requisition." },
+    "interviewId": { "type": "string", "description": "The stub interview created for this round." },
+    "roundId": { "type": "string", "description": "Round definition id." },
+    "roundNumber": { "type": "integer", "description": "Round order (nextRound.order)." },
+    "roundName": { "type": "string", "description": "Round display name." },
+    "interviewType": {
+      "type": "string",
+      "description": "Round interview type (e.g. TECHNICAL, BEHAVIORAL, PANEL, FINAL)."
+    },
+    "targetStage": {
+      "type": "string",
+      "description": "Canonical Application.stage this round maps to (TECHNICAL_ROUND / HR_ROUND / FINAL_REVIEW)."
+    }
+  }
+}

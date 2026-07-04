@@ -1,0 +1,75 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — collab-service
+  version: 0.0.1
+  description: >-
+    Interview collaboration hub (default port 4016). This service has NO REST
+    routers and NO Prisma DB. Its primary interface is a WebSocket relay at /rt
+    (documented under x-websocket below since OpenAPI has no first-class WS
+    channel type — see the AsyncAPI-style note). It exposes only health/metrics
+    over HTTP, and those are NON-standard shapes (defined inline in
+    apps/collab-service/src/index.ts, NOT the shared createHealthRouter).
+
+    Behavior: a stateless, room-scoped WebSocket relay that fans out every frame
+    a participant sends to the OTHER participants in the same room — carrying
+    both WebRTC signaling (offer/answer/ICE) and Yjs document updates for the
+    co-edited notes/code/whiteboard. The server does not parse payload frames.
+
+    x-websocket:
+      channel: "GET /rt (Upgrade: websocket)"
+      auth: >-
+        Query param `token` — a signed collab token minted by interview-service
+        (POST /internal/interviews/:id/collab-token). Optional `room` query must
+        match the token's roomId. Verified during the HTTP upgrade
+        (verifyCollabToken); an invalid token destroys the socket before any room
+        is joined. There is NO gateway JWT and NO X-Internal-Service on this path.
+      serverFrames:
+        - "{ t: 'welcome', self: { id, role, name }, peers: [...] }"
+        - "{ t: 'peer-join', id, role, name }"
+        - "{ t: 'peer-leave', id }"
+        - "relayed binary/JSON payload frames (WebRTC signaling + Yjs updates), passed through untouched"
+      clientFrames:
+        - "any binary or JSON frame — relayed verbatim to every other peer in the room"
+servers:
+  - url: http://localhost:4016
+    description: collab-service (HTTP health + WS /rt)
+tags: [{ name: health }]
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Health + live room count (non-standard shape)
+      description: 'Returns { status: ok, rooms: number }. Defined inline, not via common.'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  rooms: { type: integer }
+  /healthz:
+    get:
+      tags: [health]
+      summary: Liveness (non-standard shape)
+      description: 'Returns { status: ok }.'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+  /metrics:
+    get:
+      tags: [health]
+      summary: Prometheus metrics (hand-rolled text)
+      description: >-
+        Emits `collab_rooms` and `collab_participants` gauges as text/plain.
+        Not the shared prom-client registry.
+      responses:
+        "200": { description: text/plain exposition }

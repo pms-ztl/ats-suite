@@ -76,6 +76,7 @@ import type {
   ScreenerAnswer,
 } from "./types.js";
 import { fetchJson, header, num, dt, str, timingSafeEqualStr, PlatformHttpError } from "./http.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "seek" as const;
 
@@ -471,10 +472,12 @@ export const seekProvider: HiringPlatformProvider = {
    * the poll later). NEVER ACTIVE unless SEEK really said so.
    */
   async postJob(job, creds) {
-    // No creds -> gated board. Surface PENDING_PARTNER_APPROVAL with no external id
-    // (the caller persists the honest "awaiting board" state).
+    // No creds -> gated board. STUB path: no SEEK API is called. Surface
+    // PENDING_PARTNER_APPROVAL with no external id (the caller persists the honest
+    // "awaiting board" state) and warn at runtime. The real API path below is untouched.
     if (!str(creds.clientId) || !str(creds.clientSecret)) {
-      return { externalId: "", status: "PENDING_PARTNER_APPROVAL", raw: { reason: "no-credentials" } };
+      warnStub(PROVIDER, "no-credentials");
+      return { externalId: "", status: "PENDING_PARTNER_APPROVAL", raw: { stub: true, reason: "no-credentials" } };
     }
 
     // Apply with SEEK wiring: when the dispatcher hands us a per-posting inbound

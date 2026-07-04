@@ -56,6 +56,7 @@ import type {
   ProviderCapabilities,
 } from "./types.js";
 import { toAdzunaFeed } from "./feed.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "adzuna" as const;
 
@@ -89,13 +90,15 @@ export const adzunaProvider: HiringPlatformProvider = {
     _job: NormalizedJob,
     _creds,
   ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
+    // STUB path: no board API is called (Adzuna is pull-feed only). Warn at runtime.
+    warnStub(PROVIDER, "feed-only");
     return {
       // No board posting id exists for a crawled feed listing; never synthesized.
       externalId: "",
       // POSTING = accepted into the feed, not yet confirmed crawled/live. We never
       // claim ACTIVE for a feed listing we cannot independently confirm went live.
       status: "POSTING",
-      raw: { reason: "feed-only", note: "Adzuna ingests the registered XML feed; no programmatic postJob" },
+      raw: { stub: true, reason: "feed-only", note: "Adzuna ingests the registered XML feed; no programmatic postJob" },
     };
   },
 

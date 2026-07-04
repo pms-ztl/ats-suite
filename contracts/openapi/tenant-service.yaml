@@ -1,0 +1,383 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — tenant-service
+  version: 0.0.1
+  description: >-
+    Tenant registry, plan-change workflow, branding/retention, per-tenant UI
+    config (UiConfig store), and first-run onboarding config (default port 4002).
+    All routes mount under /internal/*. Predominantly cross-tenant (registry), so
+    RLS is OPT-IN via `prismaRls`: the self-service routers (branding, onboarding,
+    ui-config) touch the caller's OWN Tenant row via RLS; registry/super-admin/
+    saga/plan-changes use the admin client. Publishes platform.tenant.created and
+    tenant.{t}.tenant.plan-changed / plan-change.requested / plan-change.reviewed.
+
+    Gateway mapping: /api/tenants -> /internal/tenants; /api/super-admin/tenants +
+    /plan-change-requests -> /internal/tenants + /internal/plan-changes;
+    /api/tenants/plan-change-request(s) wrap /internal/plan-changes;
+    /api/me/ui-config -> /internal/ui-config; /api/branding -> /internal/branding;
+    /api/retention -> /internal/retention; /api/public/branding ->
+    /internal/public-branding; /api/onboarding -> /internal/onboarding.
+servers:
+  - url: http://localhost:4002
+    description: Internal service port
+tags:
+  - name: tenants
+  - name: plan-changes
+  - name: branding
+  - name: ui-config
+  - name: onboarding
+  - name: gdpr
+  - name: health
+paths:
+  # ─── Tenants (routes/tenants.ts) ──────────────────────────────────────────
+  /internal/tenants:
+    post:
+      tags: [tenants]
+      summary: Register a tenant (register-company saga, UNAUTHENTICATED)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Tenant created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+    get:
+      tags: [tenants]
+      summary: List tenants (SUPER_ADMIN) — paginated
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: page, in: query, required: false, schema: { type: integer } }
+        - { name: pageSize, in: query, required: false, schema: { type: integer } }
+        - { name: search, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Paginated tenants.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/PaginatedEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/tenants/stats:
+    get:
+      tags: [tenants]
+      summary: Cross-tenant KPI stats (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: "{ totalTenants, activeTenants, trialTenants, suspendedTenants, planBreakdown, recentTenants }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/tenants/{id}:
+    get:
+      tags: [tenants]
+      summary: Get one tenant
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: The tenant., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    patch:
+      tags: [tenants]
+      summary: Update a tenant (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated (may publish tenant.plan-changed)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [tenants]
+      summary: Delete a tenant
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deleted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/tenants/{id}/stripe-customer:
+    put:
+      tags: [tenants]
+      summary: Attach a Stripe customer id
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/tenants/{id}/plan-from-stripe:
+    put:
+      tags: [tenants]
+      summary: Set the plan from a Stripe subscription (publishes plan-changed)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Plan updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Plan changes (routes/plan-changes.ts) ────────────────────────────────
+  /internal/plan-changes:
+    post:
+      tags: [plan-changes]
+      summary: Request a plan change (tenant admin) — publishes plan-change.requested
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Request created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    get:
+      tags: [plan-changes]
+      summary: List all plan-change requests (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Requests., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/plan-changes/by-tenant/{id}:
+    get:
+      tags: [plan-changes]
+      summary: Plan-change requests for a tenant
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Requests for the tenant., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/plan-changes/{id}:
+    get:
+      tags: [plan-changes]
+      summary: Get one plan-change request
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: The request., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    patch:
+      tags: [plan-changes]
+      summary: Review a plan-change request (SUPER_ADMIN) — publishes plan-change.reviewed
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Reviewed., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [plan-changes]
+      summary: Cancel a pending plan-change request (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Cancelled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/plan-changes/{id}/activate:
+    patch:
+      tags: [plan-changes]
+      summary: Activate an approved plan change (idempotent) — publishes plan-changed
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Activated (no-op if already active)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Branding + retention (routes/branding.ts) ────────────────────────────
+  /internal/branding:
+    get:
+      tags: [branding]
+      summary: Get the caller tenant's branding (RLS-scoped)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Branding (incl. embedAllowedOrigins)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [branding]
+      summary: Update branding (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/retention:
+    get:
+      tags: [branding]
+      summary: Get the tenant's data-retention settings
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Retention settings., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [branding]
+      summary: Update retention settings (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/public-branding/{slug}:
+    get:
+      tags: [branding]
+      summary: Public branding by tenant slug (UNAUTHENTICATED)
+      description: Whitelabels the candidate portal. Gateway /api/public/branding.
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Public branding., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  # ─── UI config (routes/ui-config.ts) ──────────────────────────────────────
+  /internal/ui-config:
+    get:
+      tags: [ui-config]
+      summary: Get the caller tenant's UiConfig document (open read)
+      description: >-
+        Returns the migrated UiConfig document + sibling rendering defaults.
+        Fail-soft — a 404/empty override keeps the base chrome byte-identical.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: UiConfig document., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [ui-config]
+      summary: Persist a UiConfig document (tenant admin, module-gated at gateway)
+      description: >-
+        Body validated by UiConfigSchema (packages/contracts/src/ui-config.ts) —
+        the CSS-injection defense boundary (every hex/font/url validated). The
+        gateway gates this write behind requireModule('ui-customization').
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: UiConfigSchema — theme/workflow/scorecard/visibility/slots blob.
+              additionalProperties: true
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Onboarding config (routes/onboarding.ts) ─────────────────────────────
+  /internal/onboarding:
+    get:
+      tags: [onboarding]
+      summary: Get first-run wizard state
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Wizard state., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    post:
+      tags: [onboarding]
+      summary: Advance / dismiss / reset the wizard (tenant admin)
+      description: >-
+        Three POST sub-actions share this router (routes/onboarding.ts lines
+        110/160/183): mark a step complete, dismiss, and reset. Body selects the
+        action.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated wizard state., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export tenant record (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Tenant export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

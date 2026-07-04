@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — search-service
+  version: 0.0.1
+  description: >-
+    Search & matching microservice (default port 4010). Reached via the gateway
+    at /api/search/* -> /internal/search/*. Thin HTTP layer in
+    apps/search-service/src/routes/search.ts delegating to
+    services/search.service.ts (pgvector-style semantic search + candidate
+    ranking). Also runs a NATS subscriber on tenant.*.resume.parsed to index
+    parsed resumes.
+servers:
+  - url: http://localhost:4010
+    description: Internal service port (gateway forwards /api/search here)
+tags: [{ name: search }, { name: health }]
+components:
+  schemas:
+    SearchBody:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string, minLength: 1, maxLength: 500 }
+        limit: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    RankBody:
+      type: object
+      description: requisitionId OR query is required (zod .refine).
+      properties:
+        requisitionId: { type: string }
+        query: { type: string }
+        limit: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    IndexBody:
+      type: object
+      required: [kind, refId]
+      properties:
+        kind: { type: string, enum: [CANDIDATE, JOB] }
+        refId: { type: string, minLength: 1 }
+        title: { type: string, default: "" }
+        text: { type: string, default: "" }
+        skills: { type: array, items: { type: string }, default: [] }
+        embedding: { type: array, items: { type: number }, default: [] }
+        metadata: { type: object, additionalProperties: true, default: {} }
+paths:
+  /internal/search/candidates:
+    post:
+      tags: [search]
+      summary: Semantic candidate search
+      description: Body validated by SearchBody (src/schemas/search.schemas.ts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/SearchBody" } } }
+      responses:
+        "200":
+          description: "{ query, kind, count, results }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/search/jobs:
+    post:
+      tags: [search]
+      summary: Semantic job search
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/SearchBody" } } }
+      responses:
+        "200":
+          description: "{ query, kind, count, results }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/search/match/rank:
+    post:
+      tags: [search]
+      summary: Rank candidates against a requisition or free-form query
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/RankBody" } } }
+      responses:
+        "200":
+          description: "{ requisitionId, count, results }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/search/index:
+    post:
+      tags: [search]
+      summary: Index a candidate or job document
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/IndexBody" } } }
+      responses:
+        "200":
+          description: "{ indexed: true, id }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

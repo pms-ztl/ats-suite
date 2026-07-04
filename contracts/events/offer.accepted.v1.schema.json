@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/offer.accepted.v1.schema.json",
+  "title": "offer.accepted payload (v1)",
+  "description": "Emitted when a candidate accepts an offer. Producer: candidate-service (apps/candidate-service/src/lib/decision-events.ts). Ids are plain strings (cuid). Matches the typed OfferAcceptedPayloadSchema.",
+  "type": "object",
+  "x-event-type": "offer.accepted",
+  "x-subject": "tenant.{tenantId}.offer.accepted",
+  "x-stream": "CANDIDATE_EVENTS",
+  "x-producer": "candidate-service (offer flow)",
+  "x-consumers": [
+    "onboarding-service (open an onboarding case for the accepted candidate; idempotent per candidate)"
+  ],
+  "required": [
+    "tenantId",
+    "offerId",
+    "applicationId",
+    "candidateId",
+    "candidateName",
+    "candidateEmail",
+    "jobTitle",
+    "acceptedAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "description": "Owning tenant (mandatory)." },
+    "offerId": { "type": "string", "description": "Accepted offer id (cuid)." },
+    "applicationId": { "type": ["string", "null"], "description": "Related application, or null." },
+    "candidateId": { "type": "string", "description": "Candidate." },
+    "candidateName": { "type": ["string", "null"], "description": "Candidate display name, or null." },
+    "candidateEmail": { "type": ["string", "null"], "format": "email", "description": "Candidate email, or null." },
+    "jobTitle": { "type": ["string", "null"], "description": "Resolved job title, or null." },
+    "acceptedAt": { "type": ["string", "null"], "format": "date-time", "description": "When the candidate accepted (ISO), or null." }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/resume.parsed.v1.schema.json",
+  "title": "resume.parsed payload (v1)",
+  "description": "Emitted when the resume parse+enrich+verify pipeline finishes for one resume. Producer: resume-service (apps/resume-service/src/lib/parse-pipeline.ts). The REAL payload is a superset of the typed ResumeParsedPayloadSchema in packages/contracts: it also ships the full `parsed`, `enriched`, `githubCorroboration` and `verification` blobs that candidate-service and search-service read directly off the payload (not just the summary counts).",
+  "type": "object",
+  "x-event-type": "resume.parsed",
+  "x-subject": "tenant.{tenantId}.resume.parsed",
+  "x-stream": "RESUME_EVENTS",
+  "x-producer": "resume-service",
+  "x-consumers": [
+    "candidate-service (backfill Candidate.parsedSummary + overwrite placeholder name/email)",
+    "screening-service (enqueue one screening per ACTIVE application)",
+    "search-service (upsert CANDIDATE search document)",
+    "job-service apply-ingest-subscriber (advance accept-fast ledger row to PARSED)"
+  ],
+  "required": [
+    "tenantId",
+    "candidateId",
+    "resumeId",
+    "bulkUploadId",
+    "parsedSkillsCount",
+    "parseCostUsd"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Owning tenant. Mandatory per the multi-tenancy mandate (also on the envelope)."
+    },
+    "candidateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Candidate the resume belongs to."
+    },
+    "resumeId": {
+      "type": "string",
+      "description": "Resume record id (not necessarily a UUID)."
+    },
+    "bulkUploadId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Set when the resume came from a bulk archive ingest; null for a single upload / public apply."
+    },
+    "parsedSkillsCount": {
+      "type": "integer",
+      "description": "Number of skills after enrichment (enriched.skills.length)."
+    },
+    "parseCostUsd": {
+      "type": "number",
+      "description": "LLM cost of the resume-parser run (snapshot.costUsd)."
+    },
+    "parsed": {
+      "description": "The raw resume-parser agent output (result.output). Consumed by candidate-service as a fallback when `enriched` is absent, and by search-service. Free-form parsed-resume shape (identity fields may be { value, confidence } wrapped)."
+    },
+    "enriched": {
+      "description": "The enriched view (taxonomy canonicalization, per-skill YOE, normalized dates, evidence-adjusted confidence). candidate-service prefers this over `parsed` for parsedSummary; search-service reads skills/summary from it."
+    },
+    "githubCorroboration": {
+      "type": ["object", "null"],
+      "description": "GitHub-corroboration agent output, or null when no GitHub handle / corroboration disabled."
+    },
+    "verification": {
+      "type": ["object", "null"],
+      "description": "Agentic resume-verifier output (trust score + findings + trace), or null when the verifier did not run."
+    }
+  }
+}

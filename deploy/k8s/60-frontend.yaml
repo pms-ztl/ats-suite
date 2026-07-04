@@ -1,0 +1,86 @@
+# frontend — Deployment + Service (docker-compose.demo.yml:514-528).
+# Image built by infra/Dockerfile.frontend (Next.js standalone). Port 3000.
+#
+# Faithful to the demo build args + runtime env:
+#   • NEXT_PUBLIC_API_URL=/api (browser fetches same-origin, proxied to gateway).
+#     This is a BUILD arg baked into the image (Dockerfile.frontend), so it is
+#     documented here but set at image build time, not as a container env.
+#   • GATEWAY_ORIGIN=http://api-gateway:4000 — the server-side rewrite target the
+#     Next proxy forwards /api to. Set as a runtime env (compose sets it both as a
+#     build arg AND runtime env).
+#   • HOSTNAME=0.0.0.0, PORT=3000.
+# The frontend does NOT expose /healthz; the Dockerfile healthcheck and these
+# probes hit `/` (same as the demo image).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: frontend
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      containers:
+        - name: frontend
+          # Built by: docker build -f infra/Dockerfile.frontend \
+          #   --build-arg NEXT_PUBLIC_API_URL=/api \
+          #   --build-arg GATEWAY_ORIGIN=http://api-gateway:4000 \
+          #   -t ghcr.io/cdc-ats/frontend:latest .
+          image: ghcr.io/cdc-ats/frontend:latest
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            # Server-side proxy target (the gateway Service on the cluster network).
+            - name: GATEWAY_ORIGIN
+              value: "http://api-gateway:4000"
+          # Frontend has no /healthz; probe the root path like the demo image.
+          startupProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 200m, memory: 384Mi }
+            limits:   { cpu: "1",  memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: frontend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

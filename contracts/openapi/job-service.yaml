@@ -1,0 +1,482 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — job-service
+  version: 0.0.1
+  description: >-
+    Requisitions, job postings, application form schemas, JD authoring (AI),
+    job-board distribution, CDC/college partners, the public job feed, the public
+    apply surface, and the inbound job-application webhook (default port 4004).
+    Authenticated routes mount under /internal/*; public routes under /public/*;
+    the raw HMAC-verified inbound webhook under
+    /internal/inbound-job-application/*. RLS-scoped request client; public-by-slug
+    + the webhook use the admin client. Plan caps: activeJobs (requisition
+    create) and customForms (form save). Publishes tenant.{t}.jobboard.
+    application.received on inbound.
+
+    Gateway mapping: /api/requisitions -> /internal/requisitions;
+    /api/job-postings -> /internal/job-postings; /api/jd-author (AI-plan gated) ->
+    /internal/jd-author; /api/job-distribution (module-gated) ->
+    /internal/job-distribution; /api/colleges -> /internal/colleges;
+    /api/public/* -> /public/*; /api/inbound-job-application/* ->
+    /internal/inbound-job-application/*.
+servers:
+  - url: http://localhost:4004
+    description: Internal service port
+tags:
+  - name: requisitions
+  - name: job-postings
+  - name: jd-author
+  - name: job-distribution
+  - name: colleges
+  - name: public
+  - name: inbound
+  - name: gdpr
+  - name: health
+components:
+  schemas:
+    CreateRequisition:
+      type: object
+      required: [title, department, location]
+      description: CreateReqSchema (routes/requisitions.ts).
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        department: { type: string, minLength: 1, maxLength: 100 }
+        location: { type: string, minLength: 1, maxLength: 200 }
+        country: { type: string, default: US }
+        description: { type: string }
+        requirements: { type: array, items: { type: string } }
+        customFields:
+          type: array
+          maxItems: 30
+          items:
+            type: object
+            required: [label]
+            properties:
+              label: { type: string, minLength: 1, maxLength: 120 }
+              value: { type: string, maxLength: 2000, default: "" }
+              importance: { type: string, enum: [must, nice, info] }
+        salaryMin: { type: number }
+        salaryMax: { type: number }
+        salaryCurrency: { type: string, default: USD }
+        status: { type: string, description: RequisitionStatusSchema }
+        headcount: { type: integer, minimum: 1, default: 1 }
+        eligibilityRules: { type: array, maxItems: 20, items: { type: object, description: EligibilityRuleSchema } }
+paths:
+  # ─── Requisitions (routes/requisitions.ts) ────────────────────────────────
+  /internal/requisitions:
+    get:
+      tags: [requisitions]
+      summary: List requisitions (filter by status / hiringManagerId=me / recruiterId=me)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: status, in: query, required: false, schema: { type: string } }
+        - { name: hiringManagerId, in: query, required: false, schema: { type: string } }
+        - { name: recruiterId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200": { description: Up to 100 requisitions., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+    post:
+      tags: [requisitions]
+      summary: Create a requisition (ADMIN/RECRUITER/HIRING_MANAGER; activeJobs cap)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/CreateRequisition" } } }
+      responses:
+        "201": { description: Requisition created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/requisitions/overview:
+    get:
+      tags: [requisitions]
+      summary: Requisition counts by status (aggregator source)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: "{ openRequisitions, totalRequisitions, byStatus }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/requisitions/platform-stats:
+    get:
+      tags: [requisitions]
+      summary: Cross-tenant requisition counts (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: "{ total, byTenant }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/requisitions/{id}:
+    get:
+      tags: [requisitions]
+      summary: Get one requisition
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: The requisition., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+    patch:
+      tags: [requisitions]
+      summary: Update a requisition (ADMIN/RECRUITER/HIRING_MANAGER)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/requisitions/{id}/form:
+    get:
+      tags: [requisitions]
+      summary: Get the requisition's application form schema
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: ApplicationFormSchema., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [requisitions]
+      summary: Save the application form schema (customForms plan cap; system fields locked)
+      description: Body validated per-field by FormFieldSchema (@cdc-ats/contracts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true, description: "{ fields: FormFieldSchema[] }" } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Job postings (routes/job-postings.ts) ────────────────────────────────
+  /internal/job-postings:
+    post:
+      tags: [job-postings]
+      summary: Create/publish a job posting (requirePublisher)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Posting created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    get:
+      tags: [job-postings]
+      summary: List job postings
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Postings., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/job-postings/backfill-open:
+    post:
+      tags: [job-postings]
+      summary: Backfill postings for OPEN requisitions (requirePublisher)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Backfill result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/job-postings/{id}:
+    patch:
+      tags: [job-postings]
+      summary: Update a posting — publish/close transitions (requirePublisher)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── JD author (routes/jd-author.ts) ──────────────────────────────────────
+  /internal/jd-author:
+    post:
+      tags: [jd-author]
+      summary: Generate a job description (AI; ADMIN/RECRUITER/HIRING_MANAGER)
+      description: Gateway also enforces requireAgentPlan('jd-author'). Enqueues via outbox; publishes agent.completed.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Generated JD., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Job distribution (routes/job-distribution.ts) ────────────────────────
+  /internal/job-distribution/{jobPostingId}:
+    post:
+      tags: [job-distribution]
+      summary: Queue a per-board post (requireDistributor) — 202 + PENDING rows
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: jobPostingId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "202": { description: Distribution queued., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    get:
+      tags: [job-distribution]
+      summary: Per-board distribution status
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: jobPostingId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Board statuses., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/job-distribution/{jobPostingId}/{board}:
+    delete:
+      tags: [job-distribution]
+      summary: Queue a board close (requireDistributor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: jobPostingId, in: path, required: true, schema: { type: string } }
+        - { name: board, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Close queued (row CLOSED)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Colleges / CDC (routes/colleges.ts) ──────────────────────────────────
+  /internal/colleges:
+    get:
+      tags: [colleges]
+      summary: List college partners
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Colleges., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    post:
+      tags: [colleges]
+      summary: Add a college partner (requireCdcEditor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/colleges/{id}:
+    patch:
+      tags: [colleges]
+      summary: Update a college partner (requireCdcEditor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [colleges]
+      summary: Remove a college partner (requireCdcEditor)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Removed., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Public (routes/public.ts + feed.ts) — UNAUTHENTICATED ────────────────
+  /public/feed/{tenantSlug}/jobs.xml:
+    get:
+      tags: [public]
+      summary: Per-tenant XML/JSON job feed (token-authorized)
+      description: >-
+        The `token` (query OR Authorization Bearer) is the credential; the slug
+        is a cosmetic label, NOT trusted for authorization.
+      parameters:
+        - { name: tenantSlug, in: path, required: true, schema: { type: string } }
+        - { name: token, in: query, required: false, schema: { type: string } }
+        - { name: format, in: query, required: false, schema: { type: string } }
+      responses:
+        "200": { description: XML/JSON feed. }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /public/jobs:
+    get:
+      tags: [public]
+      summary: Public job listings
+      responses:
+        "200": { description: Public jobs., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /public/cdc/{token}:
+    get:
+      tags: [public]
+      summary: CDC partner job listing by token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: CDC jobs., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /public/jobs/{slug}:
+    get:
+      tags: [public]
+      summary: Public job detail by slug
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Job detail., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /public/jobs/{slug}/form:
+    get:
+      tags: [public]
+      summary: Public application form schema by slug
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Form schema., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /public/jobs/{slug}/upload-ticket:
+    get:
+      tags: [public]
+      summary: Get a pre-signed upload ticket for a resume
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Upload ticket., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /public/jobs/{slug}/apply:
+    post:
+      tags: [public]
+      summary: Apply to a job (JSON body; creates Candidate + Application)
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Application created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "429": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+  /public/jobs/{slug}/apply-custom:
+    post:
+      tags: [public]
+      summary: Apply via the tenant's custom form (multipart, file uploads)
+      description: applyUpload.any() — renders the tenant's real form schema and forwards the resume to resume-service.
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "201": { description: Application created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+  /public/applications/{id}/status:
+    get:
+      tags: [public]
+      summary: Public application status lookup
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Application status., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  # ─── Inbound webhook (routes/inbound-job-application.ts) ───────────────────
+  /internal/inbound-job-application/{provider}/{tenantId}:
+    post:
+      tags: [inbound]
+      summary: Inbound job-board application (PUBLIC webhook, HMAC-verified)
+      description: >-
+        Raw body (express.raw). No JWT and no X-Internal-Service — the provider's
+        HMAC signature over the raw bytes IS the auth; the path {tenantId} is a
+        correlation handle, NOT a trusted auth header. Publishes
+        tenant.{t}.jobboard.application.received. Unknown/forged provider/tenant
+        safely no-ops.
+      parameters:
+        - { name: provider, in: path, required: true, schema: { type: string } }
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { description: Accepted (or no-op)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { description: Invalid signature/body. }
+  # ─── GDPR (routes/gdpr.ts) ────────────────────────────────────────────────
+  /internal/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export tenant job data (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Export., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

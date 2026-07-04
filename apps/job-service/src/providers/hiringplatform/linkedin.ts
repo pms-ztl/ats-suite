@@ -66,6 +66,7 @@ import type {
   ScreenerAnswer,
 } from "./types.js";
 import { fetchJson, header, num, dt, str, timingSafeEqualStr, sleep } from "./http.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "linkedin" as const;
 
@@ -307,10 +308,12 @@ export const linkedinProvider: HiringPlatformProvider = {
    * unless LinkedIn really said so.
    */
   async postJob(job, creds) {
-    // No creds -> gated board. We surface PENDING_PARTNER_APPROVAL with no
-    // external id (the caller persists the honest "awaiting board" state).
+    // No creds -> gated board. STUB path: no LinkedIn API is called. We surface
+    // PENDING_PARTNER_APPROVAL with no external id (the caller persists the honest
+    // "awaiting board" state) and warn at runtime. The real API path below is untouched.
     if (!str(creds.clientId) || !str(creds.clientSecret)) {
-      return { externalId: "", status: "PENDING_PARTNER_APPROVAL", raw: { reason: "no-credentials" } };
+      warnStub(PROVIDER, "no-credentials");
+      return { externalId: "", status: "PENDING_PARTNER_APPROVAL", raw: { stub: true, reason: "no-credentials" } };
     }
 
     const token = await getAccessToken(creds);

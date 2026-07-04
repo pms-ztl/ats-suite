@@ -1,0 +1,469 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — api-gateway (public /api/* surface)
+  version: 0.0.1
+  description: >-
+    The ONLY public surface. The gateway (default port 4000) verifies the JWT
+    (gatewayAuth), stamps X-User-Id / X-Tenant-Id / X-User-Role / X-User-Email
+    onto the request, adds the X-Internal-Service token, and proxies to the
+    matching backend service's /internal/* route. Some routes are handled
+    IN-PROCESS (auth, aggregators, agents, gdpr fan-out, embed, super-admin
+    fan-outs) and are fully documented here; the rest are transparent proxies.
+
+    Response envelope for gateway-hosted routes is the shared
+    { success, data } / { success, error } shape (see _shared.yaml). Proxied
+    routes carry the downstream service's response verbatim (also the shared
+    envelope). Auth to the gateway is a JWT (Authorization: Bearer, or the
+    ats-token cookie); public routes (/api/auth/login, /api/public/*, provider
+    webhooks, /api/v1 with an API key) are unauthenticated at the JWT layer.
+
+    PROXY PREFIX MAP (public prefix -> backend service : internal base). Each is
+    a transparent proxy; see the linked service spec for the concrete routes and
+    schemas:
+      /api/users              -> identity   : /internal/users            (identity-service.yaml)
+      /api/api-keys           -> identity   : /internal/api-keys
+      /api/sso/config         -> identity   : /internal/sso/tenants
+      /api/super-admin/audit  -> identity   : /internal/audit
+      /api/super-admin/operators -> identity : /internal/users/platform/operators
+      /api/me/dashboards      -> identity   : /internal/users/me/dashboards
+      /api/me/preferences     -> identity   : /internal/users/me/preferences
+      /api/tenant/dashboards  -> identity   : /internal/users/tenant/dashboards
+      /api/tenants            -> tenant     : /internal/tenants          (tenant-service.yaml)
+      /api/super-admin/tenants -> tenant    : /internal/tenants (SUPER_ADMIN)
+      /api/super-admin/plan-change-requests -> tenant : /internal/plan-changes
+      /api/me/ui-config       -> tenant     : /internal/ui-config (PUT module-gated)
+      /api/branding           -> tenant     : /internal/branding
+      /api/retention          -> tenant     : /internal/retention
+      /api/onboarding         -> tenant     : /internal/onboarding
+      /api/public/branding    -> tenant     : /internal/public-branding  (no auth)
+      /api/billing            -> billing    : /internal/billing          (billing-service.yaml)
+      /api/super-admin/platform -> billing  : /internal/platform (SUPER_ADMIN)
+      /api/super-admin/modules  -> billing  : /internal/platform/modules
+      /api/super-admin/models   -> billing  : /internal/platform/models
+      /api/tenant/modules/:key  -> billing  : /internal/billing/modules/:key
+      /api/billing/stripe       -> billing  : /internal/stripe
+      /api/stripe/webhook       -> billing  : /internal/stripe/webhook   (public, raw)
+      /api/requisitions       -> job        : /internal/requisitions     (job-service.yaml)
+      /api/job-postings       -> job        : /internal/job-postings
+      /api/colleges           -> job        : /internal/colleges
+      /api/jd-author          -> job        : /internal/jd-author (AI-plan gated)
+      /api/job-distribution   -> job        : /internal/job-distribution (module gated)
+      /api/public             -> job        : /public                    (no auth)
+      /api/inbound-job-application -> job    : /internal/inbound-job-application (public, HMAC)
+      /api/candidates         -> candidate  : /internal/candidates       (candidate-service.yaml)
+      /api/applications       -> candidate  : /internal/applications
+      /api/offers             -> candidate  : /internal/offers
+      /api/sourcing           -> candidate  : /internal/sourcing (AI)
+      /api/offer              -> candidate  : /internal/offer (AI)
+      /api/candidate-experience -> candidate : /internal/candidate-experience (AI)
+      /api/resume             -> resume     : /internal/resume           (resume-service.yaml)
+      /api/screening          -> screening  : /internal/screening        (screening-service.yaml)
+      /api/assessments        -> assessment : /internal/assessments (module gated) (assessment-service.yaml)
+      /api/public/assessment  -> assessment : /internal/public/assessment (no auth)
+      /api/internal/judge0    -> assessment : /internal/judge0 (public callback)
+      /api/inbound-assessment -> assessment : /internal/inbound-assessment (public, HMAC)
+      /api/interviews         -> interview  : /internal/interviews       (interview-service.yaml)
+      /api/rounds             -> interview  : /internal/rounds
+      /api/interview-intelligence -> interview : /internal/interview-intelligence (AI)
+      /api/scheduling         -> interview  : /internal/scheduling (AI)
+      /api/onboarding-cases   -> onboarding : /internal/onboarding-cases (onboarding-service.yaml)
+      /api/public/onboarding  -> onboarding : /public/onboarding (no auth)
+      /api/notifications      -> notification : /internal/notifications  (notification-service.yaml)
+      /api/messages           -> notification : /internal/messages
+      /api/integrations       -> notification : /internal/integrations
+      /api/webhooks           -> notification : /internal/webhooks
+      /api/compliance         -> notification : /internal/compliance
+      /api/email-templates    -> notification : /internal/email-templates
+      /api/hitl               -> notification : /internal/hitl (POST/PATCH; GET via aggregator)
+      /api/support            -> notification : /internal/support
+      /api/super-admin/support[/platform] -> notification : /internal/support/admin|platform
+      /api/twilio             -> notification : /internal/twilio
+      /api/twilio/{sms,whatsapp} -> notification : /internal/twilio/* (public webhook)
+      /api/inbound-email      -> notification : /internal/inbound-email (public)
+      /api/cloud-sync         -> notification : /internal/cloud-sync (callback public)
+      /api/super-admin/integrations -> notification : /internal/platform/integrations
+      /api/super-admin/webhooks     -> notification : /internal/platform/webhooks
+      /api/search             -> search     : /internal/search           (search-service.yaml)
+      /api/agents             -> agent      : /internal/agents           (agent-service.yaml)
+      /api/reporting          -> analytics  : /internal/analytics        (analytics-service.yaml)
+      /api/audit              -> compliance : /internal/compliance       (compliance-service.yaml)
+servers:
+  - url: http://localhost:4000
+    description: api-gateway (public)
+tags:
+  - name: auth
+  - name: aggregators
+  - name: agents
+  - name: gdpr
+  - name: embed
+  - name: super-admin
+  - name: public-ingest
+  - name: impersonate
+  - name: health
+paths:
+  # ─── Auth (routes/auth.ts, in-process; express.json on /api/auth) ─────────
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Log in (PUBLIC). Sets ats-token + ats-refresh cookies.
+      description: Body validated by LoginInputSchema. Verifies via identity, signs JWTs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200": { description: Logged in (user + tokens; cookies set)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "429": { description: Rate limited (authLimiter). }
+  /api/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh the access token from the refresh cookie (PUBLIC)
+      responses:
+        "200": { description: New access token., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: Clear auth cookies
+      responses:
+        "200": { description: Logged out. }
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Current session user (JWT required)
+      responses:
+        "200": { description: The session user., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/auth/register-company:
+    post:
+      tags: [auth]
+      summary: Register a new company + admin (PUBLIC saga)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "201": { description: Company + admin created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+  /api/auth/forgot-password:
+    post: { tags: [auth], summary: Request a password reset (PUBLIC), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email } } } } } }, responses: { "200": { description: Sent if the account exists. } } }
+  /api/auth/reset-password:
+    post: { tags: [auth], summary: Reset password with a token (PUBLIC), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string } } } } } }, responses: { "200": { description: Reset. }, "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" } } }
+  /api/auth/resend-verification:
+    post: { tags: [auth], summary: Resend the email-verification link (JWT required), responses: { "200": { description: Sent. }, "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" } } }
+  /api/auth/verify-email:
+    post: { tags: [auth], summary: Verify email with a token (PUBLIC), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string } } } } } }, responses: { "200": { description: Verified. } } }
+  /api/auth/invite-info:
+    get: { tags: [auth], summary: Invite metadata by token (PUBLIC), parameters: [ { name: token, in: query, required: true, schema: { type: string } } ], responses: { "200": { description: Invite info. }, "404": { $ref: "./_shared.yaml#/components/responses/NotFound" } } }
+  /api/auth/accept-invite:
+    post: { tags: [auth], summary: Accept an invite + set password (PUBLIC), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string } } } } } }, responses: { "200": { description: Accepted. }, "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" } } }
+  /api/auth/change-password:
+    post: { tags: [auth], summary: Change password (JWT required), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string } } } } } }, responses: { "200": { description: Changed. }, "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" } } }
+  /api/auth/mfa/{action}:
+    post:
+      tags: [auth]
+      summary: MFA setup/verify/disable/challenge (JWT required)
+      parameters:
+        - { name: action, in: path, required: true, schema: { type: string, enum: [setup, verify, disable, challenge] } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: MFA action result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/auth/sso/discover:
+    post: { tags: [auth], summary: Discover SSO by email domain (PUBLIC), requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string } } } } } }, responses: { "200": { description: Discovery result. } } }
+  /api/auth/sso/{protocol}/{tenantId}/initiate:
+    get: { tags: [auth], summary: Begin SSO (PUBLIC redirect), parameters: [ { name: protocol, in: path, required: true, schema: { type: string, enum: [saml, oidc] } }, { name: tenantId, in: path, required: true, schema: { type: string } } ], responses: { "302": { description: Redirect to IdP. } } }
+  /api/auth/sso/saml/{tenantId}/callback:
+    post: { tags: [auth], summary: SAML ACS — signs JWT + sets cookies (PUBLIC), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } } ], requestBody: { required: true, content: { application/x-www-form-urlencoded: { schema: { type: object, additionalProperties: true } } } }, responses: { "302": { description: Redirect into the app with cookies set. } } }
+  /api/auth/sso/oidc/{tenantId}/callback:
+    get: { tags: [auth], summary: OIDC callback — signs JWT + sets cookies (PUBLIC), parameters: [ { name: tenantId, in: path, required: true, schema: { type: string } }, { name: code, in: query, required: false, schema: { type: string } }, { name: state, in: query, required: false, schema: { type: string } } ], responses: { "302": { description: Redirect into the app with cookies set. } } }
+  # ─── Read aggregators (routes/aggregators.ts, mounted on /api) ────────────
+  /api/analytics/pipeline:
+    get:
+      tags: [aggregators]
+      summary: Live pipeline funnel (job overview + candidate applicationsByStage)
+      responses:
+        "200": { description: "{ openRequisitions, totalCandidates, activeApplications, hiredApplications, funnel[], byStage }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/analytics/diversity:
+    get:
+      tags: [aggregators]
+      summary: Diversity breakdown (honest "not available" unless demographics enabled)
+      responses:
+        "200": { description: "{ available:false, reason, breakdowns:[] }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/analytics/time-to-hire:
+    get:
+      tags: [aggregators]
+      summary: Time-to-hire trend + overall metrics (null when no hires)
+      responses:
+        "200": { description: "{ trend[], trendByMonth[], avgDays, medianDays, p90Days, hiredCount }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/analytics/source-of-hire:
+    get:
+      tags: [aggregators]
+      summary: Source-of-hire breakdown (from Candidate.source)
+      responses:
+        "200": { description: "{ sources[], totalCandidates }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/analytics/ai-insights:
+    get:
+      tags: [aggregators]
+      summary: Cached AI insights (empty; POST /api/analytics to generate)
+      responses:
+        "200": { description: "{ insights:[], note }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/analytics/export/{kind}:
+    get:
+      tags: [aggregators]
+      summary: Analytics export (NOT_IMPLEMENTED — 501)
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string } }
+      responses:
+        "501": { description: Not implemented in microservices yet., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ErrorEnvelope" } } } }
+  /api/sourcing/talent-pools:
+    get:
+      tags: [aggregators]
+      summary: Talent pools (empty — infrastructure deferred). NOTE — GET only; POST /api/sourcing is the AI proxy.
+      responses:
+        "200": { description: "{ pools:[], total:0 }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/agents/hitl:
+    get:
+      tags: [aggregators]
+      summary: HITL queue (proxies notification /internal/hitl for the data)
+      responses:
+        "200": { description: HITL items., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/ai/jobs:
+    get:
+      tags: [aggregators]
+      summary: Recent AI agent runs (from billing usage)
+      responses:
+        "200": { description: "{ recentRuns[], totalRuns, windowDays }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/platform/features:
+    get:
+      tags: [aggregators]
+      summary: Plan/agent feature flags (proxies billing)
+      responses:
+        "200": { description: "{ plans, agents }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/platform/unified-overview:
+    get:
+      tags: [aggregators]
+      summary: Cross-service unified overview (platformRouter fan-out)
+      responses:
+        "200": { description: Unified overview., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Gateway-hosted AI agents (routes/agents.ts, express.json per path) ────
+  /api/analytics:
+    post:
+      tags: [agents]
+      summary: Analytics agent (AI; requireAgentPlan('analytics'))
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: AI analytics result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+  /api/bias-auditor:
+    post:
+      tags: [agents]
+      summary: Bias-auditor agent (AI; requireAgentPlan('bias-auditor'))
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Bias-audit result., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+  /api/copilot:
+    post:
+      tags: [agents]
+      summary: Copilot agent (AI; requireAgentPlan('copilot'))
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Copilot response., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+  # ─── GDPR fan-out (routes/gdpr.ts) ────────────────────────────────────────
+  /api/gdpr/candidates/{id}/export:
+    post:
+      tags: [gdpr]
+      summary: Export a candidate across all services (DSR)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Cross-service export bundle., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/gdpr/candidates/{id}:
+    delete:
+      tags: [gdpr]
+      summary: Erase a candidate across all services (DSR)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Erased across services., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/gdpr/tenant/export:
+    get:
+      tags: [gdpr]
+      summary: Export all tenant data across services (tenant admin)
+      responses:
+        "200": { description: Tenant export bundle., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Embed (routes/embed.ts + token mint) ─────────────────────────────────
+  /api/embed/token:
+    post:
+      tags: [embed]
+      summary: Mint a short-lived embed token (JWT required)
+      description: >-
+        Bakes the verified tenant/user/role + requested module/resourceId/params
+        + the tenant's server-resolved frame-ancestors allowlist. Fails closed to
+        [] (no origin may frame) when nothing is configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [module, resourceId]
+              properties:
+                module: { type: string }
+                resourceId: { type: string }
+                params: { type: object, additionalProperties: true }
+                allowedOrigins: { type: array, items: { type: string, format: uri } }
+      responses:
+        "200": { description: "{ token, expiresIn }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /api/embed/validate:
+    post:
+      tags: [embed]
+      summary: Validate an embed token (token-authed, NO JWT)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string } } } } }
+      responses:
+        "200": { description: "{ valid, module, resourceId, params, branding }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /api/embed/data:
+    get:
+      tags: [embed]
+      summary: Fetch the locked embed resource (token-authed via header, NO JWT)
+      description: Returns the locked funnel / screening / chart / public job scoped to the baked tenantId.
+      responses:
+        "200": { description: The locked resource data., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Super-admin fan-outs (in-process; SUPER_ADMIN) ───────────────────────
+  /api/super-admin/stats:
+    get:
+      tags: [super-admin]
+      summary: Platform KPI cards (fan-out tenant/identity/candidate/job/billing)
+      responses:
+        "200": { description: Platform stats., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/health:
+    get:
+      tags: [super-admin]
+      summary: Live service health (pings each backend /healthz)
+      responses:
+        "200": { description: "{ services[], healthy, total }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/security:
+    get:
+      tags: [super-admin]
+      summary: Platform security telemetry (fan-out to identity)
+      responses:
+        "200": { description: Security KPIs., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/tenants:
+    get:
+      tags: [super-admin]
+      summary: Enriched tenant list (merges per-tenant counts + 30d cost)
+      description: >-
+        GET is the in-process enriched aggregator; other verbs and sub-paths
+        (e.g. PATCH /:id) fall through to the tenant-service proxy.
+      responses:
+        "200": { description: Paginated enriched tenants., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/PaginatedEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/tenants/{id}/detail:
+    get:
+      tags: [super-admin]
+      summary: Per-tenant drill-down (record + counts + cost + plan changes + users)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Tenant detail bundle., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/billing/invoices:
+    get:
+      tags: [super-admin]
+      summary: Current-cycle invoices derived from each tenant's plan MRR
+      description: One "paid" invoice per PAYING tenant; FREE tenants emit no invoice.
+      responses:
+        "200": { description: Invoices., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Impersonation (routes/impersonate.ts) ────────────────────────────────
+  /api/super-admin/impersonate/{tenantId}/start:
+    post:
+      tags: [impersonate]
+      summary: Start impersonating a user in a tenant (self-checks SUPER_ADMIN)
+      parameters:
+        - { name: tenantId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Impersonation session (JWT with actorUserId)., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /api/super-admin/impersonate/stop:
+    post:
+      tags: [impersonate]
+      summary: Stop an active impersonation session (requires an active actorUserId)
+      responses:
+        "200": { description: Stopped; original session restored., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Public ingest API (routes/public-ingest.ts) — API-key auth ───────────
+  /api/v1/candidates:
+    post:
+      tags: [public-ingest]
+      summary: Ingest a candidate via tenant API key (Bearer ats_..., NOT a JWT)
+      description: >-
+        Authenticated by the tenant API key (verified against identity
+        /api-keys/verify, cached 60s). Adapter-normalizes known external formats
+        (Indeed XML, Workday HRXML, ZipRecruiter, LinkedIn). Per-key rate limit
+        60/min. Versioned under /v1.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "201": { description: Candidate created., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "429": { description: Per-key rate limit exceeded. }
+  # ─── Health ───────────────────────────────────────────────────────────────
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }
+components:
+  securitySchemes:
+    BearerJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        Session JWT. Sent as Authorization: Bearer or the ats-token cookie. The
+        gateway verifies it and stamps X-User-* headers before proxying.
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      description: Tenant API key (ats_...) for the /api/v1 public ingest surface.
+security:
+  - BearerJWT: []

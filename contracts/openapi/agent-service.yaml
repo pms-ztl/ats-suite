@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — agent-service
+  version: 0.0.1
+  description: >-
+    Centralized agent-orchestration microservice (default port 4011). Reached
+    via the gateway at /api/agents/* -> /internal/agents/*. Thin HTTP layer in
+    apps/agent-service/src/routes/agents.ts delegating to
+    services/agents.service.ts, which runs @cdc-ats/ai-engine agents and records
+    AgentRun rows. NOTE: no dedicated DB is provisioned for this service in the
+    dev/demo stack.
+servers:
+  - url: http://localhost:4011
+    description: Internal service port (gateway forwards /api/agents here)
+tags: [{ name: agents }, { name: health }]
+paths:
+  /internal/agents/registry:
+    get:
+      tags: [agents]
+      summary: List registered agent types
+      description: Returns the agent registry (agentService.registry()). No body.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Agent registry.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/agents/run:
+    post:
+      tags: [agents]
+      summary: Run an agent by type
+      description: >-
+        Runs the named agent with a free-form input object. Body validated by
+        RunBody (apps/agent-service/src/schemas/agents.schemas.ts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agentType]
+              properties:
+                agentType: { type: string, minLength: 1 }
+                input:
+                  type: object
+                  additionalProperties: true
+                  default: {}
+      responses:
+        "200":
+          description: Agent run result (output + agentRunId).
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/agents/runs:
+    get:
+      tags: [agents]
+      summary: List agent runs (optional agentType filter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: agentType, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Recent agent runs for the tenant.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/agents/runs/{id}:
+    get:
+      tags: [agents]
+      summary: Get one agent run
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The agent run.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

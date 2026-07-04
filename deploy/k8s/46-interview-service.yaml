@@ -1,0 +1,83 @@
+# interview-service — Deployment + Service (docker-compose.demo.yml:327-333).
+# Image: infra/Dockerfile.service --build-arg SERVICE=interview-service. Port 4006.
+# Owns rounds / scheduling / interview intelligence; DATABASE_URL -> interview_db.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interview-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: interview-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: interview-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: interview-service
+        app.kubernetes.io/part-of: cdc-ats
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4006"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: interview-service
+          image: ghcr.io/cdc-ats/interview-service:latest
+          ports:
+            - name: http
+              containerPort: 4006
+          envFrom:
+            - configMapRef: { name: cdc-ats-common }
+          env:
+            - name: PORT
+              value: "4006"
+            - name: SERVICE_NAME
+              value: "interview-service"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERVIEW_DATABASE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENROUTER_API_KEY, optional: true } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENAI_API_KEY, optional: true } }
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: "1",  memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: interview-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: interview-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: interview-service
+  ports:
+    - name: http
+      port: 4006
+      targetPort: http

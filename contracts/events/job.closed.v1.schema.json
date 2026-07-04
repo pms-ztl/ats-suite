@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/job.closed.v1.schema.json",
+  "title": "job.closed payload (v1)",
+  "description": "A job posting was closed — the google-indexing worker drops the stale public listing (Indexing API URL_DELETED). HONEST STATUS: CONSUMER-ONLY contract, same as job.published. The worker (apps/job-service/src/workers/google-indexing.worker.ts) subscribes to tenant.*.job.closed on a JOB_EVENTS stream, but NO producer publishes it today and JOB_EVENTS is NOT in CORE_STREAMS. This schema documents the MINIMAL shape the consumer reads.",
+  "type": "object",
+  "x-event-type": "job.closed",
+  "x-subject": "tenant.{tenantId}.job.closed",
+  "x-stream": "JOB_EVENTS (not declared in CORE_STREAMS)",
+  "x-producer": "(none active — consumer-only contract; publisher slice not deployed)",
+  "x-consumers": [
+    "job-service google-indexing worker (enqueue Google Indexing API URL_DELETED for the listing)"
+  ],
+  "required": [
+    "tenantId",
+    "jobPostingId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory; also on the envelope)." },
+    "jobPostingId": {
+      "type": "string",
+      "description": "The closed JobPosting id. The worker reads this off the payload (readJobPostingId); without it the event is ignored."
+    }
+  }
+}

@@ -1,0 +1,107 @@
+# job-service — Deployment + Service (docker-compose.demo.yml:260-317).
+# Image: infra/Dockerfile.service --build-arg SERVICE=job-service. Port 4004.
+# Owns requisitions / job postings / public apply; DATABASE_URL -> job_db.
+#
+# Faithful extras from the compose job-service block:
+#   • JOB_DATABASE_URL / DATABASE_URL carry ?connection_limit=8&pool_timeout=20
+#     (the bounded Prisma pool on the hottest apply-path service). The Secret
+#     JOB_DATABASE_URL should include these query params for prod parity; the
+#     example Secret keeps the plain URL, so the DEPLOYMENT appends the pool
+#     params via a second env only if you prefer — here we rely on the Secret.
+#   • S3_INCOMING_BUCKET=ats-incoming for the presigned fast-path upload ticket.
+#   • In compose job-service also depends_on minio-setup — apply 23-minio.yaml
+#     (and let its Job complete) before this, so the incoming bucket exists.
+#   • CLAMAV_* are OFF by default in the demo (unset) — omitted here, matching
+#     the demo. Set them via an env patch if you run the optional scanner.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: job-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: job-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: job-service
+        app.kubernetes.io/part-of: cdc-ats
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4004"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: job-service
+          image: ghcr.io/cdc-ats/job-service:latest
+          ports:
+            - name: http
+              containerPort: 4004
+          envFrom:
+            - configMapRef: { name: cdc-ats-common }
+          env:
+            - name: PORT
+              value: "4004"
+            - name: SERVICE_NAME
+              value: "job-service"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JOB_DATABASE_URL } }
+            # job-service prisma schema reads env("JOB_DATABASE_URL"), NOT the
+            # generic DATABASE_URL — set both to the same value (compose does).
+            - name: JOB_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JOB_DATABASE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENROUTER_API_KEY, optional: true } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENAI_API_KEY, optional: true } }
+            # Fast-path apply object storage (compose job-service:300-305).
+            # S3_ENDPOINT / S3_REGION / S3_FORCE_PATH_STYLE come from the ConfigMap.
+            - name: S3_INCOMING_BUCKET
+              value: "ats-incoming"
+            - name: S3_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: S3_ACCESS_KEY_ID } }
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: S3_SECRET_ACCESS_KEY } }
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 150m, memory: 320Mi }
+            limits:   { cpu: "1",  memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: job-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: job-service
+  ports:
+    - name: http
+      port: 4004
+      targetPort: http

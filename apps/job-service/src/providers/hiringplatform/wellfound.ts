@@ -62,6 +62,7 @@ import type {
 } from "./types.js";
 import { buildSourceFeed } from "./feed.js";
 import { dt, header, str, timingSafeEqualStr } from "./http.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "wellfound" as const;
 
@@ -100,10 +101,14 @@ export const wellfoundProvider: HiringPlatformProvider = {
     _job: NormalizedJob,
     _creds: PlatformCredentials,
   ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
+    // STUB path: no board API is called (Wellfound is inverted / feed-pull, no
+    // outbound job-create API). Warn at runtime.
+    warnStub(PROVIDER, "no-public-post-api");
     return {
       externalId: "",
       status: "PENDING_PARTNER_APPROVAL",
       raw: {
+        stub: true,
         reason: "no-public-post-api",
         model: "inverted",
         note: "Wellfound pulls the ATS job feed (inverted / relationship integration); there is no outbound partner job-create API. The job is distributed via the generic feed (toFeedEntry), subject to the Wellfound partner relationship setup.",

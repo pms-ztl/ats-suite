@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/plan-change.requested.v1.schema.json",
+  "title": "plan-change.requested payload (v1)",
+  "description": "Emitted when a tenant submits a plan-upgrade request. Producer: tenant-service (apps/tenant-service/src/routes/plan-changes.ts). Rides the PLAN_CHANGE_EVENTS stream. Matches the typed PlanChangeRequestedPayloadSchema.",
+  "type": "object",
+  "x-event-type": "plan-change.requested",
+  "x-subject": "tenant.{tenantId}.plan-change.requested",
+  "x-stream": "PLAN_CHANGE_EVENTS",
+  "x-producer": "tenant-service (create plan-change request)",
+  "x-consumers": [
+    "notification-service (PLAN_CHANGE_REQUESTED notification to super-admins)"
+  ],
+  "required": [
+    "tenantId",
+    "tenantName",
+    "requestId",
+    "fromPlan",
+    "toPlan",
+    "reason",
+    "requestedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "tenantName": { "type": "string", "description": "Tenant name (for the super-admin notice)." },
+    "requestId": { "type": "string", "format": "uuid", "description": "The PlanChangeRequest id." },
+    "fromPlan": { "type": "string", "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"], "description": "Current plan." },
+    "toPlan": { "type": "string", "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"], "description": "Requested plan." },
+    "reason": { "type": ["string", "null"], "description": "Requester's reason, or null." },
+    "requestedByUserId": { "type": "string", "format": "uuid", "description": "User who requested the change." }
+  }
+}

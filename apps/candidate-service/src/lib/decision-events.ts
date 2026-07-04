@@ -21,6 +21,30 @@ import {
 } from "@cdc-ats/contracts";
 import type { Logger } from "pino";
 
+/**
+ * application.stage.changed — emitted on EVERY stage transition (the PATCH
+ * stage-update route, the hire route, the reject route, and both NATS
+ * subscriber advances) so downstream consumers get an audit trail of pipeline
+ * movement. Prior to this there was no stage-level event at all; only the
+ * terminal application.hired / application.rejected fired, and the two
+ * subscriber advances moved the DB silently.
+ *
+ * The payload shape lives here (not in @cdc-ats/contracts) so this service owns
+ * its own event contract; consumers parse defensively on receipt, exactly like
+ * the existing hire/reject events which are published without a contract parse.
+ */
+export interface StageChangedPayload {
+  tenantId: string;
+  applicationId: string;
+  candidateId: string;
+  requisitionId: string | null;
+  fromStage: string;
+  toStage: string;
+  changedByUserId: string | null;
+  /** Which write path drove the change. */
+  source: "api" | "assessment" | "interview";
+}
+
 /** Best-effort requisition context resolved from job-service over HTTP. */
 export interface RequisitionContext {
   title: string | null;
@@ -82,6 +106,22 @@ export async function publishApplicationRejected(payload: ApplicationRejectedPay
     tenantId: payload.tenantId,
     payload,
   }).catch((err) => logger.warn({ err, applicationId: payload.applicationId }, "application.rejected publish failed"));
+}
+
+/**
+ * Publish application.stage.changed best-effort. A publish failure NEVER blocks
+ * or reverses the DB write that already happened at the call site (mirrors the
+ * hired/rejected publishers); it is logged at warn and swallowed.
+ */
+export async function publishStageChanged(payload: StageChangedPayload, logger: Logger): Promise<void> {
+  await publishEvent({
+    subject: tenantSubject(payload.tenantId, "application", "stage.changed"),
+    type: "application.stage.changed",
+    tenantId: payload.tenantId,
+    payload,
+  }).catch((err) =>
+    logger.warn({ err, applicationId: payload.applicationId }, "application.stage.changed publish failed"),
+  );
 }
 
 export async function publishOfferApproved(payload: OfferApprovedPayload, logger: Logger): Promise<void> {

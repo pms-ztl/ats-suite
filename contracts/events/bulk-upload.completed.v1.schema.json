@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/bulk-upload.completed.v1.schema.json",
+  "title": "bulk-upload.completed payload (v1)",
+  "description": "Emitted when a bulk resume-archive ingest finishes. Matches the typed BulkUploadCompletedPayloadSchema in packages/contracts. NOTE: the SUBJECT domain is `bulk-upload` (subject tenant.{tenantId}.bulk-upload.completed) but it rides the RESUME_EVENTS stream (its subject list includes tenant.*.bulk-upload.>). Consumed off the RESUME_EVENTS stream by notification-service.",
+  "type": "object",
+  "x-event-type": "bulk-upload.completed",
+  "x-subject": "tenant.{tenantId}.bulk-upload.completed",
+  "x-stream": "RESUME_EVENTS",
+  "x-producer": "resume-service (bulk archive ingest worker)",
+  "x-consumers": [
+    "notification-service (BULK_UPLOAD_COMPLETED notification to the uploader + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "bulkUploadId",
+    "userId",
+    "totalFiles",
+    "processedFiles",
+    "failedFiles",
+    "status"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "bulkUploadId": { "type": "string", "format": "uuid", "description": "The bulk upload batch id." },
+    "userId": { "type": "string", "format": "uuid", "description": "User who started the upload; notified directly." },
+    "totalFiles": { "type": "integer", "description": "Total files in the archive." },
+    "processedFiles": { "type": "integer", "description": "Files successfully parsed." },
+    "failedFiles": { "type": "integer", "description": "Files that failed." },
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETED", "PARTIAL", "FAILED"],
+      "description": "Overall batch outcome."
+    }
+  }
+}

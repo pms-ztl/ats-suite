@@ -1,0 +1,54 @@
+# Shared, non-secret env for every backend service.
+#
+# These are a FAITHFUL transcription of the `x-svc-env` anchor and the per-service
+# non-secret environment in docker-compose.demo.yml. In-cluster DNS names replace
+# the compose service names, but the values are otherwise identical:
+#   compose  http://identity-service:4001   ->  k8s  http://identity-service:4001
+#   compose  redis://redis:6379             ->  k8s  redis://redis:6379
+# (In k8s the Service name IS the DNS name, so these line up 1:1 with compose.)
+#
+# Anything secret (JWT_SECRET, INTERNAL_SERVICE_TOKEN, API keys, DB URLs,
+# EMBED_SECRET, ATS_CONFIG_ENC_KEY) lives in 11-secrets.example.yaml, NOT here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdc-ats-common
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+data:
+  # ── From x-svc-env (docker-compose.demo.yml:14-63) ──────────────────────────
+  NODE_ENV: "production"
+  REDIS_URL: "redis://redis:6379"
+  NATS_URL: "nats://nats:4222"
+  # LLM endpoint is pluggable; defaults mirror the compose anchor. Override the
+  # base URL / model here for Groq's free tier exactly as the compose comment
+  # describes. The API key itself is a Secret (OPENROUTER_API_KEY).
+  OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1"
+  AI_MODEL_OVERRIDE: ""
+  AGENTIC_COPILOT: ""
+  AGENTIC_RESUME_VERIFY: "0"
+  RESUME_GITHUB_CORROBORATE: "0"
+  CORS_ORIGIN: ""
+  OTEL_DISABLED: "true"
+  # Hardcoded in compose (not read from .env) so a low-balance key can screen.
+  AGENT_MAX_OUTPUT_TOKENS: "8000"
+  # Cross-service base URLs — one per backend service, resolved by k8s Service DNS.
+  IDENTITY_SERVICE_URL: "http://identity-service:4001"
+  TENANT_SERVICE_URL: "http://tenant-service:4002"
+  BILLING_SERVICE_URL: "http://billing-service:4003"
+  JOB_SERVICE_URL: "http://job-service:4004"
+  CANDIDATE_SERVICE_URL: "http://candidate-service:4005"
+  INTERVIEW_SERVICE_URL: "http://interview-service:4006"
+  RESUME_SERVICE_URL: "http://resume-service:4007"
+  SCREENING_SERVICE_URL: "http://screening-service:4008"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:4009"
+  SEARCH_SERVICE_URL: "http://search-service:4010"
+  AGENT_SERVICE_URL: "http://agent-service:4011"
+  ANALYTICS_SERVICE_URL: "http://analytics-service:4012"
+  COMPLIANCE_SERVICE_URL: "http://compliance-service:4013"
+  ASSESSMENT_SERVICE_URL: "http://assessment-service:4014"
+  # ── resume-service extras (docker-compose.demo.yml:349-361, non-secret) ─────
+  S3_ENDPOINT: "http://minio:9000"
+  S3_REGION: "us-east-1"
+  S3_FORCE_PATH_STYLE: "true"

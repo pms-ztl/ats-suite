@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/user.invited.v1.schema.json",
+  "title": "user.invited payload (v1)",
+  "description": "A user was invited to a tenant. HONEST STATUS: this is a DECLARED-BUT-UNUSED contract. The USER_EVENTS stream (subjects tenant.*.user.>) is declared in packages/nats-client CORE_STREAMS and the typed UserInvitedPayloadSchema exists in packages/contracts, but NO service publishes user.invited and NO service subscribes to it today. identity-service's /internal/users/invite adds the user + sends in-app/email notices directly (via the gateway), not via this event. This schema documents the TYPED contract shape for when the event is wired.",
+  "type": "object",
+  "x-event-type": "user.invited",
+  "x-subject": "tenant.{tenantId}.user.invited",
+  "x-stream": "USER_EVENTS",
+  "x-producer": "(none active — typed contract exists; not published today)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "userId",
+    "email",
+    "role",
+    "invitedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "userId": { "type": "string", "format": "uuid", "description": "The invited user's id." },
+    "email": { "type": "string", "format": "email", "description": "Invited user email." },
+    "role": {
+      "type": "string",
+      "enum": ["SUPER_ADMIN", "ADMIN", "RECRUITER", "HIRING_MANAGER", "COMPLIANCE_OFFICER", "INTERVIEWER", "CANDIDATE"],
+      "description": "Assigned role (UserRole enum)."
+    },
+    "invitedByUserId": { "type": "string", "format": "uuid", "description": "User who sent the invite." }
+  }
+}

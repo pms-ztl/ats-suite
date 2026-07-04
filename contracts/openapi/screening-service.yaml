@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — screening-service
+  version: 0.0.1
+  description: >-
+    AI candidate-screening service (default port 4008). Reached via the gateway
+    at /api/screening/* -> /internal/screening/*. Runs the `candidate-screener`
+    agent (@cdc-ats/ai-engine) synchronously (POST /score) and serves the
+    Screening rows produced by the async screening worker (which subscribes to
+    tenant.*.resume.parsed and publishes tenant.{t}.screening.completed). Routes
+    in apps/screening-service/src/routes/screening.ts. RLS-scoped request client;
+    the worker + AgentRun audit writes use the admin client.
+servers:
+  - url: http://localhost:4008
+    description: Internal service port (gateway forwards /api/screening here)
+tags: [{ name: screening }, { name: health }]
+paths:
+  /internal/screening/score:
+    post:
+      tags: [screening]
+      summary: Synchronous candidate-less scoring of raw resume text
+      description: >-
+        Scores raw resume TEXT against a requisition's requirements and returns
+        the verdict inline (no Screening row, no Candidate). Used by
+        resume-service's bulk-archive worker to rank staging items. Body
+        validated by ScoreBodySchema.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requisitionId, resumeText]
+              properties:
+                requisitionId: { type: string, minLength: 1 }
+                resumeText: { type: string }
+                resumeSkills: { type: array, items: { type: string } }
+      responses:
+        "200":
+          description: >-
+            { requisitionId, score, matchPercentage, result, signals,
+            reasoning, agentRunId }
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/screening:
+    get:
+      tags: [screening]
+      summary: List screenings (filter by requisition / candidate / status)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: requisitionId, in: query, required: false, schema: { type: string } }
+        - { name: candidateId, in: query, required: false, schema: { type: string } }
+        - { name: status, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Up to 100 Screening rows (newest first).
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/screening/audit/{requisitionId}:
+    get:
+      tags: [screening]
+      summary: Adverse-impact / compliance audit for a requisition's screenings
+      description: >-
+        Deterministic (no LLM): score distribution + result breakdown + per-
+        candidate decisions with evidence, for NYC LL144 / EU AI Act record
+        keeping. Declared before /:id so "audit" is not captured as an id.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: requisitionId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: >-
+            { requisitionId, total, byResult, passRate, score{min,max,avg,median},
+            adverseImpactNote, decisions[] }
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/screening/{id}:
+    get:
+      tags: [screening]
+      summary: Get a single screening
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The Screening row.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

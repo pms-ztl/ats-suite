@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/jobboard.application.received.v1.schema.json",
+  "title": "jobboard.application.received payload (v1)",
+  "description": "Emitted (best-effort) when an inbound job-board application is ingested from an external provider. Producer: job-service (apps/job-service/src/routes/inbound-job-application.ts). HONEST NOTES: (1) no subscriber consumes this subject today; (2) the subject domain `jobboard` (tenant.{tenantId}.jobboard.application.received) is NOT covered by any stream in packages/nats-client CORE_STREAMS, so unless a JOBBOARD stream is added the publish will fail to persist — the producer wraps it in try/catch and only publishes when NATS_URL is set, so a missing stream is non-fatal. Documented from the real payload interface.",
+  "type": "object",
+  "x-event-type": "jobboard.application.received",
+  "x-subject": "tenant.{tenantId}.jobboard.application.received",
+  "x-stream": "(none declared — no matching subject in CORE_STREAMS)",
+  "x-producer": "job-service (inbound job-board application route)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "provider",
+    "jobPostingId",
+    "requisitionId",
+    "applicationId",
+    "candidateId",
+    "externalApplyId",
+    "jobExternalId",
+    "appliedAt",
+    "resumeForwarded"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "provider": { "type": "string", "description": "External provider key (ProviderKey — e.g. linkedin, wellfound, ziprecruiter, naukri)." },
+    "jobPostingId": { "type": "string", "description": "Local JobPosting id." },
+    "requisitionId": { "type": "string", "description": "Local requisition id." },
+    "applicationId": { "type": "string", "description": "Created Application id." },
+    "candidateId": { "type": "string", "description": "Created/matched Candidate id." },
+    "externalApplyId": { "type": "string", "description": "The provider's application id." },
+    "jobExternalId": { "type": "string", "description": "The provider's job id." },
+    "appliedAt": { "type": "string", "format": "date-time", "description": "When the candidate applied (ISO)." },
+    "resumeForwarded": { "type": "boolean", "description": "True when the resume was forwarded to resume-service for parsing." }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/platform.agent.kill-switch.toggled.v1.schema.json",
+  "title": "platform.agent.kill-switch.toggled payload (v1)",
+  "description": "Emitted when a super-admin flips an agent kill switch platform-wide. Producer: billing-service (apps/billing-service/src/routes/platform.ts). PLATFORM-SCOPED: subject is `platform.agent.kill-switch.toggled` and the envelope tenantId is null. This is the ONE event whose payload legitimately has NO tenantId — it is genuinely platform-wide (affects every tenant), and the multi-tenancy mandate does not apply to a platform-scoped kill switch. Rides the PLATFORM_EVENTS stream.",
+  "type": "object",
+  "x-event-type": "platform.agent.kill-switch.toggled",
+  "x-subject": "platform.agent.kill-switch.toggled",
+  "x-stream": "PLATFORM_EVENTS",
+  "x-producer": "billing-service (kill-switch toggle route)",
+  "x-consumers": [
+    "notification-service (SYSTEM notice to all SUPER_ADMINs via in_app + slack)"
+  ],
+  "required": [
+    "agentType",
+    "disabled",
+    "reason",
+    "actorUserId",
+    "toggledAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "agentType": { "type": "string", "description": "Agent whose switch was toggled." },
+    "disabled": { "type": "boolean", "description": "True = killed (disabled), false = re-enabled." },
+    "reason": { "type": ["string", "null"], "description": "Reason for the toggle, or null." },
+    "actorUserId": { "type": ["string", "null"], "description": "Super-admin who flipped it, or null." },
+    "toggledAt": { "type": "string", "format": "date-time", "description": "When toggled (ISO)." }
+  }
+}

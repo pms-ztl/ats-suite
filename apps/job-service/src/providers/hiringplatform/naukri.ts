@@ -79,6 +79,7 @@ import type {
   ScreenerAnswer,
 } from "./types.js";
 import { fetchJson, header, dt, str, timingSafeEqualStr } from "./http.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "naukri" as const;
 const DEFAULT_BASE = "https://api.zwayam.com";
@@ -227,10 +228,13 @@ export const naukriProvider: HiringPlatformProvider = {
     creds: PlatformCredentials,
   ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
     if (!hasCreds(creds)) {
+      // STUB path: no Amplify/Naukri API is called. Warn at runtime. The real API
+      // path below (with creds) is untouched.
+      warnStub(PROVIDER, "no-credentials");
       return {
         externalId: "",
         status: "PENDING_PARTNER_APPROVAL",
-        raw: { reason: "no-credentials", note: "paid Naukri subscription + integration module required" },
+        raw: { stub: true, reason: "no-credentials", note: "paid Naukri subscription + integration module required" },
       };
     }
 

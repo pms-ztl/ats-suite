@@ -1,0 +1,259 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — resume-service
+  version: 0.0.1
+  description: >-
+    Resume ingest + parse service (default port 4007). Reached via the gateway
+    at /api/resume/* -> /internal/resume/*. Handles single uploads, bulk
+    multi-file uploads, and a ZIP archive-ingest pipeline (async unzip + OCR ->
+    manual-check staging -> commit). Multipart routes use multer, then re-bind
+    tenantContext AFTER multer (multer's stream processing drops the async-local
+    tenant context, which RLS needs). Real text extraction: pdf-parse / mammoth /
+    txt. Publishes tenant.{t}.resume.parsed after the parse worker runs.
+    RLS-scoped request client; background workers use the admin client.
+servers:
+  - url: http://localhost:4007
+    description: Internal service port (gateway forwards /api/resume here)
+tags: [{ name: resume }, { name: bulk }, { name: health }]
+paths:
+  /internal/resume/upload:
+    post:
+      tags: [resume]
+      summary: Upload a single resume for a candidate
+      description: >-
+        multipart/form-data. Field `resume` (file) + `candidateId` (uuid, body
+        validated by UploadBodySchema). Extracts text, upserts the Resume row
+        (parseStatus EXTRACTED), stores the binary to S3/MinIO when configured,
+        and enqueues the parse job. requireUploader (ADMIN/RECRUITER).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [resume, candidateId]
+              properties:
+                resume: { type: string, format: binary }
+                candidateId: { type: string, format: uuid }
+      responses:
+        "201":
+          description: "{ id, parseStatus }"
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/bulk:
+    post:
+      tags: [bulk]
+      summary: Bulk-upload multiple resume files
+      description: >-
+        multipart/form-data. Field `resumes` (up to 1000 files) + optional
+        `requisitionId`. Enforces the monthly resume-parse quota (fail-open),
+        creates a BulkUpload record, and enqueues parsing. requireUploader.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [resumes]
+              properties:
+                resumes: { type: array, items: { type: string, format: binary } }
+                requisitionId: { type: string }
+      responses:
+        "201":
+          description: BulkUpload created.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "402": { $ref: "./_shared.yaml#/components/responses/PlanLimit" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/bulk-archive:
+    post:
+      tags: [bulk]
+      summary: Upload a ZIP archive of mixed resumes/images (async ingest)
+      description: >-
+        multipart/form-data with a single ZIP (up to 300MB). Streams unzip +
+        extract + OCR into a manual-check staging batch, then batch-parses and
+        auto-screens on commit. (Route mounted at line ~304 of resume.ts.)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                archive: { type: string, format: binary, description: ZIP file }
+                requisitionId: { type: string }
+      responses:
+        "202":
+          description: >-
+            Accepted — BulkUpload (phase 'extracting') created; ingest runs
+            async so a large archive never hits the 30s request timeout. The
+            quota check is deferred to commit.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/bulk/{id}:
+    get:
+      tags: [bulk]
+      summary: Bulk-upload batch status
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Batch record with progress.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/resume/bulk/{id}/items:
+    get:
+      tags: [bulk]
+      summary: List staged items in a batch
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Staged items (ranked when screened).
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/resume/bulk/{id}/items/{itemId}:
+    patch:
+      tags: [bulk]
+      summary: Edit a staged item before commit
+      description: requireUploader. JSON body of corrected fields for the staging row.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: itemId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200":
+          description: Updated item.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/bulk/{id}/review-all:
+    post:
+      tags: [bulk]
+      summary: Mark all staged items reviewed
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200":
+          description: Review state updated.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/bulk/{id}/commit:
+    post:
+      tags: [bulk]
+      summary: Commit a reviewed batch (create candidates + parse + screen)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200":
+          description: Commit result (created candidate count).
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/resume/{candidateId}:
+    get:
+      tags: [resume]
+      summary: Get a candidate's resume record (parsed fields)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: candidateId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Resume record.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/resume/{resumeId}/download-url:
+    get:
+      tags: [resume]
+      summary: Signed download URL for the stored resume binary
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: resumeId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: "{ url } (or 404 if no stored object)."
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "404": { $ref: "./_shared.yaml#/components/responses/NotFound" }
+  /internal/resume/reparse/{candidateId}:
+    post:
+      tags: [resume]
+      summary: Re-run parsing for a candidate's resume
+      description: requireRole(ADMIN, RECRUITER).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: candidateId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Re-parse enqueued.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/assessment.completed.v1.schema.json",
+  "title": "assessment.completed payload (v1)",
+  "description": "Emitted when an assessment is graded. TWO producers publish the SAME subject with the SAME shape: the native grading worker (apps/assessment-service/src/workers/grading.worker.ts) and the vendor-result ingest (apps/assessment-service/src/lib/ingest-vendor-result.ts). The vendor path additionally carries `provider` (optional here). CRITICAL: `passed` is null while a human review is pending — this event NEVER encodes an automated adverse decision (GDPR Art.22).",
+  "type": "object",
+  "x-event-type": "assessment.completed",
+  "x-subject": "tenant.{tenantId}.assessment.completed",
+  "x-stream": "ASSESSMENT_EVENTS",
+  "x-producer": "assessment-service (native grading worker + vendor-result ingest)",
+  "x-consumers": [
+    "candidate-service (advance application to ASSESSMENT stage, forward-only, never auto-rejects)",
+    "notification-service (raise HITL checkpoint when flagged + notify tenant admins; audit + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "assessmentId",
+    "attemptId",
+    "candidateId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "assessmentId": { "type": "string", "description": "Assessment graded." },
+    "attemptId": {
+      "type": "string",
+      "description": "Attempt id. For the vendor ingest path this is a synthetic attempt id."
+    },
+    "candidateId": { "type": "string", "description": "Candidate graded." },
+    "applicationId": {
+      "type": ["string", "null"],
+      "description": "Resolved application to advance; null for a standalone assessment / when no application resolves."
+    },
+    "passed": {
+      "type": ["boolean", "null"],
+      "description": "Pass/fail verdict, or NULL while a human review is pending (no auto-reject). Consumers treat null as \"held for review\"."
+    },
+    "score": {
+      "type": ["number", "null"],
+      "description": "Score percentage, or null."
+    },
+    "needsReview": {
+      "type": "boolean",
+      "description": "True when the grade needs a human look (pending open-ended items, low-confidence AI grade, or a marginal numeric result)."
+    },
+    "provider": {
+      "type": "string",
+      "description": "Vendor ingest path only: provider key. Absent on the native grading path."
+    }
+  }
+}

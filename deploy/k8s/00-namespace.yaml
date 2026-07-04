@@ -1,0 +1,9 @@
+# Namespace for the whole CDC ATS stack.
+# Derived from docker-compose.demo.yml (compose has no namespace concept; this
+# groups every object below under one k8s namespace).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats

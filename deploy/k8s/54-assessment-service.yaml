@@ -1,0 +1,97 @@
+# assessment-service — Deployment + Service (docker-compose.demo.yml:421-430).
+# Image: infra/Dockerfile.service --build-arg SERVICE=assessment-service. Port 4014.
+# Owns online assessments (OA); DATABASE_URL -> assessment_db. Faithful extra:
+# ATS_CONFIG_ENC_KEY (AES-256-GCM key encrypting OA provider secrets at rest).
+#
+# NOTE (matches the demo compose comment at line 62 + 420): in the demo the
+# gateway does NOT yet proxy to assessment-service. This manifest still runs it
+# and health-checks it on 4014 exactly as compose does; wiring the gateway route
+# is a separate application change, not a deployment concern.
+#
+# The Judge0 code-execution sidecar (compose judge0, lines 437-444) is DELIBERATELY
+# omitted here: compose leaves it UNROUTED (its own internal network, no route to
+# the app services, ALLOW_ENABLE_NETWORK=false) and assessment-service does not
+# call it. Adding it to k8s would require a NetworkPolicy-isolated pod that nothing
+# consumes; it is documented in the README as intentionally not-yet-deployed.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assessment-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: assessment-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: assessment-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: assessment-service
+        app.kubernetes.io/part-of: cdc-ats
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4014"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: assessment-service
+          image: ghcr.io/cdc-ats/assessment-service:latest
+          ports:
+            - name: http
+              containerPort: 4014
+          envFrom:
+            - configMapRef: { name: cdc-ats-common }
+          env:
+            - name: PORT
+              value: "4014"
+            - name: SERVICE_NAME
+              value: "assessment-service"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ASSESSMENT_DATABASE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENROUTER_API_KEY, optional: true } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENAI_API_KEY, optional: true } }
+            - name: ATS_CONFIG_ENC_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ATS_CONFIG_ENC_KEY } }
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: "1",  memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: assessment-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: assessment-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: assessment-service
+  ports:
+    - name: http
+      port: 4014
+      targetPort: http

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/tenant.created.v1.schema.json",
+  "title": "tenant.created payload (v1)",
+  "description": "Emitted when a new tenant is created. Producer: tenant-service (apps/tenant-service/src/routes/tenants.ts). PLATFORM-SCOPED: the subject is `platform.tenant.created` (NOT tenant-scoped) and the ENVELOPE tenantId is null — but the PAYLOAD still carries the new tenant's id in `tenantId` (the multi-tenancy mandate: every payload carries tenantId). Matches the typed TenantCreatedPayloadSchema.",
+  "type": "object",
+  "x-event-type": "tenant.created",
+  "x-subject": "platform.tenant.created",
+  "x-stream": "TENANT_EVENTS",
+  "x-producer": "tenant-service (create tenant route)",
+  "x-consumers": [
+    "billing-service (seed TenantPlanCache with the new tenant's plan)",
+    "notification-service (NEW_TENANT_SIGNUP notification to super-admins)"
+  ],
+  "required": [
+    "tenantId",
+    "name",
+    "plan",
+    "industry",
+    "companySize",
+    "createdByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The new tenant's id. Carried in the payload even though the envelope tenantId is null for this platform-scoped event."
+    },
+    "name": { "type": "string", "description": "Tenant name." },
+    "plan": {
+      "type": "string",
+      "enum": ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"],
+      "description": "Initial plan (TenantPlan enum)."
+    },
+    "industry": { "type": ["string", "null"], "description": "Industry, or null." },
+    "companySize": { "type": ["string", "null"], "description": "Company size band, or null." },
+    "createdByUserId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Creating user, or null (self-serve signups create the tenant before the first user exists)."
+    }
+  }
+}

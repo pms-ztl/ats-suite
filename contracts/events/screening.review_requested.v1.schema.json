@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/screening.review_requested.v1.schema.json",
+  "title": "screening.review_requested payload (v1)",
+  "description": "Emitted by the agentic screener's flag_for_human_review tool when the model decides a candidate needs a human look. Producer: screening-service (apps/screening-service/src/lib/screener-tools.ts). Rides the SCREENING_EVENTS stream. NOTE: no subscriber consumes this subject today (producer-only / honest gap); it is published as a real autonomy action and audited via logs.",
+  "type": "object",
+  "x-event-type": "screening.review_requested",
+  "x-subject": "tenant.{tenantId}.screening.review_requested",
+  "x-stream": "SCREENING_EVENTS",
+  "x-producer": "screening-service (candidate-screener flag_for_human_review tool)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "candidateId",
+    "requisitionId",
+    "reason",
+    "severity",
+    "requestedByAgent"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "candidateId": { "type": "string", "format": "uuid", "description": "Candidate flagged for review." },
+    "requisitionId": { "type": "string", "format": "uuid", "description": "Requisition context." },
+    "reason": { "type": "string", "description": "Model-supplied reason for the review." },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Model-supplied severity."
+    },
+    "requestedByAgent": {
+      "type": "boolean",
+      "description": "Always true here — the request came from the agent tool."
+    },
+    "requestedByUserId": {
+      "type": ["string", "null"],
+      "description": "The user id the agent run was attributed to (often \"system\" for event-driven runs), or null."
+    }
+  }
+}

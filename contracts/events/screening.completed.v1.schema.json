@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/screening.completed.v1.schema.json",
+  "title": "screening.completed payload (v1)",
+  "description": "Emitted when the candidate-screener finishes a screening. Producer: screening-service (apps/screening-service/src/workers/screening.worker.ts). The REAL payload extends the typed ScreeningCompletedPayloadSchema with an OPTIONAL `agentic` block that is present only on the agentic (ReAct) path and absent on the single-shot fallback.",
+  "type": "object",
+  "x-event-type": "screening.completed",
+  "x-subject": "tenant.{tenantId}.screening.completed",
+  "x-stream": "SCREENING_EVENTS",
+  "x-producer": "screening-service (screening worker)",
+  "x-consumers": [
+    "job-service apply-ingest-subscriber (advance accept-fast ledger row to SCREENED, any PASS/REVIEW/FAIL result)"
+  ],
+  "required": [
+    "tenantId",
+    "screeningId",
+    "candidateId",
+    "requisitionId",
+    "result",
+    "score"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "screeningId": { "type": "string", "format": "uuid", "description": "Screening record id." },
+    "candidateId": { "type": "string", "format": "uuid", "description": "Screened candidate." },
+    "requisitionId": { "type": "string", "format": "uuid", "description": "Requisition screened against." },
+    "result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "REVIEW"],
+      "description": "Screening verdict after deterministic calibration."
+    },
+    "score": {
+      "type": ["number", "null"],
+      "description": "Calibrated match score 0-100 (null only if no findings produced a score)."
+    },
+    "agentic": {
+      "type": "object",
+      "description": "Present ONLY on the agentic ReAct path (AGENTIC_SCREENER != 0). Absent on the single-shot fallback. Surfaced for the AI-ops UI; no consumer currently reads it off the event.",
+      "additionalProperties": true,
+      "properties": {
+        "confidence": { "type": "number" },
+        "recommendedAction": { "type": "string" },
+        "escalatedToHuman": { "type": "boolean" },
+        "toolsUsed": { "type": "array", "items": { "type": "string" } },
+        "stepCount": { "type": "integer" },
+        "requirementFindings": {
+          "type": "array",
+          "description": "Per-requirement met/priority findings used to recompute the calibrated score.",
+          "items": { "type": "object", "additionalProperties": true }
+        }
+      }
+    }
+  }
+}

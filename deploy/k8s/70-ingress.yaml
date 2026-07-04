@@ -1,0 +1,53 @@
+# Ingress for the two publicly reachable services: the api-gateway and the
+# frontend. Replaces the demo's cloudflared tunnel (which points at frontend:3000)
+# with a real Ingress.
+#
+# Routing model (matches how the demo actually serves traffic):
+#   • The frontend already proxies same-origin "/api" to the gateway server-side
+#     (GATEWAY_ORIGIN), so a single-host setup works: everything to the frontend.
+#   • This Ingress ALSO exposes "/api" directly to the api-gateway so external
+#     API clients (and the browser, if NEXT_PUBLIC_API_URL is an absolute URL)
+#     can reach it without going through the Next proxy. "/api" is listed BEFORE
+#     "/" so the more specific prefix wins on ingress controllers that honor
+#     path order (nginx sorts by length; both are fine here).
+#
+# Set the host to your real domain and provide a TLS secret (or wire cert-manager
+# annotations). The demo uses an nginx-class ingress; adjust ingressClassName for
+# your controller. This has NOT been applied to a live cluster (see README).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cdc-ats
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+  annotations:
+    # Allow large resume uploads through the ingress (multipart apply path).
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - app.cdc-ats.example.com
+      secretName: cdc-ats-tls
+  rules:
+    - host: app.cdc-ats.example.com
+      http:
+        paths:
+          # Direct API access to the gateway.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 4000
+          # Everything else -> the Next.js frontend.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000

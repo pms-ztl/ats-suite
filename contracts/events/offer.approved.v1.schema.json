@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/offer.approved.v1.schema.json",
+  "title": "offer.approved payload (v1)",
+  "description": "Emitted when an offer is approved. Producer: candidate-service (apps/candidate-service/src/lib/decision-events.ts). Ids are plain strings (cuid). Matches the typed OfferApprovedPayloadSchema. `offerLetterKey` is null when object storage is not configured (candidate-service is honest about this).",
+  "type": "object",
+  "x-event-type": "offer.approved",
+  "x-subject": "tenant.{tenantId}.offer.approved",
+  "x-stream": "CANDIDATE_EVENTS",
+  "x-producer": "candidate-service (offer flow)",
+  "x-consumers": [
+    "notification-service (email the candidate an offer notification; audit + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "offerId",
+    "applicationId",
+    "candidateId",
+    "candidateName",
+    "candidateEmail",
+    "jobTitle",
+    "offerLetterKey",
+    "approvedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "description": "Owning tenant (mandatory)." },
+    "offerId": { "type": "string", "description": "Offer record id (cuid)." },
+    "applicationId": { "type": ["string", "null"], "description": "Related application, or null." },
+    "candidateId": { "type": "string", "description": "Candidate." },
+    "candidateName": { "type": ["string", "null"], "description": "Candidate display name, or null." },
+    "candidateEmail": { "type": ["string", "null"], "format": "email", "description": "Candidate email, or null." },
+    "jobTitle": { "type": ["string", "null"], "description": "Resolved job title, or null." },
+    "offerLetterKey": {
+      "type": ["string", "null"],
+      "description": "Object-storage key of the rendered offer-letter PDF, or null when storage is not configured / no PDF generated."
+    },
+    "approvedByUserId": { "type": ["string", "null"], "description": "User who approved, or null." }
+  }
+}

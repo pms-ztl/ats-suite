@@ -24,6 +24,10 @@ import { toFairnessView } from "@cdc-ats/ai-engine";
 // event's tenantId explicitly, so it uses the admin (non-RLS) client.
 import { prismaAdmin as prisma } from "./prisma.js";
 import { embedCandidate } from "./matching.js";
+// Single source of truth for the canonical stage order + the stage.changed
+// event both subscriber advances now emit (parity with the API write path).
+import { STAGE_ORDER } from "./stage-machine.js";
+import { publishStageChanged } from "./decision-events.js";
 
 // Loose schema — accept ANY parsed shape. The Phase 37 resume-parser wraps
 // identity fields as { value, confidence } and nests skills/experience as
@@ -69,23 +73,10 @@ const InterviewRoundStartedPayload = z.object({
   targetStage: z.string(),
 }).passthrough();
 
-// Canonical ApplicationStage order for the forward-only guard. A higher index
-// is "later" in the pipeline; terminal stages sit at the end so they are never
-// regressed. Mirrors the prisma enum order (candidate-service schema.prisma).
-const STAGE_ORDER: Record<string, number> = {
-  APPLIED: 0,
-  SCREENED: 1,
-  PHONE_SCREEN: 2,
-  ASSESSMENT: 3,
-  INTERVIEW: 4,
-  TECHNICAL_ROUND: 5,
-  HR_ROUND: 6,
-  FINAL_REVIEW: 7,
-  OFFER: 8,
-  HIRED: 9,
-  REJECTED: 99,
-  WITHDRAWN: 99,
-};
+// The canonical ApplicationStage order used by the forward-only guards below
+// now lives in ./stage-machine.ts (STAGE_ORDER) so the API write path and these
+// subscribers share one source of truth. A higher index is "later" in the
+// pipeline; terminal stages sit at the end so they are never regressed.
 
 // Placeholder emails from bulk-upload look like:
 //   bulk-{8chars}-{idx}@pending.placeholder
@@ -236,7 +227,7 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
       // tenantId + applicationId on the find AND the update.
       const app = await prisma.application.findFirst({
         where: { id: p.applicationId, tenantId: p.tenantId, candidateId: p.candidateId },
-        select: { id: true, stage: true },
+        select: { id: true, stage: true, candidateId: true, requisitionId: true },
       });
       if (!app) {
         logger.warn({ applicationId: p.applicationId, tenantId: p.tenantId }, "assessment.completed: application not found");
@@ -251,12 +242,28 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         return;
       }
 
+      const fromStage = app.stage;
       await prisma.application.updateMany({
         where: { id: app.id, tenantId: p.tenantId },
         data: { stage: "ASSESSMENT", stageUpdatedAt: new Date() },
       });
+      // Emit the transition so the pipeline audit trail records subscriber-driven
+      // advances the same way it records API-driven ones.
+      await publishStageChanged(
+        {
+          tenantId: p.tenantId,
+          applicationId: app.id,
+          candidateId: app.candidateId,
+          requisitionId: app.requisitionId ?? null,
+          fromStage,
+          toStage: "ASSESSMENT",
+          changedByUserId: null,
+          source: "assessment",
+        },
+        logger,
+      );
       logger.info(
-        { applicationId: app.id, from: app.stage, to: "ASSESSMENT", passed: p.passed, needsReview: p.needsReview },
+        { applicationId: app.id, from: fromStage, to: "ASSESSMENT", passed: p.passed, needsReview: p.needsReview },
         "assessment.completed: advanced application to ASSESSMENT (no auto-reject)",
       );
     },
@@ -288,7 +295,7 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
 
       const app = await prisma.application.findFirst({
         where: { id: p.applicationId, tenantId: p.tenantId, candidateId: p.candidateId },
-        select: { id: true, stage: true },
+        select: { id: true, stage: true, candidateId: true, requisitionId: true },
       });
       if (!app) {
         logger.warn({ applicationId: p.applicationId, tenantId: p.tenantId }, "interview.round.started: application not found");
@@ -303,12 +310,28 @@ export async function startCandidateSubscribers(logger: Logger): Promise<void> {
         return;
       }
 
+      const fromStage = app.stage;
       await prisma.application.updateMany({
         where: { id: app.id, tenantId: p.tenantId },
         data: { stage: p.targetStage as any, stageUpdatedAt: new Date() },
       });
+      // Emit the transition so the pipeline audit trail records subscriber-driven
+      // advances the same way it records API-driven ones.
+      await publishStageChanged(
+        {
+          tenantId: p.tenantId,
+          applicationId: app.id,
+          candidateId: app.candidateId,
+          requisitionId: app.requisitionId ?? null,
+          fromStage,
+          toStage: p.targetStage,
+          changedByUserId: null,
+          source: "interview",
+        },
+        logger,
+      );
       logger.info(
-        { applicationId: app.id, from: app.stage, to: p.targetStage, roundName: p.roundName, interviewType: p.interviewType },
+        { applicationId: app.id, from: fromStage, to: p.targetStage, roundName: p.roundName, interviewType: p.interviewType },
         "interview.round.started: advanced application to canonical round stage (forward-only)",
       );
     },

@@ -60,6 +60,7 @@ import type {
   ProviderCapabilities,
 } from "./types.js";
 import { toJoobleFeed } from "./feed.js";
+import { warnStub } from "./stub-logger.js";
 
 const PROVIDER = "jooble" as const;
 
@@ -93,6 +94,8 @@ export const joobleProvider: HiringPlatformProvider = {
     _job: NormalizedJob,
     _creds,
   ): Promise<{ externalId: string; externalUrl?: string; status: NormalizedJobStatus; raw: unknown }> {
+    // STUB path: no board API is called (Jooble is pull-feed only). Warn at runtime.
+    warnStub(PROVIDER, "feed-only");
     return {
       // No board posting id exists for a crawled feed listing; never synthesized.
       // (The feed itself carries the ATS JobPosting id in the `<job id>` attribute.)
@@ -100,7 +103,7 @@ export const joobleProvider: HiringPlatformProvider = {
       // POSTING = accepted into the feed, not yet confirmed crawled/live. We never
       // claim ACTIVE for a feed listing we cannot independently confirm went live.
       status: "POSTING",
-      raw: { reason: "feed-only", note: "Jooble ingests the registered XML feed; no programmatic postJob" },
+      raw: { stub: true, reason: "feed-only", note: "Jooble ingests the registered XML feed; no programmatic postJob" },
     };
   },
 

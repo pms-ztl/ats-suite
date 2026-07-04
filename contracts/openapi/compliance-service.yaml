@@ -1,0 +1,145 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — compliance-service
+  version: 0.0.1
+  description: >-
+    Compliance / audit microservice (default port 4013). Reached via the gateway
+    at /api/audit/* -> /internal/compliance/*. Thin HTTP layer in
+    apps/compliance-service/src/routes/compliance.ts delegating to
+    services/compliance.service.ts (audit log, retention policy, bias audit, and
+    DSR legs that fan out to assessment-service for OA data). NOTE: no dedicated
+    DB is provisioned for this service in the dev/demo stack.
+servers:
+  - url: http://localhost:4013
+    description: Internal service port (gateway forwards /api/audit here)
+tags: [{ name: compliance }, { name: health }]
+paths:
+  /internal/compliance/audit/log:
+    post:
+      tags: [compliance]
+      summary: Write an audit-log entry
+      description: Body validated by LogBody (src/schemas/compliance.schemas.ts). Returns 201.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind]
+              properties:
+                kind: { type: string, minLength: 1, maxLength: 40 }
+                subjectType: { type: string, maxLength: 40, default: "" }
+                subjectId: { type: string, maxLength: 120, default: "" }
+                summary: { type: string, maxLength: 2000, default: "" }
+                payload: { type: object, additionalProperties: true, default: {} }
+      responses:
+        "201":
+          description: Audit row created.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/audit:
+    get:
+      tags: [compliance]
+      summary: List audit entries (optional kind filter)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: kind, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Audit rows.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/audit/subject/{subjectId}:
+    get:
+      tags: [compliance]
+      summary: Audit entries for a subject
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: subjectId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Audit rows for the subject.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/retention/policy:
+    get:
+      tags: [compliance]
+      summary: Tenant data-retention policy
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Retention policy.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/bias-audit/{requisitionId}:
+    post:
+      tags: [compliance]
+      summary: Run a bias audit for a requisition
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: requisitionId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Bias-audit report.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/dsr/candidates/{candidateId}/export:
+    post:
+      tags: [compliance]
+      summary: DSR export leg covering OA data
+      description: >-
+        Calls assessment-service to export a candidate's assessment data and
+        writes an audit record (system-of-record DSR path).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: candidateId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Export result.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/compliance/dsr/candidates/{candidateId}:
+    delete:
+      tags: [compliance]
+      summary: DSR erase leg covering OA data
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: candidateId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Erase result.
+          content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

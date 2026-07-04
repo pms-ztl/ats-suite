@@ -1,0 +1,400 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — billing-service
+  version: 0.0.1
+  description: >-
+    Plans, usage/cost, agent kill switches, plan/module gating, the platform
+    control plane, prompt overrides, models, and Stripe self-serve (default port
+    4003). Tenant routes under /internal/billing/* (billing.ts + modules.ts);
+    super-admin control plane under /internal/platform/* (platform.ts +
+    platform-modules + models + flags); Stripe under /internal/stripe/* (the raw
+    webhook is mounted BEFORE express.json and verifies the Stripe signature).
+    RLS-scoped request client; subscribers + platform routes + Stripe use the
+    admin client. Publishes platform.agent.kill-switch.toggled and module.toggled.
+    check-agent / check-module / limits are the gates the gateway + workers call.
+
+    Gateway mapping: /api/billing -> /internal/billing; /api/super-admin/platform
+    -> /internal/platform; /api/super-admin/modules -> /internal/platform/modules;
+    /api/super-admin/models -> /internal/platform/models; /api/tenant/modules/:key
+    -> /internal/billing/modules/:key; /api/billing/stripe -> /internal/stripe;
+    /api/stripe/webhook -> /internal/stripe/webhook.
+servers:
+  - url: http://localhost:4003
+    description: Internal service port
+tags:
+  - name: billing
+  - name: modules
+  - name: platform
+  - name: stripe
+  - name: health
+paths:
+  # ─── Billing (routes/billing.ts) ──────────────────────────────────────────
+  /internal/billing/plan-limits:
+    get:
+      tags: [billing]
+      summary: Static PLAN_LIMITS catalog
+      responses:
+        "200": { description: Plan limits catalog., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/overview:
+    get:
+      tags: [billing]
+      summary: Tenant billing overview
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Overview., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/usage:
+    get:
+      tags: [billing]
+      summary: Tenant usage vs plan caps
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Usage., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/spend-trend:
+    get:
+      tags: [billing]
+      summary: Agent spend trend
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Spend series., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/agents:
+    get:
+      tags: [billing]
+      summary: Per-agent enablement + spend for the tenant
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Agents., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/agents/{type}/toggle:
+    post:
+      tags: [billing]
+      summary: Toggle an agent for the tenant (tenant admin)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: false
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Toggled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/billing/check-resume-quota:
+    get:
+      tags: [billing]
+      summary: Check monthly resume-parse quota (used by resume-service)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: count, in: query, required: false, schema: { type: integer } }
+      responses:
+        "200": { description: "{ allowed, plan, limit, used }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/check-agent:
+    get:
+      tags: [billing]
+      summary: Plan-gate check for an agent (used by gateway requireAgentPlan)
+      description: Returns allowed/denied; a 402 PLAN_LIMIT is raised by the gateway when denied.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: agentType, in: query, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "{ allowed, reason? }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/limits:
+    get:
+      tags: [billing]
+      summary: Resolved plan flags/limits for the tenant (used by fetchPlanLimits)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: "{ plan, limits{...} }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  # ─── Modules (routes/modules.ts, mounted /internal/billing) ───────────────
+  /internal/billing/check-module:
+    get:
+      tags: [modules]
+      summary: Resolve one module for the tenant (used by gateway requireModule)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: key, in: query, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "{ enabled, reason? }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/modules:
+    get:
+      tags: [modules]
+      summary: List the tenant's modules
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Modules., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/billing/modules/{key}:
+    put:
+      tags: [modules]
+      summary: Toggle a module for the tenant (tenant admin) — publishes module.toggled
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: key, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Toggled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Platform control plane (routes/platform.ts + platform-modules/models/flags)
+  /internal/platform/agents:
+    get:
+      tags: [platform]
+      summary: Cross-tenant agent kill switches (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Agents., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/agents/{type}:
+    put:
+      tags: [platform]
+      summary: Toggle a platform agent kill switch (SUPER_ADMIN) — publishes kill-switch.toggled
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Toggled., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/platform/audit:
+    get:
+      tags: [platform]
+      summary: Platform audit read
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Audit rows., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/flags:
+    get:
+      tags: [platform]
+      summary: Platform feature flags
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Flags., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/cost:
+    get:
+      tags: [platform]
+      summary: Cross-tenant AI cost rollup (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: days, in: query, required: false, schema: { type: integer } }
+      responses:
+        "200": { description: "{ totals, byTenant }", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/models:
+    get:
+      tags: [platform]
+      summary: Per-provider + per-agent AI spend/routing (Models & Providers)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Models/providers., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/modules:
+    get:
+      tags: [platform]
+      summary: Platform module catalog (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Module registry., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [platform]
+      summary: Set a platform module default / sync the registry (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/platform/prompts:
+    get:
+      tags: [platform]
+      summary: List prompt overrides
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Prompts., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/platform/prompts/{type}:
+    get:
+      tags: [platform]
+      summary: Get a prompt override + version history
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Prompt., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+    put:
+      tags: [platform]
+      summary: Save a prompt override (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: true } } }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+    delete:
+      tags: [platform]
+      summary: Delete a prompt override (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Deleted., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/platform/prompts/{type}/rollback/{id}:
+    post:
+      tags: [platform]
+      summary: Roll a prompt override back to a prior version (SUPER_ADMIN)
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: type, in: path, required: true, schema: { type: string } }
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Rolled back., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  # ─── Stripe (routes/stripe.ts) ────────────────────────────────────────────
+  /internal/stripe/webhook:
+    post:
+      tags: [stripe]
+      summary: Stripe webhook (PUBLIC, raw body — the Stripe signature IS the auth)
+      description: >-
+        Mounted BEFORE express.json in app.ts; verifyAndProcess consumes the raw
+        Buffer. 400 on signature failure (surfaced in Stripe's dashboard), 500
+        otherwise so Stripe retries. Idempotent on the Stripe evt_ id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: string, format: binary }
+      responses:
+        "200": { description: "{ received: true }" }
+        "400": { description: Missing/invalid stripe-signature. }
+  /internal/stripe/subscription:
+    get:
+      tags: [stripe]
+      summary: Get the tenant's Stripe subscription
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: Subscription., content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+  /internal/stripe/checkout-for-request/{requestId}:
+    post:
+      tags: [stripe]
+      summary: Create a Checkout session for an approved plan-change request (tenant admin)
+      description: >-
+        Returns the Stripe Checkout URL. Every paid plan change flows through a
+        PlanChangeRequest first, so checkout is keyed by requestId.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: requestId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "{ url } (Checkout URL)", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/stripe/portal:
+    post:
+      tags: [stripe]
+      summary: Create a Stripe Customer Portal session (tenant admin)
+      description: Returns { url } for managing payment methods / invoices / cancellation.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200": { description: "{ url } (Portal URL)", content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" } } } }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /healthz:
+    get: { tags: [health], summary: Liveness, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" } } } } } }
+  /livez:
+    get: { tags: [health], summary: Liveness probe, responses: { "200": { description: alive } } }
+  /readyz:
+    get: { tags: [health], summary: Readiness, responses: { "200": { description: ready, content: { application/json: { schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" } } } }, "503": { description: degraded } } }
+  /metrics:
+    get: { tags: [health], summary: Prometheus metrics, responses: { "200": { description: Prometheus exposition format } } }

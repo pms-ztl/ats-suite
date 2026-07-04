@@ -1,0 +1,152 @@
+openapi: 3.1.0
+info:
+  title: CDC ATS — analytics-service
+  version: 0.0.1
+  description: >-
+    Reporting rollup service (default port 4012). Reached via the gateway at
+    /api/reporting/* -> /internal/analytics/*. Routes are the thin HTTP layer in
+    apps/analytics-service/src/routes/analytics.ts delegating to
+    services/analytics.service.ts (MetricRollup + FUNNEL_STAGES).
+
+    Note (honest state): POST /internal/analytics/ingest exists but has no
+    in-process publisher populating MetricRollup, so /funnel and /summary read
+    from a rollup table that is currently unpopulated in the demo; the live
+    dashboards the UI shows are served by the gateway aggregators
+    (api-gateway.yaml, /api/analytics/*), not by this service.
+servers:
+  - url: http://localhost:4012
+    description: Internal service port (gateway forwards /api/reporting here)
+tags:
+  - name: analytics
+  - name: health
+paths:
+  /internal/analytics/ingest:
+    post:
+      tags: [analytics]
+      summary: Increment a metric rollup counter
+      description: >-
+        Upserts a MetricRollup row for (tenantId, metric, dimension, period) by
+        `delta`. Body validated by IngestBody
+        (apps/analytics-service/src/schemas/analytics.schemas.ts).
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metric]
+              properties:
+                metric: { type: string, minLength: 1, maxLength: 80 }
+                dimension: { type: string, maxLength: 120, default: all }
+                period: { type: string, maxLength: 20, default: all }
+                delta: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: Rollup upserted.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "400": { $ref: "./_shared.yaml#/components/responses/ValidationError" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "./_shared.yaml#/components/responses/Forbidden" }
+  /internal/analytics/summary:
+    get:
+      tags: [analytics]
+      summary: Tenant metric summary
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Aggregated metric summary for the tenant.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/analytics/funnel:
+    get:
+      tags: [analytics]
+      summary: Pipeline funnel (applied -> hired) with stage conversion
+      description: >-
+        Returns { funnel: [...] } computed from MetricRollup over FUNNEL_STAGES.
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+      responses:
+        "200":
+          description: Funnel stages.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          funnel:
+                            type: array
+                            items: { type: object }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  /internal/analytics/metrics:
+    get:
+      tags: [analytics]
+      summary: Raw metric rows filtered by metric/period
+      parameters:
+        - $ref: "./_shared.yaml#/components/parameters/XUserId"
+        - $ref: "./_shared.yaml#/components/parameters/XTenantId"
+        - $ref: "./_shared.yaml#/components/parameters/XUserRole"
+        - $ref: "./_shared.yaml#/components/parameters/XInternalService"
+        - { name: metric, in: query, required: false, schema: { type: string } }
+        - { name: period, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Metric rows.
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/SuccessEnvelope" }
+        "401": { $ref: "./_shared.yaml#/components/responses/Unauthorized" }
+  # ── Health + metrics (via @cdc-ats/common, mounted in every service) ──────
+  /healthz:
+    get:
+      tags: [health]
+      summary: Liveness — process is up
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/HealthOk" }
+  /livez:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      responses:
+        "200": { description: alive }
+  /readyz:
+    get:
+      tags: [health]
+      summary: Readiness — checks DB reachability
+      responses:
+        "200":
+          description: ready
+          content:
+            application/json:
+              schema: { $ref: "./_shared.yaml#/components/schemas/ReadyStatus" }
+        "503": { description: degraded }
+  /metrics:
+    get:
+      tags: [health]
+      summary: Prometheus metrics (text/plain)
+      responses:
+        "200": { description: Prometheus exposition format }

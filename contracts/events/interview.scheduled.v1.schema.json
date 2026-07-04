@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/interview.scheduled.v1.schema.json",
+  "title": "interview.scheduled payload (v1)",
+  "description": "Emitted when an interview is booked (by the scheduling agent or a manual create). Producer: interview-service (apps/interview-service/src/lib/scheduling-tools.ts). The REAL payload is much richer than the typed InterviewScheduledPayloadSchema in packages/contracts (which lists tenantId/interviewId/candidateId/roundId/scheduledAt/panelistUserIds). The actual publish sends endAt, durationMinutes, meetingUrl, attendees, organizer, ics and externalEvent so notification-service can send a full invite with an ICS attachment. Documented from the real call site.",
+  "type": "object",
+  "x-event-type": "interview.scheduled",
+  "x-subject": "tenant.{tenantId}.interview.scheduled",
+  "x-stream": "INTERVIEW_EVENTS",
+  "x-producer": "interview-service (scheduling tool)",
+  "x-consumers": [
+    "notification-service (email the candidate + panel a meeting invite with ICS; audit + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "interviewId",
+    "candidateId",
+    "requisitionId",
+    "scheduledAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "interviewId": { "type": "string", "description": "The interview record." },
+    "candidateId": { "type": "string", "description": "Interviewee." },
+    "requisitionId": { "type": "string", "description": "Requisition context." },
+    "scheduledAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Start time (ISO). Consumers render \"soon\" when null."
+    },
+    "endAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "End time (ISO)."
+    },
+    "durationMinutes": {
+      "type": ["integer", "null"],
+      "description": "Computed slot duration."
+    },
+    "meetingUrl": {
+      "type": ["string", "null"],
+      "description": "Video meeting URL, when one was generated."
+    },
+    "attendees": {
+      "type": "array",
+      "description": "Attendee emails/identifiers on the invite.",
+      "items": { "type": "string" }
+    },
+    "organizer": {
+      "type": ["string", "null"],
+      "description": "Organizer identity (email) used for the external calendar event + ICS."
+    },
+    "ics": {
+      "type": ["string", "null"],
+      "description": "Serialized ICS body the email channel can attach."
+    },
+    "externalEvent": {
+      "type": ["object", "null"],
+      "description": "Present when the organizer had a connected Google/Outlook calendar and the event was created there; null otherwise.",
+      "additionalProperties": true,
+      "properties": {
+        "provider": { "type": "string" },
+        "htmlLink": { "type": ["string", "null"] }
+      }
+    },
+    "bookedByAgent": {
+      "type": "boolean",
+      "description": "True when the scheduling agent booked it (vs a manual create)."
+    }
+  }
+}

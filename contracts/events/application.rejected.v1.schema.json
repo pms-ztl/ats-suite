@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/application.rejected.v1.schema.json",
+  "title": "application.rejected payload (v1)",
+  "description": "Emitted when an application is rejected. Producer: candidate-service (apps/candidate-service/src/lib/decision-events.ts). `reason` is already a courteous reason-code LABEL (never raw recruiter notes) — safe to surface to the candidate. Ids are plain strings (cuid). Matches the typed ApplicationRejectedPayloadSchema.",
+  "type": "object",
+  "x-event-type": "application.rejected",
+  "x-subject": "tenant.{tenantId}.application.rejected",
+  "x-stream": "CANDIDATE_EVENTS",
+  "x-producer": "candidate-service (decision flow)",
+  "x-consumers": [
+    "notification-service (courteous rejection email to the candidate; audit + webhook fan-out)"
+  ],
+  "required": [
+    "tenantId",
+    "applicationId",
+    "candidateId",
+    "candidateName",
+    "candidateEmail",
+    "jobTitle",
+    "reason",
+    "decidedByUserId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "description": "Owning tenant (mandatory)." },
+    "applicationId": { "type": "string", "description": "Rejected application (cuid)." },
+    "candidateId": { "type": "string", "description": "Candidate." },
+    "candidateName": { "type": ["string", "null"], "description": "Candidate display name, or null." },
+    "candidateEmail": { "type": ["string", "null"], "format": "email", "description": "Candidate email, or null." },
+    "jobTitle": { "type": ["string", "null"], "description": "Resolved job title, or null." },
+    "reason": {
+      "type": ["string", "null"],
+      "description": "Candidate-facing reason LABEL mapped from a reason code (never raw notes), or null."
+    },
+    "decidedByUserId": { "type": ["string", "null"], "description": "User who rejected, or null." }
+  }
+}

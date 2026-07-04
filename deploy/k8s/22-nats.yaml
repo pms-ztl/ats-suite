@@ -1,0 +1,83 @@
+# NATS 2.10 with JetStream — StatefulSet (mirrors the `nats` service in
+# docker-compose.demo.yml:169-174). Command `-js -sd /data -m 8222` enables
+# JetStream, persists streams under /data, and exposes the monitoring port 8222.
+# The event bus for every tenant.*.* / platform.* subject the services publish.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: nats
+  ports:
+    - name: client
+      port: 4222
+      targetPort: 4222
+    - name: monitor
+      port: 8222
+      targetPort: 8222
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  serviceName: nats
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nats
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nats
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      containers:
+        - name: nats
+          image: nats:2.10-alpine
+          # Compose command: ["-js", "-sd", "/data", "-m", "8222"]
+          args: ["-js", "-sd", "/data", "-m", "8222"]
+          ports:
+            - name: client
+              containerPort: 4222
+            - name: monitor
+              containerPort: 8222
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          # The demo compose has NO healthcheck on nats (depends_on uses
+          # service_started). NATS exposes /healthz on the monitor port (8222),
+          # which we use here for k8s probes without changing behavior.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

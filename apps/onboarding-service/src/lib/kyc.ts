@@ -8,7 +8,14 @@
 // it NEVER fabricates a "verified" result. Wiring a real provider is a matter of
 // implementing this interface and selecting it via KYC_PROVIDER.
 
+import { createLogger } from "@cdc-ats/common";
 import type { VerificationType } from "@cdc-ats/contracts";
+
+// Module logger for KYC-provider honesty. The STUB path emits a runtime warning on
+// every use so a stub verification can never be mistaken for a production one from
+// the logs alone (the honesty otherwise lived only in the persisted message string
+// + the NEEDS_PROVIDER status).
+const logger = createLogger({ serviceName: "onboarding-service:kyc" });
 
 export interface KycCheckInput {
   type: VerificationType;
@@ -27,6 +34,13 @@ export interface KycCheckResult {
   providerRef: string | null;
   maskedValue: string | null;
   message: string;
+  /**
+   * Additive honesty marker: true when this result came from the format-validation
+   * STUB (no real KYC provider ran). Optional so real providers omit it and no
+   * existing caller/shape breaks; the persisted `provider: "stub"` string already
+   * records the same fact.
+   */
+  stub?: boolean;
 }
 
 export interface KycProvider {
@@ -47,12 +61,23 @@ function mask(value: string | undefined): string | null {
 class StubKycProvider implements KycProvider {
   readonly name = "stub";
   async verify(input: KycCheckInput): Promise<KycCheckResult> {
+    // HONESTY: this path validates only the SHAPE of the input and returns a mock
+    // NEEDS_PROVIDER result. It performs NO real PAN / bank verification and mints
+    // no real provider reference. Warn once per call so a stub run is visible at
+    // runtime, not just in the persisted message.
+    logger.warn(
+      { type: input.type },
+      "[STUB] not production: kyc verify running against stub/fixture data (format-validated only, NOT a real verification; set KYC_PROVIDER + credentials for a production check)",
+    );
     const masked = input.type === "PAN" ? mask(input.pan) : mask(input.accountNumber);
     return {
       status: "NEEDS_PROVIDER",
       provider: this.name,
       providerRef: null,
       maskedValue: masked,
+      // Additive marker so a downstream consumer can machine-detect the stub without
+      // string-matching the message. `provider: "stub"` remains the persisted record.
+      stub: true,
       message:
         "Recorded. Automated verification needs a KYC provider API key " +
         "(set KYC_PROVIDER + credentials). Until then this is pending manual review — no result is fabricated.",

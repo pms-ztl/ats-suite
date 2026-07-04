@@ -1,0 +1,75 @@
+# Redis 7 — StatefulSet (mirrors the `redis` service in
+# docker-compose.demo.yml:157-167). Same image, same append-only command, same
+# ping healthcheck. BullMQ queues + caches use this.
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          # Compose: redis-server --appendonly yes
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          # Compose healthcheck: redis-cli ping.
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

@@ -1,0 +1,105 @@
+# resume-service — Deployment + Service (docker-compose.demo.yml:335-361).
+# Image: infra/Dockerfile.service --build-arg SERVICE=resume-service. Port 4007.
+# Extracts + parses resumes, stores them in MinIO (resumes bucket);
+# DATABASE_URL -> resume_db. Faithful extras from the compose block:
+#   • S3_BUCKET=resumes (+ S3_ENDPOINT/REGION/FORCE_PATH_STYLE from the ConfigMap,
+#     S3 creds from the Secret).
+#   • ENABLE_OCR=true (tesseract fallback for scanned PDFs / image resumes).
+#   • RESUME_PARSE_CONCURRENCY=8 / RESUME_PARSE_RATE_MAX=60 (bulk-ingest throughput).
+#   • In compose resume-service also depends_on minio-setup — apply 23-minio.yaml
+#     first so the `resumes` bucket exists.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resume-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: resume-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: resume-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: resume-service
+        app.kubernetes.io/part-of: cdc-ats
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4007"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: resume-service
+          image: ghcr.io/cdc-ats/resume-service:latest
+          ports:
+            - name: http
+              containerPort: 4007
+          envFrom:
+            - configMapRef: { name: cdc-ats-common }
+          env:
+            - name: PORT
+              value: "4007"
+            - name: SERVICE_NAME
+              value: "resume-service"
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: RESUME_DATABASE_URL } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: INTERNAL_SERVICE_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENROUTER_API_KEY, optional: true } }
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: ANTHROPIC_API_KEY, optional: true } }
+            - name: OPENAI_API_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: OPENAI_API_KEY, optional: true } }
+            # Resume object storage (compose resume-service:349-354).
+            - name: S3_BUCKET
+              value: "resumes"
+            - name: S3_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: S3_ACCESS_KEY_ID } }
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: S3_SECRET_ACCESS_KEY } }
+            # OCR fallback + bulk-ingest throughput (compose resume-service:357-361).
+            - name: ENABLE_OCR
+              value: "true"
+            - name: RESUME_PARSE_CONCURRENCY
+              value: "8"
+            - name: RESUME_PARSE_RATE_MAX
+              value: "60"
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /livez, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            # Slightly higher ceiling — OCR + parse workers are the CPU-heaviest.
+            requests: { cpu: 200m, memory: 512Mi }
+            limits:   { cpu: "2",  memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resume-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: resume-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: resume-service
+  ports:
+    - name: http
+      port: 4007
+      targetPort: http

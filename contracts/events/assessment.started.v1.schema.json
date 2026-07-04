@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cdc-ats/contracts/events/assessment.started.v1.schema.json",
+  "title": "assessment.started payload (v1)",
+  "description": "Emitted when a candidate starts (opens) an assessment attempt. Producer: assessment-service public-take route (apps/assessment-service/src/routes/public-take.ts). Notify-only; no subscriber consumes this subject today.",
+  "type": "object",
+  "x-event-type": "assessment.started",
+  "x-subject": "tenant.{tenantId}.assessment.started",
+  "x-stream": "ASSESSMENT_EVENTS",
+  "x-producer": "assessment-service (public-take start route)",
+  "x-consumers": [],
+  "required": [
+    "tenantId",
+    "attemptId",
+    "assessmentId",
+    "inviteId",
+    "candidateId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid", "description": "Owning tenant (mandatory)." },
+    "attemptId": { "type": "string", "description": "The attempt just created." },
+    "assessmentId": { "type": "string", "description": "Assessment being taken." },
+    "inviteId": { "type": "string", "description": "Invite this attempt was started from." },
+    "candidateId": { "type": "string", "description": "Candidate taking it." }
+  }
+}
