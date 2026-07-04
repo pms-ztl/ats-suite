@@ -9,7 +9,9 @@
  *
  * Uses tier-3 query filters:
  *   GET /api/requisitions?hiringManagerId=me      → my reqs
- *   GET /api/decisions?status=PENDING (best-effort) → decisions awaiting me
+ *   GET /api/agents/hitl → the real human-in-the-loop review queue awaiting a
+ *     human decision (the standalone /api/decisions route does not exist; this
+ *     mirrors components/cd/decisions-live.tsx, which repointed the same way).
  */
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -60,7 +62,7 @@ export function HiringManagerView() {
       try {
         const [reqsRes, decRes] = await Promise.all([
           fetch(`${API_BASE}/requisitions?hiringManagerId=me`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/decisions?status=PENDING`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/agents/hitl`, { headers }).catch(() => null),
         ]);
         if (reqsRes?.ok) {
           const body = await reqsRes.json();
@@ -68,7 +70,22 @@ export function HiringManagerView() {
         }
         if (decRes?.ok) {
           const body = await decRes.json();
-          setPendingDecisions((body.data ?? body ?? []).slice(0, 10));
+          const rows: any[] = body.data ?? body ?? [];
+          const mapped: Decision[] = rows
+            .filter((r) => String(r?.status ?? "PENDING").toUpperCase() === "PENDING")
+            .map((r) => {
+              const p = r?.payload ?? {};
+              const v = p?.screening ?? p?.verdict ?? p ?? {};
+              return {
+                id: String(r?.id ?? ""),
+                candidateId: String(p?.candidateId ?? v?.candidateId ?? ""),
+                requisitionId: String(p?.requisitionId ?? v?.requisitionId ?? ""),
+                status: String(r?.status ?? "PENDING"),
+                recommendation: String(v?.result ?? r?.type ?? r?.action ?? "REVIEW"),
+                createdAt: String(r?.createdAt ?? ""),
+              };
+            });
+          setPendingDecisions(mapped.slice(0, 10));
         }
       } finally {
         setLoading(false);

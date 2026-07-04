@@ -1,10 +1,13 @@
 "use client";
 // app/system-status/page.tsx
-// EXACT port of claude-design/Status.html, the full-bleed cinematic system-status
-// hero: CloudFront background video + tint, scattered "all systems live" typography,
-// the live indicator chip with a pulsing dot, three stat blocks (99.98% uptime,
-// 142ms latency, 0 incidents), and the link to the full status board. Standalone
-// public page, no backend wiring. Video fade-in via useRef + onLoadedData.
+// Full-bleed cinematic system-status hero (port of claude-design/Status.html):
+// CloudFront background video + tint, scattered status typography, and the link
+// to the full status board. This is an ANONYMOUS page with no reachable live
+// health source (the health aggregate is SUPER_ADMIN-gated), so the previous
+// measured-looking figures (99.98% uptime / 142ms latency / 0 incidents) and the
+// "live · refreshed just now / no incidents" claims are removed as fabricated;
+// the three stat blocks show an honest "Not measured" and point operators to the
+// admin console. Video fade-in via useRef + onLoadedData.
 import { useRef } from "react";
 
 const CSS = `
@@ -91,28 +94,27 @@ export default function SystemStatusPage() {
         </nav>
 
         <div className="fg">
-          <h1 className="hero-title lc w1">all</h1>
-          <h1 className="hero-title lc w2">systems <em>live</em></h1>
+          <h1 className="hero-title lc w1">system</h1>
+          <h1 className="hero-title lc w2">status <em>.</em></h1>
           <h1 className="hero-title lc w3">.</h1>
 
           <div className="desc">
-            <span className="livechip"><span className="d" /> Live · refreshed just now</span>
-            <p className="lc">every screening, scheduling, and candidate service is running smoothly. no incidents.</p>
+            <p className="lc">the platform components and ai agents that power screening, scheduling, and the candidate portal.</p>
             <a className="bd lc" href="/status-board">view full status board <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></a>
           </div>
 
           <div className="stat s-tr">
-            <div className="row"><span className="div" /><span className="num">99.98%</span></div>
+            <div className="row"><span className="div" /><span className="num lc" style={{ fontSize: 22, opacity: .7 }}>not measured</span></div>
             <div className="sub lc">uptime · 90 days</div>
           </div>
 
           <div className="stat s-bl">
-            <div className="row"><span className="num">142ms</span><span className="div" /></div>
+            <div className="row"><span className="num lc" style={{ fontSize: 22, opacity: .7 }}>not measured</span><span className="div" /></div>
             <div className="sub lc">avg api response</div>
           </div>
 
           <div className="stat s-br">
-            <div className="row"><span className="div" /><span className="num">0</span></div>
+            <div className="row"><span className="div" /><span className="num lc" style={{ fontSize: 22, opacity: .7 }}>not measured</span></div>
             <div className="sub lc">active incidents</div>
           </div>
         </div>

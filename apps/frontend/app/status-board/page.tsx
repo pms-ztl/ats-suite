@@ -1,10 +1,13 @@
 "use client";
 // app/status-board/page.tsx
-// EXACT port of claude-design/Status Board.html, the public system status board:
-// operational banner ("All systems operational" with checkmark), 3 KPIs
-// (99.98% uptime, 142ms avg API response, 0 active incidents), 6 system
-// components, 6 AI agents, and the 90-day uptime bar chart. Standalone public
-// page, no backend wiring; the prototype's exact content/numbers are preserved.
+// Public system status board. This is an ANONYMOUS page: the only live health
+// aggregate (/api/super-admin/health) is SUPER_ADMIN-gated and not reachable
+// here, so we do NOT present measured-looking uptime / latency / incident
+// figures we cannot back. The uptime%, avg-latency and 90-day history are shown
+// as honest "Not measured" states, and the component / agent rows are labelled a
+// catalog (status not probed on this public page) rather than asserting
+// "Operational". The prototype's numbers (99.98% / 142ms / degraded bar) are
+// intentionally removed as fabricated.
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
@@ -49,45 +52,38 @@ const CSS = `
 .statboardx .foot{text-align:center;font-size:12px;color:rgba(26,26,26,.45);margin-top:40px;}
 `;
 
-type StatusState = "ok" | "warn";
-type StatusRow = { nm: string; desc: string; state: StatusState };
+type StatusRow = { nm: string; desc: string };
 
 const COMPONENTS: StatusRow[] = [
-  { nm: "Web application", desc: "Dashboard, pipelines, and settings", state: "ok" },
-  { nm: "Candidate portal", desc: "Job boards, applications, status pages", state: "ok" },
-  { nm: "API & webhooks", desc: "REST API and outbound events", state: "ok" },
-  { nm: "Email & notifications", desc: "Transactional email and alerts", state: "ok" },
-  { nm: "Scheduling & calendar", desc: "Interview scheduling and invites", state: "ok" },
-  { nm: "Authentication & SSO", desc: "Login, SAML/OIDC, MFA", state: "ok" },
+  { nm: "Web application", desc: "Dashboard, pipelines, and settings" },
+  { nm: "Candidate portal", desc: "Job boards, applications, status pages" },
+  { nm: "API & webhooks", desc: "REST API and outbound events" },
+  { nm: "Email & notifications", desc: "Transactional email and alerts" },
+  { nm: "Scheduling & calendar", desc: "Interview scheduling and invites" },
+  { nm: "Authentication & SSO", desc: "Login, SAML/OIDC, MFA" },
 ];
 
 const AGENTS: StatusRow[] = [
-  { nm: "candidate-screener", desc: "Evidence-backed candidate scoring", state: "ok" },
-  { nm: "jd-author", desc: "Inclusive job-description drafting", state: "ok" },
-  { nm: "bias-auditor", desc: "Adverse-impact monitoring", state: "ok" },
-  { nm: "copilot", desc: "In-product assistant", state: "ok" },
-  { nm: "offer-agent", desc: "Offer-letter drafting", state: "ok" },
+  { nm: "candidate-screener", desc: "Evidence-backed candidate scoring" },
+  { nm: "jd-author", desc: "Inclusive job-description drafting" },
+  { nm: "bias-auditor", desc: "Adverse-impact monitoring" },
+  { nm: "copilot", desc: "In-product assistant" },
+  { nm: "offer-agent", desc: "Offer-letter drafting" },
 ];
 
-// row(): mirrors the prototype's JS row() builder -- ok -> "Operational" (green),
-// warn -> "Degraded" (amber). Same markup, same classes.
-function StatusRowItem({ nm, desc, state }: StatusRow) {
-  const cls = state === "warn" ? "warn" : "ok";
-  const lbl = state === "warn" ? "Degraded" : "Operational";
+// This public page cannot probe live health (the health aggregate is
+// SUPER_ADMIN-gated), so a row lists the component/agent without asserting a
+// measured "Operational" state we cannot back.
+function StatusRowItem({ nm, desc }: StatusRow) {
   return (
     <div className="row">
       <div>
         <div className="nm">{nm}</div>
         <div className="desc">{desc}</div>
       </div>
-      <span className={"stat " + cls}><span className="d" />{lbl}</span>
     </div>
   );
 }
-
-// 90-day uptime bars: index 61 is the lone "degraded" bar (class "w"), the rest
-// render operational -- exactly as the prototype's for-loop produced them.
-const BARS = Array.from({ length: 90 }, (_, i) => (i === 61 ? "w" : ""));
 
 export default function StatusBoardPage() {
   return (
@@ -100,43 +96,34 @@ export default function StatusBoardPage() {
       </nav>
 
       <div className="wrap">
-        <span className="eyebrow"><span className="dot" /> Live · refreshed just now</span>
-        <h1>All systems <em>operational.</em></h1>
+        <span className="eyebrow">System status</span>
+        <h1>Platform <em>status.</em></h1>
 
         <div className="banner">
-          <span className="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
-          <div><h2>Everything is running smoothly</h2><p>No incidents reported across screening, scheduling, and the candidate portal.</p></div>
-          <div className="upd">Updated<br />Jun 1, 1:42 PM</div>
+          <div><h2>Live status is not published here</h2><p>Detailed uptime and incident telemetry is available to operators in the admin console. This public page lists the platform components and AI agents.</p></div>
         </div>
 
         <div className="metrics">
-          <div className="metric"><div className="v">99.98%</div><div className="l">Uptime · 90 days</div></div>
-          <div className="metric"><div className="v">142ms</div><div className="l">Avg API response</div></div>
-          <div className="metric"><div className="v">0</div><div className="l">Active incidents</div></div>
+          <div className="metric"><div className="v" style={{ color: "rgba(26,26,26,.4)" }}>Not measured</div><div className="l">Uptime · 90 days</div></div>
+          <div className="metric"><div className="v" style={{ color: "rgba(26,26,26,.4)" }}>Not measured</div><div className="l">Avg API response</div></div>
+          <div className="metric"><div className="v" style={{ color: "rgba(26,26,26,.4)" }}>Not measured</div><div className="l">Active incidents</div></div>
         </div>
 
         <div className="sec">Components</div>
         <div className="list" id="comp">
           {COMPONENTS.map((r) => (
-            <StatusRowItem key={r.nm} nm={r.nm} desc={r.desc} state={r.state} />
+            <StatusRowItem key={r.nm} nm={r.nm} desc={r.desc} />
           ))}
         </div>
 
         <div className="sec">AI agents</div>
         <div className="list" id="agents">
           {AGENTS.map((r) => (
-            <StatusRowItem key={r.nm} nm={r.nm} desc={r.desc} state={r.state} />
+            <StatusRowItem key={r.nm} nm={r.nm} desc={r.desc} />
           ))}
         </div>
 
-        <div className="sec">90-day history · API</div>
-        <div className="list"><div className="row" style={{ display: "block" }}><div className="bars" id="bars">
-          {BARS.map((c, i) => (
-            <i key={i} className={c} />
-          ))}
-        </div><div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "rgba(26,26,26,.45)", marginTop: "8px" }}><span>90 days ago</span><span>99.98% uptime</span><span>Today</span></div></div></div>
-
-        <div className="foot">Subscribe to updates from the <a href="/welcome" style={{ color: "var(--br-deep)", fontWeight: 600 }}>status page</a> · TalentFlow ATS</div>
+        <div className="foot">TalentFlow ATS · live health telemetry is available to operators in the admin console</div>
       </div>
     </div>
   );

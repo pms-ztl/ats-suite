@@ -132,10 +132,10 @@ export function RequisitionDetailLive() {
       required, niceToHave,
     },
     customFields,
-    owners: [
-      { role: "Recruiter", name: "Avery Chen", ini: "AC" },
-      { role: "Hiring manager", name: "Jordan Lee", ini: "JL" },
-    ],
+    // Honest empty: the requisition read model does not expose resolved
+    // recruiter / hiring-manager owners yet, so the Owners card shows its empty
+    // state instead of inventing people (same discipline as `activity` below).
+    owners: [],
     pipeline,
     pipelineSummary: `${pipeline[0].n} candidates across 5 stages · ${reachInterview}% reach interview.`,
     pipelineCards: [

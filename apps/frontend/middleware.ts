@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   // Public marketing
   "/welcome",                  // flagship landing ("/" is the authed dashboard)
   "/contact",
+  "/support",                  // public Help / Support / Docs (linked from marketing + error/offline pages)
   "/agents",                   // public AI agents product page
   "/system-status",            // public system status (cinematic hero)
   "/status-board",             // public system status board

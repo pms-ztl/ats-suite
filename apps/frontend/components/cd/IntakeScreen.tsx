@@ -9,7 +9,7 @@ import React, { useState, useEffect } from "react";
 import { Pill, ScoreRing, fStyles } from "./aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon, Logo } from "./icon";
-import type { IntakeData, IntakeCustomField, IntakeBiasFlag, IntakeState } from "./types";
+import type { IntakeData, IntakeCustomField, IntakeBiasFlag, IntakeState, IntakeJDGen } from "./types";
 
 const inputStyle: React.CSSProperties = { width: "100%", padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-sans)", outline: "none" };
 
@@ -150,8 +150,13 @@ function Preview({ st, orgName }: { st: IntakeState; orgName: string }) {
   );
 }
 
-export function IntakeScreen({ data, orgName = "Northwind Talent", onBack, onPost, onSaveDraft }: {
+export function IntakeScreen({ data, orgName = "Northwind Talent", onBack, onPost, onSaveDraft, onGenerate }: {
   data: IntakeData; orgName?: string; onBack?: () => void; onPost?: (st: IntakeState) => void; onSaveDraft?: (st: IntakeState) => void;
+  // When provided, the real jd-author agent produces the JD from the title. The
+  // in-screen trace is kept as cosmetic chrome while the request runs; the result
+  // (description / required / nice-to-have / inclusivity / bias flags) comes from
+  // the agent, never a canned seed. Reject -> honest error, no fabricated JD.
+  onGenerate?: (title: string) => Promise<IntakeJDGen>;
 }) {
   const [st, setSt] = useState<IntakeState>({
     title: data.initial.title, dept: data.initial.dept, level: data.initial.level, location: data.initial.location,
@@ -161,25 +166,52 @@ export function IntakeScreen({ data, orgName = "Northwind Talent", onBack, onPos
   });
   const [biasFlags, setBiasFlags] = useState<IntakeBiasFlag[]>([]);
   const [traceStep, setTraceStep] = useState(0);
+  const [genError, setGenError] = useState<string | null>(null);
+  // Holds the real agent result once it resolves; the completion effect applies it
+  // only after the cosmetic trace has finished animating.
+  const [genResult, setGenResult] = useState<IntakeJDGen | null>(null);
   const set = (patch: Partial<IntakeState>) => setSt(s => ({ ...s, ...patch }));
+
+  const applyJDGen = (g: IntakeJDGen) => {
+    set({ generating: false, generated: true, description: g.description, required: g.required, niceToHave: g.niceToHave, inclusivity: g.inclusivity });
+    setBiasFlags(g.biasFlags.map(f => ({ ...f })));
+  };
 
   const generate = () => {
     if (!st.title.trim()) return;
-    set({ generating: true, generated: false }); setTraceStep(0); setBiasFlags([]);
+    set({ generating: true, generated: false }); setTraceStep(0); setBiasFlags([]); setGenError(null); setGenResult(null);
+    // Kick off the real agent request (if wired) alongside the cosmetic trace.
+    if (onGenerate) {
+      onGenerate(st.title.trim())
+        .then(g => setGenResult(g))
+        .catch(() => setGenError("jd-author is unavailable right now. Try again in a moment, or paste your own description."));
+    }
   };
   useEffect(() => {
     if (!st.generating) return;
+    // A real agent request is in flight (onGenerate wired): wait for it, then apply
+    // the REAL result. Failure surfaces an honest error instead of a fabricated JD.
+    if (onGenerate) {
+      if (genError) { set({ generating: false }); return; }
+      if (genResult && traceStep >= data.jdGen.trace.length) {
+        const t = setTimeout(() => applyJDGen(genResult), 200);
+        return () => clearTimeout(t);
+      }
+      // advance the cosmetic trace but stop at the last step until the result lands
+      if (traceStep < data.jdGen.trace.length) {
+        const t = setTimeout(() => setTraceStep(s => s + 1), 560);
+        return () => clearTimeout(t);
+      }
+      return;
+    }
+    // No real agent wired (e.g. a pure design preview): fall back to the seed.
     if (traceStep >= data.jdGen.trace.length) {
-      const t = setTimeout(() => {
-        const g = data.jdGen;
-        set({ generating: false, generated: true, description: g.description, required: g.required, niceToHave: g.niceToHave, inclusivity: g.inclusivity });
-        setBiasFlags(g.biasFlags.map(f => ({ ...f })));
-      }, 350);
+      const t = setTimeout(() => applyJDGen(data.jdGen), 350);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setTraceStep(s => s + 1), 560);
     return () => clearTimeout(t);
-  }, [st.generating, traceStep]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [st.generating, traceStep, genResult, genError]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fixBias = (id: string) => {
     setBiasFlags(fs => fs.map(f => f.id === id ? { ...f, applied: true } : f));
@@ -267,6 +299,16 @@ export function IntakeScreen({ data, orgName = "Northwind Talent", onBack, onPos
                     <span style={{ fontSize: 12.5, fontWeight: 600 }}>{s.t}</span><span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>· {s.d}</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {st.mode === "ai" && genError && !st.generating && !st.generated && (
+              <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: "var(--r)", background: "var(--danger-tint)", border: "1px solid color-mix(in oklab, var(--danger) 28%, transparent)", display: "flex", gap: 9, alignItems: "flex-start", fontSize: 12.5, color: "var(--ink-2)" }}>
+                <Icon name="flag" size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <b style={{ color: "var(--ink)" }}>Could not generate the description.</b> {genError}
+                  <button onClick={generate} disabled={!st.title.trim()} style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: "var(--ai-ink)", background: "none", border: "none", cursor: st.title.trim() ? "pointer" : "not-allowed", padding: 0, textDecoration: "underline" }}>Try again</button>
+                </div>
               </div>
             )}
 

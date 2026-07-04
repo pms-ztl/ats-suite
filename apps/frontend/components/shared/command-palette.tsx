@@ -36,11 +36,19 @@ const SECTION_LABELS: Record<string, string> = Object.fromEntries(
   SIDEBAR_CATEGORIES.map(c => [c.key, c.label])
 );
 
+// Valid section base paths (the only real, existing routes) keyed by section
+// slug. The per-feature deep routes in section-features.json (e.g.
+// /ai/explainable-ai-ranking) have NO backing page, so every search result is
+// routed to its owning section's base page instead.
+const SECTION_BASE_PATHS: Record<string, string> = Object.fromEntries(
+  SIDEBAR_CATEGORIES.map(c => [c.key, c.path])
+);
+
 const QUICK_LINKS = [
-  { title: "Dashboard",  route: "/",                    icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
-  { title: "Settings",   route: "/settings",            icon: <Settings        className="h-4 w-4 shrink-0" /> },
-  { title: "Notifications", route: "/notifications",    icon: <Bell            className="h-4 w-4 shrink-0" /> },
-  { title: "Audit Log",  route: "/security/audit-log",  icon: <Shield          className="h-4 w-4 shrink-0" /> },
+  { title: "Dashboard",  route: "/",               icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
+  { title: "Settings",   route: "/settings",       icon: <Settings        className="h-4 w-4 shrink-0" /> },
+  { title: "Notifications", route: "/notifications", icon: <Bell          className="h-4 w-4 shrink-0" /> },
+  { title: "Audit Log",  route: "/audit",          icon: <Shield          className="h-4 w-4 shrink-0" /> },
 ];
 
 // ── Flatten section-features.json once at module level ───────────────────────
@@ -193,7 +201,9 @@ export function CommandPalette() {
                   <Command.Item
                     key={item.route}
                     value={item.route}
-                    onSelect={() => navigate(item.route)}
+                    // The deep per-feature route (item.route) has no backing page;
+                    // route to the owning section's real base page instead.
+                    onSelect={() => navigate(SECTION_BASE_PATHS[item.section] ?? "/" + item.section)}
                     className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent aria-selected:bg-accent"
                   >
                     {SECTION_ICONS[item.section] ?? <LayoutDashboard className="h-4 w-4 shrink-0" />}

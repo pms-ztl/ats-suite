@@ -148,7 +148,9 @@ export function RequisitionDetail({ data, statusMeta, roundsSlot, formSlot, onBa
               </div>
               <div style={{ borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", padding: 18, boxShadow: "var(--e1)" }}>
                 <div style={{ ...LABEL, marginBottom: 12 }}>Owners</div>
-                {d.owners.map((o) => (
+                {d.owners.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--ink-3)" }}>No owners assigned</div>
+                ) : d.owners.map((o) => (
                   <div key={o.role} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
                     <span className="mono" style={{ width: 32, height: 32, borderRadius: 99, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "white", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11 }}>{o.ini}</span>
                     <div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{o.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{o.role}</div></div>

@@ -57,11 +57,11 @@ function toSourceRow(r: any): SourceRow {
   return { source, applied, hired, conversion, cost };
 }
 
-// Pull rows from the source-effectiveness endpoint, falling back to /sources.
+// Pull rows from the real per-source aggregator. The gateway exposes
+// GET /analytics/source-of-hire -> { sources: [{ source, applied, hired,
+// conversionRate }] }, which toSourceRow already maps.
 async function getSourceEffectiveness(): Promise<SourceRow[]> {
-  let out: any;
-  try { out = await raw("GET", "/analytics/source-effectiveness"); }
-  catch { out = await raw("GET", "/analytics/sources"); }
+  const out: any = await raw("GET", "/analytics/source-of-hire");
   const rows = Array.isArray(out) ? out : (out?.sources ?? out?.rows ?? out?.items ?? out?.bySource ?? []);
   return (Array.isArray(rows) ? rows : []).map(toSourceRow).filter((r) => r.source);
 }

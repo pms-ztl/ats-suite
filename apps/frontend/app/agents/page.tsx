@@ -428,7 +428,7 @@ export default function AgentsPage() {
                 </div>
                 <div className="footer-col">
                   <div className="footer-col-title">Company</div>
-                  <a href="/careers">Careers</a><a href="/welcome">About</a><a href="/support">Terms &amp; Conditions</a><a href="/support">Privacy Policy</a>
+                  <a href="/jobs">Careers</a><a href="/welcome">About</a><a href="/support">Terms &amp; Conditions</a><a href="/support">Privacy Policy</a>
                 </div>
               </div>
             </div>

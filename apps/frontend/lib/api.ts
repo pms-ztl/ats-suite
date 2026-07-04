@@ -589,8 +589,17 @@ function toDecision(d: any): Decision {
 export async function listDecisions(): Promise<Decision[]> {
   return arr(await api.decisions.listDecisions({ page: 1, pageSize: 100 })).map(toDecision);
 }
-export async function recordDecision(b: Partial<Decision>): Promise<Decision> {
-  const res: any = await raw("POST", "/decisions", { ...(b.id ? { decisionId: b.id } : {}), ...b });
+// Persist a human HITL decision. There is no /api/decisions surface; the real,
+// live resolution write is notification-service POST /internal/hitl/:id/decision
+// (reached via the gateway /api/hitl mount). The route expects a 2-way outcome
+// { decision: "APPROVED" | "REJECTED", comment }; HIRE/HOLD map to APPROVED,
+// REJECT maps to REJECTED, and the structured reason code rides along as comment.
+export async function recordDecision(b: Partial<Decision> & { checkpointId?: string; note?: string }): Promise<Decision> {
+  const checkpointId = b.checkpointId ?? b.id;
+  if (!checkpointId) throw new Error("recordDecision: missing checkpoint id");
+  const decision = b.type === "REJECT" ? "REJECTED" : "APPROVED";
+  const comment = [b.reasonCode, b.note].filter(Boolean).join(" · ") || undefined;
+  const res: any = await raw("POST", `/hitl/${checkpointId}/decision`, { decision, comment });
   return toDecision(res?.data ?? res ?? b);
 }
 
@@ -618,14 +627,9 @@ function toReviewItem(r: any): ReviewItem {
 export async function listReviewQueue(): Promise<ReviewItem[]> {
   return arr(await raw("GET", "/agents/hitl")).map(toReviewItem);
 }
-export async function getReviewItem(id: string): Promise<ReviewItem> {
-  const res: any = await raw("GET", `/agents/hitl/${id}`);
-  return toReviewItem(res?.data ?? res);
-}
-export async function resolveReview(id: string, b: { result: string; note: string }): Promise<ReviewItem> {
-  const res: any = await raw("POST", `/agents/hitl/${id}/resolve`, b);
-  return toReviewItem(res?.data ?? res ?? {});
-}
+// NOTE: single-item read (/agents/hitl/:id) and a /resolve sub-route do not exist
+// on the aggregator; the only live HITL resolution write is recordDecision above
+// (POST /api/hitl/:id/decision). Dead getReviewItem/resolveReview helpers removed.
 export async function runScreening(requisitionId: string): Promise<{ queued: number }> {
   const res: any = await raw("POST", "/screening", { requisitionId });
   return { queued: Number(res?.queued ?? res?.data?.queued ?? 0) };

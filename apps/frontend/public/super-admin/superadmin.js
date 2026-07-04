@@ -1077,10 +1077,18 @@ function renderUsage(){
 var PROVIDERS=[{n:"Anthropic",s:"connected",models:"Claude 3.5 Sonnet, Haiku",spend:8420,head:72,lat:640},{n:"OpenAI",s:"connected",models:"GPT-4o, GPT-4o-mini",spend:3180,head:81,lat:520},{n:"OpenRouter",s:"degraded",models:"40+ routed",spend:2240,head:34,lat:910},{n:"Groq",s:"connected",models:"Llama 3.1 70B",spend:380,head:88,lat:180}];
 var ROUTING=[{a:"candidate-screener",p:"Claude 3.5 Sonnet",f:"GPT-4o",cost:4210},{a:"resume-parser",p:"GPT-4o-mini",f:"Haiku",cost:2180},{a:"jd-author",p:"Claude 3.5 Sonnet",f:"GPT-4o",cost:1840},{a:"bias-auditor",p:"Claude 3.5 Haiku",f:"GPT-4o-mini",cost:1320},{a:"copilot",p:"Claude 3.5 Sonnet",f:"GPT-4o",cost:5640}];
 var APIKEYS=[{n:"Anthropic",k:"sk-ant-•••••••••3Kf2",used:"2m ago"},{n:"OpenAI",k:"sk-•••••••••9Lr7",used:"4m ago"},{n:"OpenRouter",k:"sk-or-•••••••••2wT6",used:"18m ago"},{n:"Groq",k:"gsk_•••••••••5sA0",used:"1h ago"}];
+// Set true once /super-admin/models has hydrated. Distinguishes "still loading
+// the design seed" from a real empty response, so the empty-state is honest.
+var MODELS_WIRED=false;
 function renderModels(){
   var html='<div class="phead"><div class="row"><div><h1>Models & Providers</h1><p>LLM provider connections and per-agent model routing.</p></div><span class="ai-chip">'+svg(IC.spark,11)+' Routing engine</span></div></div>';
+  if(MODELS_WIRED&&!PROVIDERS.length){
+    html+='<div class="card"><div style="padding:26px 18px;text-align:center;color:var(--ink-3);font-size:13px">No AI usage recorded yet. Per-provider spend, routing, and latency appear here once agents have run.</div></div>';
+    screenEl.innerHTML=html;
+    return;
+  }
   html+='<div class="kpis">';
-  PROVIDERS.forEach(function(p){html+='<div class="kpi'+(p.s==="degraded"?"":"")+'"><div class="top"><span class="lbl"><span class="ic" style="background:var(--ai-tint);color:var(--ai)">'+svg(IC.server,15)+'</span>'+p.n+'</span>'+ipill(p.s==="connected"?"healthy":"degraded")+'</div><div style="font-size:12px;color:var(--ink-3);margin-top:10px">'+p.models+'</div><div class="bot" style="margin-top:11px"><span class="mono" style="font-weight:700">'+money(p.spend)+'</span><span class="mono" style="font-size:11.5px;color:var(--ink-3)">'+p.head+'% headroom · '+p.lat+'ms</span></div></div>';});
+  PROVIDERS.forEach(function(p){html+='<div class="kpi'+(p.s==="degraded"?"":"")+'"><div class="top"><span class="lbl"><span class="ic" style="background:var(--ai-tint);color:var(--ai)">'+svg(IC.server,15)+'</span>'+p.n+'</span>'+ipill(p.s==="connected"?"healthy":"degraded")+'</div><div style="font-size:12px;color:var(--ink-3);margin-top:10px">'+p.models+'</div><div class="bot" style="margin-top:11px"><span class="mono" style="font-weight:700">'+money(p.spend)+'</span><span class="mono" style="font-size:11.5px;color:var(--ink-3)">'+p.lat+'ms</span></div></div>';});
   html+='</div>';
   html+='<div class="card"><div class="ch"><div><h3>Model routing</h3><div class="sub">Primary → fallback per agent</div></div></div><div class="tbl-wrap"><table style="min-width:640px"><thead><tr><th>Agent</th><th>Primary model</th><th>Fallback</th><th class="num">Cost 30d</th><th></th></tr></thead><tbody>';
   ROUTING.forEach(function(r){html+='<tr><td class="mono" style="font-weight:600;color:var(--ai-ink)">'+r.a+'</td><td><span class="pill" style="background:var(--ai-tint);color:var(--ai-ink)">'+r.p+'</span></td><td style="color:var(--ink-2)">'+r.f+'</td><td class="num mono">'+money(r.cost)+'</td><td><button class="btn btn-soft btn-sm" data-route="'+r.a+'">Override</button></td></tr>';});
@@ -1094,7 +1102,7 @@ function renderModels(){
   PROVIDERS.forEach(function(p){html+='<div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)"><div style="flex:1"><div style="font-weight:600;font-size:13px">'+p.n+'</div><div class="mono" style="font-size:12px;color:var(--ink-3)">'+(p.s==="connected"?"Key configured":"Not connected")+'</div></div><span class="pill '+(p.s==="connected"?"h-healthy":"h-watch")+'"><span class="d"></span>'+titleCase(p.s==="connected"?"active":p.s)+'</span></div>';});
   html+='</div></div></div><div><div class="card"><div class="ch"><h3>Provider health</h3></div><div style="padding:6px 18px 12px">';
   if(!PROVIDERS.length)html+='<div style="padding:10px 2px;color:var(--ink-3);font-size:13px">No provider telemetry.</div>';
-  PROVIDERS.forEach(function(p){html+='<div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)"><span style="width:7px;height:7px;border-radius:50%;background:'+(p.s==="connected"?"var(--ok)":"var(--warn)")+'"></span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+p.n+'</div><div style="font-size:12px;color:var(--ink-3)">'+(p.lat?p.lat+"ms latency · ":"")+p.head+'% headroom</div></div><span style="font-size:11.5px;color:var(--ink-3)">'+titleCase(p.s==="connected"?"healthy":p.s)+'</span></div>';});
+  PROVIDERS.forEach(function(p){html+='<div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)"><span style="width:7px;height:7px;border-radius:50%;background:'+(p.s==="connected"?"var(--ok)":"var(--warn)")+'"></span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+p.n+'</div><div style="font-size:12px;color:var(--ink-3)">'+(p.lat?p.lat+"ms latency":"")+'</div></div><span style="font-size:11.5px;color:var(--ink-3)">'+titleCase(p.s==="connected"?"healthy":p.s)+'</span></div>';});
   html+='<button class="btn btn-soft btn-sm" style="margin-top:10px" id="testConn">'+svg(IC.refresh,14)+' Test connections</button></div></div></div></div>';
   screenEl.innerHTML=html;
   Array.prototype.forEach.call(document.querySelectorAll("[data-route]"),function(b){b.onclick=function(){toast("Routing override for "+b.getAttribute("data-route"),"ai");};});
@@ -1613,7 +1621,10 @@ renderNav();render();
     var body=res&&res.data?res.data:{};
     var provs=body.providers||[];
     var routes=body.routing||[];
-    if(!Array.isArray(provs)||!provs.length) return;
+    // Honest empty-state: when there is no metered AI usage the endpoint returns
+    // an empty providers array. Clear the byte-frozen design seed so the screen
+    // shows a real "no usage recorded" state instead of fabricated spend.
+    if(!Array.isArray(provs)) provs=[];
     PROVIDERS.length=0;
     provs.forEach(function(p){ p=p||{};
       PROVIDERS.push({
@@ -1621,10 +1632,10 @@ renderNav();render();
         s:p.s==="degraded"?"degraded":"connected",
         models:p.models||"(no usage)",
         spend:Number(p.spend)||0,
-        head:Number(p.head)||50,
         lat:Number(p.lat)||0
       });
     });
+    MODELS_WIRED=true;
     if(Array.isArray(routes)&&routes.length){
       ROUTING.length=0;
       routes.forEach(function(r){ r=r||{}; ROUTING.push({ a:r.a||"agent", p:r.p||"—", f:r.f||"—", cost:Number(r.cost)||0 }); });

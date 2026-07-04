@@ -153,7 +153,10 @@ export default function OfferDetailPage() {
   async function send() {
     setAct({ busy: true });
     try {
-      await raw("POST", `/offers/${id}/send`); // best-effort; surfaced gracefully
+      // candidate-service has no /offers/:id/send route; the real transition is the
+      // PATCH status update (proxied to /internal/offers/:id), which the offer
+      // status flow accepts (APPROVED -> SENT).
+      await raw("PATCH", `/offers/${id}`, { status: "SENT" });
       setAct({ done: "Offer sent to the candidate. Refreshing." });
       reload();
     } catch (e) {

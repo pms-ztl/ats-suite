@@ -60,11 +60,12 @@ export default function ReviewDetailPage() {
     setConfirm(false);
     setFailed(false);
     setDone(verb);
-    // Persist the human decision to the audit trail. Best-effort: the verdict id is
-    // the subject; the structured reason code rides along as the decision reason.
+    // Persist the human decision via the real HITL resolution route
+    // (POST /api/hitl/:id/decision). The route param id is the HitlCheckpoint id;
+    // the structured reason code rides along as the decision comment.
     try {
       await recordDecision({
-        id: data.id,
+        checkpointId: id,
         candidateId: data.candidateId,
         requisitionId: data.requisitionId,
         type: VERB_TYPE[verb] ?? "HOLD",

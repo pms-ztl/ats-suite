@@ -499,7 +499,8 @@ router.delete("/prompts/:type", requireSuperAdmin, async (req: Request, res: Res
 // Super-admin Models & Providers screen. Real per-provider + per-agent AI spend
 // derived from AgentRunCost (last 30d): provider spend (grouped by the provider
 // inferred from modelName) + per-agent model routing cost. Cross-tenant admin
-// read. Empty if there has been no AI usage (console then keeps designed data).
+// read. Returns an explicit empty providers array when there has been no AI
+// usage; the console then renders an honest "no usage recorded" empty-state.
 router.get("/models", async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -553,7 +554,6 @@ router.get("/models", async (_req: Request, res: Response, next: NextFunction) =
           s: "connected",
           models: modelStr || "(no recent usage)",
           spend: Math.round(a.spend * 100) / 100,
-          head: Math.max(20, 100 - Math.round(a.spend / 50)),
           lat: a.latN ? Math.round(a.latSum / a.latN) : 0,
         };
       })
