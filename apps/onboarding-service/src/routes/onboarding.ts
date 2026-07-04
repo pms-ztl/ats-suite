@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 import { openCase } from "../lib/case-service.js";
+import { getPresignedDownloadUrl } from "../lib/storage.js";
 
 const router = Router();
 const requireRecruiter = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
@@ -47,6 +48,25 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     });
     if (!c) throw Errors.notFound("Onboarding case");
     ok(res, c);
+  } catch (err) { next(err); }
+});
+
+// GET /internal/onboarding-cases/:id/tasks/:taskId/document — recruiter-side
+// presigned download for a document a candidate uploaded. RLS-scoped: the task is
+// re-read on the request client so a recruiter can only reach their own tenant's
+// documents. Returns 404 (not 200 with a fake URL) when nothing was uploaded or
+// storage is unavailable — never a fabricated link.
+router.get("/:id/tasks/:taskId/document", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    getTenantId(req);
+    const caseId = req.params["id"] as string;
+    const taskId = req.params["taskId"] as string;
+    const task = await prisma.onboardingTask.findFirst({ where: { id: taskId, caseId } });
+    if (!task) throw Errors.notFound("Task");
+    if (!task.documentStorageKey) throw Errors.notFound("Uploaded document");
+    const url = await getPresignedDownloadUrl(task.documentStorageKey);
+    if (!url) throw Errors.notFound("Document storage is not available");
+    ok(res, { url, fileName: task.documentFileName, contentType: task.documentContentType });
   } catch (err) { next(err); }
 });
 

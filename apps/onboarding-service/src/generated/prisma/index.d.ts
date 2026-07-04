@@ -2607,10 +2607,12 @@ export namespace Prisma {
 
   export type OnboardingTaskAvgAggregateOutputType = {
     order: number | null
+    documentSize: number | null
   }
 
   export type OnboardingTaskSumAggregateOutputType = {
     order: number | null
+    documentSize: number | null
   }
 
   export type OnboardingTaskMinAggregateOutputType = {
@@ -2626,6 +2628,11 @@ export namespace Prisma {
     completedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    documentStorageKey: string | null
+    documentFileName: string | null
+    documentContentType: string | null
+    documentSize: number | null
+    documentUploadedAt: Date | null
   }
 
   export type OnboardingTaskMaxAggregateOutputType = {
@@ -2641,6 +2648,11 @@ export namespace Prisma {
     completedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    documentStorageKey: string | null
+    documentFileName: string | null
+    documentContentType: string | null
+    documentSize: number | null
+    documentUploadedAt: Date | null
   }
 
   export type OnboardingTaskCountAggregateOutputType = {
@@ -2656,16 +2668,23 @@ export namespace Prisma {
     completedAt: number
     createdAt: number
     updatedAt: number
+    documentStorageKey: number
+    documentFileName: number
+    documentContentType: number
+    documentSize: number
+    documentUploadedAt: number
     _all: number
   }
 
 
   export type OnboardingTaskAvgAggregateInputType = {
     order?: true
+    documentSize?: true
   }
 
   export type OnboardingTaskSumAggregateInputType = {
     order?: true
+    documentSize?: true
   }
 
   export type OnboardingTaskMinAggregateInputType = {
@@ -2681,6 +2700,11 @@ export namespace Prisma {
     completedAt?: true
     createdAt?: true
     updatedAt?: true
+    documentStorageKey?: true
+    documentFileName?: true
+    documentContentType?: true
+    documentSize?: true
+    documentUploadedAt?: true
   }
 
   export type OnboardingTaskMaxAggregateInputType = {
@@ -2696,6 +2720,11 @@ export namespace Prisma {
     completedAt?: true
     createdAt?: true
     updatedAt?: true
+    documentStorageKey?: true
+    documentFileName?: true
+    documentContentType?: true
+    documentSize?: true
+    documentUploadedAt?: true
   }
 
   export type OnboardingTaskCountAggregateInputType = {
@@ -2711,6 +2740,11 @@ export namespace Prisma {
     completedAt?: true
     createdAt?: true
     updatedAt?: true
+    documentStorageKey?: true
+    documentFileName?: true
+    documentContentType?: true
+    documentSize?: true
+    documentUploadedAt?: true
     _all?: true
   }
 
@@ -2813,6 +2847,11 @@ export namespace Prisma {
     completedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    documentStorageKey: string | null
+    documentFileName: string | null
+    documentContentType: string | null
+    documentSize: number | null
+    documentUploadedAt: Date | null
     _count: OnboardingTaskCountAggregateOutputType | null
     _avg: OnboardingTaskAvgAggregateOutputType | null
     _sum: OnboardingTaskSumAggregateOutputType | null
@@ -2847,6 +2886,11 @@ export namespace Prisma {
     completedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    documentStorageKey?: boolean
+    documentFileName?: boolean
+    documentContentType?: boolean
+    documentSize?: boolean
+    documentUploadedAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["onboardingTask"]>
 
@@ -2863,6 +2907,11 @@ export namespace Prisma {
     completedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    documentStorageKey?: boolean
+    documentFileName?: boolean
+    documentContentType?: boolean
+    documentSize?: boolean
+    documentUploadedAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["onboardingTask"]>
 
@@ -2879,6 +2928,11 @@ export namespace Prisma {
     completedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    documentStorageKey?: boolean
+    documentFileName?: boolean
+    documentContentType?: boolean
+    documentSize?: boolean
+    documentUploadedAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["onboardingTask"]>
 
@@ -2895,9 +2949,14 @@ export namespace Prisma {
     completedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    documentStorageKey?: boolean
+    documentFileName?: boolean
+    documentContentType?: boolean
+    documentSize?: boolean
+    documentUploadedAt?: boolean
   }
 
-  export type OnboardingTaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "caseId" | "kind" | "title" | "description" | "required" | "status" | "order" | "completedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["onboardingTask"]>
+  export type OnboardingTaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "caseId" | "kind" | "title" | "description" | "required" | "status" | "order" | "completedAt" | "createdAt" | "updatedAt" | "documentStorageKey" | "documentFileName" | "documentContentType" | "documentSize" | "documentUploadedAt", ExtArgs["result"]["onboardingTask"]>
   export type OnboardingTaskInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
   }
@@ -2926,6 +2985,11 @@ export namespace Prisma {
       completedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      documentStorageKey: string | null
+      documentFileName: string | null
+      documentContentType: string | null
+      documentSize: number | null
+      documentUploadedAt: Date | null
     }, ExtArgs["result"]["onboardingTask"]>
     composites: {}
   }
@@ -3362,6 +3426,11 @@ export namespace Prisma {
     readonly completedAt: FieldRef<"OnboardingTask", 'DateTime'>
     readonly createdAt: FieldRef<"OnboardingTask", 'DateTime'>
     readonly updatedAt: FieldRef<"OnboardingTask", 'DateTime'>
+    readonly documentStorageKey: FieldRef<"OnboardingTask", 'String'>
+    readonly documentFileName: FieldRef<"OnboardingTask", 'String'>
+    readonly documentContentType: FieldRef<"OnboardingTask", 'String'>
+    readonly documentSize: FieldRef<"OnboardingTask", 'Int'>
+    readonly documentUploadedAt: FieldRef<"OnboardingTask", 'DateTime'>
   }
     
 
@@ -3782,17 +3851,30 @@ export namespace Prisma {
 
   export type AggregateOnboardingDocument = {
     _count: OnboardingDocumentCountAggregateOutputType | null
+    _avg: OnboardingDocumentAvgAggregateOutputType | null
+    _sum: OnboardingDocumentSumAggregateOutputType | null
     _min: OnboardingDocumentMinAggregateOutputType | null
     _max: OnboardingDocumentMaxAggregateOutputType | null
+  }
+
+  export type OnboardingDocumentAvgAggregateOutputType = {
+    size: number | null
+  }
+
+  export type OnboardingDocumentSumAggregateOutputType = {
+    size: number | null
   }
 
   export type OnboardingDocumentMinAggregateOutputType = {
     id: string | null
     tenantId: string | null
     caseId: string | null
+    taskId: string | null
     label: string | null
     storageKey: string | null
     fileName: string | null
+    contentType: string | null
+    size: number | null
     uploadedAt: Date | null
     createdAt: Date | null
   }
@@ -3801,9 +3883,12 @@ export namespace Prisma {
     id: string | null
     tenantId: string | null
     caseId: string | null
+    taskId: string | null
     label: string | null
     storageKey: string | null
     fileName: string | null
+    contentType: string | null
+    size: number | null
     uploadedAt: Date | null
     createdAt: Date | null
   }
@@ -3812,22 +3897,36 @@ export namespace Prisma {
     id: number
     tenantId: number
     caseId: number
+    taskId: number
     label: number
     storageKey: number
     fileName: number
+    contentType: number
+    size: number
     uploadedAt: number
     createdAt: number
     _all: number
   }
 
 
+  export type OnboardingDocumentAvgAggregateInputType = {
+    size?: true
+  }
+
+  export type OnboardingDocumentSumAggregateInputType = {
+    size?: true
+  }
+
   export type OnboardingDocumentMinAggregateInputType = {
     id?: true
     tenantId?: true
     caseId?: true
+    taskId?: true
     label?: true
     storageKey?: true
     fileName?: true
+    contentType?: true
+    size?: true
     uploadedAt?: true
     createdAt?: true
   }
@@ -3836,9 +3935,12 @@ export namespace Prisma {
     id?: true
     tenantId?: true
     caseId?: true
+    taskId?: true
     label?: true
     storageKey?: true
     fileName?: true
+    contentType?: true
+    size?: true
     uploadedAt?: true
     createdAt?: true
   }
@@ -3847,9 +3949,12 @@ export namespace Prisma {
     id?: true
     tenantId?: true
     caseId?: true
+    taskId?: true
     label?: true
     storageKey?: true
     fileName?: true
+    contentType?: true
+    size?: true
     uploadedAt?: true
     createdAt?: true
     _all?: true
@@ -3893,6 +3998,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: OnboardingDocumentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OnboardingDocumentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: OnboardingDocumentMinAggregateInputType
@@ -3923,6 +4040,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: OnboardingDocumentCountAggregateInputType | true
+    _avg?: OnboardingDocumentAvgAggregateInputType
+    _sum?: OnboardingDocumentSumAggregateInputType
     _min?: OnboardingDocumentMinAggregateInputType
     _max?: OnboardingDocumentMaxAggregateInputType
   }
@@ -3931,12 +4050,17 @@ export namespace Prisma {
     id: string
     tenantId: string
     caseId: string
+    taskId: string | null
     label: string
     storageKey: string | null
     fileName: string | null
+    contentType: string | null
+    size: number | null
     uploadedAt: Date | null
     createdAt: Date
     _count: OnboardingDocumentCountAggregateOutputType | null
+    _avg: OnboardingDocumentAvgAggregateOutputType | null
+    _sum: OnboardingDocumentSumAggregateOutputType | null
     _min: OnboardingDocumentMinAggregateOutputType | null
     _max: OnboardingDocumentMaxAggregateOutputType | null
   }
@@ -3959,9 +4083,12 @@ export namespace Prisma {
     id?: boolean
     tenantId?: boolean
     caseId?: boolean
+    taskId?: boolean
     label?: boolean
     storageKey?: boolean
     fileName?: boolean
+    contentType?: boolean
+    size?: boolean
     uploadedAt?: boolean
     createdAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
@@ -3971,9 +4098,12 @@ export namespace Prisma {
     id?: boolean
     tenantId?: boolean
     caseId?: boolean
+    taskId?: boolean
     label?: boolean
     storageKey?: boolean
     fileName?: boolean
+    contentType?: boolean
+    size?: boolean
     uploadedAt?: boolean
     createdAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
@@ -3983,9 +4113,12 @@ export namespace Prisma {
     id?: boolean
     tenantId?: boolean
     caseId?: boolean
+    taskId?: boolean
     label?: boolean
     storageKey?: boolean
     fileName?: boolean
+    contentType?: boolean
+    size?: boolean
     uploadedAt?: boolean
     createdAt?: boolean
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
@@ -3995,14 +4128,17 @@ export namespace Prisma {
     id?: boolean
     tenantId?: boolean
     caseId?: boolean
+    taskId?: boolean
     label?: boolean
     storageKey?: boolean
     fileName?: boolean
+    contentType?: boolean
+    size?: boolean
     uploadedAt?: boolean
     createdAt?: boolean
   }
 
-  export type OnboardingDocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "caseId" | "label" | "storageKey" | "fileName" | "uploadedAt" | "createdAt", ExtArgs["result"]["onboardingDocument"]>
+  export type OnboardingDocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "caseId" | "taskId" | "label" | "storageKey" | "fileName" | "contentType" | "size" | "uploadedAt" | "createdAt", ExtArgs["result"]["onboardingDocument"]>
   export type OnboardingDocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     case?: boolean | OnboardingCaseDefaultArgs<ExtArgs>
   }
@@ -4022,9 +4158,12 @@ export namespace Prisma {
       id: string
       tenantId: string
       caseId: string
+      taskId: string | null
       label: string
       storageKey: string | null
       fileName: string | null
+      contentType: string | null
+      size: number | null
       uploadedAt: Date | null
       createdAt: Date
     }, ExtArgs["result"]["onboardingDocument"]>
@@ -4454,9 +4593,12 @@ export namespace Prisma {
     readonly id: FieldRef<"OnboardingDocument", 'String'>
     readonly tenantId: FieldRef<"OnboardingDocument", 'String'>
     readonly caseId: FieldRef<"OnboardingDocument", 'String'>
+    readonly taskId: FieldRef<"OnboardingDocument", 'String'>
     readonly label: FieldRef<"OnboardingDocument", 'String'>
     readonly storageKey: FieldRef<"OnboardingDocument", 'String'>
     readonly fileName: FieldRef<"OnboardingDocument", 'String'>
+    readonly contentType: FieldRef<"OnboardingDocument", 'String'>
+    readonly size: FieldRef<"OnboardingDocument", 'Int'>
     readonly uploadedAt: FieldRef<"OnboardingDocument", 'DateTime'>
     readonly createdAt: FieldRef<"OnboardingDocument", 'DateTime'>
   }
@@ -7183,7 +7325,12 @@ export namespace Prisma {
     order: 'order',
     completedAt: 'completedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    documentStorageKey: 'documentStorageKey',
+    documentFileName: 'documentFileName',
+    documentContentType: 'documentContentType',
+    documentSize: 'documentSize',
+    documentUploadedAt: 'documentUploadedAt'
   };
 
   export type OnboardingTaskScalarFieldEnum = (typeof OnboardingTaskScalarFieldEnum)[keyof typeof OnboardingTaskScalarFieldEnum]
@@ -7193,9 +7340,12 @@ export namespace Prisma {
     id: 'id',
     tenantId: 'tenantId',
     caseId: 'caseId',
+    taskId: 'taskId',
     label: 'label',
     storageKey: 'storageKey',
     fileName: 'fileName',
+    contentType: 'contentType',
+    size: 'size',
     uploadedAt: 'uploadedAt',
     createdAt: 'createdAt'
   };
@@ -7565,6 +7715,11 @@ export namespace Prisma {
     completedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingTask"> | Date | string
     updatedAt?: DateTimeFilter<"OnboardingTask"> | Date | string
+    documentStorageKey?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentFileName?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentContentType?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentSize?: IntNullableFilter<"OnboardingTask"> | number | null
+    documentUploadedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
     case?: XOR<OnboardingCaseScalarRelationFilter, OnboardingCaseWhereInput>
   }
 
@@ -7581,6 +7736,11 @@ export namespace Prisma {
     completedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    documentFileName?: SortOrderInput | SortOrder
+    documentContentType?: SortOrderInput | SortOrder
+    documentSize?: SortOrderInput | SortOrder
+    documentUploadedAt?: SortOrderInput | SortOrder
     case?: OnboardingCaseOrderByWithRelationInput
   }
 
@@ -7600,6 +7760,11 @@ export namespace Prisma {
     completedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingTask"> | Date | string
     updatedAt?: DateTimeFilter<"OnboardingTask"> | Date | string
+    documentStorageKey?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentFileName?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentContentType?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentSize?: IntNullableFilter<"OnboardingTask"> | number | null
+    documentUploadedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
     case?: XOR<OnboardingCaseScalarRelationFilter, OnboardingCaseWhereInput>
   }, "id">
 
@@ -7616,6 +7781,11 @@ export namespace Prisma {
     completedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    documentFileName?: SortOrderInput | SortOrder
+    documentContentType?: SortOrderInput | SortOrder
+    documentSize?: SortOrderInput | SortOrder
+    documentUploadedAt?: SortOrderInput | SortOrder
     _count?: OnboardingTaskCountOrderByAggregateInput
     _avg?: OnboardingTaskAvgOrderByAggregateInput
     _max?: OnboardingTaskMaxOrderByAggregateInput
@@ -7639,6 +7809,11 @@ export namespace Prisma {
     completedAt?: DateTimeNullableWithAggregatesFilter<"OnboardingTask"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"OnboardingTask"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"OnboardingTask"> | Date | string
+    documentStorageKey?: StringNullableWithAggregatesFilter<"OnboardingTask"> | string | null
+    documentFileName?: StringNullableWithAggregatesFilter<"OnboardingTask"> | string | null
+    documentContentType?: StringNullableWithAggregatesFilter<"OnboardingTask"> | string | null
+    documentSize?: IntNullableWithAggregatesFilter<"OnboardingTask"> | number | null
+    documentUploadedAt?: DateTimeNullableWithAggregatesFilter<"OnboardingTask"> | Date | string | null
   }
 
   export type OnboardingDocumentWhereInput = {
@@ -7648,9 +7823,12 @@ export namespace Prisma {
     id?: StringFilter<"OnboardingDocument"> | string
     tenantId?: StringFilter<"OnboardingDocument"> | string
     caseId?: StringFilter<"OnboardingDocument"> | string
+    taskId?: StringNullableFilter<"OnboardingDocument"> | string | null
     label?: StringFilter<"OnboardingDocument"> | string
     storageKey?: StringNullableFilter<"OnboardingDocument"> | string | null
     fileName?: StringNullableFilter<"OnboardingDocument"> | string | null
+    contentType?: StringNullableFilter<"OnboardingDocument"> | string | null
+    size?: IntNullableFilter<"OnboardingDocument"> | number | null
     uploadedAt?: DateTimeNullableFilter<"OnboardingDocument"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingDocument"> | Date | string
     case?: XOR<OnboardingCaseScalarRelationFilter, OnboardingCaseWhereInput>
@@ -7660,9 +7838,12 @@ export namespace Prisma {
     id?: SortOrder
     tenantId?: SortOrder
     caseId?: SortOrder
+    taskId?: SortOrderInput | SortOrder
     label?: SortOrder
     storageKey?: SortOrderInput | SortOrder
     fileName?: SortOrderInput | SortOrder
+    contentType?: SortOrderInput | SortOrder
+    size?: SortOrderInput | SortOrder
     uploadedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     case?: OnboardingCaseOrderByWithRelationInput
@@ -7675,9 +7856,12 @@ export namespace Prisma {
     NOT?: OnboardingDocumentWhereInput | OnboardingDocumentWhereInput[]
     tenantId?: StringFilter<"OnboardingDocument"> | string
     caseId?: StringFilter<"OnboardingDocument"> | string
+    taskId?: StringNullableFilter<"OnboardingDocument"> | string | null
     label?: StringFilter<"OnboardingDocument"> | string
     storageKey?: StringNullableFilter<"OnboardingDocument"> | string | null
     fileName?: StringNullableFilter<"OnboardingDocument"> | string | null
+    contentType?: StringNullableFilter<"OnboardingDocument"> | string | null
+    size?: IntNullableFilter<"OnboardingDocument"> | number | null
     uploadedAt?: DateTimeNullableFilter<"OnboardingDocument"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingDocument"> | Date | string
     case?: XOR<OnboardingCaseScalarRelationFilter, OnboardingCaseWhereInput>
@@ -7687,14 +7871,19 @@ export namespace Prisma {
     id?: SortOrder
     tenantId?: SortOrder
     caseId?: SortOrder
+    taskId?: SortOrderInput | SortOrder
     label?: SortOrder
     storageKey?: SortOrderInput | SortOrder
     fileName?: SortOrderInput | SortOrder
+    contentType?: SortOrderInput | SortOrder
+    size?: SortOrderInput | SortOrder
     uploadedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: OnboardingDocumentCountOrderByAggregateInput
+    _avg?: OnboardingDocumentAvgOrderByAggregateInput
     _max?: OnboardingDocumentMaxOrderByAggregateInput
     _min?: OnboardingDocumentMinOrderByAggregateInput
+    _sum?: OnboardingDocumentSumOrderByAggregateInput
   }
 
   export type OnboardingDocumentScalarWhereWithAggregatesInput = {
@@ -7704,9 +7893,12 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"OnboardingDocument"> | string
     tenantId?: StringWithAggregatesFilter<"OnboardingDocument"> | string
     caseId?: StringWithAggregatesFilter<"OnboardingDocument"> | string
+    taskId?: StringNullableWithAggregatesFilter<"OnboardingDocument"> | string | null
     label?: StringWithAggregatesFilter<"OnboardingDocument"> | string
     storageKey?: StringNullableWithAggregatesFilter<"OnboardingDocument"> | string | null
     fileName?: StringNullableWithAggregatesFilter<"OnboardingDocument"> | string | null
+    contentType?: StringNullableWithAggregatesFilter<"OnboardingDocument"> | string | null
+    size?: IntNullableWithAggregatesFilter<"OnboardingDocument"> | number | null
     uploadedAt?: DateTimeNullableWithAggregatesFilter<"OnboardingDocument"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"OnboardingDocument"> | Date | string
   }
@@ -8027,6 +8219,11 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
     case: OnboardingCaseCreateNestedOneWithoutTasksInput
   }
 
@@ -8043,6 +8240,11 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
   }
 
   export type OnboardingTaskUpdateInput = {
@@ -8057,6 +8259,11 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     case?: OnboardingCaseUpdateOneRequiredWithoutTasksNestedInput
   }
 
@@ -8073,6 +8280,11 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingTaskCreateManyInput = {
@@ -8088,6 +8300,11 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
   }
 
   export type OnboardingTaskUpdateManyMutationInput = {
@@ -8102,6 +8319,11 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingTaskUncheckedUpdateManyInput = {
@@ -8117,14 +8339,22 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingDocumentCreateInput = {
     id?: string
     tenantId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
     case: OnboardingCaseCreateNestedOneWithoutDocumentsInput
@@ -8134,9 +8364,12 @@ export namespace Prisma {
     id?: string
     tenantId: string
     caseId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
   }
@@ -8144,9 +8377,12 @@ export namespace Prisma {
   export type OnboardingDocumentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     case?: OnboardingCaseUpdateOneRequiredWithoutDocumentsNestedInput
@@ -8156,9 +8392,12 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     caseId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8167,9 +8406,12 @@ export namespace Prisma {
     id?: string
     tenantId: string
     caseId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
   }
@@ -8177,9 +8419,12 @@ export namespace Prisma {
   export type OnboardingDocumentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8188,9 +8433,12 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     caseId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8650,6 +8898,17 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type OnboardingCaseScalarRelationFilter = {
     is?: OnboardingCaseWhereInput
     isNot?: OnboardingCaseWhereInput
@@ -8668,10 +8927,16 @@ export namespace Prisma {
     completedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    documentFileName?: SortOrder
+    documentContentType?: SortOrder
+    documentSize?: SortOrder
+    documentUploadedAt?: SortOrder
   }
 
   export type OnboardingTaskAvgOrderByAggregateInput = {
     order?: SortOrder
+    documentSize?: SortOrder
   }
 
   export type OnboardingTaskMaxOrderByAggregateInput = {
@@ -8687,6 +8952,11 @@ export namespace Prisma {
     completedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    documentFileName?: SortOrder
+    documentContentType?: SortOrder
+    documentSize?: SortOrder
+    documentUploadedAt?: SortOrder
   }
 
   export type OnboardingTaskMinOrderByAggregateInput = {
@@ -8702,10 +8972,16 @@ export namespace Prisma {
     completedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    documentFileName?: SortOrder
+    documentContentType?: SortOrder
+    documentSize?: SortOrder
+    documentUploadedAt?: SortOrder
   }
 
   export type OnboardingTaskSumOrderByAggregateInput = {
     order?: SortOrder
+    documentSize?: SortOrder
   }
 
   export type EnumOnboardingTaskKindWithAggregatesFilter<$PrismaModel = never> = {
@@ -8752,24 +9028,50 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
   export type OnboardingDocumentCountOrderByAggregateInput = {
     id?: SortOrder
     tenantId?: SortOrder
     caseId?: SortOrder
+    taskId?: SortOrder
     label?: SortOrder
     storageKey?: SortOrder
     fileName?: SortOrder
+    contentType?: SortOrder
+    size?: SortOrder
     uploadedAt?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type OnboardingDocumentAvgOrderByAggregateInput = {
+    size?: SortOrder
   }
 
   export type OnboardingDocumentMaxOrderByAggregateInput = {
     id?: SortOrder
     tenantId?: SortOrder
     caseId?: SortOrder
+    taskId?: SortOrder
     label?: SortOrder
     storageKey?: SortOrder
     fileName?: SortOrder
+    contentType?: SortOrder
+    size?: SortOrder
     uploadedAt?: SortOrder
     createdAt?: SortOrder
   }
@@ -8778,11 +9080,18 @@ export namespace Prisma {
     id?: SortOrder
     tenantId?: SortOrder
     caseId?: SortOrder
+    taskId?: SortOrder
     label?: SortOrder
     storageKey?: SortOrder
     fileName?: SortOrder
+    contentType?: SortOrder
+    size?: SortOrder
     uploadedAt?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type OnboardingDocumentSumOrderByAggregateInput = {
+    size?: SortOrder
   }
 
   export type EnumVerificationTypeFilter<$PrismaModel = never> = {
@@ -9158,6 +9467,14 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type OnboardingCaseUpdateOneRequiredWithoutTasksNestedInput = {
     create?: XOR<OnboardingCaseCreateWithoutTasksInput, OnboardingCaseUncheckedCreateWithoutTasksInput>
     connectOrCreate?: OnboardingCaseCreateOrConnectWithoutTasksInput
@@ -9431,6 +9748,33 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedEnumVerificationTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.VerificationType | EnumVerificationTypeFieldRefInput<$PrismaModel>
     in?: $Enums.VerificationType[] | ListEnumVerificationTypeFieldRefInput<$PrismaModel>
@@ -9517,6 +9861,11 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
   }
 
   export type OnboardingTaskUncheckedCreateWithoutCaseInput = {
@@ -9531,6 +9880,11 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
   }
 
   export type OnboardingTaskCreateOrConnectWithoutCaseInput = {
@@ -9546,9 +9900,12 @@ export namespace Prisma {
   export type OnboardingDocumentCreateWithoutCaseInput = {
     id?: string
     tenantId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
   }
@@ -9556,9 +9913,12 @@ export namespace Prisma {
   export type OnboardingDocumentUncheckedCreateWithoutCaseInput = {
     id?: string
     tenantId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
   }
@@ -9645,6 +10005,11 @@ export namespace Prisma {
     completedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingTask"> | Date | string
     updatedAt?: DateTimeFilter<"OnboardingTask"> | Date | string
+    documentStorageKey?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentFileName?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentContentType?: StringNullableFilter<"OnboardingTask"> | string | null
+    documentSize?: IntNullableFilter<"OnboardingTask"> | number | null
+    documentUploadedAt?: DateTimeNullableFilter<"OnboardingTask"> | Date | string | null
   }
 
   export type OnboardingDocumentUpsertWithWhereUniqueWithoutCaseInput = {
@@ -9670,9 +10035,12 @@ export namespace Prisma {
     id?: StringFilter<"OnboardingDocument"> | string
     tenantId?: StringFilter<"OnboardingDocument"> | string
     caseId?: StringFilter<"OnboardingDocument"> | string
+    taskId?: StringNullableFilter<"OnboardingDocument"> | string | null
     label?: StringFilter<"OnboardingDocument"> | string
     storageKey?: StringNullableFilter<"OnboardingDocument"> | string | null
     fileName?: StringNullableFilter<"OnboardingDocument"> | string | null
+    contentType?: StringNullableFilter<"OnboardingDocument"> | string | null
+    size?: IntNullableFilter<"OnboardingDocument"> | number | null
     uploadedAt?: DateTimeNullableFilter<"OnboardingDocument"> | Date | string | null
     createdAt?: DateTimeFilter<"OnboardingDocument"> | Date | string
   }
@@ -9988,14 +10356,22 @@ export namespace Prisma {
     completedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    documentStorageKey?: string | null
+    documentFileName?: string | null
+    documentContentType?: string | null
+    documentSize?: number | null
+    documentUploadedAt?: Date | string | null
   }
 
   export type OnboardingDocumentCreateManyCaseInput = {
     id?: string
     tenantId: string
+    taskId?: string | null
     label: string
     storageKey?: string | null
     fileName?: string | null
+    contentType?: string | null
+    size?: number | null
     uploadedAt?: Date | string | null
     createdAt?: Date | string
   }
@@ -10027,6 +10403,11 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingTaskUncheckedUpdateWithoutCaseInput = {
@@ -10041,6 +10422,11 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingTaskUncheckedUpdateManyWithoutCaseInput = {
@@ -10055,14 +10441,22 @@ export namespace Prisma {
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    documentFileName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentContentType?: NullableStringFieldUpdateOperationsInput | string | null
+    documentSize?: NullableIntFieldUpdateOperationsInput | number | null
+    documentUploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type OnboardingDocumentUpdateWithoutCaseInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10070,9 +10464,12 @@ export namespace Prisma {
   export type OnboardingDocumentUncheckedUpdateWithoutCaseInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10080,9 +10477,12 @@ export namespace Prisma {
   export type OnboardingDocumentUncheckedUpdateManyWithoutCaseInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
+    taskId?: NullableStringFieldUpdateOperationsInput | string | null
     label?: StringFieldUpdateOperationsInput | string
     storageKey?: NullableStringFieldUpdateOperationsInput | string | null
     fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: NullableStringFieldUpdateOperationsInput | string | null
+    size?: NullableIntFieldUpdateOperationsInput | number | null
     uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

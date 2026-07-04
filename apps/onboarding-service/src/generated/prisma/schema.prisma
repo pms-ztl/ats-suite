@@ -90,6 +90,18 @@ model OnboardingTask {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
+  // Document upload for a DOCUMENT-kind task. When the candidate uploads a file
+  // from the portal these carry the S3/MinIO object key + original filename so the
+  // recruiter can retrieve it via a presigned URL. Nullable so this stays additive
+  // and every non-document task simply leaves them empty. contentType is captured
+  // for the download Content-Type; documentSize is the server-measured byte length
+  // (never the client-supplied Content-Length).
+  documentStorageKey  String?
+  documentFileName    String?
+  documentContentType String?
+  documentSize        Int?
+  documentUploadedAt  DateTime?
+
   case OnboardingCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
@@ -97,19 +109,27 @@ model OnboardingTask {
 }
 
 model OnboardingDocument {
-  id         String    @id @default(uuid())
-  tenantId   String
-  caseId     String
-  label      String
-  storageKey String?
-  fileName   String?
-  uploadedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(uuid())
+  tenantId    String
+  caseId      String
+  // Optional link back to the DOCUMENT task this file satisfies. Plain scalar (no
+  // FK relation) — mirrors the managerId gotcha: a self/loose reference under
+  // FORCE-RLS is safer as a bare column, and this ledger is written by the admin
+  // client anyway. Nullable keeps legacy rows valid.
+  taskId      String?
+  label       String
+  storageKey  String?
+  fileName    String?
+  contentType String?
+  size        Int?
+  uploadedAt  DateTime?
+  createdAt   DateTime  @default(now())
 
   case OnboardingCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([caseId])
+  @@index([taskId])
 }
 
 model Verification {

@@ -12,6 +12,7 @@ import { useRouter, useParams } from "next/navigation";
 import { RequisitionDetail } from "./screens/RequisitionDetail";
 import { RoundsConfig } from "./RequisitionBuilder";
 import { FormBuilderLive } from "./form-builder-live";
+import { EligibilityEditorLive } from "./eligibility-editor-live";
 import { Icon } from "./icon";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -163,7 +164,16 @@ export function RequisitionDetailLive() {
         data={data}
         statusMeta={statusMeta}
         roundsSlot={<RoundsConfig data={roundsData} jobTitle={d.title} />}
-        formSlot={<FormBuilderLive requisitionId={d.id} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />}
+        formSlot={
+          <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
+            <FormBuilderLive requisitionId={d.id} jobTitle={d.title} orgLine={`${orgName} · ${d.department}`} />
+            {/* Eligibility authoring lives with the application form: its rules gate
+                the answers candidates give on exactly these fields. */}
+            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 26 }}>
+              <EligibilityEditorLive requisitionId={d.id} />
+            </div>
+          </div>
+        }
         onBack={() => router.push("/requisitions")}
         onCandidates={() => router.push("/candidates")}
         onPost={onPost}

@@ -149,16 +149,24 @@ exports.Prisma.OnboardingTaskScalarFieldEnum = {
   order: 'order',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  documentStorageKey: 'documentStorageKey',
+  documentFileName: 'documentFileName',
+  documentContentType: 'documentContentType',
+  documentSize: 'documentSize',
+  documentUploadedAt: 'documentUploadedAt'
 };
 
 exports.Prisma.OnboardingDocumentScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
   caseId: 'caseId',
+  taskId: 'taskId',
   label: 'label',
   storageKey: 'storageKey',
   fileName: 'fileName',
+  contentType: 'contentType',
+  size: 'size',
   uploadedAt: 'uploadedAt',
   createdAt: 'createdAt'
 };

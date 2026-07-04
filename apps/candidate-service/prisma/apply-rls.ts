@@ -21,7 +21,11 @@ import { prisma } from "../src/lib/prisma.js";
 
 const ROLE = "ats_app";
 const PASSWORD = process.env["RLS_APP_DB_PASSWORD"] ?? "ats_app_dev_pw";
-const TENANT_TABLES = ["Candidate", "Application", "ApplicationAttachment", "CandidateNote"];
+// Offer joins the tenant-scoped set: it carries a non-null "tenantId" and the
+// Offers board / approval flow reads + writes it through the RLS request client
+// (offers.ts, applications.ts, offer-approve.ts, the candidates analytics rollup).
+// The background/GDPR paths keep prismaAdmin. Same standard tenant_isolation policy.
+const TENANT_TABLES = ["Candidate", "Application", "ApplicationAttachment", "CandidateNote", "Offer"];
 
 async function run(sql: string) {
   await prisma.$executeRawUnsafe(sql);

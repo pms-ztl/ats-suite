@@ -8,7 +8,7 @@ import { useParams } from "next/navigation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
-interface Task { id: string; kind: string; title: string; description: string | null; required: boolean; status: string; order: number }
+interface Task { id: string; kind: string; title: string; description: string | null; required: boolean; status: string; order: number; documentFileName?: string | null; documentUploadedAt?: string | null }
 interface Verification { type: string; status: string; provider: string | null; maskedValue: string | null; message: string | null; verifiedAt: string | null }
 interface Case {
   id: string; candidateName: string | null; jobTitle: string | null; status: string;
@@ -73,6 +73,33 @@ export default function OnboardingPortalPage() {
     if (res.ok) setData(res.data?.data ?? res.data);
   };
 
+  // Document upload — multipart, no Content-Type header (browser sets the boundary).
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({});
+  const uploadDocument = async (taskId: string, file: File) => {
+    setUploadingId(taskId);
+    setUploadMsg((m) => ({ ...m, [taskId]: "" }));
+    try {
+      const fd = new FormData();
+      fd.append("document", file);
+      const r = await fetch(`${API_BASE}/public/onboarding/${token}/tasks/${taskId}/document`, {
+        method: "POST", credentials: "include", body: fd,
+      });
+      const body = await r.json().catch(() => null);
+      if (r.ok) {
+        setData(body?.data ?? body);
+        const stored = (body?.data ?? body)?.upload?.stored;
+        setUploadMsg((m) => ({ ...m, [taskId]: stored === false ? "Received. Awaiting storage." : "Uploaded." }));
+      } else {
+        setUploadMsg((m) => ({ ...m, [taskId]: body?.error?.message ?? "Upload failed. Please try again." }));
+      }
+    } catch {
+      setUploadMsg((m) => ({ ...m, [taskId]: "Upload failed. Please check your connection." }));
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const v = (type: string) => data?.verifications.find((x) => x.type === type);
   const progress = useMemo(() => {
     const req = (data?.tasks ?? []).filter((t) => t.required);
@@ -130,18 +157,42 @@ export default function OnboardingPortalPage() {
         <div style={card}>
           <h3 style={{ marginTop: 0 }}>Your checklist</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {data.tasks.filter((t) => t.kind !== "VERIFICATION").map((t) => (
+            {data.tasks.filter((t) => t.kind !== "VERIFICATION").map((t) => {
+              const isDoc = t.kind === "DOCUMENT";
+              const busy = uploadingId === t.id;
+              const msg = uploadMsg[t.id];
+              return (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1px solid var(--c-line-2,#e5e7eb)", borderRadius: 10 }}>
-                <span style={{ width: 18, height: 18, borderRadius: 99, border: "2px solid", borderColor: t.status === "DONE" ? "#107a57" : "#cbd5e1", background: t.status === "DONE" ? "#107a57" : "transparent" }} />
+                <span style={{ width: 18, height: 18, borderRadius: 99, border: "2px solid", borderColor: t.status === "DONE" ? "#107a57" : "#cbd5e1", background: t.status === "DONE" ? "#107a57" : "transparent", flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{t.title}{t.required && <span style={{ color: "#b91c1c", marginLeft: 4 }}>*</span>}</div>
                   {t.description && <div style={{ fontSize: 12.5, color: "var(--c-ink-2,#555)" }}>{t.description}</div>}
+                  {isDoc && t.documentFileName && (
+                    <div style={{ fontSize: 12, color: "#107a57", marginTop: 4 }}>
+                      {t.status === "SUBMITTED" ? "Received: " : "Uploaded: "}{t.documentFileName}
+                    </div>
+                  )}
+                  {isDoc && msg && <div style={{ fontSize: 12, color: "var(--c-ink-3,#777)", marginTop: 4 }}>{msg}</div>}
                 </div>
-                {t.status !== "DONE"
-                  ? <button style={{ ...btn, background: "#0f172a" }} onClick={() => void completeTask(t.id)}>Mark done</button>
-                  : <span style={{ fontSize: 12.5, color: "#107a57", fontWeight: 600 }}>Done</span>}
+                {isDoc ? (
+                  <label style={{ ...btn, background: busy ? "#94a3b8" : "#0f172a", cursor: busy ? "wait" : "pointer", display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+                    {busy ? "Uploading…" : t.status === "DONE" ? "Replace file" : "Upload file"}
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,image/png,image/jpeg,image/webp,image/tiff"
+                      disabled={busy}
+                      style={{ display: "none" }}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadDocument(t.id, f); e.target.value = ""; }}
+                    />
+                  </label>
+                ) : t.status !== "DONE" ? (
+                  <button style={{ ...btn, background: "#0f172a", flexShrink: 0 }} onClick={() => void completeTask(t.id)}>Mark done</button>
+                ) : (
+                  <span style={{ fontSize: 12.5, color: "#107a57", fontWeight: 600, flexShrink: 0 }}>Done</span>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

@@ -25,6 +25,12 @@ const STRICT_TABLES = [
   "JobBoardDistribution",
   "ApplicationIdempotency",
   "JobFeedToken",
+  // Module A: CDC / college partner. Non-null tenantId; the authenticated
+  // colleges.ts CRUD routes use the RLS client (getTenantId + tenant-scoped
+  // queries). Only the public /cdc/:token landing resolves cross-tenant by the
+  // opaque shareToken and it uses prismaAdmin (like public-by-slug), so it is
+  // unaffected by this strict policy.
+  "CollegePartner",
 ];
 const NULLABLE_TABLES = ["Skill"]; // tenant rows isolated; NULL-tenant rows are global
 

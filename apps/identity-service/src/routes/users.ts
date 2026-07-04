@@ -61,6 +61,29 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = CreateUserInputSchema.parse(req.body);
 
+    // Body-tenant hardening (master prompt §7 — tenant context is NEVER trusted
+    // from a client body field when a verified context exists).
+    //
+    // This route is DUAL-PURPOSE:
+    //   1. Legitimate pre-auth bootstrap: the register-company saga calls it
+    //      with NO gateway user headers (req.user undefined) to create the very
+    //      first ADMIN of a brand-new tenant. body.tenantId is the only tenant
+    //      source here and MUST be honored — this is the new-tenant signup path
+    //      and must not break.
+    //   2. Exposure to guard: the generic `/api/users` gateway proxy forwards
+    //      ANY authenticated POST /api/users to /internal/users, arriving WITH a
+    //      verified req.user (X-Tenant-Id from the caller's JWT). Without this
+    //      guard an authenticated caller could POST { tenantId: "<victim>" } and
+    //      mint a user inside a tenant they do not belong to.
+    //
+    // So: only when a verified tenant context is present do we require the body
+    // tenantId to match it (reject a mismatch with 400 — the verified context
+    // always wins, never the body). Pre-auth saga requests (no req.user) keep
+    // their existing behavior. Additive + backward-compatible.
+    if (req.user?.tenantId && body.tenantId !== req.user.tenantId) {
+      throw Errors.validation("tenantId in body does not match the authenticated tenant");
+    }
+
     const existing = await prisma.user.findFirst({
       where: { tenantId: body.tenantId, email: body.email.toLowerCase() },
     });
@@ -302,6 +325,32 @@ const ROLE_HIERARCHY: Record<string, string[]> = {
 router.post("/invite", requireRole("ADMIN", "HIRING_MANAGER", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = InviteSchema.parse(req.body);
+
+    // Body-tenant hardening (master prompt §7 — tenant context is NEVER
+    // trusted from a client body field). requireRole above guarantees a
+    // gateway-verified req.user (tenant + id derived from the JWT). The gateway
+    // ALSO injects body.tenantId/body.invitedByUserId before forwarding, so in
+    // the normal path they equal the verified context. We reconcile the two:
+    //   - reject a MISMATCH with a 400 (a body tenantId/inviter that disagrees
+    //     with the verified one must never silently win — that would let a
+    //     caller write into a tenant they are not authorized for), and
+    //   - rebind to the verified values so EVERY downstream write below uses
+    //     the trusted context, never the body.
+    // Backward-compatible: when body and context agree (the gateway path) this
+    // is a no-op. Defense in depth for the case where /internal/users/invite is
+    // reached via the generic proxy or another internal caller.
+    const verifiedTenantId = getTenantId(req);
+    const verifiedInviterId = req.user!.id;
+    if (body.tenantId !== verifiedTenantId) {
+      throw Errors.validation("tenantId in body does not match the authenticated tenant");
+    }
+    if (body.invitedByUserId !== verifiedInviterId) {
+      throw Errors.validation("invitedByUserId in body does not match the authenticated user");
+    }
+    // Pin to the verified context (identical values here, but this makes the
+    // trusted source the one used, not the client-supplied body field).
+    body.tenantId = verifiedTenantId;
+    body.invitedByUserId = verifiedInviterId;
 
     // Phase 35 — role-hierarchy gate. An inviter may only add users in roles
     // strictly beneath their own, so a manager can grow their team but cannot
@@ -572,7 +621,26 @@ router.get("/", requireRole("SUPER_ADMIN", "ADMIN"), async (req: Request, res: R
 router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params["id"] as string;
-    await prisma.user.delete({ where: { id } }).catch(() => { /* already gone */ });
+    // Body/context-tenant hardening (master prompt §7). DUAL-PURPOSE route:
+    //   1. Pre-auth saga compensation: register-company rollback deletes the
+    //      just-created user by id with NO gateway headers (req.user undefined).
+    //      The saga's contract guarantees it deletes the user it just made in
+    //      the same saga, so a plain delete-by-id is safe there and must stay.
+    //   2. Exposure to guard: the generic `/api/users` gateway proxy forwards an
+    //      authenticated DELETE /api/users/:id here WITH a verified req.user.
+    //      An unscoped delete-by-id would let an authenticated caller delete a
+    //      user in ANOTHER tenant (cross-tenant IDOR).
+    // So when a verified tenant context is present, scope the delete to that
+    // tenant (deleteMany with the tenant filter — a cross-tenant id simply
+    // matches 0 rows and is a no-op, never a foreign delete). The pre-auth saga
+    // path (no req.user) keeps the exact prior delete-by-id behavior. Additive.
+    if (req.user?.tenantId) {
+      await prisma.user
+        .deleteMany({ where: { id, tenantId: req.user.tenantId } })
+        .catch(() => { /* already gone */ });
+    } else {
+      await prisma.user.delete({ where: { id } }).catch(() => { /* already gone */ });
+    }
     ok(res, { deleted: id });
   } catch (err) {
     next(err);
