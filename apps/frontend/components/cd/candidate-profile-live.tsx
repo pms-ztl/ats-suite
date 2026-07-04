@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CandidateProfile } from "./screens/CandidateProfile";
+import { CandidateAssessmentSection } from "./candidate-assessment-section";
 import { CandidateSummaryExport } from "@/components/shared/candidate-summary-export";
 import { HireActions } from "@/components/shared/hire-actions";
 import { useData } from "@/lib/use-data";
@@ -224,6 +225,23 @@ export function CandidateProfileLive() {
         <HireActions applicationId={(c as any).applicationId} stage={c.stage} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+        {/* LANE 2: native "Send a coding test" + real-time OA results for this
+            candidate (HackerRank / HackerEarth). Rendered above the byte-exact
+            profile so the byte-exact screen stays untouched. Gated internally by
+            the oa-assessments module; renders nothing when the module is off. */}
+        {!blind && (
+          <div style={{ padding: "18px 26px 0" }}>
+            <CandidateAssessmentSection
+              candidate={{
+                id: c.id,
+                name: c.name,
+                email: c.email || "",
+                requisitionId: c.requisitionId ?? null,
+                applicationId: (c as any).applicationId ?? null,
+              }}
+            />
+          </div>
+        )}
         <CandidateProfile
           data={data}
           stages={STAGES}

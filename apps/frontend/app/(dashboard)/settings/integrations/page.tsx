@@ -32,6 +32,8 @@ import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { useModules } from "@/hooks/use-modules";
 import { useIsAdmin } from "@/hooks/use-current-user";
+// LANE 2: lane-local "Test connection" probe (GET /api/assessments/providers/:kind/validate).
+import { validateProvider, type ProviderKind } from "@/lib/assessment-provider-api";
 
 type CSS = React.CSSProperties;
 
@@ -115,6 +117,12 @@ interface AssessmentProvider {
   color: string;
   blurb: string;
   fields: ProviderField[];
+  // LANE 2: when set, the card offers a live "Test connection" probe (calls
+  // /api/assessments/providers/:kind/validate) plus a short inline how-to on
+  // where the tenant finds these credentials. Only the vendors NCR Voyix uses
+  // (HackerRank + HackerEarth) carry these today.
+  testable?: boolean;
+  howTo?: string[];
 }
 
 // One credential field set per vendor, derived from the real adapter auth shapes
@@ -125,8 +133,15 @@ const ASSESSMENT_PROVIDERS: AssessmentProvider[] = [
   {
     kind: "hackerrank", name: "HackerRank", abbr: "HR", color: "var(--c-ok)",
     blurb: "Technical coding assessments. Results sync via polling (no per-invite webhook).",
+    testable: true,
+    howTo: [
+      "Sign in to HackerRank for Work as an admin.",
+      "Open Settings, then the API and Integrations tab.",
+      "Generate an API key (HackerRank calls it an access token) and copy it.",
+      "Paste it into the API key field below and save. Test connection confirms it works and counts your tests.",
+    ],
     fields: [
-      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your HackerRank API key", help: "HackerRank for Work → Settings → API. Stored encrypted." },
+      { key: "apiKey", label: "API key", secret: true, placeholder: "Paste your HackerRank API key", help: "HackerRank for Work, Settings, API. Stored encrypted." },
       { key: "apiToken", label: "API token (optional)", secret: true, placeholder: "Bearer token, if your account uses one" },
       { key: "baseUrl", label: "Base URL (optional)", secret: false, placeholder: "https://www.hackerrank.com/x/api/v3" },
     ],
@@ -143,8 +158,16 @@ const ASSESSMENT_PROVIDERS: AssessmentProvider[] = [
   {
     kind: "hackerearth", name: "HackerEarth", abbr: "HE", color: "var(--c-brand)",
     blurb: "Developer assessments. Authenticates with a client ID + secret pair.",
+    testable: true,
+    howTo: [
+      "Sign in to HackerEarth Assessment as an admin.",
+      "Open Settings, then the Integrations or API section.",
+      "Copy your client_id and client_secret. Create them if none exist yet.",
+      "For live result callbacks, copy the report webhook signing secret too.",
+      "Paste them below and save. Test connection confirms the pair works and counts your tests.",
+    ],
     fields: [
-      { key: "apiKey", label: "Client ID", secret: true, placeholder: "Paste your HackerEarth client_id", help: "HackerEarth Assessment → Integrations. Stored encrypted." },
+      { key: "apiKey", label: "Client ID", secret: true, placeholder: "Paste your HackerEarth client_id", help: "HackerEarth Assessment, Integrations. Stored encrypted." },
       { key: "clientSecret", label: "Client secret", secret: true, placeholder: "Paste your HackerEarth secret" },
       { key: "webhookSecret", label: "Webhook secret (optional)", secret: true, placeholder: "Report-callback signing secret" },
     ],
@@ -473,6 +496,11 @@ function ProviderCard({
 }) {
   const configured = !!row;
   const [open, setOpen] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
+  // LANE 2: live "Test connection" state. `probe.ok` reflects a REAL validate
+  // call; it is never optimistic. null = not yet run.
+  const [probe, setProbe] = useState<{ ok: boolean; testCount: number | null; message: string | null } | null>(null);
+  const [testing, setTesting] = useState(false);
   // Draft starts EMPTY for secrets (write-only) and seeded from the saved
   // NON-SECRET routing fields so admins can edit them without retyping. A secret
   // input left blank means "keep the existing saved secret".
@@ -488,6 +516,17 @@ function ProviderCard({
   const [draft, setDraft] = useState<Record<string, string>>(initialDraft);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Run the live connection probe. Uses saved credentials (the probe reads them
+  // server-side); it never sends or echoes the secret from this page.
+  async function testConnection() {
+    if (testing) return;
+    setTesting(true);
+    setProbe(null);
+    const res = await validateProvider(provider.kind as ProviderKind);
+    setProbe({ ok: res.ok, testCount: res.testCount ?? null, message: res.message ?? null });
+    setTesting(false);
+  }
 
   function startEdit() {
     setDraft(initialDraft());
@@ -569,8 +608,54 @@ function ProviderCard({
       </div>
       <p style={{ margin: "11px 0 0", fontSize: 12, color: "var(--c-ink-2)", lineHeight: 1.45 }}>{provider.blurb}</p>
 
+      {/* LANE 2: short inline how-to (where NCR Voyix finds these credentials).
+          Collapsed by default; only rendered for vendors that carry a how-to. */}
+      {provider.howTo && provider.howTo.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            onClick={() => setShowHowTo((v) => !v)}
+            style={{ display: "inline-flex", gap: 5, alignItems: "center", fontSize: 11.5, fontWeight: 600, color: "var(--c-brand)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            <Icon name="lifebuoy" size={13} /> Where do I find these credentials?
+          </button>
+          {showHowTo && (
+            <ol style={{ margin: "8px 0 0", paddingLeft: 18, display: "grid", gap: 4 }}>
+              {provider.howTo.map((step, i) => (
+                <li key={i} style={{ fontSize: 11.5, color: "var(--c-ink-2)", lineHeight: 1.5 }}>{step}</li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {/* LANE 2: live "Test connection" result. Honest states only - a real
+          success shows the vendor test count; a failure shows the real reason. */}
+      {probe && (
+        <div
+          role="status"
+          style={{
+            display: "flex", gap: 8, alignItems: "flex-start", marginTop: 11, padding: "9px 11px", borderRadius: "var(--r)", fontSize: 12, lineHeight: 1.45,
+            background: probe.ok ? "var(--c-ok-tint)" : "var(--c-danger-tint)",
+            color: probe.ok ? "var(--c-ok)" : "var(--c-danger)",
+          }}
+        >
+          <Icon name={probe.ok ? "check" : "x"} size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>
+            {probe.ok
+              ? `Connected.${typeof probe.testCount === "number" ? ` ${probe.testCount} test${probe.testCount === 1 ? "" : "s"} available in your ${provider.name} account.` : " Credentials verified."}`
+              : `Could not connect.${probe.message ? ` ${probe.message}` : " Check the credentials and try again."}`}
+          </span>
+        </div>
+      )}
+
       {!open ? (
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {/* Test connection is offered for testable vendors that are configured. */}
+          {provider.testable && configured && (
+            <Btn variant="soft" size="sm" icon="radar" onClick={testConnection} disabled={testing}>
+              {testing ? "Testing..." : "Test connection"}
+            </Btn>
+          )}
           {canEdit ? (
             <Btn variant={configured ? "ghost" : "primary"} size="sm" icon={configured ? "settings" : "plug"} onClick={startEdit}>
               {configured ? "Configure" : "Connect"}

@@ -6,6 +6,7 @@ import {
 import type { Logger } from "pino";
 import { prisma } from "./lib/prisma.js";
 import assessmentsRouter from "./routes/assessments.js";
+import providersRouter from "./routes/providers.js";
 import invitesRouter from "./routes/invites.js";
 import publicTakeRouter from "./routes/public-take.js";
 import resultsRouter from "./routes/results.js";
@@ -79,6 +80,12 @@ export function createApp(logger: Logger): Express {
 
   // Internal authenticated routes. The Routes slice (WF7) fills the handlers;
   // invites + results share the /internal/assessments base with authoring.
+  //
+  // The providers browse/validate router is mounted FIRST so its LITERAL
+  // `/providers` path is not shadowed by the authoring router's `GET /:id`
+  // (which would otherwise match id="providers" and 404). Its deeper paths
+  // (`/providers/:kind/tests|validate`) collide with nothing in the other routers.
+  app.use("/internal/assessments", readAuthHeaders(), providersRouter);
   app.use("/internal/assessments", readAuthHeaders(), assessmentsRouter);
   app.use("/internal/assessments", readAuthHeaders(), invitesRouter);
   app.use("/internal/assessments", readAuthHeaders(), resultsRouter);

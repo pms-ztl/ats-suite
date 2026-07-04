@@ -18,6 +18,7 @@ import { Pill, SectionCard } from "@/components/cd/aurora-kit";
 import { Icon, type IconName } from "@/components/cd/icon";
 import { useLiveRefresh } from "@/lib/use-live-refresh";
 import { useModules } from "@/hooks/use-modules";
+import { AssessmentActivityPanel } from "@/components/cd/assessment-activity-panel";
 import {
   listAssessments, createAssessment,
   type AssessmentListItem, type AssessmentStatus,
@@ -183,6 +184,13 @@ export default function AssessmentsPage() {
           </div>
         )}
       </SectionCard>
+
+      {/* LANE 2: cross-candidate invite + result activity, sortable by score and
+          filterable by vendor. Reads the existing /:id/invites + /:id/results
+          across the tenant's assessments; honest empty until real activity exists. */}
+      <div style={{ marginTop: 20 }}>
+        <AssessmentActivityPanel />
+      </div>
     </div>
   );
 }
