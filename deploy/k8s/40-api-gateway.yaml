@@ -42,6 +42,23 @@ spec:
               value: "4000"
             - name: SERVICE_NAME
               value: "api-gateway"
+            # WF-I / I5: trust the ingress/LB in front of the gateway so Express
+            # derives req.ip from X-Forwarded-For (the real client IP) instead of
+            # the single upstream socket. WITHOUT this the per-IP rate limiters in
+            # apps/api-gateway/src/app.ts collapse every client into ONE bucket and
+            # 429 the whole apply spike. "true" trusts all hops (correct behind a
+            # single k8s Ingress/LB); set to the hop count "N" for an LB chain, or a
+            # CSV of trusted proxy CIDRs for direct-exposure. See docs/SCALABILITY.md.
+            - name: TRUST_PROXY
+              value: "true"
+            # WF-I / I5: with >1 gateway replica (this Deployment runs 2 + an HPA),
+            # the express-rate-limit ceilings must be COUNTED ACROSS replicas or the
+            # effective limit is silently N×. REDIS_URL comes from the ConfigMap; the
+            # gateway uses a shared Redis limiter store ONLY when `rate-limit-redis`
+            # is present in apps/api-gateway/package.json (best-effort optional import;
+            # see the I5 code comment). Until that dep is declared the limiter falls
+            # back to the per-process in-memory store. DISABLE_RATE_LIMIT=1 turns the
+            # limiters off entirely (not recommended in production).
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: cdc-ats-secrets, key: JWT_SECRET } }
             - name: INTERNAL_SERVICE_TOKEN

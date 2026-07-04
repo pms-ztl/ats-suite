@@ -28,6 +28,13 @@ cd /repo
 # stable key). Keep these byte-equal to the orgName values in apps/seed-data/src/seed.ts.
 DEMO_TENANT_NAME="Pinnacle Tech"
 FREE_TENANT_NAME="Northwind Staffing"
+# NCR Voyix - the client-branded demo tenant (apps/seed-data). It is ENTERPRISE
+# (Phase 2 upgrades every non-FREE-control tenant), and gets the online-assessment
+# module turned ON here so the HackerRank + HackerEarth integration cards render on
+# Settings -> Integrations and the /assessments surface is reachable. The cards
+# stay honestly INERT ("Not connected") until NCR pastes its own vendor keys - this
+# only flips the module gate, it stores NO credentials and fabricates nothing.
+NCR_TENANT_NAME="NCR Voyix"
 
 # The demo origin authorized to frame the white-label embed. Single bare https
 # origin (scheme+host[:port], no path) - same shape branding.ts validates.
@@ -167,6 +174,44 @@ else
     >/dev/null 2>&1 \
     && echo "    tenant-default dashboard 'home' set (includes oa_results tile)" \
     || echo "    !! dashboard layout upsert skipped"
+fi
+
+# -- Phase 3b - NCR Voyix online-assessment entitlement ------------------------
+# Turn ON the oa-assessments module for the client-branded NCR Voyix tenant so the
+# HackerRank + HackerEarth integration cards render (Settings -> Integrations) and
+# the /assessments surface is reachable through the gateway's requireModule gate.
+# This ONLY flips the module override (Gate 3); the plan gate already passes (NCR
+# Voyix is ENTERPRISE via Phase 2). It stores NO credentials - the vendor cards
+# stay "Not connected" until NCR pastes its own keys. custom-dashboards is also
+# enabled so NCR gets the customizable dashboard surface; white-label-embed is
+# intentionally left OFF (no embed origin configured for this tenant). Idempotent
+# UPSERT keyed on (tenantId, moduleKey), safe to re-run.
+NCR_ID=$(psql "$TENANT_DATABASE_URL" -tAc \
+  "SELECT id FROM \"Tenant\" WHERE name = '${NCR_TENANT_NAME}' LIMIT 1;" 2>/dev/null | tr -d '[:space:]')
+
+if [ -z "$NCR_ID" ]; then
+  echo "    (NCR Voyix tenant not present - skipping OA entitlement; run the seeder first)"
+else
+  echo "==> Entitling '${NCR_TENANT_NAME}' ($NCR_ID) with oa-assessments + custom-dashboards..."
+  NCR_ADMIN_ID=$(psql "$IDENTITY_DATABASE_URL" -tAc \
+    "SELECT id FROM \"User\" WHERE \"tenantId\" = '$NCR_ID' AND role = 'ADMIN' ORDER BY \"createdAt\" ASC LIMIT 1;" \
+    2>/dev/null | tr -d '[:space:]')
+  NCR_ADMIN_ID="${NCR_ADMIN_ID:-seed-script}"
+  for mkey in oa-assessments custom-dashboards; do
+    psql "$BILLING_DATABASE_URL" -v ON_ERROR_STOP=0 -c \
+      "INSERT INTO \"TenantModule\"
+         (id, \"tenantId\", \"moduleKey\", enabled, config, \"enabledAt\", \"updatedBy\", \"createdAt\", \"updatedAt\")
+       VALUES
+         (gen_random_uuid(), '$NCR_ID', '$mkey', true, '{}'::jsonb, now(), '$NCR_ADMIN_ID', now(), now())
+       ON CONFLICT (\"tenantId\", \"moduleKey\") DO UPDATE
+         SET enabled = true,
+             \"enabledAt\" = COALESCE(\"TenantModule\".\"enabledAt\", now()),
+             \"updatedBy\" = EXCLUDED.\"updatedBy\",
+             \"updatedAt\" = now();" \
+      >/dev/null 2>&1 \
+      && echo "    module ON: $mkey" \
+      || echo "    !! module upsert skipped: $mkey"
+  done
 fi
 
 echo "==> Seed complete. The demo is ready."

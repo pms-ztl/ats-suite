@@ -21,6 +21,11 @@ infra (Postgres, Redis, NATS, MinIO), the schema migration as a `Job`, and an
 - **Resource requests/limits are engineering estimates, not measured.** Compose
   sets none, so there is nothing to mirror; the values here are conservative
   defaults you should tune against real load.
+- **The HorizontalPodAutoscalers (`55-autoscalers.yaml`) are derived, not
+  measured.** They scale the six hot-path deployables on CPU; the target
+  percentages and min/max replica bounds are engineering estimates chosen to
+  justify the 10k story in `docs/SCALABILITY.md`, untested on a live cluster. They
+  need `autoscaling/v2` + `metrics-server` on the cluster. Load-test, then tune.
 - **Ingress host + TLS are placeholders** (`app.cdc-ats.example.com`,
   `cdc-ats-tls`). The demo uses a Cloudflare tunnel instead of an Ingress; this
   substitutes a normal Ingress and you must set your own host/cert.
@@ -51,6 +56,7 @@ infra (Postgres, Redis, NATS, MinIO), the schema migration as a `Job`, and an
 | compliance-service | Deployment + Service | 4013 | |
 | assessment-service | Deployment + Service | 4014 | + `ATS_CONFIG_ENC_KEY`; gateway does not proxy to it yet |
 | frontend | Deployment + Service | 3000 | probes on `/` |
+| (autoscalers) | HorizontalPodAutoscaler x6 | n/a | CPU-based, for frontend + gateway + job/resume/screening/assessment; needs metrics-server |
 | (ingress) | Ingress | 80/443 | replaces cloudflared |
 
 That is the exact set the demo compose brings up (15 backend services +

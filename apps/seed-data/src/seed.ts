@@ -10,11 +10,16 @@
  *   npm run seed:full --workspace=@cdc-ats/seed-data
  *
  * What it creates:
- *   - 3 demo tenants (Pinnacle Tech, Apex Manufacturing, Wavelength Studios)
- *   - 8 users across tenants (1 admin + 1-3 staff each)
- *   - 12 requisitions spread across statuses
- *   - 50 candidates (realistic names + skills)
- *   - 80 applications across pipeline stages
+ *   - 5 demo tenants (Pinnacle Tech, Apex Manufacturing, Wavelength Studios,
+ *     Northwind Staffing [FREE gating control], NCR Voyix [client-branded])
+ *   - users across tenants (1 admin + a 3-level hierarchy each)
+ *   - requisitions spread across statuses
+ *   - candidates (realistic names + skills)
+ *   - applications across pipeline stages
+ *   - NCR Voyix: brand palette (via PUT /api/branding), a "Software Engineer II"
+ *     technical requisition with an eligibility rule + an inert HackerRank OA
+ *     step, and (with seed.sh) the oa-assessments module ON so the HackerRank +
+ *     HackerEarth integration cards show as "Not connected" ready for NCR's keys.
  *   - Optional: 3-5 real Claude agent runs to populate the AI Ops dashboard
  */
 
@@ -105,6 +110,64 @@ const TENANTS = [
     requisitionCount: 2,
     candidateCount: 5,
     tier: "free" as const,
+  },
+  // NCR Voyix - the client's own branded demo tenant. Retail + restaurant
+  // commerce technology (NYSE: VYX; Atlanta HQ). This tenant showcases the
+  // client's real stack: it is ENTERPRISE-tier (all features on), carries the
+  // NCR Voyix brand palette (below), and is pre-wired for the two online-
+  // assessment vendors NCR actually uses (HackerRank + HackerEarth).
+  //
+  // branding: applied idempotently by seedBranding() via PUT /api/branding after
+  //   the admin logs in. brandPrimaryColor is NCR Voyix purple; the shell brand
+  //   ramp (cd-shell.tsx buildThemeCss/legacyBrandHex) re-skins the whole logged-
+  //   in app from this hex. NCR Voyix does NOT publish an exact secondary/accent
+  //   in a public brand kit, so those are on-brand choices derived from the
+  //   purple + their black wordmark, NOT a claim of pixel-exact brand values.
+  //
+  // technicalReq: seedTechnicalRequisition() creates a real "Software Engineer II"
+  //   requisition with an eligibility rule + an honest HackerRank-OA-step note in
+  //   customFields, so the demo shows the technical-hiring flow shape. The OA step
+  //   is INERT until NCR pastes its own HackerRank key on Settings -> Integrations
+  //   (no fake keys, no fake "connected", no fabricated score).
+  {
+    orgName: "NCR Voyix",
+    firstName: "Dana",
+    lastName: "Okafor",
+    email: "admin@ncrvoyix.demo",
+    password: "NcrVoyixDemo123!",
+    requisitionCount: 4,
+    candidateCount: 12,
+    tier: "enterprise" as const,
+    // ENTERPRISE at creation so every feature works immediately. seed.sh Phase 2
+    // ALSO upgrades every non-FREE-control tenant to ENTERPRISE + syncs the
+    // billing TenantPlanCache, so this is belt-and-braces (both paths agree).
+    plan: "ENTERPRISE" as const,
+    branding: {
+      // NCR Voyix purple. Sourced from brandcolorcode.com/ncr-voyix (their public
+      // brand-color reference), which itself notes the values are the closest match
+      // to NCR Voyix's brand codes rather than an official spec. On-brand, not a
+      // claim of exactness.
+      brandPrimaryColor: "#5f249f",
+      // Deep violet-ink secondary derived from the primary (a darker shade of the
+      // same hue) for chrome/surfaces. On-brand derivative, not an official token.
+      brandSecondaryColor: "#3d1766",
+      // Accent kept in the same violet family so the AI-accent ramp reads on brand.
+      brandAccentColor: "#7c3aed",
+      brandTagline: "Run your restaurant and retail teams on one platform.",
+      website: "https://www.ncrvoyix.com",
+      // Dark chrome by default so the purple ramp reads as it does on NCR's own
+      // marketing surfaces. Applied via the same PUT /api/branding payload.
+      defaultColorMode: "dark" as const,
+      // A small, real flat token map the dashboard renderer applies as CSS custom
+      // properties (values are plain strings). Keeps the brand accent consistent
+      // on the customizable dashboard surface.
+      dashboardThemeTokens: {
+        "brand-accent": "#5f249f",
+        "brand-accent-fg": "#ffffff",
+        "radius-card": "16px",
+      } as Record<string, string>,
+    },
+    technicalReq: true as const,
   },
 ];
 
@@ -216,6 +279,167 @@ async function seedStaff(t: typeof TENANTS[number]): Promise<void> {
   }
 }
 
+// ── Branded tenant theming (e.g. NCR Voyix). Idempotent: PUT /api/branding is a
+// full-payload replace, so re-running always converges to the same brand values.
+// Only runs for tenants that declare a `branding` block; a plain demo tenant is
+// left with the platform defaults (unchanged). The logged-in app chrome
+// (cd-shell.tsx) reads brandPrimaryColor via buildThemeCss to re-skin itself, and
+// the candidate portal reads the same values via /api/public/branding, so this
+// one PUT themes both surfaces. Requires the caller to be a tenant ADMIN
+// (requireTenantAdmin on PUT /internal/branding); the seed logs in as the admin,
+// so the token carries the ADMIN role. ──
+async function seedBranding(t: typeof TENANTS[number]): Promise<void> {
+  const branding = (t as any).branding as
+    | {
+        brandPrimaryColor?: string;
+        brandSecondaryColor?: string;
+        brandAccentColor?: string;
+        brandTagline?: string;
+        website?: string;
+        defaultColorMode?: "system" | "light" | "dark";
+        dashboardThemeTokens?: Record<string, string>;
+      }
+    | undefined;
+  if (!branding) return;
+
+  let login: any;
+  try {
+    login = await api("POST", "/auth/login", { body: { email: t.email, password: t.password } });
+  } catch {
+    console.log(`  ! branding: could not log in as admin — skipping`);
+    return;
+  }
+  const token: string | undefined = login?.token;
+  if (!token) {
+    console.log(`  ! branding: missing admin token — skipping`);
+    return;
+  }
+
+  try {
+    // PUT /api/branding takes the full brand payload; tenant-service normalizes
+    // empty strings to null and validates hex colors + the color mode + theme
+    // token map. We send only the fields this tenant declared.
+    await api("PUT", "/branding", {
+      token,
+      body: {
+        ...(branding.brandPrimaryColor ? { brandPrimaryColor: branding.brandPrimaryColor } : {}),
+        ...(branding.brandSecondaryColor ? { brandSecondaryColor: branding.brandSecondaryColor } : {}),
+        ...(branding.brandAccentColor ? { brandAccentColor: branding.brandAccentColor } : {}),
+        ...(branding.brandTagline ? { brandTagline: branding.brandTagline } : {}),
+        ...(branding.website ? { website: branding.website } : {}),
+        ...(branding.defaultColorMode ? { defaultColorMode: branding.defaultColorMode } : {}),
+        ...(branding.dashboardThemeTokens ? { dashboardThemeTokens: branding.dashboardThemeTokens } : {}),
+      },
+    });
+    console.log(`  ✓ branding applied (${branding.brandPrimaryColor ?? "custom"} + theme tokens)`);
+  } catch (err) {
+    console.log(`  ! branding PUT failed: ${(err as Error).message.slice(0, 100)}`);
+  }
+}
+
+// ── Sample technical requisition for a branded tenant (e.g. NCR Voyix). Creates
+// one "Software Engineer II" requisition with:
+//   - a real eligibility rule (work authorization) evaluated on the public apply
+//     path, so the demo shows a gated requisition, and
+//   - an HONEST HackerRank-OA note in customFields describing the intended
+//     assessment step. The step is INERT until the tenant pastes its own
+//     HackerRank API key on Settings -> Integrations (no fake key, no fake
+//     "connected", no fabricated score). We do NOT create an Assessment row here
+//     because /api/assessments is module-gated (oa-assessments) and the module is
+//     turned on by infra/seed.sh AFTER this script, so an inline note keyed to
+//     the requisition is the honest, always-runnable representation of the step.
+// Idempotent: skips if a "Software Engineer II" requisition already exists for
+// this tenant. Only runs for tenants with technicalReq = true. ──
+async function seedTechnicalRequisition(t: typeof TENANTS[number]): Promise<void> {
+  if (!(t as any).technicalReq) return;
+
+  let login: any;
+  try {
+    login = await api("POST", "/auth/login", { body: { email: t.email, password: t.password } });
+  } catch {
+    console.log(`  ! tech req: could not log in as admin — skipping`);
+    return;
+  }
+  const token: string | undefined = login?.token;
+  if (!token) {
+    console.log(`  ! tech req: missing admin token — skipping`);
+    return;
+  }
+
+  const TITLE = "Software Engineer II";
+
+  // Idempotency: don't create a second copy on re-run.
+  try {
+    const list = await api<any>("GET", "/requisitions", { token });
+    const arr: any[] = Array.isArray(list) ? list : list?.requisitions ?? list?.data ?? [];
+    if (arr.some((r) => String(r?.title ?? "").toLowerCase() === TITLE.toLowerCase())) {
+      console.log(`  ↻ tech req "${TITLE}" already exists — skipping`);
+      return;
+    }
+  } catch {
+    // If the list read fails we still try to create; a duplicate is harmless demo
+    // data, and the create may still succeed.
+  }
+
+  try {
+    await api("POST", "/requisitions", {
+      token,
+      body: {
+        title: TITLE,
+        department: "Engineering",
+        location: "Atlanta, GA (Hybrid)",
+        country: "US",
+        requirements: ["Java or Go", "REST APIs", "SQL", "CI/CD", "Cloud (AWS/Azure)"],
+        salaryMin: 110000,
+        salaryMax: 150000,
+        status: "OPEN",
+        // Ordered eligibility rules (EligibilityRule[]) evaluated against the
+        // candidate's submitted answers on the public apply path. This one gates
+        // on work authorization; a candidate who answers "no" is short-circuited
+        // with this message. Demonstrates the eligibility-gate flow shape.
+        eligibilityRules: [
+          {
+            field: "workAuthorization",
+            op: "eq",
+            values: ["yes"],
+            errorMessage:
+              "This role requires existing authorization to work in the United States.",
+            label: "US work authorization required",
+          },
+        ],
+        // Honest description of the assessment step. The OA is INERT until NCR
+        // connects HackerRank on Settings -> Integrations.
+        description:
+          "Backend/full-stack engineering role on NCR Voyix commerce platform teams. " +
+          "Technical screen: candidates who pass eligibility are invited to a HackerRank " +
+          "coding assessment. This step is inactive until a HackerRank API key is connected " +
+          "under Settings -> Integrations (no assessment is sent until then).",
+        // customFields on a requisition are { label, value(string), importance? }
+        // (job-service CustomFieldSchema) and double as extra criteria fed to the
+        // AI screener. We record the INTENDED assessment step here as an honest,
+        // info-only note (provider + a placeholder test slug the tenant will
+        // replace with a real HackerRank test id). It carries no credentials and
+        // triggers no send — it documents the flow shape for the demo. The real
+        // invite is created later from the assessment surface once HackerRank is
+        // connected. importance:"info" keeps it out of pass/fail screening logic.
+        customFields: [
+          {
+            label: "Assessment step (HackerRank OA)",
+            value:
+              "provider=hackerrank; testSlug=PLACEHOLDER-swe-ii-coding; status=needs_credentials. " +
+              "Inert until HackerRank is connected under Settings -> Integrations; replace testSlug " +
+              "with a real HackerRank test id to enable invites. No assessment is sent until then.",
+            importance: "info" as const,
+          },
+        ],
+      },
+    });
+    console.log(`  ✓ technical requisition "${TITLE}" created (eligibility rule + inert HackerRank OA step)`);
+  } catch (err) {
+    console.log(`  ! tech req create failed: ${(err as Error).message.slice(0, 120)}`);
+  }
+}
+
 // ── Per-tenant seeding ───────────────────────────────────────────────────────
 async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
   console.log(`\n━━━ ${t.orgName} ━━━`);
@@ -241,6 +465,12 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
     // Phase 35 — even for an already-seeded tenant, make sure the manager +
     // recruiters exist, then skip the heavy requisition/candidate data.
     await seedStaff(t);
+    // NCR Voyix - re-apply branding + ensure the technical requisition exists on
+    // every run (both idempotent: branding is a full-payload replace, the req
+    // create is skipped when it already exists). This is what lets the branded
+    // tenant converge on re-run against an already-seeded DB.
+    await seedBranding(t);
+    await seedTechnicalRequisition(t);
     return;
   }
   try {
@@ -251,10 +481,16 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
         lastName: t.lastName,
         email: t.email,
         password: t.password,
+        // Most tenants register on FREE (register-company's default) and are
+        // upgraded to ENTERPRISE by infra/seed.sh Phase 2. A tenant may opt to be
+        // created directly on a plan (e.g. NCR Voyix -> ENTERPRISE) so every
+        // feature works even before seed.sh runs. register-company validates this
+        // against TenantPlanSchema; omit for the default FREE.
+        ...((t as any).plan ? { plan: (t as any).plan } : {}),
       },
     });
     token = reg.token;
-    console.log(`  ✓ tenant created`);
+    console.log(`  ✓ tenant created${(t as any).plan ? ` (${(t as any).plan})` : ""}`);
   } catch (err) {
     console.log(`  ! tenant creation failed: ${(err as Error).message.slice(0, 100)}`);
     return;
@@ -262,6 +498,11 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
 
   // Phase 35 — seed the org hierarchy for the freshly-created tenant.
   await seedStaff(t);
+
+  // NCR Voyix - apply the tenant's brand palette right after creation so the very
+  // first dashboard load is already themed. No-op for tenants without a `branding`
+  // block.
+  await seedBranding(t);
 
   // 2. Requisitions
   const reqIds: string[] = [];
@@ -286,6 +527,11 @@ async function seedTenant(t: typeof TENANTS[number]): Promise<void> {
     }
   }
   console.log(`  ✓ ${reqIds.length} requisitions`);
+
+  // 2b. Sample technical requisition (branded tenants only, e.g. NCR Voyix):
+  // "Software Engineer II" with an eligibility rule + an honest, inert HackerRank
+  // OA step. No-op for tenants without technicalReq.
+  await seedTechnicalRequisition(t);
 
   // 3. Candidates
   const candidateIds: string[] = [];
@@ -400,11 +646,19 @@ async function main() {
     console.log(`    manager@${domain}  password: ManagerDemo123!  (Hiring Manager)`);
   }
   console.log(`\n  Plan/entitlements are applied by infra/seed.sh AFTER this script:`);
-  console.log(`    - Pinnacle/Apex/Wavelength -> ENTERPRISE`);
-  console.log(`    - Pinnacle additionally gets oa-assessments + custom-dashboards +`);
-  console.log(`      white-label-embed turned ON (real TenantModule rows) + a tenant`);
-  console.log(`      dashboard + theme + embed origin.`);
+  console.log(`    - Pinnacle/Apex/Wavelength/NCR Voyix -> ENTERPRISE`);
+  console.log(`    - Pinnacle + NCR Voyix additionally get oa-assessments (+ custom-`);
+  console.log(`      dashboards + white-label-embed) turned ON via real TenantModule rows.`);
   console.log(`    - Northwind Staffing stays FREE (proves gating still 402/404s).`);
+  console.log(`\n  NCR Voyix (client-branded demo tenant):`);
+  console.log(`    Login:  admin@ncrvoyix.demo  password: NcrVoyixDemo123!  (ADMIN, ENTERPRISE)`);
+  console.log(`    Branding: NCR Voyix purple chrome (brandPrimaryColor #5f249f) + dark mode;`);
+  console.log(`              the logged-in app + candidate portal both theme from PUT /api/branding.`);
+  console.log(`    Assessments: HackerRank + HackerEarth appear on Settings -> Integrations as`);
+  console.log(`              "Not connected" (honestly INERT, no keys stored). Paste NCR's own`);
+  console.log(`              keys there to activate; nothing is fabricated until then.`);
+  console.log(`    Technical req: "Software Engineer II" with an eligibility rule + an inert`);
+  console.log(`              HackerRank OA step recorded in customFields (needs_credentials).`);
   console.log(`\n  Visit dashboard: http://localhost:3000/`);
   console.log(`  Visit AI Ops: http://localhost:3001/d/cdc-ats-ai-ops`);
 }

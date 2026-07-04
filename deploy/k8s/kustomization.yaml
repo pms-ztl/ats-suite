@@ -50,3 +50,9 @@ resources:
   # ── Frontend + Ingress ─────────────────────────────────────────────────────
   - 60-frontend.yaml
   - 70-ingress.yaml
+  # ── Autoscaling (HorizontalPodAutoscalers for the hot-path deployables) ─────
+  # Additive. Requires autoscaling/v2 + metrics-server on the cluster. See the
+  # honest-status header in the file and docs/SCALABILITY.md before relying on
+  # the target percentages / replica bounds (they are estimates, untested on a
+  # live cluster). Applied last so its scaleTargetRef Deployments already exist.
+  - 55-autoscalers.yaml
