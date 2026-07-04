@@ -12,6 +12,8 @@ import { startBoardSyncWorker } from "./workers/board-sync.worker.js";
 import { startBoardCloseWorker } from "./workers/board-close.worker.js";
 import { startApplyIngestWorker } from "./workers/apply-ingest.worker.js";
 import { startApplyIngestSubscribers } from "./lib/apply-ingest-subscriber.js";
+import { startApplicationCountSubscribers } from "./lib/application-count-subscriber.js";
+import { startApplicationCountRollup } from "./lib/application-count-rollup.js";
 import type { ActiveSubscription } from "@cdc-ats/nats-client";
 
 const logger = createLogger({ serviceName: "job-service" });
@@ -23,6 +25,8 @@ let boardSyncWorker: ReturnType<typeof startBoardSyncWorker> | null = null;
 let boardCloseWorker: ReturnType<typeof startBoardCloseWorker> | null = null;
 let applyIngestWorker: ReturnType<typeof startApplyIngestWorker> | null = null;
 let applyIngestSubs: ActiveSubscription[] = [];
+let applicationCountSubs: ActiveSubscription[] = [];
+let stopApplicationCountRollup: (() => Promise<void>) | null = null;
 
 async function main() {
   if (process.env["NATS_URL"]) {
@@ -42,9 +46,31 @@ async function main() {
       } catch (err) {
         logger.warn({ err }, "apply-ingest subscribers failed to start — PARSED/SCREENED stage will not advance");
       }
+
+      // applicationCount rollup subscriber — reconciles a requisition's
+      // JobPosting.applicationCount to the REAL candidate-service count the moment an
+      // application.stage.changed event arrives (the event-driven half of the rollup
+      // that replaced the per-apply count UPDATE dropped from the accept-fast path).
+      try {
+        applicationCountSubs = await startApplicationCountSubscribers(logger);
+      } catch (err) {
+        logger.warn({ err }, "applicationCount rollup subscriber failed to start — count refreshes only on the periodic sweep");
+      }
     } catch (err) {
       logger.warn({ err }, "NATS connect failed — agent.completed events will not publish");
     }
+  }
+
+  // applicationCount periodic rollup sweep — reconciles every published posting's
+  // applicationCount to the REAL candidate-service count on a low-frequency timer.
+  // It talks to candidate-service over HTTP (not NATS/Redis), so it runs regardless
+  // of broker availability and catches the one case the event driver misses: a
+  // brand-new accept-fast apply that sits at APPLIED and emits no stage.changed
+  // event yet. Best-effort: a failed sweep is logged and retried on the next tick.
+  try {
+    stopApplicationCountRollup = startApplicationCountRollup(logger).stop;
+  } catch (err) {
+    logger.warn({ err }, "applicationCount rollup sweep failed to schedule");
   }
 
   // WF-G G6 — outbound board-distribution workers consume the board-post + board-sync
@@ -86,6 +112,8 @@ async function main() {
       async () => { if (boardCloseWorker) await boardCloseWorker.close().catch(() => {}); },
       async () => { if (applyIngestWorker) await applyIngestWorker.close().catch(() => {}); },
       async () => { await Promise.all(applyIngestSubs.map((s) => s.stop().catch(() => {}))); },
+      async () => { await Promise.all(applicationCountSubs.map((s) => s.stop().catch(() => {}))); },
+      async () => { if (stopApplicationCountRollup) await stopApplicationCountRollup().catch(() => {}); },
       async () => { await closeRedis().catch(() => {}); },
       async () => { await closeNats().catch(() => {}); },
     ],

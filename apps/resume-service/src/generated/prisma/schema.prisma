@@ -27,6 +27,13 @@ model Resume {
   storageKey       String    @default("")
   extractedText    String?   @db.Text
   parsedData       Json?
+  // Additive structured facets derived at parse time from the REAL parsed text +
+  // enriched output (see lib/projects-tags.ts). projects = [{ name, description,
+  // technologies[] }] pulled from an actual "Projects" section; tags = flat deduped
+  // facet list (canonical skills + certs + languages + format). Honest-empty ([])
+  // when the resume has no such content — never fabricated.
+  projects         Json      @default("[]")
+  tags             String[]  @default([])
   parseStatus      String    @default("PENDING")
   parsedAt         DateTime?
   bulkUploadId     String?
@@ -67,28 +74,33 @@ model BulkUpload {
 // Holds the full extracted text so commit does NOT re-extract; a recruiter
 // reviews/edits/approves these before any real Candidate/Resume is created.
 model BulkImportItem {
-  id            String   @id @default(uuid())
-  tenantId      String
-  bulkUploadId  String
-  fileName      String
-  mimeType      String
-  sizeBytes     Int      @default(0)
-  detectedName  String?
-  detectedEmail String?
-  textSnippet   String?
-  extractedText String?  @db.Text
+  id               String   @id @default(uuid())
+  tenantId         String
+  bulkUploadId     String
+  fileName         String
+  mimeType         String
+  sizeBytes        Int      @default(0)
+  detectedName     String?
+  detectedEmail    String?
+  textSnippet      String?
+  extractedText    String?  @db.Text
   // extracted | ocr_empty | failed | unsupported
-  extractStatus String   @default("extracted")
+  extractStatus    String   @default("extracted")
+  // WHY this item failed/was skipped, persisted per item so the batch result
+  // reports the real reason each bad file was quarantined (corrupt PDF, unsupported
+  // type, blank OCR, extraction error). Null for a clean "extracted" item. The
+  // batch NEVER aborts on a bad file — it stages it with this reason instead.
+  quarantineReason String?
   // pending | approved | rejected
-  reviewStatus  String   @default("pending")
+  reviewStatus     String   @default("pending")
   // ATS score (0-100) of this resume against the BulkUpload's requisition, set
   // by the bulk-archive-extract worker after a service-to-service screen.
   // Null when the BulkUpload has no requisitionId (unranked import).
-  score         Float?
+  score            Float?
   // null/"pending" (not yet scored) | "scored" | "failed". Never fabricated.
-  scoreStatus   String?
-  candidateId   String?
-  createdAt     DateTime @default(now())
+  scoreStatus      String?
+  candidateId      String?
+  createdAt        DateTime @default(now())
 
   @@index([bulkUploadId])
   @@index([tenantId])

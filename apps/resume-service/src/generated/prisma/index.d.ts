@@ -1219,6 +1219,8 @@ export namespace Prisma {
     storageKey: number
     extractedText: number
     parsedData: number
+    projects: number
+    tags: number
     parseStatus: number
     parsedAt: number
     bulkUploadId: number
@@ -1281,6 +1283,8 @@ export namespace Prisma {
     storageKey?: true
     extractedText?: true
     parsedData?: true
+    projects?: true
+    tags?: true
     parseStatus?: true
     parsedAt?: true
     bulkUploadId?: true
@@ -1386,6 +1390,8 @@ export namespace Prisma {
     storageKey: string
     extractedText: string | null
     parsedData: JsonValue | null
+    projects: JsonValue
+    tags: string[]
     parseStatus: string
     parsedAt: Date | null
     bulkUploadId: string | null
@@ -1423,6 +1429,8 @@ export namespace Prisma {
     storageKey?: boolean
     extractedText?: boolean
     parsedData?: boolean
+    projects?: boolean
+    tags?: boolean
     parseStatus?: boolean
     parsedAt?: boolean
     bulkUploadId?: boolean
@@ -1441,6 +1449,8 @@ export namespace Prisma {
     storageKey?: boolean
     extractedText?: boolean
     parsedData?: boolean
+    projects?: boolean
+    tags?: boolean
     parseStatus?: boolean
     parsedAt?: boolean
     bulkUploadId?: boolean
@@ -1459,6 +1469,8 @@ export namespace Prisma {
     storageKey?: boolean
     extractedText?: boolean
     parsedData?: boolean
+    projects?: boolean
+    tags?: boolean
     parseStatus?: boolean
     parsedAt?: boolean
     bulkUploadId?: boolean
@@ -1477,6 +1489,8 @@ export namespace Prisma {
     storageKey?: boolean
     extractedText?: boolean
     parsedData?: boolean
+    projects?: boolean
+    tags?: boolean
     parseStatus?: boolean
     parsedAt?: boolean
     bulkUploadId?: boolean
@@ -1484,7 +1498,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ResumeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "candidateId" | "fileName" | "originalFilename" | "fileSize" | "mimeType" | "storageKey" | "extractedText" | "parsedData" | "parseStatus" | "parsedAt" | "bulkUploadId" | "createdAt" | "updatedAt", ExtArgs["result"]["resume"]>
+  export type ResumeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "candidateId" | "fileName" | "originalFilename" | "fileSize" | "mimeType" | "storageKey" | "extractedText" | "parsedData" | "projects" | "tags" | "parseStatus" | "parsedAt" | "bulkUploadId" | "createdAt" | "updatedAt", ExtArgs["result"]["resume"]>
 
   export type $ResumePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Resume"
@@ -1500,6 +1514,8 @@ export namespace Prisma {
       storageKey: string
       extractedText: string | null
       parsedData: Prisma.JsonValue | null
+      projects: Prisma.JsonValue
+      tags: string[]
       parseStatus: string
       parsedAt: Date | null
       bulkUploadId: string | null
@@ -1938,6 +1954,8 @@ export namespace Prisma {
     readonly storageKey: FieldRef<"Resume", 'String'>
     readonly extractedText: FieldRef<"Resume", 'String'>
     readonly parsedData: FieldRef<"Resume", 'Json'>
+    readonly projects: FieldRef<"Resume", 'Json'>
+    readonly tags: FieldRef<"Resume", 'String[]'>
     readonly parseStatus: FieldRef<"Resume", 'String'>
     readonly parsedAt: FieldRef<"Resume", 'DateTime'>
     readonly bulkUploadId: FieldRef<"Resume", 'String'>
@@ -3565,6 +3583,7 @@ export namespace Prisma {
     textSnippet: string | null
     extractedText: string | null
     extractStatus: string | null
+    quarantineReason: string | null
     reviewStatus: string | null
     score: number | null
     scoreStatus: string | null
@@ -3584,6 +3603,7 @@ export namespace Prisma {
     textSnippet: string | null
     extractedText: string | null
     extractStatus: string | null
+    quarantineReason: string | null
     reviewStatus: string | null
     score: number | null
     scoreStatus: string | null
@@ -3603,6 +3623,7 @@ export namespace Prisma {
     textSnippet: number
     extractedText: number
     extractStatus: number
+    quarantineReason: number
     reviewStatus: number
     score: number
     scoreStatus: number
@@ -3634,6 +3655,7 @@ export namespace Prisma {
     textSnippet?: true
     extractedText?: true
     extractStatus?: true
+    quarantineReason?: true
     reviewStatus?: true
     score?: true
     scoreStatus?: true
@@ -3653,6 +3675,7 @@ export namespace Prisma {
     textSnippet?: true
     extractedText?: true
     extractStatus?: true
+    quarantineReason?: true
     reviewStatus?: true
     score?: true
     scoreStatus?: true
@@ -3672,6 +3695,7 @@ export namespace Prisma {
     textSnippet?: true
     extractedText?: true
     extractStatus?: true
+    quarantineReason?: true
     reviewStatus?: true
     score?: true
     scoreStatus?: true
@@ -3778,6 +3802,7 @@ export namespace Prisma {
     textSnippet: string | null
     extractedText: string | null
     extractStatus: string
+    quarantineReason: string | null
     reviewStatus: string
     score: number | null
     scoreStatus: string | null
@@ -3816,6 +3841,7 @@ export namespace Prisma {
     textSnippet?: boolean
     extractedText?: boolean
     extractStatus?: boolean
+    quarantineReason?: boolean
     reviewStatus?: boolean
     score?: boolean
     scoreStatus?: boolean
@@ -3835,6 +3861,7 @@ export namespace Prisma {
     textSnippet?: boolean
     extractedText?: boolean
     extractStatus?: boolean
+    quarantineReason?: boolean
     reviewStatus?: boolean
     score?: boolean
     scoreStatus?: boolean
@@ -3854,6 +3881,7 @@ export namespace Prisma {
     textSnippet?: boolean
     extractedText?: boolean
     extractStatus?: boolean
+    quarantineReason?: boolean
     reviewStatus?: boolean
     score?: boolean
     scoreStatus?: boolean
@@ -3873,6 +3901,7 @@ export namespace Prisma {
     textSnippet?: boolean
     extractedText?: boolean
     extractStatus?: boolean
+    quarantineReason?: boolean
     reviewStatus?: boolean
     score?: boolean
     scoreStatus?: boolean
@@ -3880,7 +3909,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type BulkImportItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "bulkUploadId" | "fileName" | "mimeType" | "sizeBytes" | "detectedName" | "detectedEmail" | "textSnippet" | "extractedText" | "extractStatus" | "reviewStatus" | "score" | "scoreStatus" | "candidateId" | "createdAt", ExtArgs["result"]["bulkImportItem"]>
+  export type BulkImportItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "bulkUploadId" | "fileName" | "mimeType" | "sizeBytes" | "detectedName" | "detectedEmail" | "textSnippet" | "extractedText" | "extractStatus" | "quarantineReason" | "reviewStatus" | "score" | "scoreStatus" | "candidateId" | "createdAt", ExtArgs["result"]["bulkImportItem"]>
 
   export type $BulkImportItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BulkImportItem"
@@ -3897,6 +3926,7 @@ export namespace Prisma {
       textSnippet: string | null
       extractedText: string | null
       extractStatus: string
+      quarantineReason: string | null
       reviewStatus: string
       score: number | null
       scoreStatus: string | null
@@ -4336,6 +4366,7 @@ export namespace Prisma {
     readonly textSnippet: FieldRef<"BulkImportItem", 'String'>
     readonly extractedText: FieldRef<"BulkImportItem", 'String'>
     readonly extractStatus: FieldRef<"BulkImportItem", 'String'>
+    readonly quarantineReason: FieldRef<"BulkImportItem", 'String'>
     readonly reviewStatus: FieldRef<"BulkImportItem", 'String'>
     readonly score: FieldRef<"BulkImportItem", 'Float'>
     readonly scoreStatus: FieldRef<"BulkImportItem", 'String'>
@@ -5877,6 +5908,8 @@ export namespace Prisma {
     storageKey: 'storageKey',
     extractedText: 'extractedText',
     parsedData: 'parsedData',
+    projects: 'projects',
+    tags: 'tags',
     parseStatus: 'parseStatus',
     parsedAt: 'parsedAt',
     bulkUploadId: 'bulkUploadId',
@@ -5923,6 +5956,7 @@ export namespace Prisma {
     textSnippet: 'textSnippet',
     extractedText: 'extractedText',
     extractStatus: 'extractStatus',
+    quarantineReason: 'quarantineReason',
     reviewStatus: 'reviewStatus',
     score: 'score',
     scoreStatus: 'scoreStatus',
@@ -6120,6 +6154,8 @@ export namespace Prisma {
     storageKey?: StringFilter<"Resume"> | string
     extractedText?: StringNullableFilter<"Resume"> | string | null
     parsedData?: JsonNullableFilter<"Resume">
+    projects?: JsonFilter<"Resume">
+    tags?: StringNullableListFilter<"Resume">
     parseStatus?: StringFilter<"Resume"> | string
     parsedAt?: DateTimeNullableFilter<"Resume"> | Date | string | null
     bulkUploadId?: StringNullableFilter<"Resume"> | string | null
@@ -6138,6 +6174,8 @@ export namespace Prisma {
     storageKey?: SortOrder
     extractedText?: SortOrderInput | SortOrder
     parsedData?: SortOrderInput | SortOrder
+    projects?: SortOrder
+    tags?: SortOrder
     parseStatus?: SortOrder
     parsedAt?: SortOrderInput | SortOrder
     bulkUploadId?: SortOrderInput | SortOrder
@@ -6159,6 +6197,8 @@ export namespace Prisma {
     storageKey?: StringFilter<"Resume"> | string
     extractedText?: StringNullableFilter<"Resume"> | string | null
     parsedData?: JsonNullableFilter<"Resume">
+    projects?: JsonFilter<"Resume">
+    tags?: StringNullableListFilter<"Resume">
     parseStatus?: StringFilter<"Resume"> | string
     parsedAt?: DateTimeNullableFilter<"Resume"> | Date | string | null
     bulkUploadId?: StringNullableFilter<"Resume"> | string | null
@@ -6177,6 +6217,8 @@ export namespace Prisma {
     storageKey?: SortOrder
     extractedText?: SortOrderInput | SortOrder
     parsedData?: SortOrderInput | SortOrder
+    projects?: SortOrder
+    tags?: SortOrder
     parseStatus?: SortOrder
     parsedAt?: SortOrderInput | SortOrder
     bulkUploadId?: SortOrderInput | SortOrder
@@ -6203,6 +6245,8 @@ export namespace Prisma {
     storageKey?: StringWithAggregatesFilter<"Resume"> | string
     extractedText?: StringNullableWithAggregatesFilter<"Resume"> | string | null
     parsedData?: JsonNullableWithAggregatesFilter<"Resume">
+    projects?: JsonWithAggregatesFilter<"Resume">
+    tags?: StringNullableListFilter<"Resume">
     parseStatus?: StringWithAggregatesFilter<"Resume"> | string
     parsedAt?: DateTimeNullableWithAggregatesFilter<"Resume"> | Date | string | null
     bulkUploadId?: StringNullableWithAggregatesFilter<"Resume"> | string | null
@@ -6344,6 +6388,7 @@ export namespace Prisma {
     textSnippet?: StringNullableFilter<"BulkImportItem"> | string | null
     extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
     extractStatus?: StringFilter<"BulkImportItem"> | string
+    quarantineReason?: StringNullableFilter<"BulkImportItem"> | string | null
     reviewStatus?: StringFilter<"BulkImportItem"> | string
     score?: FloatNullableFilter<"BulkImportItem"> | number | null
     scoreStatus?: StringNullableFilter<"BulkImportItem"> | string | null
@@ -6363,6 +6408,7 @@ export namespace Prisma {
     textSnippet?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
     extractStatus?: SortOrder
+    quarantineReason?: SortOrderInput | SortOrder
     reviewStatus?: SortOrder
     score?: SortOrderInput | SortOrder
     scoreStatus?: SortOrderInput | SortOrder
@@ -6385,6 +6431,7 @@ export namespace Prisma {
     textSnippet?: StringNullableFilter<"BulkImportItem"> | string | null
     extractedText?: StringNullableFilter<"BulkImportItem"> | string | null
     extractStatus?: StringFilter<"BulkImportItem"> | string
+    quarantineReason?: StringNullableFilter<"BulkImportItem"> | string | null
     reviewStatus?: StringFilter<"BulkImportItem"> | string
     score?: FloatNullableFilter<"BulkImportItem"> | number | null
     scoreStatus?: StringNullableFilter<"BulkImportItem"> | string | null
@@ -6404,6 +6451,7 @@ export namespace Prisma {
     textSnippet?: SortOrderInput | SortOrder
     extractedText?: SortOrderInput | SortOrder
     extractStatus?: SortOrder
+    quarantineReason?: SortOrderInput | SortOrder
     reviewStatus?: SortOrder
     score?: SortOrderInput | SortOrder
     scoreStatus?: SortOrderInput | SortOrder
@@ -6431,6 +6479,7 @@ export namespace Prisma {
     textSnippet?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     extractedText?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     extractStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
+    quarantineReason?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
     reviewStatus?: StringWithAggregatesFilter<"BulkImportItem"> | string
     score?: FloatNullableWithAggregatesFilter<"BulkImportItem"> | number | null
     scoreStatus?: StringNullableWithAggregatesFilter<"BulkImportItem"> | string | null
@@ -6543,6 +6592,8 @@ export namespace Prisma {
     storageKey?: string
     extractedText?: string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeCreatetagsInput | string[]
     parseStatus?: string
     parsedAt?: Date | string | null
     bulkUploadId?: string | null
@@ -6561,6 +6612,8 @@ export namespace Prisma {
     storageKey?: string
     extractedText?: string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeCreatetagsInput | string[]
     parseStatus?: string
     parsedAt?: Date | string | null
     bulkUploadId?: string | null
@@ -6579,6 +6632,8 @@ export namespace Prisma {
     storageKey?: StringFieldUpdateOperationsInput | string
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeUpdatetagsInput | string[]
     parseStatus?: StringFieldUpdateOperationsInput | string
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bulkUploadId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6597,6 +6652,8 @@ export namespace Prisma {
     storageKey?: StringFieldUpdateOperationsInput | string
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeUpdatetagsInput | string[]
     parseStatus?: StringFieldUpdateOperationsInput | string
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bulkUploadId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6615,6 +6672,8 @@ export namespace Prisma {
     storageKey?: string
     extractedText?: string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeCreatetagsInput | string[]
     parseStatus?: string
     parsedAt?: Date | string | null
     bulkUploadId?: string | null
@@ -6633,6 +6692,8 @@ export namespace Prisma {
     storageKey?: StringFieldUpdateOperationsInput | string
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeUpdatetagsInput | string[]
     parseStatus?: StringFieldUpdateOperationsInput | string
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bulkUploadId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6651,6 +6712,8 @@ export namespace Prisma {
     storageKey?: StringFieldUpdateOperationsInput | string
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     parsedData?: NullableJsonNullValueInput | InputJsonValue
+    projects?: JsonNullValueInput | InputJsonValue
+    tags?: ResumeUpdatetagsInput | string[]
     parseStatus?: StringFieldUpdateOperationsInput | string
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bulkUploadId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6817,6 +6880,7 @@ export namespace Prisma {
     textSnippet?: string | null
     extractedText?: string | null
     extractStatus?: string
+    quarantineReason?: string | null
     reviewStatus?: string
     score?: number | null
     scoreStatus?: string | null
@@ -6836,6 +6900,7 @@ export namespace Prisma {
     textSnippet?: string | null
     extractedText?: string | null
     extractStatus?: string
+    quarantineReason?: string | null
     reviewStatus?: string
     score?: number | null
     scoreStatus?: string | null
@@ -6855,6 +6920,7 @@ export namespace Prisma {
     textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
+    quarantineReason?: NullableStringFieldUpdateOperationsInput | string | null
     reviewStatus?: StringFieldUpdateOperationsInput | string
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6874,6 +6940,7 @@ export namespace Prisma {
     textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
+    quarantineReason?: NullableStringFieldUpdateOperationsInput | string | null
     reviewStatus?: StringFieldUpdateOperationsInput | string
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6893,6 +6960,7 @@ export namespace Prisma {
     textSnippet?: string | null
     extractedText?: string | null
     extractStatus?: string
+    quarantineReason?: string | null
     reviewStatus?: string
     score?: number | null
     scoreStatus?: string | null
@@ -6912,6 +6980,7 @@ export namespace Prisma {
     textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
+    quarantineReason?: NullableStringFieldUpdateOperationsInput | string | null
     reviewStatus?: StringFieldUpdateOperationsInput | string
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6931,6 +7000,7 @@ export namespace Prisma {
     textSnippet?: NullableStringFieldUpdateOperationsInput | string | null
     extractedText?: NullableStringFieldUpdateOperationsInput | string | null
     extractStatus?: StringFieldUpdateOperationsInput | string
+    quarantineReason?: NullableStringFieldUpdateOperationsInput | string | null
     reviewStatus?: StringFieldUpdateOperationsInput | string
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     scoreStatus?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7113,6 +7183,37 @@ export namespace Prisma {
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
@@ -7152,6 +7253,8 @@ export namespace Prisma {
     storageKey?: SortOrder
     extractedText?: SortOrder
     parsedData?: SortOrder
+    projects?: SortOrder
+    tags?: SortOrder
     parseStatus?: SortOrder
     parsedAt?: SortOrder
     bulkUploadId?: SortOrder
@@ -7278,6 +7381,32 @@ export namespace Prisma {
     _min?: NestedJsonNullableFilter<$PrismaModel>
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
 
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
@@ -7312,29 +7441,6 @@ export namespace Prisma {
     in?: $Enums.BulkUploadStatus[] | ListEnumBulkUploadStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.BulkUploadStatus[] | ListEnumBulkUploadStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumBulkUploadStatusFilter<$PrismaModel> | $Enums.BulkUploadStatus
-  }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type BulkUploadCountOrderByAggregateInput = {
@@ -7429,32 +7535,6 @@ export namespace Prisma {
     _min?: NestedEnumBulkUploadStatusFilter<$PrismaModel>
     _max?: NestedEnumBulkUploadStatusFilter<$PrismaModel>
   }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
-  }
 
   export type FloatNullableFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel> | null
@@ -7479,6 +7559,7 @@ export namespace Prisma {
     textSnippet?: SortOrder
     extractedText?: SortOrder
     extractStatus?: SortOrder
+    quarantineReason?: SortOrder
     reviewStatus?: SortOrder
     score?: SortOrder
     scoreStatus?: SortOrder
@@ -7503,6 +7584,7 @@ export namespace Prisma {
     textSnippet?: SortOrder
     extractedText?: SortOrder
     extractStatus?: SortOrder
+    quarantineReason?: SortOrder
     reviewStatus?: SortOrder
     score?: SortOrder
     scoreStatus?: SortOrder
@@ -7522,6 +7604,7 @@ export namespace Prisma {
     textSnippet?: SortOrder
     extractedText?: SortOrder
     extractStatus?: SortOrder
+    quarantineReason?: SortOrder
     reviewStatus?: SortOrder
     score?: SortOrder
     scoreStatus?: SortOrder
@@ -7639,6 +7722,10 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type ResumeCreatetagsInput = {
+    set: string[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -7653,6 +7740,11 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type ResumeUpdatetagsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -7838,6 +7930,29 @@ export namespace Prisma {
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
@@ -7882,29 +7997,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumBulkUploadStatusFilter<$PrismaModel>
     _max?: NestedEnumBulkUploadStatusFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedFloatNullableFilter<$PrismaModel = never> = {

@@ -141,6 +141,41 @@ export async function getScreeningStatus(
   }
 }
 
+/**
+ * Rollup — read the REAL number of applications a requisition has from
+ * candidate-service (the owner of the Application rows), so job-service can
+ * reconcile the denormalized JobPosting.applicationCount off the request hot path
+ * (the accept-fast apply deliberately dropped the per-apply count UPDATE to avoid a
+ * row-level write-lock hotspot). This is a REAL count of the applications
+ * candidate-service reports for the requisition, never a fabricated / incremented
+ * guess.
+ *
+ * candidate-service's GET /internal/applications?requisitionId= returns the real
+ * rows (ordered appliedAt desc). It caps a single response at 200 rows and exposes
+ * no cursor, so we read what it returns and count exactly. When the response is
+ * short of the cap the count is exact; a response AT the cap means "at least 200"
+ * (the true total is higher) — we return { count, capped } so the caller records
+ * the real observed floor and never overstates. Returns null on any read error so
+ * the caller leaves the existing stored count untouched (no fabricated 0).
+ */
+const APPLICATIONS_READ_CAP = 200;
+export async function fetchApplicationCountForRequisition(
+  tenantId: string,
+  requisitionId: string,
+): Promise<{ count: number; capped: boolean } | null> {
+  try {
+    const url = `${CANDIDATE_URL}/internal/applications?requisitionId=${encodeURIComponent(requisitionId)}`;
+    const res = await fetch(url, { headers: internalHeaders(tenantId), signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const body: any = await res.json().catch(() => null);
+    const rows = Array.isArray(body?.data) ? body.data : null;
+    if (rows === null) return null;
+    return { count: rows.length, capped: rows.length >= APPLICATIONS_READ_CAP };
+  } catch {
+    return null;
+  }
+}
+
 export async function callCandidateService<T>(opts: {
   method: "GET" | "POST" | "PATCH" | "DELETE";
   path: string;

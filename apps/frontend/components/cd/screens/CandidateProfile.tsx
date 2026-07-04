@@ -130,6 +130,44 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
                 </div>
                 <div style={{ width: 200 }}><Confidence value={s.confidence} /></div>
               </div>
+              {/* Mandated alignment dimensions: technical skills match + experience
+                  relevance. DERIVED from the real requirement findings (see
+                  candidate-profile-live). Gated by the same alignment-score policy;
+                  honest "Not scored" when no finding maps to the dimension. */}
+              {canSee("alignmentScore") && s.dimensions && s.dimensions.length > 0 && (
+                <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {s.dimensions.map((d) => {
+                    const col = d.scored ? pStCol(d.state || "review") : "var(--ink-3)";
+                    const bg = d.scored ? pStBg(d.state || "review") : "var(--surface-2)";
+                    return (
+                      <div key={d.key} style={{ borderRadius: "var(--r-lg)", border: "1px solid var(--line)", background: bg, padding: "11px 13px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-2)" }}>{d.label}</span>
+                          {d.scored ? (
+                            <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: col }}>{d.pct}%</span>
+                          ) : (
+                            <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--ink-3)" }}>Not scored</span>
+                          )}
+                        </div>
+                        {d.scored ? (
+                          <>
+                            <div style={{ marginTop: 8, height: 6, borderRadius: 99, background: "var(--surface-3)", overflow: "hidden" }}>
+                              <div style={{ width: `${Math.max(0, Math.min(100, d.pct ?? 0))}%`, height: "100%", background: col, borderRadius: 99 }} />
+                            </div>
+                            <div style={{ marginTop: 6, fontSize: 11, color: "var(--ink-3)" }}>
+                              {d.met}/{d.total} requirement{(d.total ?? 0) === 1 ? "" : "s"} met
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ marginTop: 8, fontSize: 11, color: "var(--ink-3)", lineHeight: 1.4 }}>
+                            No matching requirement in this verdict.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
                 {s.requirements.map((r) => (
                   <div key={r.id} style={{ padding: "7px 0", borderTop: "1px solid var(--line)" }}>

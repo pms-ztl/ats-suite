@@ -3,7 +3,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole, createLogger, filterVisibleFields } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: candidate-facing operations need ADMIN/RECRUITER/HIRING_MANAGER.
 // INTERVIEWER cannot create/update applications or upload attachments.
@@ -77,7 +77,22 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       take: 200,
       include: { candidate: { select: { firstName: true, lastName: true, email: true } } },
     });
-    ok(res, apps);
+    // Strip role-restricted candidate fields from the embedded candidate before
+    // responding (RBAC HELPER contract). The application's own fields (stage,
+    // status, dates) are non-sensitive and pass through; only the nested
+    // candidate is run through the candidate matrix. Additive: for full-view
+    // roles nothing changes, and the selected candidate fields
+    // (name/email) are non-sensitive so this is a no-op today, but it fails
+    // closed if a sensitive candidate field is added to the include later.
+    const role = req.user?.role ?? (req.headers["x-user-role"] as string | undefined) ?? "";
+    ok(
+      res,
+      apps.map((a) =>
+        a.candidate
+          ? { ...a, candidate: filterVisibleFields(a.candidate, role, "candidate") }
+          : a,
+      ),
+    );
   } catch (err) { next(err); }
 });
 

@@ -67,7 +67,9 @@ export function mapGroupsToRole(groups: string[] | undefined, config: TenantSso)
   return config.defaultRole;
 }
 
-const VALID_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER"]);
+// Phase 36: DEPARTMENT_HEAD + EXECUTIVE added additively so an IdP group can
+// map to an org-leadership role via SSO JIT. Existing entries unchanged.
+const VALID_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER", "DEPARTMENT_HEAD", "EXECUTIVE"]);
 function isValidRole(role: string): boolean {
   return VALID_ROLES.has(role);
 }

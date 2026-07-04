@@ -28,10 +28,21 @@ function VideoTile({ stream, label, muted }: { stream: MediaStream | null; label
 
 type Tab = "notes" | "code" | "whiteboard";
 
-export function InterviewRoom({ interviewId }: { interviewId: string }) {
+export function InterviewRoom({
+  interviewId,
+  joinToken,
+  guestName,
+}: {
+  interviewId: string;
+  // When present, this is the candidate/guest entry: no login, the opaque signed
+  // token (from the ${APP_URL}/interview/room/{id}?t=... link) is the credential.
+  joinToken?: string;
+  guestName?: string;
+}) {
   const { user } = useCurrentUser();
-  const displayName = user?.name ?? "Interviewer";
-  const room = useCollabRoom(interviewId, "host", displayName);
+  const isGuest = Boolean(joinToken);
+  const displayName = isGuest ? (guestName?.trim() || "Candidate") : (user?.name ?? "Interviewer");
+  const room = useCollabRoom(interviewId, isGuest ? "guest" : "host", displayName, joinToken ?? null);
   const [tab, setTab] = useState<Tab>("notes");
   const [codeLang, setCodeLang] = useState("typescript");
   const wbRef = useRef<WhiteboardHandle | null>(null);
@@ -57,12 +68,13 @@ export function InterviewRoom({ interviewId }: { interviewId: string }) {
     } catch { /* autosave is best-effort */ }
   }, [interviewId, codeLang]);
 
-  // Autosave every 15s while live + once on unmount.
+  // Autosave every 15s while live + once on unmount. Guests do not own the record
+  // (the artifact PUT is staff-authed), so only the host autosaves + exports.
   useEffect(() => {
-    if (room.status !== "live") return;
+    if (isGuest || room.status !== "live") return;
     const t = setInterval(() => void save(), 15_000);
     return () => { clearInterval(t); void save(); };
-  }, [room.status, save]);
+  }, [isGuest, room.status, save]);
 
   const exportPdf = useCallback(async () => {
     await save();
@@ -109,7 +121,7 @@ export function InterviewRoom({ interviewId }: { interviewId: string }) {
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button style={ctrlBtn} onClick={() => room.toggleMute()}>{room.muted ? "Unmute" : "Mute"}</button>
           <button style={ctrlBtn} onClick={() => room.toggleCamera()}>{room.cameraOff ? "Camera on" : "Camera off"}</button>
-          <button style={ctrlBtn} onClick={() => void exportPdf()}>Export PDF</button>
+          {!isGuest && <button style={ctrlBtn} onClick={() => void exportPdf()}>Export PDF</button>}
           <button style={{ ...ctrlBtn, background: "#3a1f24", borderColor: "#5a2a2a" }} onClick={() => room.leave()}>Leave</button>
         </div>
       </div>

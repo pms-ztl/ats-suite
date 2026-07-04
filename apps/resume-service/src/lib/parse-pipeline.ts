@@ -32,6 +32,7 @@ import type { Logger } from "pino";
 // Resume rows with an explicit tenantId.
 import { prismaAdmin as prisma } from "./prisma.js";
 import { buildVerifierTools } from "./verifier-tools.js";
+import { extractProjects, buildTags } from "./projects-tags.js";
 
 function persistRunFor(tenantId: string, userId: string | null) {
   return async (run: any) => {
@@ -164,11 +165,21 @@ export async function runParsePipeline(opts: {
     }
   }
 
-  // 4. Persist
+  // 4. Derive additive structured facets from the REAL parsed text + enriched
+  //    output (no extra LLM call): projects[] from an actual "Projects" section,
+  //    tags[] as a flat facet list of the canonical skills / certs / languages /
+  //    format already extracted. Honest-empty when the resume lacks the content.
+  const canonicalSkillLabels = enriched.skills.map((s) => s.label).filter(Boolean);
+  const projects = extractProjects(resumeText, canonicalSkillLabels);
+  const tags = buildTags({ canonicalSkillLabels, parsed: result.output });
+
+  // 5. Persist
   await prisma.resume.update({
     where: { id: resumeId },
     data: {
       parsedData: { raw: result.output, enriched, githubCorroboration, verification } as any,
+      projects: projects as any,
+      tags,
       parseStatus: "PARSED",
       parsedAt: new Date(),
     },
@@ -187,13 +198,15 @@ export async function runParsePipeline(opts: {
       parseCostUsd: result.snapshot.costUsd,
       parsed: result.output,
       enriched,
+      projects,
+      tags,
       githubCorroboration,
       verification,
     },
   }).catch(() => undefined);
 
   logger.info(
-    { resumeId, candidateId, reparse: !!opts.reparse, skills: enriched.skills.length, verified: !!verification },
+    { resumeId, candidateId, reparse: !!opts.reparse, skills: enriched.skills.length, projects: projects.length, tags: tags.length, verified: !!verification },
     "resume parse pipeline complete",
   );
 

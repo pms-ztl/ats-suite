@@ -496,6 +496,31 @@ export function createApp(logger: Logger): Express {
     })
   );
 
+  // Functional-gap wiring: candidate status-by-email (candidate-service) + guest
+  // interview join (interview-service). Mounted BEFORE the generic /api/public
+  // job-service catch-all so these exact sub-paths win (same idiom as
+  // /api/public/assessment + /api/public/onboarding above).
+  //   /api/public/applications/*  → candidate-service /public/applications/*
+  app.use(
+    "/api/public/applications",
+    createProxyMiddleware({
+      target: candidateUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/public/applications${path}`,
+      logger,
+    })
+  );
+  //   /api/public/interview/*  → interview-service /public/interview/*
+  app.use(
+    "/api/public/interview",
+    createProxyMiddleware({
+      target: interviewUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/public/interview${path}`,
+      logger,
+    })
+  );
+
   // ── Public routes (no auth) — /api/public/* → job-service /public/* ──
   // WF-I / I5 — the public APPLY data path. Reuse pooled keep-alive sockets to
   // job-service (the hottest backend under an apply spike). No aggressive

@@ -43,6 +43,15 @@ const TEMPLATE_TYPES = [
   "BULK_UPLOAD_COMPLETED",
   "SEAT_LIMIT_REACHED",
   "INTERVIEW_FEEDBACK_NEW",
+  // Lane 4: candidate-facing comms are now tenant-customizable. Each of these
+  // resolves the tenant's EmailTemplate override first (delivery worker keys on
+  // type) and falls back to the built-in default emitted at the event site.
+  "OFFER_APPROVED",
+  "APPLICATION_HIRED",
+  "APPLICATION_REJECTED",
+  "APPLICATION_STATUS_UPDATE",
+  "ASSESSMENT_INVITED",
+  "ONBOARDING_INVITE",
   "SYSTEM",
 ] as const;
 
@@ -54,6 +63,14 @@ export const TEMPLATE_VARIABLES: Record<string, string[]> = {
   BULK_UPLOAD_COMPLETED: ["userName", "fileCount", "successCount", "failureCount"],
   SEAT_LIMIT_REACHED: ["tenantName", "currentSeats", "planLimit", "plan"],
   INTERVIEW_FEEDBACK_NEW: ["candidateName", "jobTitle", "panelistName", "recommendation"],
+  // Lane 4 candidate-comm variables, sourced from each event's notification
+  // metadata (see subscribers.ts). Unknown vars render to "" (mailer.ts).
+  OFFER_APPROVED: ["candidateName", "jobTitle"],
+  APPLICATION_HIRED: ["candidateName", "jobTitle"],
+  APPLICATION_REJECTED: ["candidateName", "jobTitle", "reason"],
+  APPLICATION_STATUS_UPDATE: ["candidateName", "fromStage", "toStage", "statusLabel"],
+  ASSESSMENT_INVITED: ["candidateName", "assessmentUrl"],
+  ONBOARDING_INVITE: ["candidateName", "jobTitle", "portalUrl"],
   SYSTEM: ["userName"],
 };
 
@@ -227,6 +244,12 @@ function sampleVariablesFor(type: string): Record<string, string> {
     failureCount: "3",
     currentSeats: "5",
     planLimit: "5",
+    // Lane 4 candidate-comm samples.
+    fromStage: "SCREENING",
+    toStage: "TECHNICAL_ROUND",
+    statusLabel: "Technical Round",
+    assessmentUrl: "https://app.example.com/assessment/take/sample-token",
+    portalUrl: "https://app.example.com/onboarding/sample-token",
   };
   return base;
 }

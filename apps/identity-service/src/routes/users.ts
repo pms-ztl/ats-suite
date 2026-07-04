@@ -273,8 +273,14 @@ const InviteSchema = z.object({
 // HIRING_MANAGER -> RECRUITER -> INTERVIEWER) without letting anyone mint a
 // peer or a higher tier. The new user's managerId is set to the inviter below.
 const ROLE_HIERARCHY: Record<string, string[]> = {
-  SUPER_ADMIN: ["ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER"],
-  ADMIN: ["RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER"],
+  // Phase 36: DEPARTMENT_HEAD + EXECUTIVE added additively. SUPER_ADMIN/ADMIN
+  // may now also mint these org-leadership roles; a DEPARTMENT_HEAD grows its
+  // own department (hiring managers + recruiters + interviewers). Existing rows
+  // above the additions are unchanged so no prior invite path regresses.
+  SUPER_ADMIN: ["ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER", "DEPARTMENT_HEAD", "EXECUTIVE"],
+  ADMIN: ["RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER", "DEPARTMENT_HEAD", "EXECUTIVE"],
+  EXECUTIVE: ["DEPARTMENT_HEAD", "HIRING_MANAGER", "RECRUITER", "INTERVIEWER"],
+  DEPARTMENT_HEAD: ["HIRING_MANAGER", "RECRUITER", "INTERVIEWER"],
   HIRING_MANAGER: ["RECRUITER", "INTERVIEWER"],
   RECRUITER: ["INTERVIEWER"],
   INTERVIEWER: [],

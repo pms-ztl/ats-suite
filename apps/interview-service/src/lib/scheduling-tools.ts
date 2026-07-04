@@ -12,7 +12,8 @@ import type { Logger } from "pino";
 import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
 import { prisma } from "./prisma.js";
-import { getBusyWindows, generateMeetingLink, buildIcs, type BusyWindow } from "./calendar.js";
+import { getBusyWindows, buildIcs, type BusyWindow } from "./calendar.js";
+import { buildBuiltInRoomUrl } from "./built-in-room.js";
 import { createExternalEvent } from "./calendar-connectors.js";
 
 interface Participant {
@@ -155,7 +156,9 @@ export function buildSchedulingTools(opts: {
         return { ok: false, error: "no candidate/requisition context — cannot book" };
       }
       try {
-        const meetingUrl = generateMeetingLink(`${tenantId}:${opts.candidateId}:${args.start}`);
+        // Create first so the built-in room URL can bind the real interview id;
+        // then stamp the tenant's OWN room link (with a guest join token) — never
+        // an external meeting tool.
         const interview = await prisma.interview.create({
           data: {
             tenantId,
@@ -165,9 +168,12 @@ export function buildSchedulingTools(opts: {
             status: "SCHEDULED",
             scheduledAt: new Date(args.start),
             duration: durationMinutes,
-            meetingUrl,
-            location: meetingUrl,
           },
+        });
+        const meetingUrl = buildBuiltInRoomUrl(interview.id);
+        await prisma.interview.update({
+          where: { id: interview.id },
+          data: { meetingUrl, location: meetingUrl },
         });
 
         const attendees = participants.map((p) => p.email);

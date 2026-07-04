@@ -14,6 +14,7 @@ import experienceRouter from "./routes/agent-experience.js";
 import gdprRouter from "./routes/gdpr.js";
 import importRouter from "./routes/import.js";
 import interviewQuestionsRouter from "./routes/interview-questions.js";
+import publicStatusRouter from "./routes/public-status.js";
 
 export function createApp(logger: Logger): Express {
   const app = express();
@@ -38,6 +39,14 @@ export function createApp(logger: Logger): Express {
   // Bind the request tenant to the async-local store so the RLS Prisma client
   // scopes every query to it (X-Tenant-Id is gateway-verified upstream).
   app.use(tenantContext);
+
+  // PUBLIC application-status lookup — NO auth, NO tenant header (the candidate
+  // has no login). Mounted BEFORE the authed /internal routers and WITHOUT
+  // readAuthHeaders so it is reachable by anonymous applicants; the route itself
+  // resolves the tenant from the public job slug and uses prismaAdmin scoped to
+  // (tenantId, email, requisitionId). Reached via gateway
+  // /api/public/applications/status -> here /public/applications/status.
+  app.use("/public/applications", publicStatusRouter);
 
   app.use("/internal/candidates", readAuthHeaders(), candidatesRouter);
   app.use("/internal/applications", readAuthHeaders(), applicationsRouter);

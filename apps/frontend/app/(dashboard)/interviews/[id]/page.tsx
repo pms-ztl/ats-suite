@@ -161,6 +161,39 @@ export default function InterviewDetailPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitErr, setSubmitErr] = useState(false);
 
+  // Module D — export the FULL interview record (notes + code + whiteboard +
+  // feedback) as a PDF. Calls Lane 1's GET /interviews/:id/artifact/export in its
+  // HTML representation (a self-contained printable document) WITH the recruiter's
+  // auth, then opens it in a new window and triggers the browser print dialog so it
+  // can be saved as PDF. Real saved content only; empty sections render "(none)".
+  const [exporting, setExporting] = useState(false);
+  async function exportRecord() {
+    setExporting(true);
+    try {
+      const t = authToken();
+      const res = await fetch(`${API_BASE}/interviews/${id}/artifact/export?format=html`, {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "text/html", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+      });
+      if (!res.ok) throw new Error(`export -> ${res.status}`);
+      const html = await res.text();
+      // Blob URL so the authed HTML renders in a real tab the recruiter can print.
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, "_blank");
+      // Give the document a beat to lay out, then open the print dialog (Save as PDF).
+      if (w) w.addEventListener("load", () => { try { w.print(); } catch { /* user can print manually */ } });
+      // Revoke a little later so the new tab has finished reading the blob.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      // Honest failure: no fabricated document, no silent success.
+      window.alert("We could not export the interview record right now. Please try again in a moment.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function submitScorecard() {
     setSubmitting(true); setSubmitErr(false);
     try {
@@ -387,6 +420,16 @@ export default function InterviewDetailPage() {
             <a href={`/interviews/${id}/room`} style={{ display: "flex", gap: 7, alignItems: "center", justifyContent: "center", marginTop: 12, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--c-brand-tint)", color: "var(--c-brand-ink)", fontWeight: 600, fontSize: 12.5, textDecoration: "none", cursor: "pointer" }}>
               <Icon name="enter" size={15} />Join interview room
             </a>
+            {/* Module D — export the saved interview record (notes + code +
+                whiteboard + feedback) as a PDF via the browser print dialog. */}
+            <button
+              type="button"
+              onClick={() => void exportRecord()}
+              disabled={exporting}
+              style={{ display: "flex", gap: 7, alignItems: "center", justifyContent: "center", width: "100%", marginTop: 8, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--c-surface-2)", color: "var(--c-ink)", border: "1px solid var(--c-line-2)", fontWeight: 600, fontSize: 12.5, cursor: exporting ? "default" : "pointer", opacity: exporting ? 0.65 : 1, fontFamily: "var(--font-sans)" }}
+            >
+              <Icon name="fileText" size={15} />{exporting ? "Preparing…" : "Export record (PDF)"}
+            </button>
           </div>
 
           {/* AI suggested questions - rendered only when present */}

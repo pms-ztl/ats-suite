@@ -34,6 +34,11 @@ const PUBLIC_PATHS = [
   "/profile",
   "/c",                        // tenant-scoped public board: /c/[slug]/jobs
   "/offline",
+  // Module D — the tenant's OWN built-in interview room, guest (candidate) join.
+  // Contract: ${APP_URL}/interview/room/{interviewId}?t=<joinToken>. The opaque
+  // signed join token in the URL is the ONLY credential (validated server-side by
+  // Lane 1's /public/interview/join); no recruiter login. NEVER an external tool.
+  "/interview/room",
   // WF9 / SLICE I1 — embeddable widget surface (the (embed) route group). These
   // chrome-less pages are framed into a customer site with NO session login; the
   // signed embed token in the URL is the only credential, verified server-side

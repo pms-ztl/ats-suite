@@ -8,6 +8,7 @@ import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
 import { prisma } from "./prisma.js";
 import { fetchActiveUsersByRole } from "./service-client.js";
+import { buildBuiltInRoomUrl } from "./built-in-room.js";
 
 export type AdvanceTriggeredBy = "user" | "auto";
 
@@ -61,7 +62,9 @@ export async function advanceApplicationToNextRound(args: {
     return { interview: null, round: null, assignedPanelistId: null, reason: "no_more_rounds" };
   }
 
-  // Create stub interview for the next round
+  // Create stub interview for the next round, then stamp the tenant's OWN
+  // built-in room URL (bound to the new interview id) so the room link is ready
+  // when this round is scheduled. Never an external meeting tool.
   const interview = await prisma.interview.create({
     data: {
       tenantId, requisitionId, candidateId, applicationId,
@@ -72,6 +75,10 @@ export async function advanceApplicationToNextRound(args: {
       duration: nextRound.durationMinutes,
       status: "SCHEDULED",
     },
+  });
+  await prisma.interview.update({
+    where: { id: interview.id },
+    data: { meetingUrl: buildBuiltInRoomUrl(interview.id) },
   });
 
   // ── Connect the interview leg to the canonical pipeline ──────────────

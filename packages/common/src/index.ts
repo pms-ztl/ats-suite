@@ -26,3 +26,5 @@ export * from "./modules/plan-limits.js";
 export * from "./modules/is-module-on.js";
 export * from "./crypto/aes-gcm.js";
 export * from "./validation/ajv.js";
+
+export * from "./rbac/field-visibility.js";

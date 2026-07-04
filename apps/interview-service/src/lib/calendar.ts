@@ -11,13 +11,18 @@
  *      windows — no OAuth, no SDK. Gated: no-op when unset.
  *
  * MEETING LINKS (hands):
- *   generateMeetingLink() returns a real, working Jitsi room URL (no auth/API).
+ *   generateMeetingLink() returns a link into the tenant's OWN built-in interview
+ *   room (own-WebRTC + collab relay) — NEVER an external meeting tool. When an
+ *   interview id is known, book_interview builds the canonical room URL with a
+ *   guest join token via built-in-room.ts; this seed-based helper is the
+ *   fallback for callers that only have an opaque seed (scripts/tests).
  *   buildIcs() produces a standards-compliant VEVENT a notifier can email.
  */
 import { createHash } from "crypto";
 import { prisma } from "./prisma.js";
 import type { Logger } from "pino";
 import { fetchExternalBusy } from "./calendar-connectors.js";
+import { appBaseUrl } from "./built-in-room.js";
 
 export interface BusyWindow { start: string; end: string }
 export interface Participant { email: string; role: string; busyWindows?: BusyWindow[] }
@@ -121,11 +126,15 @@ export async function getBusyWindows(opts: {
   return result;
 }
 
-/** Real, working meeting link — Jitsi rooms need no auth/API. */
+/**
+ * Fallback meeting link for callers that only have an opaque seed (scripts/tests).
+ * Points at the tenant's OWN built-in room base — NEVER an external tool. Booking
+ * paths that know the interview id use built-in-room.ts to mint the canonical
+ * `${APP_URL}/interview/room/{interviewId}?t=<joinToken>` URL instead.
+ */
 export function generateMeetingLink(seed: string): string {
   const room = createHash("sha256").update(seed).digest("hex").slice(0, 24);
-  const base = process.env["MEETING_BASE_URL"] ?? "https://meet.jit.si";
-  return `${base}/cdc-ats-${room}`;
+  return `${appBaseUrl()}/interview/room/cdc-ats-${room}`;
 }
 
 /** Standards-compliant single-event ICS a notifier can attach to an email. */

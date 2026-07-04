@@ -27,6 +27,13 @@ model Resume {
   storageKey       String   @default("")
   extractedText    String?  @db.Text
   parsedData       Json?
+  // Additive structured facets derived at parse time from the REAL parsed text +
+  // enriched output (see lib/projects-tags.ts). projects = [{ name, description,
+  // technologies[] }] pulled from an actual "Projects" section; tags = flat deduped
+  // facet list (canonical skills + certs + languages + format). Honest-empty ([])
+  // when the resume has no such content — never fabricated.
+  projects         Json     @default("[]")
+  tags             String[] @default([])
   parseStatus      String   @default("PENDING")
   parsedAt         DateTime?
   bulkUploadId     String?
@@ -79,6 +86,11 @@ model BulkImportItem {
   extractedText String?  @db.Text
   // extracted | ocr_empty | failed | unsupported
   extractStatus String   @default("extracted")
+  // WHY this item failed/was skipped, persisted per item so the batch result
+  // reports the real reason each bad file was quarantined (corrupt PDF, unsupported
+  // type, blank OCR, extraction error). Null for a clean "extracted" item. The
+  // batch NEVER aborts on a bad file — it stages it with this reason instead.
+  quarantineReason String?
   // pending | approved | rejected
   reviewStatus  String   @default("pending")
   // ATS score (0-100) of this resume against the BulkUpload's requisition, set

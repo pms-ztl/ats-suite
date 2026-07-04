@@ -19,6 +19,12 @@ enum UserRole {
   COMPLIANCE_OFFICER
   INTERVIEWER
   CANDIDATE
+  // Phase 36: org-leadership roles. Additive: existing rows/roles unchanged.
+  // These consume analytics + decisions + salaries but NOT raw interviewer
+  // notes (see the field-visibility matrix in @cdc-ats/common). DEPARTMENT_HEAD
+  // owns a department's hiring; EXECUTIVE has org-wide read of leadership data.
+  DEPARTMENT_HEAD
+  EXECUTIVE
 }
 
 model User {

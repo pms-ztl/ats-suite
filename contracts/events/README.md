@@ -90,6 +90,7 @@ subject is genuinely unconsumed today, not that a consumer was omitted.
 | `interview.scheduled` | `tenant.{tenantId}.interview.scheduled` | interview-service | notification-service |
 | `interview.round.started` | `tenant.{tenantId}.interview.round.started` | interview-service | candidate-service |
 | `interview.feedback.submitted` | `tenant.{tenantId}.interview.feedback.submitted` | (none — consumer-only) | notification-service |
+| `interview.feedback.created` | `tenant.{tenantId}.interview.feedback.created` | interview-service (feedback route) | notification-service |
 | `application.hired` | `tenant.{tenantId}.application.hired` | candidate-service | notification-service, onboarding-service |
 | `application.rejected` | `tenant.{tenantId}.application.rejected` | candidate-service | notification-service |
 | `application.stage.changed` | `tenant.{tenantId}.application.stage.changed` | candidate-service | (none) |

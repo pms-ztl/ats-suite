@@ -41,7 +41,16 @@ export interface UseCollabRoom {
   error: string | null;
 }
 
-export function useCollabRoom(interviewId: string | null, role: "host" | "guest", displayName: string): UseCollabRoom {
+// When `joinToken` is supplied the caller is a GUEST (candidate, no login): we
+// exchange the opaque signed join token for a collab room token via Lane 1's
+// PUBLIC endpoint (POST /public/interview/join), so no auth cookie/JWT is needed.
+// Without it, staff join the authed way (POST /interviews/:id/collab-token).
+export function useCollabRoom(
+  interviewId: string | null,
+  role: "host" | "guest",
+  displayName: string,
+  joinToken?: string | null,
+): UseCollabRoom {
   const [status, setStatus] = useState<RoomStatus>("connecting");
   const [self, setSelf] = useState<Peer | null>(null);
   const [peers, setPeers] = useState<Peer[]>([]);
@@ -121,13 +130,21 @@ export function useCollabRoom(interviewId: string | null, role: "host" | "guest"
         localStreamRef.current = stream;
         setLocalStream(stream);
 
-        // 2) token from interview-service.
-        const res = await fetch(`${API_BASE}/interviews/${interviewId}/collab-token`, {
-          method: "POST", credentials: "include",
-          headers: { "Content-Type": "application/json", ...(authToken() ? { Authorization: `Bearer ${authToken()}` } : {}) },
-          body: JSON.stringify({ role, displayName }),
-        });
-        if (!res.ok) { if (!cancelled) setStatus(res.status === 403 ? "denied" : "error"); return; }
+        // 2) token from interview-service. GUEST (join token present): swap the
+        // opaque join token for a collab room token at the PUBLIC endpoint, no
+        // auth headers. STAFF: the authed collab-token route.
+        const res = joinToken
+          ? await fetch(`${API_BASE}/public/interview/join`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token: joinToken, displayName }),
+            })
+          : await fetch(`${API_BASE}/interviews/${interviewId}/collab-token`, {
+              method: "POST", credentials: "include",
+              headers: { "Content-Type": "application/json", ...(authToken() ? { Authorization: `Bearer ${authToken()}` } : {}) },
+              body: JSON.stringify({ role, displayName }),
+            });
+        if (!res.ok) { if (!cancelled) setStatus(res.status === 403 || res.status === 401 ? "denied" : "error"); return; }
         const tok = (await res.json())?.data ?? {};
         if (cancelled) return;
 
@@ -210,7 +227,7 @@ export function useCollabRoom(interviewId: string | null, role: "host" | "guest"
       doc.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviewId, role, displayName]);
+  }, [interviewId, role, displayName, joinToken]);
 
   const toggleMute = useCallback(() => {
     const s = localStreamRef.current; if (!s) return;

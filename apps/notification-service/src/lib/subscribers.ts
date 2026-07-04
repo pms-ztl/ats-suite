@@ -5,7 +5,10 @@
  *   tenant.{*}.plan-change.requested    → PLAN_CHANGE_REQUESTED (super-admins)
  *   tenant.{*}.tenant.plan-changed      → PLAN_CHANGE_APPROVED  (tenant broadcast)
  *   tenant.{*}.bulk-upload.completed    → BULK_UPLOAD_COMPLETED (uploader)
- *   tenant.{*}.interview.feedback.submitted → INTERVIEW_FEEDBACK_NEW (tenant broadcast)
+ *   tenant.{*}.interview.feedback.created → INTERVIEW_FEEDBACK_NEW (tenant broadcast)
+ *   tenant.{*}.assessment.invited       → ASSESSMENT_INVITED    (candidate email)
+ *   tenant.{*}.application.stage.changed → APPLICATION_STATUS_UPDATE (candidate email)
+ *   tenant.{*}.application.hired         → ONBOARDING_INVITE     (new-hire portal link)
  */
 import { subscribeToEvents } from "@cdc-ats/nats-client";
 import { z } from "zod";
@@ -18,10 +21,42 @@ import {
   TenantPlanChangedPayloadSchema,
   PlanChangeRequestedPayloadSchema,
   BulkUploadCompletedPayloadSchema,
-  FeedbackSubmittedPayloadSchema,
 } from "@cdc-ats/contracts";
 import { emitNotification } from "./emit.js";
+import { fetchCandidateContact, fetchOnboardingPortalToken } from "./candidate-lookup.js";
 import type { Logger } from "pino";
+
+// Absolute base URL for candidate-facing links (relative paths 400 the .url()
+// check downstream). Matches the ${APP_URL} convention used across services.
+const APP_URL = process.env["APP_URL"] ?? "http://localhost:3000";
+
+/**
+ * Human-friendly label for an Application.stage code (e.g. TECHNICAL_ROUND ->
+ * "Technical Round"). Used in the candidate status-update email so we surface a
+ * readable stage, not a raw enum. Falls back to a Title-Cased version of the raw
+ * code for any stage not in the map (honest; no fabricated wording).
+ */
+const STAGE_LABELS: Record<string, string> = {
+  APPLIED: "Application received",
+  SCREENING: "Application review",
+  ASSESSMENT: "Online assessment",
+  TECHNICAL_ROUND: "Technical interview",
+  HR_ROUND: "HR interview",
+  FINAL_REVIEW: "Final review",
+  OFFER: "Offer",
+  HIRED: "Hired",
+  REJECTED: "Not moving forward",
+};
+function stageLabel(stage: string): string {
+  return (
+    STAGE_LABELS[stage] ??
+    stage
+      .toLowerCase()
+      .split(/[_\s]+/)
+      .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
+      .join(" ")
+  );
+}
 
 export async function startNotificationSubscribers(logger: Logger) {
   // ── platform.tenant.created ───────────────────────────────────────────
@@ -138,14 +173,26 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
-  // ── tenant.{*}.interview.feedback.submitted ───────────────────────────
+  // ── tenant.{*}.interview.feedback.created ─────────────────────────────
+  // DEAD-COMMS FIX (Lane 4): the old subscriber filtered on
+  // `interview.feedback.submitted`, which NO producer ever published, so this
+  // comm never fired. Lane 1 (interview-service) now publishes
+  // `interview.feedback.created` when an interviewer submits feedback; we align
+  // the durable consumer's filter subject to the REAL published subject. Parsed
+  // with a lenient local schema (ids as z.string()) so a payload is not rejected
+  // on a uuid mismatch, matching the Module E events below.
   await subscribeToEvents({
     stream: "INTERVIEW_EVENTS",
-    subject: "tenant.*.interview.feedback.submitted",
-    durable: "notification-service:interview-feedback",
+    subject: "tenant.*.interview.feedback.created",
+    // New durable name (was ...:interview-feedback bound to the never-published
+    // .submitted subject). A durable's filter_subject is fixed at create time and
+    // the idempotent create skips existing durables, so reusing the old name would
+    // keep the stale .submitted filter. A fresh name creates a consumer with the
+    // correct .created filter on (re)deploy.
+    durable: "notification-service:interview-feedback-created",
     logger,
     handler: async (envelope) => {
-      const p = FeedbackSubmittedPayloadSchema.parse(envelope.payload);
+      const p = FeedbackCreatedEvent.parse(envelope.payload);
       await emitNotification({
         tenantId: p.tenantId,
         userId: null,                       // broadcast to tenant
@@ -159,13 +206,22 @@ export async function startNotificationSubscribers(logger: Logger) {
         },
         channels: ["in_app", "slack"],
       });
-      await auditAndDeliver("interview.feedback.submitted", p as any, { logger });
+      await auditAndDeliver("interview.feedback.created", p as any, { logger });
     },
   });
 
   // ── tenant.{*}.interview.scheduled ────────────────────────────────────
   // Phase 38 — the scheduling agent (or manual create) booked an interview.
   // Send the candidate + panel a real invite with the meeting link + ICS.
+  //
+  // DEAD-COMMS FIX (Lane 4): manual-interview-invite. The prior handler emitted
+  // with userId:null + email channel, which BROADCAST the invite to every tenant
+  // user via the tenant-user lookup and NEVER reached the candidate (candidateId
+  // is in the payload, not an email). Fix: address the EMAIL explicitly to the
+  // candidate (resolved from candidate-service) + the panel attendees carried in
+  // the payload, so the invite actually reaches the people it names. The in-app
+  // notice still broadcasts to the tenant so recruiters see the booking on their
+  // dashboard (additive; no in-app behavior change).
   await subscribeToEvents({
     stream: "INTERVIEW_EVENTS",
     subject: "tenant.*.interview.scheduled",
@@ -174,9 +230,14 @@ export async function startNotificationSubscribers(logger: Logger) {
     handler: async (envelope) => {
       const p = envelope.payload as any;
       const when = p.scheduledAt ? new Date(p.scheduledAt).toUTCString() : "soon";
+      const attendees: string[] = Array.isArray(p.attendees)
+        ? p.attendees.filter((e: unknown): e is string => typeof e === "string" && !!e)
+        : [];
+
+      // In-app: broadcast to the tenant (recruiter dashboard visibility).
       await emitNotification({
         tenantId: p.tenantId,
-        userId: null,                       // broadcast to the tenant
+        userId: null,
         // Reuses SYSTEM type (NotificationType is a DB enum; a dedicated
         // INTERVIEW_SCHEDULED value would need an enum migration). The
         // metadata + title/link carry the full invite context.
@@ -187,12 +248,46 @@ export async function startNotificationSubscribers(logger: Logger) {
         metadata: {
           interviewId: p.interviewId, candidateId: p.candidateId,
           scheduledAt: p.scheduledAt, endAt: p.endAt, meetingUrl: p.meetingUrl,
-          attendees: p.attendees ?? [], organizer: p.organizer ?? null,
+          attendees, organizer: p.organizer ?? null,
           ics: p.ics ?? null,               // email channel can attach this
           bookedByAgent: !!p.bookedByAgent,
         },
-        channels: ["in_app", "email"],
-      });
+        channels: ["in_app"],
+      }).catch((err) => logger.warn({ err, interviewId: p.interviewId }, "interview.scheduled in-app notification failed"));
+
+      // Email: the actual invite, to the candidate + panel attendees. Resolve
+      // the candidate's real email (best-effort). If neither the candidate nor
+      // any attendee is resolvable, we skip the email honestly rather than
+      // broadcast to the whole tenant.
+      const contact = p.candidateId
+        ? await fetchCandidateContact(p.tenantId, p.candidateId, logger)
+        : { email: null, name: null };
+      const recipients = Array.from(new Set([contact.email, ...attendees].filter((e): e is string => !!e)));
+      if (recipients.length > 0) {
+        await emitNotification({
+          tenantId: p.tenantId,
+          userId: null,
+          type: "SYSTEM",
+          title: "Interview scheduled",
+          body:
+            `Hi${contact.name ? ` ${contact.name}` : ""},\n\n` +
+            `Your interview has been scheduled for ${when}.` +
+            (p.meetingUrl ? `\n\nJoin here: ${p.meetingUrl}` : "") +
+            `\n\nWe look forward to speaking with you.`,
+          link: p.meetingUrl ?? (p.interviewId ? `${APP_URL}/interviews/${p.interviewId}` : `${APP_URL}/interviews`),
+          explicitEmailRecipients: recipients,
+          metadata: {
+            interviewId: p.interviewId, candidateId: p.candidateId,
+            scheduledAt: p.scheduledAt, endAt: p.endAt, meetingUrl: p.meetingUrl,
+            attendees, organizer: p.organizer ?? null, ics: p.ics ?? null,
+            bookedByAgent: !!p.bookedByAgent,
+          },
+          channels: ["email"],
+        }).catch((err) => logger.warn({ err, interviewId: p.interviewId }, "interview.scheduled invite email failed"));
+      } else {
+        logger.info({ interviewId: p.interviewId }, "interview.scheduled: no candidate/attendee email; invite email skipped");
+      }
+
       await auditAndDeliver("interview.scheduled", p, { logger });
     },
   });
@@ -449,7 +544,177 @@ export async function startNotificationSubscribers(logger: Logger) {
     },
   });
 
-  logger.info("notification-service NATS subscribers started (10 subjects)");
+  // ── DEAD-COMMS FIX (Lane 4): tenant.{*}.assessment.invited ─────────────────
+  // OA-INVITE. assessment-service publishes assessment.invited (native route +
+  // vendor worker) EXPLICITLY so notification-service can email the candidate the
+  // take link, but no subscriber existed, so the invite email never fired. Wire
+  // it: email the candidate the assessment take URL. The recipient is the
+  // external candidate (email is in the payload), so we address it explicitly
+  // rather than broadcasting to the tenant. The link is already an absolute URL
+  // built by assessment-service (${APP_URL}/assessment/take/... or the vendor
+  // take URL). Never an auto-reject; purely "your assessment is ready".
+  await subscribeToEvents({
+    stream: "ASSESSMENT_EVENTS",
+    subject: "tenant.*.assessment.invited",
+    durable: "notification-service:assessment-invited",
+    logger,
+    handler: async (envelope) => {
+      const p = AssessmentInvitedEvent.parse(envelope.payload);
+      if (!p.email) {
+        logger.warn({ inviteId: p.inviteId }, "assessment.invited has no candidate email; skipping email");
+        await auditAndDeliver("assessment.invited", p as any, { logger });
+        return;
+      }
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,                       // recipient is the external candidate
+        type: "ASSESSMENT_INVITED",
+        title: "Your online assessment is ready",
+        body:
+          "You've been invited to complete an online assessment as part of your application. " +
+          "Use the link below to begin. If the link has expired, please contact the hiring team.\n\n" +
+          p.rawTokenUrl,
+        // link renders the "View" button in the branded email + the in-app deep link.
+        link: p.rawTokenUrl,
+        explicitEmailRecipients: [p.email],
+        metadata: {
+          // Template variables (ASSESSMENT_INVITED): candidateName, assessmentUrl.
+          assessmentUrl: p.rawTokenUrl,
+          inviteId: p.inviteId,
+          assessmentId: p.assessmentId,
+          candidateId: p.candidateId,
+          ...(p.provider ? { provider: p.provider } : {}),
+        },
+        channels: ["email"],
+      }).catch((err) => logger.warn({ err, inviteId: p.inviteId }, "assessment.invited notification failed"));
+      await auditAndDeliver("assessment.invited", p as any, { logger });
+    },
+  });
+
+  // ── MANDATED AUTOMATION (Lane 4): tenant.{*}.application.stage.changed ──────
+  // Auto status-update email on stage change. candidate-service publishes this on
+  // EVERY pipeline transition; we email the candidate a courteous "your
+  // application moved to <stage>" update (in_app is tenant-broadcast noise for a
+  // candidate-facing comm, so the candidate gets email; the tenant already sees
+  // stage moves in the board). The stage.changed payload carries only ids, so we
+  // resolve the candidate's real email + name from candidate-service (best-effort;
+  // no email = skip honestly, never guess an address). Tenant-customizable via
+  // the APPLICATION_STATUS_UPDATE EmailTemplate override.
+  //
+  // We only email on FORWARD-facing, candidate-meaningful transitions and NEVER
+  // for the terminal HIRED / REJECTED stages, which have their own dedicated,
+  // richer candidate comms (application.hired / application.rejected); double-
+  // emailing would be spammy and confusing.
+  await subscribeToEvents({
+    stream: "CANDIDATE_EVENTS",
+    subject: "tenant.*.application.stage.changed",
+    durable: "notification-service:application-stage-changed",
+    logger,
+    handler: async (envelope) => {
+      const p = StageChangedEvent.parse(envelope.payload);
+      // Skip no-op transitions and the terminal stages (own comms exist).
+      if (p.fromStage === p.toStage) return;
+      const terminal = new Set(["HIRED", "REJECTED"]);
+      if (terminal.has(p.toStage)) {
+        await auditAndDeliver("application.stage.changed", p as any, { logger });
+        return;
+      }
+
+      const contact = await fetchCandidateContact(p.tenantId, p.candidateId, logger);
+      if (!contact.email) {
+        logger.info({ applicationId: p.applicationId }, "stage.changed: no candidate email resolved; skipping status email");
+        await auditAndDeliver("application.stage.changed", p as any, { logger });
+        return;
+      }
+      const toLabel = stageLabel(p.toStage);
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,                       // recipient is the external candidate
+        type: "APPLICATION_STATUS_UPDATE",
+        title: `Update on your application`,
+        body:
+          `Hi${contact.name ? ` ${contact.name}` : ""},\n\n` +
+          `There's an update on your application: it has moved to the "${toLabel}" stage. ` +
+          `We'll be in touch with next steps. Thank you for your continued interest.`,
+        link: `${APP_URL}/status`,
+        explicitEmailRecipients: [contact.email],
+        metadata: {
+          // Template variables (APPLICATION_STATUS_UPDATE): candidateName,
+          // fromStage, toStage, statusLabel.
+          candidateName: contact.name,
+          fromStage: p.fromStage,
+          toStage: p.toStage,
+          statusLabel: toLabel,
+          applicationId: p.applicationId,
+          candidateId: p.candidateId,
+          requisitionId: p.requisitionId ?? null,
+          source: p.source ?? null,
+        },
+        channels: ["email"],
+      }).catch((err) => logger.warn({ err, applicationId: p.applicationId }, "application.stage.changed notification failed"));
+      await auditAndDeliver("application.stage.changed", p as any, { logger });
+    },
+  });
+
+  // ── ONBOARDING PORTAL INVITE (Lane 4): tenant.{*}.application.hired ─────────
+  // When a candidate is hired, onboarding-service opens their onboarding case on
+  // this SAME event but sends nothing, so the new-hire never received their portal
+  // link. Wire the missing send: email the new-hire the onboarding portal link.
+  // We resolve the case's REAL portalToken from onboarding-service (bounded retry
+  // absorbs the case-create race) and build the honest tokened link
+  // ${APP_URL}/onboarding/{token}. If the token isn't available yet we fall back
+  // to the portal landing ${APP_URL}/onboarding (honest; never a guessed token).
+  // Distinct from the existing application.hired stakeholder notice (that pushes
+  // to hiring manager/recruiter); this one is addressed to the CANDIDATE.
+  await subscribeToEvents({
+    stream: "CANDIDATE_EVENTS",
+    subject: "tenant.*.application.hired",
+    durable: "notification-service:onboarding-invite",
+    logger,
+    handler: async (envelope) => {
+      const p = ApplicationHiredEvent.parse(envelope.payload);
+      // Need the candidate's email. Prefer the payload; else resolve it.
+      let email = p.candidateEmail ?? null;
+      let name = p.candidateName ?? null;
+      if (!email) {
+        const contact = await fetchCandidateContact(p.tenantId, p.candidateId, logger);
+        email = contact.email;
+        name = name ?? contact.name;
+      }
+      if (!email) {
+        logger.info({ applicationId: p.applicationId }, "onboarding-invite: no candidate email; skipping portal email");
+        return;
+      }
+      const token = await fetchOnboardingPortalToken(p.tenantId, p.candidateId, logger);
+      const portalUrl = token ? `${APP_URL}/onboarding/${token}` : `${APP_URL}/onboarding`;
+      const jobTitle = p.jobTitle ?? "your new role";
+      await emitNotification({
+        tenantId: p.tenantId,
+        userId: null,                       // recipient is the external new-hire
+        type: "ONBOARDING_INVITE",
+        title: `Welcome aboard! Let's get you onboarded`,
+        body:
+          `Congratulations${name ? `, ${name}` : ""}! We're thrilled to have you joining us for ${jobTitle}. ` +
+          `To get started, please complete your onboarding using the secure link below. ` +
+          `You'll be able to submit your details and required documents there.\n\n` +
+          portalUrl,
+        link: portalUrl,
+        explicitEmailRecipients: [email],
+        metadata: {
+          // Template variables (ONBOARDING_INVITE): candidateName, jobTitle, portalUrl.
+          candidateName: name,
+          jobTitle: p.jobTitle,
+          portalUrl,
+          hasPortalToken: !!token,
+          applicationId: p.applicationId,
+          candidateId: p.candidateId,
+        },
+        channels: ["email"],
+      }).catch((err) => logger.warn({ err, applicationId: p.applicationId }, "onboarding-invite notification failed"));
+    },
+  });
+
+  logger.info("notification-service NATS subscribers started (13 subjects)");
 }
 
 // ── Module E event payloads ────────────────────────────────────────────────
@@ -502,4 +767,51 @@ const AssessmentCompletedPayload = z.object({
   passed: z.boolean().nullable().optional(),
   score: z.number().nullable().optional(),
   needsReview: z.boolean().optional(),
+}).passthrough();
+
+// ── Lane 4 event payloads (lenient: ids as z.string(); .passthrough() keeps
+// forward-compat with the richer real wire payloads). ──────────────────────────
+
+// interview.feedback.created (Lane 1 / interview-service). Mirrors the typed
+// FeedbackSubmittedPayloadSchema but parsed leniently so a uuid mismatch never
+// drops the comm. roundNumber/roundId optional for pre-round feedback.
+const FeedbackCreatedEvent = z.object({
+  tenantId: z.string(),
+  interviewId: z.string(),
+  candidateId: z.string(),
+  recommendation: z.string(),
+  roundNumber: z.number().int().nullable().optional(),
+  roundId: z.string().nullable().optional(),
+  feedbackId: z.string().optional(),
+  interviewerId: z.string().optional(),
+}).passthrough();
+
+// assessment.invited (assessment-service native route + vendor worker). The
+// vendor path adds provider/providerInvitationId; email + rawTokenUrl are the
+// fields we email on.
+const AssessmentInvitedEvent = z.object({
+  tenantId: z.string(),
+  inviteId: z.string(),
+  assessmentId: z.string(),
+  candidateId: z.string(),
+  email: z.string().nullable().optional(),
+  rawTokenUrl: z.string(),
+  provider: z.string().optional(),
+  providerInvitationId: z.string().optional(),
+}).passthrough();
+
+// application.stage.changed (candidate-service). Carries the cross-lane contract
+// fields (actorUserId/at) alongside the historical changedByUserId/source. Only
+// ids — the candidate email is resolved separately.
+const StageChangedEvent = z.object({
+  tenantId: z.string(),
+  applicationId: z.string(),
+  candidateId: z.string(),
+  requisitionId: z.string().nullable().optional(),
+  fromStage: z.string(),
+  toStage: z.string(),
+  actorUserId: z.string().nullable().optional(),
+  changedByUserId: z.string().nullable().optional(),
+  at: z.string().optional(),
+  source: z.string().optional(),
 }).passthrough();

@@ -67,6 +67,14 @@ export interface Candidate {
   timeInStageDays?: number;
   resumeUrl?: string;
   appliedAt: string;
+  // Additive — real fields surfaced from the candidate record + parsed resume,
+  // used by the intelligent candidate-summary export. All optional; honest-empty.
+  phone?: string;
+  tags?: string[];
+  skills?: string[];         // from parsedSummary.skills (names)
+  experience?: string[];     // human lines from parsedSummary.experience
+  education?: string[];      // human lines from parsedSummary.education
+  parsedSummaryText?: string; // parsedSummary.summary (resume-level summary)
 }
 
 export interface RequirementMatch {

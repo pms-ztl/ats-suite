@@ -33,6 +33,10 @@ export type NotificationType =
   | "OFFER_APPROVED"
   | "APPLICATION_HIRED"
   | "APPLICATION_REJECTED"
+  // Lane 4: status-update / assessment-invite / onboarding-invite candidate comms.
+  | "APPLICATION_STATUS_UPDATE"
+  | "ASSESSMENT_INVITED"
+  | "ONBOARDING_INVITE"
   | "SYSTEM";
 
 export type DeliveryChannel = "in_app" | "email" | "slack";

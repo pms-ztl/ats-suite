@@ -344,6 +344,20 @@ export interface ProfileScorecard {
   dims: { d: string; s: number }[]; // dimension scores (s is 0..5, rendered as 5 dots)
   note: string;                  // free-text feedback (shown italic in quotes)
 }
+// One mandated alignment dimension (spec: "technical skills match" +
+// "experience relevance") DERIVED from the real screener findings, never
+// fabricated. `pct` is a met-ratio over the requirements that pertain to the
+// dimension (0..100); `scored` is false when no finding maps to it -> honest
+// "Not scored" rather than an invented number.
+export interface ProfileDimension {
+  key: "technical" | "experience";
+  label: string;                 // "Technical skills match" | "Experience relevance"
+  scored: boolean;               // false -> render honest-empty
+  pct?: number;                  // 0..100 met-ratio, only when scored
+  met?: number;                  // count of met/partial findings backing this
+  total?: number;                // count of findings mapped to this dimension
+  state?: VerdictKind;           // roll-up band for tinting (pass/review/fail)
+}
 export interface ProfileVerdict {
   score: number;                 // AI match 0..100
   band: string;                  // verdict band label, e.g. "Strong potential"
@@ -352,6 +366,7 @@ export interface ProfileVerdict {
   requirements: ReqBreakdown[];  // per-requirement breakdown
   strengths: string[];           // screener MATCH: signals (or met requirements)
   missing: string[];             // screener GAP: signals (or not-met requirements)
+  dimensions?: ProfileDimension[]; // mandated alignment dimensions (derived, additive)
 }
 export interface ParsedResume {
   fields: { k: string; v: string; c: number }[]; // parsed field: key, value, confidence 0..1 (<0.7 flags)

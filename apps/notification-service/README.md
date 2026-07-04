@@ -36,12 +36,20 @@ Also serves `/health`, `/healthz`, `/metrics`.
 
 No `publishEvent` in this service. It is the primary event **consumer**: via
 subscribers it listens for `platform.tenant.created`,
-`platform.agent.kill-switch.toggled`, `tenant.*.application.hired`,
-`tenant.*.application.rejected`, `tenant.*.offer.approved`,
-`tenant.*.assessment.completed`, `tenant.*.interview.feedback.submitted`,
-`tenant.*.interview.scheduled`, `tenant.*.bulk-upload.completed`,
-`tenant.*.plan-change.requested`, and `tenant.*.tenant.plan-changed`, turning each
-into notifications / deliveries.
+`platform.agent.kill-switch.toggled`, `tenant.*.application.hired` (twice: the
+stakeholder hire notice AND the new-hire onboarding portal invite),
+`tenant.*.application.rejected`, `tenant.*.application.stage.changed` (mandated
+auto status-update email to the candidate), `tenant.*.offer.approved`,
+`tenant.*.assessment.completed`, `tenant.*.assessment.invited` (OA take-link
+email to the candidate), `tenant.*.interview.feedback.created`,
+`tenant.*.interview.scheduled` (candidate + panel invite email),
+`tenant.*.bulk-upload.completed`, `tenant.*.plan-change.requested`, and
+`tenant.*.tenant.plan-changed`, turning each into notifications / deliveries.
+
+Candidate-facing comms (offer / hire / rejection / status-update / assessment
+invite / onboarding invite) resolve a per-tenant `EmailTemplate` override first
+(keyed on notification `type` by the delivery worker) and fall back to the
+built-in default emitted at the event site, so tenants can customize the copy.
 
 ## Background workers (BullMQ, require `REDIS_URL`)
 

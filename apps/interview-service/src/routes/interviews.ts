@@ -1,6 +1,8 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, requireRole } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cdc-ats/common";
+import { publishEvent } from "@cdc-ats/nats-client";
+import { tenantSubject } from "@cdc-ats/contracts";
 
 // Phase 27 F-028-micro-P1:
 // - create / advance-round → recruiter or admin (not interviewer)
@@ -10,8 +12,10 @@ const requireFeedbackSubmitter = requireRole("ADMIN", "RECRUITER", "HIRING_MANAG
 import { InterviewTypeSchema, InterviewStatusSchema, InterviewRecommendationSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 import { advanceApplicationToNextRound } from "../lib/round-progression.js";
+import { buildBuiltInRoomUrl } from "../lib/built-in-room.js";
 
 const router = Router();
+const logger = createLogger({ serviceName: "interview-service:interviews" });
 
 const CreateInterviewSchema = z.object({
   requisitionId: z.string().uuid(),
@@ -78,8 +82,22 @@ router.post("/", requireScheduler, async (req: Request, res: Response, next: Nex
       const round = await prisma.interviewRound.findFirst({ where: { id: body.roundId, tenantId } });
       if (round) data.roundNumber = round.order;
     }
+    // The room URL must bind the real interview id, so we set it after create.
+    // Never persist a caller-supplied external meeting link here — the tenant's
+    // OWN built-in room is the only meeting surface. A caller may still pass its
+    // own built-in room URL (kept as-is); anything else is replaced.
+    const suppliedBuiltInRoom =
+      typeof body.meetingUrl === "string" && body.meetingUrl.includes("/interview/room/")
+        ? body.meetingUrl
+        : undefined;
+    delete data.meetingUrl;
     const interview = await prisma.interview.create({ data });
-    created(res, interview);
+    const meetingUrl = suppliedBuiltInRoom ?? buildBuiltInRoomUrl(interview.id);
+    const withRoom = await prisma.interview.update({
+      where: { id: interview.id },
+      data: { meetingUrl, ...(interview.location ? {} : { location: meetingUrl }) },
+    });
+    created(res, withRoom);
   } catch (err) { next(err); }
 });
 
@@ -129,6 +147,29 @@ router.post("/:id/feedback", requireFeedbackSubmitter, async (req: Request, res:
         notes: body.notes ?? null,
       },
     });
+
+    // Real downstream effect: notify the tenant a scorecard landed. Fires the
+    // (previously producer-less) interview.feedback event so the notification
+    // listener has a live publisher. Best-effort — never blocks the write.
+    await publishEvent({
+      subject: tenantSubject(tenantId, "interview", "feedback.created"),
+      type: "interview.feedback.created",
+      tenantId,
+      payload: {
+        tenantId,
+        feedbackId: feedback.id,
+        interviewId: id,
+        candidateId: body.candidateId,
+        applicationId: interview.applicationId ?? null,
+        interviewerId: body.interviewerId,
+        rating: body.overallRating,
+        recommendation: body.recommendation,
+        summary: body.notes ?? null,
+        roundId: interview.roundId ?? null,
+        roundNumber: interview.roundNumber ?? null,
+        at: new Date().toISOString(),
+      },
+    }).catch((err) => logger.warn({ err, interviewId: id }, "interview.feedback.created publish failed"));
 
     // Auto-advance? (Phase 3: synchronous; Phase 3.5 moves to worker queue)
     if (

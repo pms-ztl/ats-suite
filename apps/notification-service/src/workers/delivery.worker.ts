@@ -195,6 +195,12 @@ function iconForType(type: string): string {
       return ":tada:";
     case "APPLICATION_REJECTED":
       return ":envelope:";
+    case "APPLICATION_STATUS_UPDATE":
+      return ":arrows_counterclockwise:";
+    case "ASSESSMENT_INVITED":
+      return ":memo:";
+    case "ONBOARDING_INVITE":
+      return ":clipboard:";
     default:
       return ":bell:";
   }

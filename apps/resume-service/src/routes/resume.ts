@@ -423,6 +423,7 @@ router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunc
         detectedEmail: it.detectedEmail,
         textSnippet: it.textSnippet,
         extractStatus: it.extractStatus,
+        quarantineReason: it.quarantineReason,
         reviewStatus: it.reviewStatus,
         score: it.score,
         scoreStatus: it.scoreStatus,

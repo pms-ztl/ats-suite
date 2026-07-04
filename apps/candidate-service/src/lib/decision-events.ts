@@ -41,6 +41,19 @@ export interface StageChangedPayload {
   fromStage: string;
   toStage: string;
   changedByUserId: string | null;
+  /**
+   * CROSS-LANE CONTRACT field (consumed by notification-wiring):
+   * `actorUserId` is the nullable user id that drove the transition. It is the
+   * SAME value as `changedByUserId` (kept as the canonical contract name so the
+   * notification subscriber can rely on it verbatim); `changedByUserId` is
+   * retained for the existing consumers, so this is purely additive.
+   */
+  actorUserId: string | null;
+  /**
+   * CROSS-LANE CONTRACT field: ISO-8601 timestamp of when the transition was
+   * committed. Additive; existing consumers ignore it.
+   */
+  at: string;
   /** Which write path drove the change. */
   source: "api" | "assessment" | "interview";
 }
@@ -112,8 +125,22 @@ export async function publishApplicationRejected(payload: ApplicationRejectedPay
  * Publish application.stage.changed best-effort. A publish failure NEVER blocks
  * or reverses the DB write that already happened at the call site (mirrors the
  * hired/rejected publishers); it is logged at warn and swallowed.
+ *
+ * The CROSS-LANE CONTRACT fields `actorUserId` + `at` are normalized here so the
+ * existing call sites (which pass the historical `changedByUserId` + `source`)
+ * stay unchanged: `actorUserId` defaults to `changedByUserId` and `at` defaults
+ * to the current instant. This keeps the emitted event backward-compatible while
+ * guaranteeing the exact shape the notification-wiring lane consumes.
  */
-export async function publishStageChanged(payload: StageChangedPayload, logger: Logger): Promise<void> {
+export async function publishStageChanged(
+  input: Omit<StageChangedPayload, "actorUserId" | "at"> & Partial<Pick<StageChangedPayload, "actorUserId" | "at">>,
+  logger: Logger,
+): Promise<void> {
+  const payload: StageChangedPayload = {
+    ...input,
+    actorUserId: input.actorUserId ?? input.changedByUserId ?? null,
+    at: input.at ?? new Date().toISOString(),
+  };
   await publishEvent({
     subject: tenantSubject(payload.tenantId, "application", "stage.changed"),
     type: "application.stage.changed",

@@ -22,6 +22,7 @@ export type VisibilityField = z.infer<typeof VisibilityFieldSchema>;
 
 export const VisibilityRoleSchema = z.enum([
   "ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER", "SUPER_ADMIN",
+  "DEPARTMENT_HEAD", "EXECUTIVE",
 ]);
 export type VisibilityRole = z.infer<typeof VisibilityRoleSchema>;
 

@@ -15,13 +15,15 @@
 // Inline palette colors use var(--c-NAME); effect/size tokens (--r*, --fs*, --ease*)
 // are bare. The prototype's `rise` / `pop` animations map to the existing globals.
 //
-// WIRE: the lookup is a controlled form (email + optional reference). On submit we
-// do a best-effort fetch via raw() against the real public endpoint
-// (GET /public/status?email=...), falling back to /candidate-portal/status, and
-// coerce res?.data ?? res. When the API returns an application we render the real
-// stage / timeline; otherwise pre-lookup, loading, "not found", and error each
-// render the same layout with an EmptyState / ErrorState / spinner. No application
-// data is fabricated, the design's sample copy only seeds the input placeholder.
+// WIRE: the lookup is a controlled form (email + optional job reference/slug). On
+// submit we fetch via raw() against the REAL public status endpoint contract
+// (GET /public/applications/status?email=<e>&jobSlug=<s>) which returns
+// { stage, updatedAt, jobTitle } or a 404-honest-empty. We coerce res?.data ?? res.
+// The endpoint returns no PII beyond the applicant's own stage. When the API returns
+// an application we render the real stage / timeline; otherwise pre-lookup, loading,
+// "not found", and error each render the same layout with an EmptyState / ErrorState
+// / spinner. No application data is fabricated, the design's sample copy only seeds
+// the input placeholder.
 import { useState } from "react";
 import { EmptyState, ErrorState } from "@/components/aurora";
 import { Icon } from "@/components/aurora-icon";
@@ -29,12 +31,16 @@ import type { ApplicationStage } from "@/lib/types";
 
 /* ---------- local raw() gateway helper (unwrap res?.data ?? res) ---------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// A 404 from the status endpoint is an HONEST empty ("no application for that email"),
+// not a server error, so we surface it as null rather than throwing.
+class NotFoundError extends Error {}
 async function raw(path: string): Promise<any> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "GET",
     credentials: "include",
     headers: { Accept: "application/json" },
   });
+  if (res.status === 404) throw new NotFoundError(`GET ${path} -> 404`);
   if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
   const json = await res.json();
   return json?.data ?? json;
@@ -141,28 +147,35 @@ function statusChip(stage: ApplicationStage): { label: string; icon: string; ton
   }
 }
 
-// What the API gives us, kept loose because the public endpoint is best-effort.
+// What the API gives us. The status endpoint's contract is { stage, updatedAt,
+// jobTitle }; we also stay tolerant of the older/loose shape (title/company/etc)
+// so this view-model keeps working if the payload is richer.
 interface StatusResult {
-  title: string;        // role applied for
-  company: string;      // tenant / company name
-  applied: string;      // human date, e.g. "May 24"
+  title: string;        // role applied for (contract: jobTitle)
+  company: string;      // tenant / company name (contract omits this; optional)
+  applied: string;      // human "last updated" date, e.g. "May 24" (contract: updatedAt)
   stage: ApplicationStage;
   note?: string;        // optional "what's happening now" copy
 }
 
 // Coerce the (unwrapped) gateway payload into the view-model, or null if absent.
+// Reads the status-endpoint contract fields (stage, updatedAt, jobTitle) first,
+// then falls back to the older loose keys for backward compatibility.
 function toResult(d: any): StatusResult | null {
   if (!d || typeof d !== "object") return null;
   const row = Array.isArray(d) ? d[0] : (d.application ?? d.candidate ?? d);
   if (!row || typeof row !== "object") return null;
   const stage = (row.stage ?? row.status ?? "") as string;
   if (!stage) return null;
-  const title = row.title ?? row.role ?? row.requisitionTitle ?? row.jobTitle ?? "Your application";
+  const title = row.jobTitle ?? row.title ?? row.role ?? row.requisitionTitle ?? "Your application";
   const company = row.company ?? row.companyName ?? row.tenantName ?? row.tenant?.name ?? "";
-  const appliedRaw = row.applied ?? row.appliedAt ?? row.createdAt ?? "";
-  let applied = String(appliedRaw);
-  const ts = appliedRaw ? Date.parse(String(appliedRaw)) : NaN;
+  // The contract's `updatedAt` is the authoritative timestamp; fall back to the
+  // legacy applied/createdAt keys. We label it "Updated" in the header.
+  const stampRaw = row.updatedAt ?? row.applied ?? row.appliedAt ?? row.createdAt ?? "";
+  let applied = String(stampRaw);
+  const ts = stampRaw ? Date.parse(String(stampRaw)) : NaN;
   if (!Number.isNaN(ts)) applied = new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  else applied = "";
   return { title, company, applied, stage: stage.toUpperCase() as ApplicationStage, note: row.note ?? row.statusNote };
 }
 
@@ -187,25 +200,25 @@ export default function StatusPage() {
   async function lookup(e?: React.FormEvent) {
     e?.preventDefault();
     const q = email.trim();
-    if (!q) return;
+    const slug = reference.trim();
+    // The status contract matches on BOTH email AND jobSlug (privacy: only the
+    // applicant's own stage for the one job they name). Require both before firing.
+    if (!q || !slug) return;
     setPhase("loading");
     setResult(null);
-    const ref = reference.trim();
-    const qs = `email=${encodeURIComponent(q)}${ref ? `&reference=${encodeURIComponent(ref)}` : ""}`;
-    // Try the real public endpoint first, then the candidate-portal alias.
-    const paths = [`/public/status?${qs}`, `/candidate-portal/status?${qs}`];
-    let lastErr = false;
-    for (const p of paths) {
-      try {
-        const data = await raw(p);
-        const vm = toResult(data);
-        if (vm) { setResult(vm); setPhase("found"); return; }
-        lastErr = false; // reached the API but no application matched
-      } catch {
-        lastErr = true; // network / endpoint error, try the next path
-      }
+    const qs = `email=${encodeURIComponent(q)}&jobSlug=${encodeURIComponent(slug)}`;
+    // The REAL public status endpoint contract:
+    //   GET /api/public/applications/status?email=<e>&jobSlug=<s> -> { stage, updatedAt, jobTitle }
+    // A 404 is an honest "no application found" (NotFoundError -> empty), any other
+    // failure is a server/network error.
+    try {
+      const data = await raw(`/public/applications/status?${qs}`);
+      const vm = toResult(data);
+      if (vm) { setResult(vm); setPhase("found"); return; }
+      setPhase("empty"); // reached the API, 200, but nothing usable in the payload
+    } catch (err) {
+      setPhase(err instanceof NotFoundError ? "empty" : "error");
     }
-    setPhase(lastErr ? "error" : "empty");
   }
 
   function reset() {
@@ -238,21 +251,24 @@ export default function StatusPage() {
               }}
             />
             <label style={{ display: "block", fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--c-ink-2)", margin: "14px 0 7px" }}>
-              Application reference <span style={{ color: "var(--c-ink-3)", fontWeight: 500 }}>(optional)</span>
+              Job reference <span style={{ color: "var(--c-ink-3)", fontWeight: 500 }}>(from the role you applied to)</span>
             </label>
             <div style={{ display: "flex", gap: 10 }}>
               <input
-                value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. APP-48213"
+                value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. senior-engineer"
                 style={{
                   flex: 1, padding: "12px 15px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)",
                   background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-md)", outline: "none",
                   fontFamily: "var(--font-sans)",
                 }}
               />
-              <Btn kind="primary" type="submit" trail="search" disabled={!email.trim() || phase === "loading"}>
+              <Btn kind="primary" type="submit" trail="search" disabled={!email.trim() || !reference.trim() || phase === "loading"}>
                 {phase === "loading" ? "Looking up" : "Look up"}
               </Btn>
             </div>
+            <p style={{ margin: "10px 2px 0", fontSize: "var(--fs-xs)", color: "var(--c-ink-3)", lineHeight: 1.5 }}>
+              For your privacy we match on both your email and the job you applied to, so we only ever show your own application status.
+            </p>
           </form>
 
           {/* feedback under the form: loading / not-found / error */}
@@ -286,7 +302,7 @@ export default function StatusPage() {
               <ErrorState
                 title="We could not reach our servers"
                 body="Something went wrong looking up your status. Please try again in a moment."
-                code="GET /public/status"
+                code="GET /public/applications/status"
                 onRetry={() => lookup()}
               />
             )}
@@ -300,7 +316,7 @@ export default function StatusPage() {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "var(--fs-lg)" }}>{result.title}</div>
                   <div style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-3)" }}>
-                    {result.applied ? `Applied ${result.applied}` : "Applied"}{result.company ? ` · ${result.company}` : ""}
+                    {result.applied ? `Updated ${result.applied}` : "Your application"}{result.company ? ` · ${result.company}` : ""}
                   </div>
                 </div>
                 <Chip icon={chip.icon} tone={chip.tone} bg={chip.bg}>{chip.label}</Chip>

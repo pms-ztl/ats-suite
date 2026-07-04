@@ -13,6 +13,28 @@ export async function ingest(tenantId: string, b: IngestInput) {
   return { metric: row.metric, dimension: row.dimension, period: row.period, value: row.value };
 }
 
+/**
+ * SET a rollup cell to an absolute value (idempotent), as opposed to `ingest`'s
+ * delta-increment. Used by the periodic rollup worker, which recomputes each
+ * funnel metric from the REAL authoritative count candidate-service reports and
+ * mirrors it here — a SET (not an increment) so a re-run converges to the true
+ * value instead of drifting upward.
+ */
+export async function setMetric(
+  tenantId: string,
+  metric: string,
+  value: number,
+  dimension = "all",
+  period = "all",
+) {
+  const row = await prisma.metricRollup.upsert({
+    where: { tenantId_metric_dimension_period: { tenantId, metric, dimension, period } },
+    create: { tenantId, metric, dimension, period, value },
+    update: { value },
+  });
+  return { metric: row.metric, dimension: row.dimension, period: row.period, value: row.value };
+}
+
 export async function summary(tenantId: string) {
   const rollups = await prisma.metricRollup.findMany({ where: { tenantId }, orderBy: { metric: "asc" } });
   return { count: rollups.length, rollups };

@@ -8,6 +8,8 @@ export const UserRoleSchema = z.enum([
   "HIRING_MANAGER",
   "COMPLIANCE_OFFICER",
   "INTERVIEWER",
+  "DEPARTMENT_HEAD",
+  "EXECUTIVE",
   "CANDIDATE",
 ]);
 export type UserRole = z.infer<typeof UserRoleSchema>;

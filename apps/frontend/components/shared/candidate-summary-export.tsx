@@ -1,8 +1,9 @@
 "use client";
 // Module G — candidate summary export. Generates a concise, professional one-doc
-// summary (name, contact, alignment score, skills, experience, education, stage,
-// recruiter notes) as PDF or Word — enough context for a decision-maker without
-// dumping the whole resume.
+// summary (name, contact incl. phone, AI alignment score + derived dimensions,
+// skills, experience, education, resume tags, interview scores, stage, recruiter
+// notes) as PDF or Word — the intelligent summary a decision-maker needs without
+// dumping the whole resume. Real data or honest-empty; empty sections are dropped.
 import * as React from "react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
@@ -26,6 +27,7 @@ export interface CandidateSummary {
   education?: string[];
   strengths?: string[];
   missing?: string[];
+  interviewScores?: string[]; // real per-interview ratings, e.g. "Technical round: 4/5 (strong yes)"
   notes?: string[];
 }
 
@@ -44,11 +46,14 @@ function buildDoc(c: CandidateSummary): ExportDoc {
     ]),
     sec("AI alignment", [
       c.score != null ? `Match score: ${Math.round(c.score)}%${c.band ? ` (${c.band})` : ""}` : null,
-      c.scoreSummary ?? null,
+      // scoreSummary may carry the advisory summary + derived dimension lines +
+      // the parsed resume summary, newline-joined; split so each renders cleanly.
+      ...((c.scoreSummary ?? "").split("\n").map((l) => l.trim()).filter(Boolean)),
     ]),
     sec("Skills", c.skills?.length ? [c.skills.join(", ")] : ["(none captured)"]),
     sec("Strengths", c.strengths ?? []),
     sec("Missing / gaps", c.missing ?? []),
+    sec("Interview scores", c.interviewScores ?? []),
     sec("Experience", c.experience ?? []),
     sec("Education", c.education ?? []),
     sec("Resume tags", c.tags?.length ? [c.tags.join(", ")] : []),

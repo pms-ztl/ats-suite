@@ -17,7 +17,7 @@
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, getUserId, requireRole, filterVisibleFields } from "@cdc-ats/common";
 
 // Phase 27 F-028-micro-P1: candidate operations need ADMIN/RECRUITER/HIRING_MANAGER.
 // upsert-from-application is INTERNAL (called by job-service public apply flow),
@@ -26,6 +26,27 @@ const requireRecruiterOrAdmin = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGE
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
+
+/**
+ * SERVER-SIDE field filter (RBAC HELPER contract). Strips candidate fields the
+ * caller's role may not see (recruiter notes, alignment/screening scores,
+ * expected/current salary) BEFORE the entity is serialized, so a restricted role
+ * (e.g. INTERVIEWER) cannot read them via the raw API even though the frontend
+ * also hides them. Non-sensitive fields (name, email, stage, tags, ...) pass
+ * through untouched, so the recruiter/admin full view is unchanged — this is
+ * purely additive. An unknown/absent role gets the most restrictive view.
+ *
+ * The caller's role comes from the gateway-verified X-User-Role header
+ * (req.user.role, set by readAuthHeaders). Nested applications are left as-is
+ * here (they are governed by the same candidate matrix and carry no sensitive
+ * candidate fields themselves).
+ */
+function callerRole(req: Request): string {
+  return req.user?.role ?? (req.headers["x-user-role"] as string | undefined) ?? "";
+}
+function serializeCandidate<T>(entity: T, req: Request): Partial<T> {
+  return filterVisibleFields(entity, callerRole(req), "candidate");
+}
 
 /**
  * Bucket a set of dates into `weeks` consecutive 7-day windows ending now, and
@@ -79,7 +100,8 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    ok(res, candidates);
+    // Strip role-restricted candidate fields server-side before responding.
+    ok(res, candidates.map((c) => serializeCandidate(c, req)));
   } catch (err) { next(err); }
 });
 
@@ -250,7 +272,8 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
       include: { applications: true },
     });
     if (!candidate) throw Errors.notFound("Candidate");
-    ok(res, candidate);
+    // Strip role-restricted candidate fields server-side before responding.
+    ok(res, serializeCandidate(candidate, req));
   } catch (err) { next(err); }
 });
 
@@ -305,7 +328,7 @@ router.patch("/:id", requireRecruiterOrAdmin, async (req: Request, res: Response
     const { count } = await prisma.candidate.updateMany({ where: { id, tenantId }, data: body });
     if (count === 0) throw Errors.notFound("Candidate");
     const updated = await prisma.candidate.findUnique({ where: { id } });
-    ok(res, updated);
+    ok(res, serializeCandidate(updated, req));
   } catch (err) { next(err); }
 });
 

@@ -74,7 +74,8 @@ paths:
       summary: Submit interview feedback (requireFeedbackSubmitter)
       description: >-
         Consumes the 5-point recommendation scale (STRONG_HIRE..STRONG_NO_HIRE).
-        The FeedbackSubmittedPayloadSchema exists but is not published today.
+        On success publishes tenant.{tenantId}.interview.feedback.created
+        (INTERVIEW_EVENTS) so notification-service can notify the tenant.
       parameters:
         - $ref: "./_shared.yaml#/components/parameters/XUserId"
         - $ref: "./_shared.yaml#/components/parameters/XTenantId"

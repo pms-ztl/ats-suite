@@ -30,8 +30,11 @@ Also serves `/health`, `/healthz`, `/metrics`.
 ## Events
 
 **Produces**: `interview.round.started` (published from `lib/round-progression.ts`;
-consumed by candidate-service to advance the pipeline stage) and
-`interview.scheduled` (from the scheduling agent; consumed by notification-service).
+consumed by candidate-service to advance the pipeline stage),
+`interview.scheduled` (from the scheduling agent; consumed by notification-service),
+and `interview.feedback.created` (from the feedback route on `POST
+/internal/interviews/:id/feedback`; consumed by notification-service to notify the
+tenant a scorecard landed).
 
 No event subscriptions in this service.
 
@@ -40,8 +43,12 @@ No event subscriptions in this service.
 Read directly in `src/`: `PORT`, `NODE_ENV`, `NATS_URL`,
 `INTERVIEW_APP_DATABASE_URL` (RLS app-role), `INTERNAL_SERVICE_TOKEN`,
 `IDENTITY_SERVICE_URL`, `JOB_SERVICE_URL`, `BILLING_SERVICE_URL`,
-`AGENTIC_SCHEDULING`, `MEETING_BASE_URL`.
+`AGENTIC_SCHEDULING`.
 
+- Built-in room: `APP_URL` (frontend base for the room link
+  `${APP_URL}/interview/room/{interviewId}?t=<joinToken>`; NO external meeting tool),
+  `INTERVIEW_JOIN_TOKEN_SECRET` (falls back to `COLLAB_TOKEN_SECRET`) — signs the
+  candidate guest-join token validated by `POST /public/interview/join`.
 - Collab room tokens: `COLLAB_TOKEN_SECRET`, `COLLAB_WS_PUBLIC_URL`.
 - Calendar OAuth: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`,
   `MS_OAUTH_CLIENT_ID`, `MS_OAUTH_CLIENT_SECRET`, `MS_OAUTH_TENANT`,

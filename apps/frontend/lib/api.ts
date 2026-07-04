@@ -75,8 +75,33 @@ export async function getVerdict(id: string): Promise<ScreeningVerdict> {
 }
 
 /* ---------- Candidates ---------- */
+// Normalize a parsedSummary array (flat strings OR enriched objects) into human,
+// export-ready lines. Real data only — an empty/absent array yields [].
+function parsedLines(arr: any, kind: "skill" | "experience" | "education"): string[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((it: any) => {
+      if (it == null) return "";
+      if (typeof it === "string") return it.trim();
+      if (kind === "skill") return String(it.name ?? it.skill ?? it.label ?? "").trim();
+      if (kind === "experience") {
+        const title = it.title ?? it.role ?? it.position ?? "";
+        const org = it.company ?? it.organization ?? it.employer ?? "";
+        const span = it.dates ?? it.period ?? [it.startDate, it.endDate].filter(Boolean).join(" – ");
+        return [title, org && `at ${org}`, span].filter(Boolean).join(" ").trim();
+      }
+      // education
+      const deg = it.degree ?? it.qualification ?? "";
+      const school = it.school ?? it.university ?? it.institution ?? "";
+      const yr = it.year ?? it.graduationYear ?? it.endDate ?? "";
+      return [deg, school && `— ${school}`, yr].filter(Boolean).join(" ").trim();
+    })
+    .filter((l: string) => l.length > 0);
+}
+
 function toCandidate(c: any): Candidate {
   const app = c?.applications?.[0] ?? {};
+  const ps = c?.parsedSummary ?? null;
   return {
     id: c?.id, name: fullName(c) || "Candidate", email: c?.email ?? "",
     location: c?.location ?? c?.country ?? "", source: c?.source ?? "",
@@ -89,6 +114,13 @@ function toCandidate(c: any): Candidate {
     timeInStageDays: c?.timeInStageDays ?? undefined,
     resumeUrl: c?.resumeUrl ?? undefined,
     appliedAt: c?.appliedAt ?? app?.appliedAt ?? c?.createdAt ?? "",
+    // Additive real fields for the intelligent candidate-summary export.
+    phone: c?.phone ?? undefined,
+    tags: Array.isArray(c?.tags) ? c.tags.filter(Boolean) : undefined,
+    skills: ps ? parsedLines(ps.skills, "skill") : undefined,
+    experience: ps ? parsedLines(ps.experience, "experience") : undefined,
+    education: ps ? parsedLines(ps.education, "education") : undefined,
+    parsedSummaryText: (typeof ps?.summary === "string" && ps.summary.trim()) ? ps.summary.trim() : (typeof c?.summary === "string" && c.summary.trim() ? c.summary.trim() : undefined),
   };
 }
 export async function listCandidates(q?: { stage?: ApplicationStage; requisitionId?: string }): Promise<Candidate[]> {
@@ -611,6 +643,42 @@ function toInterview(iv: any): Interview {
     mode: (iv?.format ?? iv?.mode ?? "VIDEO") as Interview["mode"],
   };
 }
+// Intelligent candidate-summary support: real interview scores for a candidate.
+// Lists the candidate's interviews (GET /interviews?candidateId=), then reads each
+// one's detail for its submitted feedback (overallRating 1..5 + recommendation).
+// Returns honest human lines like "Technical round — 4/5 (STRONG_YES)"; an interview
+// with no feedback yet is reported as pending, never with a fabricated score.
+export async function getCandidateInterviewScores(candidateId: string): Promise<string[]> {
+  if (!candidateId) return [];
+  let list: any[] = [];
+  try {
+    list = arr(await raw("GET", `/interviews?candidateId=${encodeURIComponent(candidateId)}`));
+  } catch { return []; }
+  const lines: string[] = [];
+  // Bounded fan-out: at most the first 8 interviews, detail read for feedback.
+  for (const iv of list.slice(0, 8)) {
+    const round = iv?.round?.name ?? iv?.round ?? iv?.type ?? iv?.stage ?? "Interview";
+    const status = String(iv?.status ?? "");
+    let feedback: any[] = Array.isArray(iv?.feedback) ? iv.feedback : [];
+    if (feedback.length === 0 && iv?.id) {
+      try {
+        const detail = await raw("GET", `/interviews/${iv.id}`);
+        feedback = Array.isArray(detail?.feedback) ? detail.feedback : [];
+      } catch { /* keep empty — honest pending */ }
+    }
+    if (feedback.length > 0) {
+      for (const f of feedback) {
+        const rating = f?.overallRating != null ? `${f.overallRating}/5` : "";
+        const rec = f?.recommendation ? ` (${String(f.recommendation).replace(/_/g, " ").toLowerCase()})` : "";
+        lines.push(`${round}: ${[rating, rec].filter(Boolean).join("")}`.trim().replace(/:\s*$/, ": feedback recorded"));
+      }
+    } else if (status === "COMPLETED") {
+      lines.push(`${round}: awaiting feedback`);
+    }
+  }
+  return lines;
+}
+
 export async function listInterviews(): Promise<Interview[]> {
   return arr(await api.interviews.listInterviews({ page: 1, pageSize: 100 })).map(toInterview);
 }

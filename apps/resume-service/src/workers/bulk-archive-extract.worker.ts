@@ -86,7 +86,8 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
           const sizeBytes = Number(entry.uncompressedSize ?? 0) || 0;
 
           // Unsupported type → record a staging row so the recruiter sees the
-          // file was present but skipped (no fabricated success).
+          // file was present but skipped (no fabricated success), with the real
+          // reason persisted so the batch result reports WHY it was quarantined.
           if (!mimeType) {
             await prisma.bulkImportItem.create({
               data: {
@@ -96,6 +97,7 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
                 mimeType: "application/octet-stream",
                 sizeBytes,
                 extractStatus: "unsupported",
+                quarantineReason: `Unsupported file type${ext ? ` (.${ext})` : ""}; expected pdf/doc/docx/txt or an image`,
                 reviewStatus: "pending",
               },
             });
@@ -110,6 +112,8 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
           let detectedName: string | null = null;
           let detectedEmail: string | null = null;
           let textSnippet: string | null = null;
+          // WHY the item failed, persisted per item. Null on a clean extract.
+          let quarantineReason: string | null = null;
 
           try {
             const buf = await entry.buffer();
@@ -125,14 +129,19 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
               // Image whose OCR produced nothing (blank scan / OCR disabled).
               extractStatus = "ocr_empty";
               detectedName = guessIdentity(null, fileName).detectedName;
+              quarantineReason = "OCR produced no text (blank/low-quality scan or OCR disabled)";
             } else {
               // Non-image with no text (e.g. empty/corrupt doc).
               extractStatus = "failed";
               detectedName = guessIdentity(null, fileName).detectedName;
+              quarantineReason = "No extractable text (empty or corrupt document)";
             }
           } catch (err) {
             extractStatus = "failed";
             detectedName = guessIdentity(null, fileName).detectedName;
+            // Persist the real extraction error (trimmed) so the batch result says
+            // WHY this file failed — e.g. "Invalid PDF structure".
+            quarantineReason = `Extraction error: ${(err instanceof Error ? err.message : String(err)).slice(0, 300)}`;
             logger.warn(
               { err, fileName, bulkUploadId },
               "archive entry extraction failed",
@@ -157,6 +166,7 @@ export function startBulkArchiveExtractWorker(logger: Logger) {
               textSnippet,
               extractedText,
               extractStatus,
+              quarantineReason,
               reviewStatus: "pending",
               ...(willScore ? { scoreStatus: "pending" } : {}),
             },

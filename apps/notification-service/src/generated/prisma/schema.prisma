@@ -20,6 +20,13 @@ enum NotificationType {
   OFFER_APPROVED
   APPLICATION_HIRED
   APPLICATION_REJECTED
+  // Lane 4: mandated auto status-update email on stage change + assessment
+  // invite + onboarding portal invite candidate comms. Each is a first-class
+  // NotificationType so tenants can customize its EmailTemplate independently
+  // (the delivery worker keys the per-tenant override lookup on type).
+  APPLICATION_STATUS_UPDATE
+  ASSESSMENT_INVITED
+  ONBOARDING_INVITE
   SYSTEM
 }
 
