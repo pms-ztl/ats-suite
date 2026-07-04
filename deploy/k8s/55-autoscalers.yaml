@@ -1,4 +1,4 @@
-# HorizontalPodAutoscalers for the hot-path deployables - additive.
+# HorizontalPodAutoscalers for the hot-path HTTP deployables - additive.
 #
 # ── Honest status (read this first) ───────────────────────────────────────────
 # These HPAs are DERIVED FROM the compose-translated Deployments in this tree and
@@ -15,34 +15,41 @@
 #   • metrics-server MUST be installed for the CPU-utilization metric to resolve;
 #     without it every HPA reports `<unknown>` targets and will not scale. This is
 #     a cluster add-on, not something these manifests can provide.
-#   • Every target Deployment MUST declare CPU `resources.requests` (they all do,
-#     in 40/44/47/48/54/60-*.yaml) - HPA computes utilization as a percentage OF
-#     THE REQUEST, so a missing request makes the CPU metric unusable.
+#   • Every target Deployment MUST declare CPU `resources.requests` (they all do)
+#     - HPA computes utilization as a percentage OF THE REQUEST, so a missing
+#     request makes the CPU metric unusable.
 #
-# ── Why THESE six deployables ─────────────────────────────────────────────────
-# The hot path a 10k-applicant spike actually exercises:
+# ── Division of labour: THIS file (CPU HPAs) vs 60-keda-scaledobjects.yaml ─────
+# The four QUEUE-DRIVEN Deployments - job-service, resume-service,
+# screening-service, assessment-service - are now scaled by KEDA on BullMQ Redis
+# queue depth (the metric a CPU HPA cannot see) in 60-keda-scaledobjects.yaml. Their
+# CPU HPAs USED to live here and have been REMOVED, because a plain HPA and a KEDA
+# ScaledObject on the SAME Deployment fight over the one HPA object. KEDA folds a CPU
+# trigger into its ScaledObject so those services still scale on MAX(queue-depth,
+# CPU) via the single HPA KEDA manages.
+#
+# What remains here are the pure HTTP surfaces with NO in-process queue worker, so a
+# CPU HPA is the correct and sufficient signal:
 #   • frontend        - every browser session (SSR + the Next proxy to the gateway)
 #   • api-gateway     - the single public ingress; ALL /api/* traffic funnels here
-#   • job-service     - the public apply accept-fast path (202) + the apply-ingest
-#                       BullMQ worker runs IN-PROCESS in this same container
-#   • resume-service  - extract/parse + OCR; the parse BullMQ worker is in-process
-#                       (the CPU-heaviest service - note its 2-core limit)
-#   • screening-service - the candidate-screener BullMQ worker is in-process
-#   • assessment-service - OA invite issuance + result ingest + the poll reconciler
-# Stateful infra (Postgres/Redis/NATS/MinIO) and the low-traffic control-plane
-# services (identity/tenant/billing/candidate/interview/notification/search/agent/
-# analytics/compliance) are intentionally NOT autoscaled here; scale them manually
-# or add their own HPAs once you have measured a need. Postgres in particular does
-# NOT autoscale by pod count - read the connection-pool section of SCALABILITY.md.
+#   • identity-service  - login/token verify; every authenticated session hits it
+#   • tenant-service    - tenant/plan/branding resolution on the request path
+#   • billing-service   - plan-gate + entitlement checks in front of AI + writes
+#   • candidate-service - candidate/application reads+writes (the apply spike lands
+#                         Candidate rows here via job-service; browse is read-hot)
+#   • interview-service - scheduling + interview-room reads on the recruiter path
+# Stateful infra (Postgres/Redis/NATS/MinIO/PgBouncer) and the remaining low-traffic
+# services (search/agent/analytics/compliance) are NOT autoscaled here; add HPAs once
+# you have measured a need. Postgres in particular does NOT autoscale by pod count -
+# read the connection-pool section of SCALABILITY.md (and 25-pgbouncer.yaml).
 #
 # ── A note on the in-process BullMQ workers ───────────────────────────────────
-# job-service, resume-service and screening-service each run their HTTP surface AND
-# their queue worker in ONE process (see apps/*/src/index.ts). BullMQ is a
-# Redis-backed competing-consumer queue, so adding replicas linearly adds worker
-# concurrency AND HTTP capacity together - which is exactly why a CPU-driven HPA on
-# these Deployments scales the async pipeline correctly. If you ever split a worker
-# into its own Deployment, give it its OWN HPA keyed on queue depth (an external /
-# custom metric via KEDA), because CPU alone under-represents a deep backlog.
+# job-service, resume-service, screening-service and assessment-service each run
+# their HTTP surface AND their queue worker in ONE process (see apps/*/src/index.ts).
+# BullMQ is a Redis-backed competing-consumer queue, so adding replicas linearly adds
+# worker concurrency AND HTTP capacity together - which is why scaling those
+# Deployments on queue depth (via KEDA) also scales their shared HTTP surface. That
+# is exactly why they are KEDA-owned, not CPU-HPA-owned, in this tree.
 ---
 # ── frontend ──────────────────────────────────────────────────────────────────
 # Next.js SSR + the server-side /api proxy. Baseline 2 (matches the Deployment
@@ -82,7 +89,7 @@ spec:
       # Scale in slowly so a brief lull does not thrash replicas.
       stabilizationWindowSeconds: 300
       policies:
-        - type: Pod
+        - type: Pods
           value: 1
           periodSeconds: 60
 ---
@@ -134,39 +141,38 @@ spec:
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-        - type: Pod
+        - type: Pods
           value: 1
           periodSeconds: 60
 ---
-# ── job-service ────────────────────────────────────────────────────────────────
-# The public apply accept-fast path (202) + the in-process apply-ingest BullMQ
-# worker. This is THE deployable a 10k-applicant spike hammers, so it gets the
-# widest range. Adding replicas adds both accept-path HTTP capacity and ingest
-# worker concurrency (competing consumers on the shared Redis queue).
+# ── identity-service ───────────────────────────────────────────────────────────
+# Login + JWT verify + user lookups. Every authenticated request in the system
+# ultimately depends on identity being healthy; under a campaign the public apply
+# path does not hit it, but the recruiter/admin surface and token refresh do. Pure
+# HTTP (no queue), so CPU is the right signal. Moderate range.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: job-service
+  name: identity-service
   namespace: cdc-ats
   labels:
-    app.kubernetes.io/name: job-service
+    app.kubernetes.io/name: identity-service
     app.kubernetes.io/part-of: cdc-ats
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: job-service
+    name: identity-service
   minReplicas: 2
-  maxReplicas: 16
+  maxReplicas: 6
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          # 65% of the 150m request. The accept path is deliberately light (one
-          # small DB write + a queue add), so CPU rises mainly with request rate.
-          averageUtilization: 65
+          # 70% of the 100m request. argon2 verify on login is the CPU cost.
+          averageUtilization: 70
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 30
@@ -174,129 +180,30 @@ spec:
         - type: Percent
           value: 100
           periodSeconds: 30
-        - type: Pods
-          value: 4
-          periodSeconds: 30
-      selectPolicy: Max
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-        - type: Pod
+        - type: Pods
           value: 1
           periodSeconds: 60
 ---
-# ── resume-service ─────────────────────────────────────────────────────────────
-# Extract + parse + OCR; the parse BullMQ worker runs in-process
-# (RESUME_PARSE_CONCURRENCY=8 per replica). This is the CPU-heaviest service (2-core
-# limit, OCR is expensive), so the CPU target is a bit higher (work is genuinely
-# CPU-bound, not I/O-wait) and the ceiling is generous to chew through a bulk-ingest
-# backlog. Under a real backlog, prefer a queue-depth (KEDA) metric over CPU alone.
+# ── tenant-service ─────────────────────────────────────────────────────────────
+# Tenant / plan / branding resolution on the request path (the gateway + services
+# resolve tenant context here). Read-hot, pure HTTP. Moderate range.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: resume-service
+  name: tenant-service
   namespace: cdc-ats
   labels:
-    app.kubernetes.io/name: resume-service
+    app.kubernetes.io/name: tenant-service
     app.kubernetes.io/part-of: cdc-ats
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: resume-service
+    name: tenant-service
   minReplicas: 2
-  maxReplicas: 12
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          # 70% of the 200m request - parse/OCR is CPU-bound, so run each replica
-          # warm before adding another.
-          averageUtilization: 70
-  behavior:
-    scaleUp:
-      # Parse/OCR pods are heavier to start (larger image, tesseract), so a slightly
-      # longer window avoids over-provisioning on a transient burst.
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 60
-        - type: Pods
-          value: 3
-          periodSeconds: 60
-      selectPolicy: Max
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Pod
-          value: 1
-          periodSeconds: 90
----
-# ── screening-service ──────────────────────────────────────────────────────────
-# The AI candidate-screener BullMQ worker runs in-process
-# (SCREENING_CONCURRENCY=6 per replica). Each job makes a rate-limited, plan-gated
-# LLM call, so screening throughput is bounded by the vendor/plan MORE than by CPU;
-# CPU scaling here mainly covers the JSON/prompt assembly + fan-out. Modest range.
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: screening-service
-  namespace: cdc-ats
-  labels:
-    app.kubernetes.io/name: screening-service
-    app.kubernetes.io/part-of: cdc-ats
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: screening-service
-  minReplicas: 2
-  maxReplicas: 8
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Pods
-          value: 2
-          periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Pod
-          value: 1
-          periodSeconds: 90
----
-# ── assessment-service ─────────────────────────────────────────────────────────
-# OA invite issuance + inbound webhook ingest + the poll reconciler
-# (assessment-poll.worker). Traffic is spiky (a batch of invites, then vendor
-# webhooks / poll ticks) but low-volume relative to apply, so a small range. NOTE:
-# the poll reconciler is a Redis-backed REPEATABLE job - it runs on exactly ONE
-# replica at a time regardless of replica count (BullMQ single scheduler), so
-# scaling this Deployment adds HTTP/webhook capacity, not extra poll ticks.
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: assessment-service
-  namespace: cdc-ats
-  labels:
-    app.kubernetes.io/name: assessment-service
-    app.kubernetes.io/part-of: cdc-ats
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: assessment-service
-  minReplicas: 1
   maxReplicas: 6
   metrics:
     - type: Resource
@@ -307,14 +214,139 @@ spec:
           averageUtilization: 70
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 60
+      stabilizationWindowSeconds: 30
       policies:
-        - type: Pods
-          value: 2
-          periodSeconds: 60
+        - type: Percent
+          value: 100
+          periodSeconds: 30
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
-        - type: Pod
+        - type: Pods
           value: 1
-          periodSeconds: 90
+          periodSeconds: 60
+---
+# ── billing-service ────────────────────────────────────────────────────────────
+# The plan-gate / entitlement check the gateway calls in front of EVERY AI agent
+# route + gated write (requireAgentPlan → /internal/billing/check-agent). A campaign
+# that fans out screening drives a check per screen, so this sits on a genuine hot
+# path. Pure HTTP. Moderate range.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: billing-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: billing-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: billing-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+---
+# ── candidate-service ──────────────────────────────────────────────────────────
+# Candidate + application reads/writes. The apply spike lands Candidate/Application
+# rows via job-service's async ingest, and the recruiter pipeline reads are served
+# here, so it is read-and-write-hot under a campaign. Pure HTTP. Wider range than the
+# other control-plane services because candidate browse/detail is a heavy read path.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: candidate-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: candidate-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: candidate-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+---
+# ── interview-service ──────────────────────────────────────────────────────────
+# Scheduling + interview-room reads on the recruiter path. Lower volume than the
+# apply path, but part of the day-to-day recruiter hot path. Pure HTTP. Modest range.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: interview-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: interview-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: interview-service
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

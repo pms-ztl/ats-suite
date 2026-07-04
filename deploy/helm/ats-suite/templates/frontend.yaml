@@ -1,0 +1,74 @@
+{{/*
+  frontend - Next.js standalone (infra/Dockerfile.frontend). Port 3000.
+  Differs from the backends: no DATABASE_URL, no /healthz (probed on "/"), and it
+  needs GATEWAY_ORIGIN (the server-side rewrite target the Next proxy forwards
+  /api to). NEXT_PUBLIC_API_URL=/api is a BUILD arg baked into the image, so it is
+  NOT a runtime env here.
+*/}}
+{{- if .Values.frontend.enabled }}
+{{- $fe := .Values.frontend }}
+{{- $repo := $fe.image.repository }}
+{{- if not $repo }}{{ $repo = printf "%s/frontend" .Values.global.image.repository }}{{ end }}
+{{- $tag := $fe.image.tag }}
+{{- if not $tag }}{{ $tag = .Values.global.image.tag }}{{ end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "frontend" "root" .) | nindent 4 }}
+spec:
+  {{- if not (and .Values.autoscaling.enabled $fe.autoscaling $fe.autoscaling.enabled) }}
+  replicas: {{ $fe.replicaCount | default 2 }}
+  {{- end }}
+  strategy:
+    {{- toYaml .Values.global.updateStrategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" "frontend" "instance" .Release.Name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "frontend" "root" .) | nindent 8 }}
+    spec:
+      {{- include "ats.imagePullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- toYaml .Values.global.podSecurityContext | nindent 8 }}
+      containers:
+        - name: frontend
+          image: {{ .Values.global.image.registry }}/{{ $repo }}:{{ $tag }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $fe.port }}
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: {{ $fe.port | quote }}
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            # Server-side proxy target (the gateway Service on the cluster network).
+            - name: GATEWAY_ORIGIN
+              value: {{ $fe.gatewayOrigin | quote }}
+          {{- include "ats.frontendProbes" . | nindent 10 }}
+          resources:
+            {{- toYaml $fe.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "frontend" "root" .) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "ats.selectorLabels" (dict "name" "frontend" "instance" .Release.Name) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $fe.port }}
+      targetPort: http
+{{- end }}

@@ -1,0 +1,108 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Prometheus Operator CRs (path B) - PodMonitor + PrometheusRule.
+#
+#  REQUIRES the Prometheus Operator (monitoring.coreos.com CRDs). Install
+#  kube-prometheus-stack first, or `kubectl get crd podmonitors.monitoring.coreos.com`
+#  will fail and these will not apply. If you run the self-contained Prometheus in
+#  20-prometheus.yaml (path A) instead, you do NOT need this file - skip it in the
+#  observability kustomization (it is commented out there by default).
+#
+#  A PodMonitor (not a ServiceMonitor) is used because the ATS backends are scraped
+#  per-POD via the prometheus.io/* annotations, and most of them have no dedicated
+#  metrics Service. The selector matches the app.kubernetes.io/part-of=cdc-ats
+#  label every ATS Deployment/Service carries.
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cdc-ats-services
+  namespace: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+    # Match your Prometheus CR's podMonitorSelector (kube-prometheus-stack default
+    # is `release: <release-name>`; add that label if your install requires it).
+spec:
+  namespaceSelector:
+    matchNames: [cdc-ats]
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: cdc-ats
+  podMetricsEndpoints:
+    # The ATS services expose /metrics on their HTTP port (named `http` in every
+    # Deployment/Service). port refers to the CONTAINER PORT NAME.
+    - port: http
+      path: /metrics
+      interval: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          targetLabel: app
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+---
+# The same alert rules as 30-alert-rules.yaml, expressed as a PrometheusRule CR so
+# the Operator loads them. Keep the two in sync if you edit thresholds. See the
+# honest-gap notes in 30-alert-rules.yaml (queue-depth + postgres_exporter rules
+# need extra exporters before they fire).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cdc-ats-alerts
+  namespace: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+spec:
+  groups:
+    - name: cdc-ats.request-health
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum by (app) (rate(http_requests_total{status=~"5.."}[5m]))
+              /
+              sum by (app) (rate(http_requests_total[5m]))
+            ) > 0.05
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "High 5xx error rate on {{ $labels.app }}"
+            description: "{{ $labels.app }} is serving >5% 5xx over 5m ({{ $value | humanizePercentage }})."
+        - alert: HighRequestLatencyP95
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (app, le) (rate(http_request_duration_seconds_bucket[5m]))
+            ) > 1.5
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "High p95 latency on {{ $labels.app }}"
+            description: "{{ $labels.app }} p95 request latency >1.5s over 5m."
+        - alert: ServiceDown
+          expr: up{job=~".*cdc-ats.*"} == 0
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: "Cannot scrape {{ $labels.app }} ({{ $labels.pod }})"
+            description: "Target down for 2m."
+    - name: cdc-ats.workload
+      rules:
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="cdc-ats"}[15m]) > 3
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash-looping"
+            description: "Restarted >3 times in 15m."
+        - alert: HPAMaxedOut
+          expr: |
+            kube_horizontalpodautoscaler_status_current_replicas{namespace="cdc-ats"}
+            >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="cdc-ats"}
+          for: 15m
+          labels: { severity: warning }
+          annotations:
+            summary: "HPA {{ $labels.horizontalpodautoscaler }} pinned at ceiling"
+            description: "At maxReplicas for 15m - raise the ceiling or add nodes (docs/SCALABILITY.md)."

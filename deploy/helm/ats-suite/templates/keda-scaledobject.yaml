@@ -1,0 +1,52 @@
+{{/*
+══════════════════════════════════════════════════════════════════════════════
+  KEDA ScaledObjects - queue-depth autoscaling for the in-process BullMQ workers.
+
+  Rendered ONLY when keda.enabled AND a service sets keda.enabled:true. Requires
+  KEDA (keda.sh/v1alpha1) installed on the cluster. Targets:
+    • resume-service   (parse queue)
+    • screening-service (candidate-screener queue)
+  (job-service's apply-ingest worker is fine on CPU - the accept path is light.)
+
+  WHY: CPU alone under-represents a DEEP backlog. KEDA scales these Deployments on
+  the Redis LIST length (the BullMQ waiting-list key). When a ScaledObject is
+  active it MANAGES the Deployment's replicas (do NOT also run an HPA on the same
+  Deployment - KEDA creates its own HPA under the hood). This chart leaves the
+  CPU HPA on by default and KEDA OFF; enable ONE per worker, not both.
+
+  HONEST: the Redis LIST key names below are the CONVENTIONAL BullMQ waiting-list
+  keys (bull:<queue>:wait). Verify them against your actual Redis (the queue
+  prefix/name can differ) before relying on this in production. The redis scaler
+  here assumes an unauthenticated in-cluster Redis; for a password-protected
+  Redis, add a TriggerAuthentication and reference it (see README).
+══════════════════════════════════════════════════════════════════════════════
+*/}}
+{{- if .Values.keda.enabled }}
+{{- range $name, $svc := .Values.services }}
+{{- if and $svc.keda $svc.keda.enabled }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicaCount: {{ (default $svc.autoscaling.minReplicas 1) }}
+  maxReplicaCount: {{ (default $svc.autoscaling.maxReplicas 10) }}
+  cooldownPeriod: {{ $.Values.keda.cooldownPeriod }}
+  pollingInterval: {{ $.Values.keda.pollingInterval }}
+  triggers:
+    - type: redis
+      metadata:
+        address: {{ $.Values.keda.redisAddress | quote }}
+        listName: {{ $svc.keda.listName | quote }}
+        listLength: {{ $svc.keda.listLength | quote }}
+        enableTLS: "false"
+{{- end }}
+{{- end }}
+{{- end }}

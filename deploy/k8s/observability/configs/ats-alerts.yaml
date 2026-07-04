@@ -1,0 +1,131 @@
+# Prometheus alert rules for the CDC ATS stack (self-contained, path A).
+# Consumed by the observability kustomization configMapGenerator
+# (prometheus-alert-rules), mounted at /etc/prometheus/rules. The literal-ConfigMap
+# twin is 30-alert-rules.yaml (for `kubectl apply -f`) - keep the two in sync. See
+# 30-alert-rules.yaml for the honest gaps (queue-depth + postgres_exporter rules
+# need extra exporters before they fire).
+groups:
+  - name: cdc-ats.request-health
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum by (app) (rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum by (app) (rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "High 5xx error rate on {{ $labels.app }}"
+          description: "{{ $labels.app }} is serving >5% 5xx over 5m ({{ $value | humanizePercentage }})."
+      - alert: ElevatedErrorRateWarning
+        expr: |
+          (
+            sum by (app) (rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum by (app) (rate(http_requests_total[5m]))
+          ) > 0.01
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Elevated 5xx error rate on {{ $labels.app }}"
+          description: "{{ $labels.app }} 5xx rate >1% over 10m."
+      - alert: HighRequestLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (app, le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1.5
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "High p95 latency on {{ $labels.app }}"
+          description: "{{ $labels.app }} p95 request latency is {{ $value | printf \"%.2f\" }}s (>1.5s) over 5m."
+      - alert: ServiceDown
+        expr: up{job="cdc-ats-services"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Prometheus cannot scrape {{ $labels.app }} ({{ $labels.pod }})"
+          description: "Target {{ $labels.pod }} in {{ $labels.namespace }} has been down for 2m."
+      - alert: NoTrafficToGateway
+        expr: sum(rate(http_requests_total{app="api-gateway"}[5m])) == 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "api-gateway is receiving zero requests"
+          description: "No requests hit the gateway for 10m. Check the ingress / LB and the gateway pods."
+
+  - name: cdc-ats.queue-backlog
+    rules:
+      - alert: QueueBacklogHigh
+        # PLACEHOLDER - bullmq_queue_waiting is NOT exported yet. See the twin file
+        # 30-alert-rules.yaml queue-backlog comment for how to wire it.
+        expr: bullmq_queue_waiting > 5000
+        for: 10m
+        labels: { severity: warning, status: needs-exporter }
+        annotations:
+          summary: "Deep queue backlog on {{ $labels.queue }}"
+          description: "PLACEHOLDER - requires a queue-depth exporter; will not fire until bullmq_queue_waiting is published."
+
+  - name: cdc-ats.workload
+    rules:
+      - alert: PodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total{namespace="cdc-ats"}[15m]) > 3
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash-looping"
+          description: "{{ $labels.pod }} restarted >3 times in 15m."
+      - alert: DeploymentReplicasUnavailable
+        expr: kube_deployment_status_replicas_unavailable{namespace="cdc-ats"} > 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.deployment }} has unavailable replicas"
+          description: "{{ $labels.deployment }} has {{ $value }} unavailable replica(s) for 10m."
+      - alert: HPAMaxedOut
+        expr: |
+          kube_horizontalpodautoscaler_status_current_replicas{namespace="cdc-ats"}
+          >=
+          kube_horizontalpodautoscaler_spec_max_replicas{namespace="cdc-ats"}
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "HPA {{ $labels.horizontalpodautoscaler }} is at its ceiling"
+          description: "Pinned at maxReplicas for 15m. Raise the ceiling or add nodes - docs/SCALABILITY.md."
+      - alert: PodMemoryNearLimit
+        expr: |
+          (
+            container_memory_working_set_bytes{namespace="cdc-ats", container!=""}
+            /
+            on (namespace, pod, container)
+            kube_pod_container_resource_limits{namespace="cdc-ats", resource="memory"}
+          ) > 0.9
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.pod }}/{{ $labels.container }} near memory limit"
+          description: "Working set >90% of the memory limit for 10m - risk of OOMKill."
+
+  - name: cdc-ats.database
+    rules:
+      - alert: PostgresConnectionsHigh
+        expr: |
+          sum(pg_stat_activity_count) by (server)
+          /
+          max(pg_settings_max_connections) by (server)
+          > 0.8
+        for: 5m
+        labels: { severity: critical, status: needs-exporter }
+        annotations:
+          summary: "Postgres connection pool >80% saturated"
+          description: "Add PgBouncer / lower connection_limit - docs/SCALABILITY.md §6. (Requires postgres_exporter.)"
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels: { severity: critical, status: needs-exporter }
+        annotations:
+          summary: "Postgres is unreachable"
+          description: "pg_up=0 - every write path is down. (Requires postgres_exporter.)"

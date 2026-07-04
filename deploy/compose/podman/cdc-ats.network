@@ -1,0 +1,12 @@
+# Quadlet network unit - the internal bridge every ATS container joins.
+# Mirrors the `ats_net` bridge in docker-compose.prod.yml. Container units below
+# reference it as Network=cdc-ats.network.
+[Unit]
+Description=CDC ATS internal network
+
+[Network]
+NetworkName=cdc-ats
+Driver=bridge
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,30 @@
+# Quadlet unit - PgBouncer pooler (mirrors docker-compose.prod.yml pgbouncer).
+# RLS SAFETY: POOL_MODE=session is the safe default (per-request SET
+# app.current_tenant_id). Do the SET-LOCAL audit before switching to transaction.
+[Unit]
+Description=CDC ATS PgBouncer
+After=cdc-ats-postgres.service
+Requires=cdc-ats-postgres.service
+
+[Container]
+ContainerName=pgbouncer
+Image=docker.io/edoburu/pgbouncer:latest
+Network=cdc-ats.network
+EnvironmentFile=/etc/cdc-ats/prod.env
+Environment=DB_HOST=postgres
+Environment=DB_PORT=5432
+Environment=DB_USER=postgres
+Environment=POOL_MODE=session
+Environment=MAX_CLIENT_CONN=2000
+Environment=DEFAULT_POOL_SIZE=25
+Environment=AUTH_TYPE=scram-sha-256
+Environment=IGNORE_STARTUP_PARAMETERS=extra_float_digits
+HealthCmd=pg_isready -h 127.0.0.1 -p 6432
+HealthInterval=10s
+HealthRetries=10
+
+[Service]
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target

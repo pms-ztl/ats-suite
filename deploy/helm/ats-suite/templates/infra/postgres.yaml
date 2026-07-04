@@ -1,0 +1,129 @@
+{{/*
+  Postgres 16 - StatefulSet + headless Service + init ConfigMap. Deployed ONLY
+  when postgres.internal is true. The init SQL creates one database per service
+  (from postgres.databases) and runs once on an empty PGDATA. The tuning flags are
+  the same ones docker-compose.demo.yml passes (max_connections=400, larger WAL).
+
+  For MANAGED Postgres (RDS/Cloud SQL/Neon) set postgres.internal:false and point
+  each service's DATABASE_URL at it via secrets.databaseUrls (or postgres.host).
+*/}}
+{{- if .Values.postgres.internal }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  labels:
+    {{- include "ats.labels" . | nindent 4 }}
+data:
+  00-create-dbs.sql: |
+    -- Create one database per service (DB-per-service architecture).
+    -- Runs once at first start (empty data dir only).
+    {{- range .Values.postgres.databases }}
+    CREATE DATABASE {{ . }};
+    {{- end }}
+    -- Production should create per-service users with limited grants.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.host }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "postgres" "root" .) | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "ats.selectorLabels" (dict "name" "postgres" "instance" .Release.Name) | nindent 4 }}
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.port }}
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "postgres" "root" .) | nindent 4 }}
+spec:
+  serviceName: {{ .Values.postgres.host }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" "postgres" "instance" .Release.Name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "postgres" "root" .) | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          args:
+            - "postgres"
+            {{- range $flag, $val := .Values.postgres.tuning }}
+            - "-c"
+            - "{{ $flag }}={{ $val }}"
+            {{- end }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: POSTGRES_DB
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ats.secretName" . }}
+                  key: POSTGRES_PASSWORD
+            # Point Postgres at a subdir so initdb scripts run on an empty PGDATA
+            # even though the mounted PVC root may contain lost+found.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U {{ .Values.postgres.user }}"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U {{ .Values.postgres.user }}"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+        {{- if not .Values.postgres.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+  {{- if .Values.postgres.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{ toYaml .Values.postgres.persistence.accessModes | nindent 10 }}
+        {{- if .Values.postgres.persistence.storageClass }}
+        storageClassName: {{ .Values.postgres.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.persistence.size }}
+  {{- else }}
+  # Persistence disabled - EMPTYDIR (data lost on pod restart; dev only).
+  {{- end }}
+{{- end }}

@@ -1,0 +1,100 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Prometheus scrape configuration for the CDC ATS stack (self-contained mode).
+#
+#  HONEST STATUS: this is a self-contained, plain Prometheus install (a Deployment
+#  + this ConfigMap, see 20-prometheus.yaml) that scrapes the ATS services by
+#  Kubernetes SD. It is DERIVED FROM docker-compose.demo.yml + deploy/k8s and has
+#  NOT been run against a live cluster. Two ways to consume the metrics:
+#
+#    A) THIS plain Prometheus (no CRDs needed) - uses the scrape_configs below,
+#       driven by the `prometheus.io/scrape` / `prometheus.io/port` /
+#       `prometheus.io/path` pod annotations the ATS Deployments already carry
+#       (see deploy/k8s/40-api-gateway.yaml:24-27 and every 4x-*.yaml).
+#
+#    B) The Prometheus Operator (kube-prometheus-stack) - use the ServiceMonitor /
+#       PodMonitor CRs in 40-servicemonitors.yaml INSTEAD of this ConfigMap. Those
+#       require the monitoring.coreos.com CRDs to be installed first.
+#
+#  Pick ONE. This ConfigMap is for path A. If you run the Operator, delete the
+#  Prometheus Deployment here and apply only the CRs.
+#
+#  Every metric name below is real: the services expose GET /metrics via
+#  packages/common/src/lib/metrics.ts (prom-client): http_requests_total,
+#  http_request_duration_seconds{,_bucket,_sum,_count}, plus prom-client default
+#  process_*/nodejs_* metrics. The `service` label is set per registry
+#  (registry.setDefaultLabels({ service })).
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: cdc-ats
+        stack: ats
+
+    # Alerting rules live in a separate ConfigMap (30-alert-rules.yaml), mounted
+    # into /etc/prometheus/rules by the Deployment.
+    rule_files:
+      - /etc/prometheus/rules/*.yaml
+
+    # Wire Alertmanager here if you run it (not shipped as a workload in this
+    # self-contained bundle; the rules fire regardless and show in the Prometheus
+    # UI. Uncomment + point at your Alertmanager Service to route them).
+    # alerting:
+    #   alertmanagers:
+    #     - static_configs:
+    #         - targets: ["alertmanager.cdc-ats-monitoring.svc:9093"]
+
+    scrape_configs:
+      # ── Prometheus self-scrape ───────────────────────────────────────────────
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      # ── ATS pods via annotation-based Kubernetes SD ──────────────────────────
+      # Discovers EVERY pod in the cdc-ats namespace and keeps only those with
+      # prometheus.io/scrape=true (all 15 backend services + the gateway carry it;
+      # the frontend is a Next.js server with no /metrics, so it is not annotated
+      # and is correctly skipped). Port + path come from the pod annotations, so a
+      # service on a non-4000 port (e.g. job-service:4004) is scraped correctly
+      # with NO per-service config here.
+      - job_name: cdc-ats-services
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [cdc-ats]
+        relabel_configs:
+          # Keep only annotated pods.
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          # Use the annotated metrics path (defaults to /metrics).
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          # Rewrite the scrape address to POD_IP:annotated_port.
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          # Promote useful k8s metadata to labels.
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          # The workload name (app.kubernetes.io/name on every ATS Deployment).
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            target_label: app
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node

@@ -1,0 +1,215 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Prometheus alerting rules for the CDC ATS stack.
+#
+#  HONEST STATUS: thresholds are engineering starting points chosen to match the
+#  scaling story in docs/SCALABILITY.md and the SLOs in the load tests
+#  (load-tests/stress-10k.js targets p95<1.5s / <1% error). They are NOT tuned
+#  against measured production load - run load-tests/stress-10k.js and tune the
+#  `expr` numbers + `for` windows to your real baseline before you page on them.
+#
+#  Every metric referenced is real:
+#    • http_requests_total / http_request_duration_seconds{_bucket,_count}
+#      - packages/common/src/lib/metrics.ts (prom-client), label set
+#        {service, method, route, status}.
+#    • kube_pod_container_status_restarts_total, kube_deployment_status_replicas*,
+#      kube_horizontalpodautoscaler_status_* - kube-state-metrics (a standard
+#      cluster add-on; install it or these KubeState-based alerts stay inactive).
+#    • pg_stat_activity_count / pg_settings_max_connections - postgres_exporter
+#      (optional; the DB-saturation alerts require it - see the note on that group).
+#    • node_/process_ defaults come from prom-client collectDefaultMetrics.
+#
+#  This ConfigMap is mounted at /etc/prometheus/rules by 20-prometheus.yaml.
+#  For the Prometheus Operator, the same rules are also provided as a
+#  PrometheusRule CR in 40-servicemonitors.yaml.
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+data:
+  ats-alerts.yaml: |
+    groups:
+      # ── Request-path health (per service, from the app /metrics) ─────────────
+      - name: cdc-ats.request-health
+        rules:
+          - alert: HighErrorRate
+            # >5% of requests returning 5xx over 5m, per service. The app label is
+            # set by createMetrics(serviceName); `app` is the k8s workload label.
+            expr: |
+              (
+                sum by (app) (rate(http_requests_total{status=~"5.."}[5m]))
+                /
+                sum by (app) (rate(http_requests_total[5m]))
+              ) > 0.05
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High 5xx error rate on {{ $labels.app }}"
+              description: "{{ $labels.app }} is serving >5% 5xx over 5m ({{ $value | humanizePercentage }})."
+
+          - alert: ElevatedErrorRateWarning
+            expr: |
+              (
+                sum by (app) (rate(http_requests_total{status=~"5.."}[5m]))
+                /
+                sum by (app) (rate(http_requests_total[5m]))
+              ) > 0.01
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Elevated 5xx error rate on {{ $labels.app }}"
+              description: "{{ $labels.app }} 5xx rate >1% over 10m - below the critical page but worth a look."
+
+          - alert: HighRequestLatencyP95
+            # p95 request latency > 1.5s over 5m - the accept-fast apply SLO in
+            # load-tests/stress-10k.js is p95<1.5s for the full flow.
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum by (app, le) (rate(http_request_duration_seconds_bucket[5m]))
+              ) > 1.5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High p95 latency on {{ $labels.app }}"
+              description: "{{ $labels.app }} p95 request latency is {{ $value | printf \"%.2f\" }}s (>1.5s) over 5m."
+
+          - alert: ServiceDown
+            # A scraped ATS target has been unreachable for 2m.
+            expr: up{job="cdc-ats-services"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Prometheus cannot scrape {{ $labels.app }} ({{ $labels.pod }})"
+              description: "Target {{ $labels.pod }} in {{ $labels.namespace }} has been down for 2m."
+
+          - alert: NoTrafficToGateway
+            # The single public entrypoint stopped receiving requests entirely -
+            # usually means the ingress or the gateway is broken, not idleness.
+            expr: sum(rate(http_requests_total{app="api-gateway"}[5m])) == 0
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "api-gateway is receiving zero requests"
+              description: "No requests hit the gateway for 10m. Check the ingress / LB and the gateway pods."
+
+      # ── Async pipeline backlog (BullMQ queue depth) ──────────────────────────
+      # HONEST GAP: the in-process BullMQ workers (apply-ingest, resume-parse,
+      # screening, provider-invite, grading) do NOT export a Prometheus queue-depth
+      # gauge today - only the default http_/process_ metrics exist. This alert is
+      # therefore DISABLED (expr references a metric that will not resolve until the
+      # workers publish it). To enable real queue-backlog alerting, either:
+      #   (a) export a `bullmq_queue_waiting{queue=...}` gauge from the workers, or
+      #   (b) scrape Redis with redis_exporter and alert on the BullMQ list lengths
+      #       (keys `bull:<queue>:wait`), or
+      #   (c) use KEDA's Redis scaler (which reads the same depth) to scale AND
+      #       expose it. See docs/SCALABILITY.md §5 and the HPA in-process-worker note.
+      - name: cdc-ats.queue-backlog
+        rules:
+          - alert: QueueBacklogHigh
+            # PLACEHOLDER expr - bullmq_queue_waiting is not exported yet (see the
+            # group comment). Left here as the wiring target, not an active alert.
+            expr: bullmq_queue_waiting > 5000
+            for: 10m
+            labels:
+              severity: warning
+              status: needs-exporter
+            annotations:
+              summary: "Deep queue backlog on {{ $labels.queue }}"
+              description: "PLACEHOLDER - requires a queue-depth exporter (see the queue-backlog rule-group comment). Will not fire until bullmq_queue_waiting is published."
+
+      # ── Pod / workload stability (kube-state-metrics) ────────────────────────
+      - name: cdc-ats.workload
+        rules:
+          - alert: PodCrashLooping
+            # >3 container restarts in 15m for any cdc-ats pod.
+            expr: |
+              increase(kube_pod_container_status_restarts_total{namespace="cdc-ats"}[15m]) > 3
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.pod }} is crash-looping"
+              description: "{{ $labels.pod }} restarted >3 times in 15m. Check logs and readiness of its deps (DB/Redis/NATS)."
+
+          - alert: DeploymentReplicasUnavailable
+            expr: |
+              kube_deployment_status_replicas_unavailable{namespace="cdc-ats"} > 0
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.deployment }} has unavailable replicas"
+              description: "{{ $labels.deployment }} has {{ $value }} unavailable replica(s) for 10m."
+
+          - alert: HPAMaxedOut
+            # An autoscaled deployable pinned at maxReplicas - it has run out of
+            # headroom to absorb more load (see deploy/k8s/55-autoscalers.yaml).
+            expr: |
+              kube_horizontalpodautoscaler_status_current_replicas{namespace="cdc-ats"}
+              >=
+              kube_horizontalpodautoscaler_spec_max_replicas{namespace="cdc-ats"}
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "HPA {{ $labels.horizontalpodautoscaler }} is at its ceiling"
+              description: "{{ $labels.horizontalpodautoscaler }} has been pinned at maxReplicas for 15m. Raise the ceiling or provision more nodes - see docs/SCALABILITY.md."
+
+          - alert: PodMemoryNearLimit
+            # A container using >90% of its memory limit is close to an OOMKill.
+            expr: |
+              (
+                container_memory_working_set_bytes{namespace="cdc-ats", container!=""}
+                /
+                on (namespace, pod, container)
+                kube_pod_container_resource_limits{namespace="cdc-ats", resource="memory"}
+              ) > 0.9
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.pod }}/{{ $labels.container }} near memory limit"
+              description: "Working set >90% of the memory limit for 10m - risk of OOMKill."
+
+      # ── Database saturation (postgres_exporter - OPTIONAL) ───────────────────
+      # HONEST GAP: these require postgres_exporter scraping the Postgres
+      # StatefulSet (deploy/k8s/20-postgres.yaml). It is NOT shipped in this bundle.
+      # Install it (e.g. prometheus-community/prometheus-postgres-exporter) and the
+      # alerts activate. Postgres connections are the REAL scaling ceiling - see
+      # docs/SCALABILITY.md §6 (bounded Prisma pools + PgBouncer). Note the ATS uses
+      # DB-per-service, so max_connections is per logical DB; size accordingly.
+      - name: cdc-ats.database
+        rules:
+          - alert: PostgresConnectionsHigh
+            expr: |
+              sum(pg_stat_activity_count) by (server)
+              /
+              max(pg_settings_max_connections) by (server)
+              > 0.8
+            for: 5m
+            labels:
+              severity: critical
+              status: needs-exporter
+            annotations:
+              summary: "Postgres connection pool >80% saturated"
+              description: "Connections at {{ $value | humanizePercentage }} of max_connections. Add PgBouncer / lower per-service connection_limit - see docs/SCALABILITY.md §6. (Requires postgres_exporter.)"
+
+          - alert: PostgresDown
+            expr: pg_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              status: needs-exporter
+            annotations:
+              summary: "Postgres is unreachable"
+              description: "postgres_exporter reports pg_up=0. Every write path is down. (Requires postgres_exporter.)"

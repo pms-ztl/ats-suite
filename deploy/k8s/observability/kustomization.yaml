@@ -1,0 +1,68 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Self-contained observability kustomization for the CDC ATS stack.
+#
+#  This is SEPARATE from deploy/k8s/kustomization.yaml (the app stack) on purpose:
+#  install / upgrade / delete monitoring independently of the application.
+#
+#    kubectl apply -k deploy/k8s/observability/
+#
+#  HONEST STATUS: derived from the compose/k8s topology, NOT tested on a live
+#  cluster. This bundle installs the SELF-CONTAINED path (path A): a plain
+#  Prometheus (annotation-based scrape) + Grafana with the ATS overview dashboard.
+#  It needs NO CRDs. Some alert rules need extra exporters to fire (kube-state-
+#  metrics for pod/HPA alerts, postgres_exporter for DB saturation, a queue-depth
+#  exporter for BullMQ backlog) - see 30-alert-rules.yaml.
+#
+#  PREREQUISITES you must handle out of band (not created here):
+#    • Secret `grafana-admin` (admin-user/admin-password) - see 50-grafana.yaml.
+#    • kube-state-metrics installed for the workload/HPA alerts + replica panels.
+#    • (optional) postgres_exporter, a BullMQ/Redis queue-depth exporter.
+#
+#  PATH B (Prometheus Operator): if you already run kube-prometheus-stack, do NOT
+#  apply 15/20-prometheus* (you would run two Prometheis). Instead uncomment
+#  40-servicemonitors.yaml below (PodMonitor + PrometheusRule CRs) and keep Grafana
+#  (or use the stack's Grafana + import dashboards/cdc-ats-overview.json).
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cdc-ats-monitoring
+
+commonLabels:
+  app.kubernetes.io/part-of: cdc-ats
+  app.kubernetes.io/component: observability
+
+resources:
+  - 00-namespace.yaml
+  # ── Path A: self-contained Prometheus (no CRDs) ────────────────────────────
+  - 15-prometheus-rbac.yaml
+  - 20-prometheus.yaml
+  - 50-grafana.yaml
+  # ── Path B: Prometheus Operator CRs. Uncomment ONLY if the Operator CRDs are
+  #    installed AND you are NOT running the path-A Prometheus above. ──────────
+  # - 40-servicemonitors.yaml
+
+configMapGenerator:
+  # Prometheus scrape config + alert rules (path A). generatorOptions below keeps
+  # stable names (no hash suffix) that the Deployment volume mounts reference.
+  # The Deployments in 20-prometheus.yaml consume these generated ConfigMaps; the
+  # literal 10-/30-*.yaml twins are NOT in `resources`, so there is no collision.
+  - name: prometheus-config
+    files:
+      - prometheus.yml=configs/prometheus.yml
+  - name: prometheus-alert-rules
+    files:
+      - ats-alerts.yaml=configs/ats-alerts.yaml
+  # Grafana dashboard JSON → one ConfigMap key per file. Add more dashboards here.
+  - name: grafana-dashboards
+    files:
+      - cdc-ats-overview.json=dashboards/cdc-ats-overview.json
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# NOTE: 10-prometheus-config.yaml and 30-alert-rules.yaml ship the SAME content as
+# literal ConfigMaps for readers who apply files directly with `kubectl apply -f`.
+# They are deliberately EXCLUDED from `resources` above so that under
+# `kubectl apply -k` only the configMapGenerator versions (same names) are created
+# - no duplicate-resource error. Keep the twins in sync if you edit either.

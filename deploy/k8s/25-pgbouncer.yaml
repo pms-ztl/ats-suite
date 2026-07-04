@@ -1,0 +1,210 @@
+# PgBouncer - transaction/session connection pooler in front of Postgres.
+#
+# ── Why this exists (the real ceiling at 10k) ─────────────────────────────────
+# Pods autoscale; Postgres does NOT scale by pod count. Each app replica opens a
+# Prisma pool, so total server connections grow as `Σ (replicas × connection_limit)`
+# and Postgres has a hard `max_connections` (the StatefulSet in 20-postgres.yaml
+# runs with max_connections=400). At the replica counts the HPAs allow
+# (job-service up to 16, gateway up to 12, resume 12, screening 8, ... plus the
+# control-plane services), that sum can approach or blow past 400. PgBouncer
+# multiplexes many short-lived app connections onto a small server-side pool, so the
+# backend connection count stays bounded no matter how far the HPAs scale the pods.
+# This is the piece docs/SCALABILITY.md §6 flags as the honest TODO for high replica
+# counts - this manifest is that piece for the raw-kustomize path.
+#
+# ── Honest status ─────────────────────────────────────────────────────────────
+# Derived from the compose `pgbouncer` profile (docker-compose.demo.yml:489-511,
+# edoburu/pgbouncer image, same env knobs). NOT applied to or tested against a live
+# cluster - same caveat as the rest of deploy/k8s (see README.md "Honest status").
+# By default NOTHING routes through PgBouncer: the app Secrets still point
+# DATABASE_URL at postgres:5432 directly, so applying this file alone is inert and
+# safe. To actually use it, repoint the per-service *_DATABASE_URL in your
+# 11-secrets.yaml at `pgbouncer:6432` - see the README "PgBouncer" section for the
+# required RLS transaction-pooling audit BEFORE you do that.
+#
+# ── CRITICAL: RLS + transaction pooling caveat ────────────────────────────────
+# This stack scopes Postgres RLS via `SET app.current_tenant_id` per request. In
+# PgBouncer TRANSACTION pooling mode a plain session-level `SET` leaks across pooled
+# clients and BREAKS tenant isolation. Before routing any RLS service through
+# PgBouncer in transaction mode you MUST confirm the tenant scoping uses
+# `SET LOCAL ...` inside an explicit transaction (the @cdc-ats/common rlsExtend /
+# tenantContext path) so the setting is transaction-scoped and reset on COMMIT. If
+# that audit has not been done, keep POOL_MODE=session (the safe default below):
+# it preserves per-connection session state (so `SET app.current_tenant_id` is
+# correct) and is still a large win for connection churn. This mirrors the same
+# warning block in docker-compose.demo.yml:478-501.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgbouncer-config
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: cdc-ats
+data:
+  # pgbouncer.ini - the raw config the plain `pgbouncer` binary reads. Mounted at
+  # /etc/pgbouncer/pgbouncer.ini. The [databases] wildcard `* = host=postgres ...`
+  # transparently forwards ANY database name a client asks for to the postgres
+  # StatefulSet, so all 14+ per-service databases (identity_db, job_db, ...) are
+  # pooled through this one PgBouncer without listing each one.
+  #
+  # auth_file points at userlist.txt (below). auth_type=scram-sha-256 matches the
+  # compose profile; the userlist carries a SCRAM verifier, NOT a plaintext
+  # password (see the userlist ConfigMap note).
+  pgbouncer.ini: |
+    [databases]
+    * = host=postgres port=5432
+
+    [pgbouncer]
+    listen_addr = 0.0.0.0
+    listen_port = 6432
+    auth_type = scram-sha-256
+    auth_file = /etc/pgbouncer/userlist.txt
+    # SESSION pooling is the SAFE default (preserves `SET app.current_tenant_id` per
+    # connection so RLS stays correct). Switch to `transaction` ONLY after the
+    # SET-LOCAL RLS audit in the header. Transaction mode is where PgBouncer's real
+    # fan-in win at 10k comes from, but only when SET LOCAL is proven.
+    pool_mode = session
+    # Fan-in: accept up to 1000 client connections, keep at most 25 server
+    # connections open per (user, database) pair. Tune DEFAULT_POOL_SIZE up for the
+    # hottest DB (job_db) if you move it to transaction mode. Keep
+    # `Σ default_pool_size across DBs` under Postgres max_connections=400.
+    max_client_conn = 1000
+    default_pool_size = 25
+    min_pool_size = 5
+    reserve_pool_size = 5
+    reserve_pool_timeout = 3
+    server_idle_timeout = 240
+    # Health/observability: expose the internal `pgbouncer` admin DB to the operator
+    # user for SHOW POOLS / SHOW STATS. stats_users is read-only stats access.
+    ignore_startup_parameters = extra_float_digits
+    max_db_connections = 90
+    max_user_connections = 0
+---
+# userlist.txt - the PgBouncer auth file. This is a PLACEHOLDER example, NOT a real
+# credential store. In production, generate a SCRAM-SHA-256 verifier for the app
+# user and mount it via a real Secret, NOT this ConfigMap. The value below is the
+# format PgBouncer expects: "username" "SCRAM-or-md5-verifier". Replace it.
+#
+# Generate a SCRAM verifier (run against your Postgres, then copy the row):
+#   SELECT rolname, rolpassword FROM pg_authid WHERE rolname = 'postgres';
+# or set `auth_query` instead of a static userlist to look users up live (preferred
+# in prod - remove this ConfigMap and add auth_user/auth_query to pgbouncer.ini).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pgbouncer-userlist
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: cdc-ats
+type: Opaque
+stringData:
+  # REPLACE with a real SCRAM verifier row. The demo uses password auth to the
+  # `postgres` superuser; the placeholder below documents the required file shape.
+  userlist.txt: |
+    "postgres" "SCRAM-SHA-256$PLACEHOLDER-REPLACE-WITH-REAL-VERIFIER"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pgbouncer
+  ports:
+    - name: pgbouncer
+      port: 6432
+      targetPort: pgbouncer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  # Two replicas so the pooler is not a single point of failure between the app and
+  # Postgres. PgBouncer is stateless (the pool lives per-process), so replicas do
+  # not share a pool - size default_pool_size with the replica count in mind:
+  # effective backend connections per DB ≈ replicas × default_pool_size.
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pgbouncer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pgbouncer
+        app.kubernetes.io/part-of: cdc-ats
+    spec:
+      containers:
+        - name: pgbouncer
+          # edoburu/pgbouncer - same image family as the compose `pgbouncer` profile.
+          # This variant reads a mounted /etc/pgbouncer/pgbouncer.ini when present.
+          image: edoburu/pgbouncer:latest
+          ports:
+            - name: pgbouncer
+              containerPort: 6432
+          env:
+            # The edoburu image also accepts these envs; they are kept in sync with
+            # the mounted pgbouncer.ini so either config path yields the same pool.
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: cdc-ats-secrets, key: PGBOUNCER_DB_USER, optional: true }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: cdc-ats-secrets, key: POSTGRES_PASSWORD }
+            - name: POOL_MODE
+              value: "session"
+            - name: AUTH_TYPE
+              value: "scram-sha-256"
+            - name: MAX_CLIENT_CONN
+              value: "1000"
+            - name: DEFAULT_POOL_SIZE
+              value: "25"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer/pgbouncer.ini
+              subPath: pgbouncer.ini
+              readOnly: true
+            - name: userlist
+              mountPath: /etc/pgbouncer/userlist.txt
+              subPath: userlist.txt
+              readOnly: true
+          # PgBouncer speaks the Postgres wire protocol on 6432; a TCP probe is the
+          # reliable liveness/readiness signal (there is no HTTP health endpoint).
+          startupProbe:
+            tcpSocket: { port: pgbouncer }
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket: { port: pgbouncer }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: pgbouncer }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 64Mi }
+            limits:   { cpu: 500m, memory: 256Mi }
+      volumes:
+        - name: config
+          configMap:
+            name: pgbouncer-config
+        - name: userlist
+          secret:
+            secretName: pgbouncer-userlist

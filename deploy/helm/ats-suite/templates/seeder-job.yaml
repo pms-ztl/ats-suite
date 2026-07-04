@@ -1,0 +1,51 @@
+{{/*
+  Seeder - a post-install Helm HOOK Job. Runs `bash infra/seed.sh` from the SAME
+  tools image as the migrator. It seeds the DEMO tenant + users over the gateway
+  API (API_URL) and writes a couple of rows directly (TENANT/BILLING/IDENTITY DBs).
+  As a post-install hook it runs AFTER the normal resources are created; it retries
+  (backoffLimit) until the gateway answers.
+
+  OPTIONAL: this only creates the DEMO tenant/data. Disable it for a production
+  deploy where you provision tenants yourself (seeder.enabled=false, as
+  values-prod.yaml does). hookWeight orders it AFTER the migrator's schema hook.
+*/}}
+{{- if .Values.seeder.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-seeder
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "seeder" "root" .) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": {{ .Values.seeder.hookWeight | quote }}
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.seeder.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "seeder" "root" .) | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- include "ats.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: seeder
+          image: {{ .Values.global.image.registry }}/{{ .Values.seeder.image.repository }}:{{ .Values.seeder.image.tag }}
+          imagePullPolicy: {{ .Values.seeder.image.pullPolicy }}
+          command: ["bash", "infra/seed.sh"]
+          env:
+            - name: API_URL
+              value: "http://api-gateway:{{ (index .Values.services "api-gateway").port }}/api"
+            - name: TENANT_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: TENANT_DATABASE_URL }
+            - name: BILLING_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: BILLING_DATABASE_URL }
+            - name: IDENTITY_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: IDENTITY_DATABASE_URL }
+          resources:
+            {{- toYaml .Values.seeder.resources | nindent 12 }}
+{{- end }}

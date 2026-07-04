@@ -1,0 +1,28 @@
+{{/*
+  cdc-ats-common ConfigMap - the non-secret shared env every backend mounts via
+  envFrom (mirrors the compose x-svc-env anchor, minus secrets).
+
+  The cross-service <SVC>_SERVICE_URL keys are GENERATED from the services map so
+  you never hand-maintain 14 URLs: each backend that has a port becomes
+  http://<name>:<port>. The KEY is derived from the service name
+  (job-service -> JOB_SERVICE_URL). Literal keys in .Values.commonEnv win over
+  generated ones (last-write in the merge), so you can still override any single URL.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdc-ats-common
+  labels:
+    {{- include "ats.labels" . | nindent 4 }}
+data:
+  {{- /* Generated cross-service base URLs. */}}
+  {{- range $name, $svc := .Values.services }}
+  {{- if and $svc.port (ne $name "api-gateway") }}
+  {{- $key := printf "%s_SERVICE_URL" ($name | replace "-service" "" | upper | replace "-" "_") }}
+  {{ $key }}: "http://{{ $name }}:{{ $svc.port }}"
+  {{- end }}
+  {{- end }}
+  {{- /* Literal shared env (may override any generated key above). */}}
+  {{- range $k, $v := .Values.commonEnv }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}

@@ -1,0 +1,30 @@
+# Quadlet unit - tuned Postgres (mirrors docker-compose.prod.yml postgres).
+# Secrets come from an EnvironmentFile (root-only), NOT inline. The DB-per-service
+# init SQL is bind-mounted from the repo, same as compose.
+[Unit]
+Description=CDC ATS Postgres
+After=network-online.target
+
+[Container]
+ContainerName=postgres
+Image=docker.io/library/postgres:16-alpine
+Network=cdc-ats.network
+# Point this at a root-only env file holding POSTGRES_PASSWORD (see ../.env.prod.example).
+EnvironmentFile=/etc/cdc-ats/prod.env
+Environment=POSTGRES_USER=postgres
+Environment=POSTGRES_DB=postgres
+Volume=cdc-ats-pgdata:/var/lib/postgresql/data
+# Adjust the repo path to where you checked out the ATS source.
+Volume=%h/cdc-ats/infra/postgres-init.sql:/docker-entrypoint-initdb.d/00-create-dbs.sql:ro
+Exec=postgres -c max_connections=400 -c shared_buffers=1GB -c work_mem=8MB \
+  -c maintenance_work_mem=256MB -c wal_buffers=32MB -c max_wal_size=8GB \
+  -c min_wal_size=2GB -c checkpoint_completion_target=0.9 -c effective_cache_size=4GB
+HealthCmd=pg_isready -U postgres
+HealthInterval=5s
+HealthRetries=20
+
+[Service]
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target

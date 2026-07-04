@@ -1,0 +1,60 @@
+{{/*
+  Ingress fronting the two publicly reachable services: /api -> api-gateway,
+  everything else -> the frontend (the Next server also proxies same-origin /api
+  to the gateway, so one host works). Replaces the demo's Cloudflare tunnel.
+  "/api" is listed BEFORE "/" so the more specific prefix wins where the ingress
+  controller honors path order.
+
+  HONEST: host + TLS secret are placeholders in values.yaml
+  (app.cdc-ats.example.com / cdc-ats-tls). Set your real domain + cert (or wire
+  cert-manager via ingress.annotations). NOT validated on a live cluster.
+*/}}
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cdc-ats
+  labels:
+    {{- include "ats.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+        {{- range .Values.ingress.extraHosts }}
+        - {{ .host | quote }}
+        {{- end }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          # Direct API access to the gateway.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: {{ (index .Values.services "api-gateway").port }}
+          # Everything else -> the Next.js frontend.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: {{ .Values.frontend.port }}
+    {{- range .Values.ingress.extraHosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- toYaml .paths | nindent 10 }}
+    {{- end }}
+{{- end }}

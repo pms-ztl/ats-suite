@@ -1,0 +1,340 @@
+# KEDA ScaledObjects - event-driven autoscaling of the BullMQ QUEUE WORKERS by
+# Redis queue depth (list length), the metric a CPU HPA cannot see.
+#
+# ── Why KEDA and not (only) the CPU HPAs ──────────────────────────────────────
+# The async pipeline that absorbs a 10k-apply burst is a set of BullMQ competing-
+# consumer workers (apps/*/src/workers/*). A deep backlog with workers idle-WAITING
+# on a rate limit or on I/O reads LOW on CPU, so the CPU HPAs in 55-autoscalers.yaml
+# under-scale exactly when the queue is deepest. KEDA scales on the real signal:
+# how many jobs are WAITING in Redis. This is the right tool for the pipeline; the
+# CPU HPAs stay for the HTTP surfaces. docs/SCALABILITY.md §5 flags this as the
+# honest queue-depth TODO - these ScaledObjects are that piece.
+#
+# ── How BullMQ maps to the KEDA redis scaler ──────────────────────────────────
+# @cdc-ats/nats-client getQueue() creates BullMQ queues with the DEFAULT key prefix
+# `bull` and NO custom prefix (packages/nats-client/src/queue.ts). BullMQ stores the
+# jobs waiting to be picked up in a Redis LIST at key `bull:<queueName>:wait`. The
+# KEDA `redis` scaler reads exactly that list length (listName + listLength), so
+# `desiredReplicas ≈ ceil(listLength / listLength-target)`, clamped to
+# min/maxReplicaCount. (KEDA also offers a `redis-streams` scaler; BullMQ uses LISTS
+# for the wait queue, so the `redis` list scaler is the correct one here.)
+#
+# The queue NAMES below are the REAL constants from the code, not invented:
+#   • resume-parse           apps/resume-service/src/lib/queue.ts (parse worker)
+#   • bulk-archive-extract   apps/resume-service/src/lib/queue.ts (ZIP ingest)
+#   • ai-screening           apps/screening-service/src/lib/queue.ts
+#   • apply-ingest           apps/job-service/src/lib/apply-ingest-queue.ts
+#   • board-post/-sync/-close apps/job-service/src/lib/board-queue.ts
+#   • assessment-provider-invite  apps/assessment-service/src/lib/queue.ts
+#   • assessment-grading     apps/assessment-service/src/lib/queue.ts
+#   • assessment-vendor-poll apps/assessment-service/src/workers/assessment-poll.worker.ts
+#   • notification-delivery  apps/notification-service/src/workers/delivery.worker.ts
+#
+# ── Requirements (read before applying) ───────────────────────────────────────
+#   • KEDA MUST be installed on the cluster (the keda.sh/v1alpha1 CRDs +
+#     keda-operator). These manifests do NOT install it:
+#       helm repo add kedacore https://kedacore.github.io/charts
+#       helm install keda kedacore/keda -n keda --create-namespace
+#   • The workers run IN-PROCESS inside their service container (the HTTP surface and
+#     the BullMQ worker share one process - see apps/*/src/index.ts and the note in
+#     55-autoscalers.yaml). So a ScaledObject here targets the SAME Deployment the CPU
+#     HPA targets. You MUST NOT point a KEDA ScaledObject and a plain HPA at the same
+#     Deployment (they fight). Resolution used here: KEDA OWNS the four queue-driven
+#     Deployments (job-service, resume-service, screening-service, assessment-service)
+#     - their CPU HPAs are REMOVED from 55-autoscalers.yaml and folded in below as a
+#     KEDA `cpu` trigger, so each of these scales on MAX(queue-depth, CPU) via the ONE
+#     HPA that KEDA creates and manages. The gateway + frontend (no queue) keep their
+#     plain CPU HPAs in 55-autoscalers.yaml. notification-service has no CPU HPA today,
+#     so its ScaledObject is purely queue-driven and introduces no conflict.
+#   • Untested against a live cluster - same honest caveat as the rest of deploy/k8s
+#     (README.md "Honest status"). The listLength targets and replica bounds are
+#     engineering estimates to justify the 10k drain story; load-test, then tune.
+#
+# ── TriggerAuthentication: how KEDA reaches Redis ─────────────────────────────
+# KEDA needs the Redis address. The app services read redis://redis:6379 from the
+# ConfigMap (REDIS_URL); KEDA runs in its own namespace and cannot envFrom that, so
+# each trigger carries `address: redis:6379` explicitly (the in-cluster Service DNS,
+# same host the apps use). The demo Redis has NO password; if you set one, create a
+# Secret + TriggerAuthentication and add `passwordFromEnv`/authenticationRef. The
+# `redis` scaler's `enableTLS` defaults to false (matches the plaintext demo Redis).
+---
+# ── job-service ← apply-ingest (THE 10k apply burst queue) ─────────────────────
+# The public apply accept path enqueues one `apply-ingest` job per accepted
+# application; the in-process apply-ingest worker drains it (scan → forward → parse →
+# screen handoff). This is the queue a campaign spike fills fastest, so it gets the
+# widest range. A CPU trigger is folded in so this ONE KEDA-managed HPA also covers
+# the accept-path HTTP surface that shares the process (replaces the plain
+# job-service CPU HPA removed from 55-autoscalers.yaml).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: job-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: job-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    name: job-service
+  minReplicaCount: 2
+  maxReplicaCount: 16
+  # Give a scaled-up replica time to warm before KEDA reconsiders scale-in.
+  cooldownPeriod: 300
+  pollingInterval: 15
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 30
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+            - type: Pods
+              value: 4
+              periodSeconds: 30
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 60
+  triggers:
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:apply-ingest:wait"
+        # Aim for ~50 waiting jobs per replica; a deeper backlog scales out.
+        listLength: "50"
+        enableTLS: "false"
+        databaseIndex: "0"
+    # Also cover the shared HTTP accept path on CPU (the worker + HTTP are one proc).
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "65"
+---
+# ── resume-service ← resume-parse + bulk-archive-extract ───────────────────────
+# The CPU-heaviest workers (parse + OCR at RESUME_PARSE_CONCURRENCY=8/replica, plus
+# the bulk-archive ZIP extractor). Two Redis triggers (one per queue) + a CPU trigger
+# - KEDA scales on the MAX across all three. Lower listLength target than apply-ingest
+# because each parse/OCR job is far heavier than an accept enqueue, so a shallower
+# backlog already justifies another replica.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: resume-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: resume-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    name: resume-service
+  minReplicaCount: 2
+  maxReplicaCount: 12
+  cooldownPeriod: 300
+  pollingInterval: 15
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          # Parse/OCR pods are heavier to start (larger image, tesseract model), so a
+          # slightly longer window avoids over-provisioning on a transient burst.
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 60
+            - type: Pods
+              value: 3
+              periodSeconds: 60
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 90
+  triggers:
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:resume-parse:wait"
+        # ~24 waiting parses per replica (each replica runs 8 concurrently, so ~3
+        # jobs of headroom per concurrency slot before adding a pod).
+        listLength: "24"
+        enableTLS: "false"
+        databaseIndex: "0"
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:bulk-archive-extract:wait"
+        # A single archive job fans out to thousands of files, so even a couple of
+        # queued archives warrants another extractor.
+        listLength: "2"
+        enableTLS: "false"
+        databaseIndex: "0"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+---
+# ── screening-service ← ai-screening ───────────────────────────────────────────
+# The AI candidate-screener worker (SCREENING_CONCURRENCY=6/replica). Each job is a
+# rate-limited, plan-gated LLM call, so throughput is bounded by the vendor/plan MORE
+# than by CPU or replica count - extra replicas mainly buy backlog-drain headroom.
+# Queue depth is therefore the honest scale signal here (a deep LLM backlog with
+# workers blocked on the vendor rate limit reads near-idle on CPU). A modest CPU
+# trigger is folded in for the prompt-assembly/fan-out overhead.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: screening-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: screening-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    name: screening-service
+  minReplicaCount: 2
+  maxReplicaCount: 8
+  cooldownPeriod: 300
+  pollingInterval: 15
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 90
+  triggers:
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:ai-screening:wait"
+        # ~18 waiting screens per replica (each runs 6 concurrently).
+        listLength: "18"
+        enableTLS: "false"
+        databaseIndex: "0"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+---
+# ── assessment-service ← provider-invite + grading (+ CPU) ─────────────────────
+# Two outbound queues on the assessment-service Deployment: provider-invite (issue an
+# OA invite on an external vendor) and grading (Judge0 / LLM rubric grading of a
+# submitted attempt). Both are I/O-bound (vendor API / Judge0), so queue depth is the
+# right signal. NOTE: the assessment-vendor-poll queue is a single REPEATABLE
+# scheduler job (runs on exactly one replica regardless of count - see
+# 55-autoscalers.yaml), so it is intentionally NOT a scale trigger; scaling this
+# Deployment adds invite/grading/webhook capacity, not extra poll ticks.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: assessment-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: assessment-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    name: assessment-service
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  cooldownPeriod: 300
+  pollingInterval: 15
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 90
+  triggers:
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:assessment-provider-invite:wait"
+        listLength: "20"
+        enableTLS: "false"
+        databaseIndex: "0"
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:assessment-grading:wait"
+        listLength: "10"
+        enableTLS: "false"
+        databaseIndex: "0"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+---
+# ── notification-service ← notification-delivery ───────────────────────────────
+# The delivery worker dispatches each queued NotificationDelivery (EMAIL / SLACK).
+# notification-service has NO CPU HPA in 55-autoscalers.yaml today, so this
+# ScaledObject introduces no HPA conflict - it is purely queue-driven. A campaign
+# that accepts thousands of applicants also fans out thousands of "application
+# received" / stage notifications, so the delivery queue is a genuine hot path under
+# the same spike. minReplicaCount stays 1 (steady-state delivery is light); it bursts
+# out on backlog and scales back to 1.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: notification-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  scaleTargetRef:
+    name: notification-service
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  cooldownPeriod: 300
+  pollingInterval: 15
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 30
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 30
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 60
+  triggers:
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: "bull:notification-delivery:wait"
+        # ~100 queued deliveries per replica before adding another (delivery is a
+        # cheap outbound HTTP/SMTP call, so a replica clears them fast).
+        listLength: "100"
+        enableTLS: "false"
+        databaseIndex: "0"

@@ -1,0 +1,144 @@
+{{/*
+══════════════════════════════════════════════════════════════════════════════
+  Backend services - one Deployment + Service per entry in .Values.services.
+
+  This single template renders all 15 backend deployables (api-gateway + the 14
+  backends) by ranging over the services map, so adding/removing a service is a
+  values change, not a new file. Each Deployment:
+    • pulls the right image (ats.image helper)
+    • mounts the shared ConfigMap via envFrom
+    • sets PORT + SERVICE_NAME
+    • injects DATABASE_URL from the Secret (+ an alias key when the service's
+      Prisma schema reads a non-generic var, e.g. job-service -> JOB_DATABASE_URL)
+    • injects the shared secret env (JWT/internal token/LLM keys/S3 creds) + any
+      per-service extraSecretEnv
+    • carries per-service extraEnv literals
+    • uses the real /healthz /livez /readyz probes
+    • runs non-root with a hardened securityContext
+    • rolls with the global rolling-update strategy
+    • carries the prometheus.io/scrape pod annotations (metrics on /metrics)
+══════════════════════════════════════════════════════════════════════════════
+*/}}
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  {{- /* Static replicas ONLY when this service is not HPA-managed (an HPA owns
+         .spec.replicas; setting it here would fight the controller). */}}
+  {{- if not (include "ats.hpaEnabled" (dict "svc" $svc "root" $)) }}
+  replicas: {{ $svc.replicaCount | default 1 }}
+  {{- end }}
+  strategy:
+    {{- toYaml $.Values.global.updateStrategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" $name "instance" $.Release.Name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ $svc.port | quote }}
+        prometheus.io/path: /metrics
+        # Roll pods when the shared config/secret change (best-effort; a real
+        # secrets manager may rotate independently).
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+    spec:
+      {{- include "ats.imagePullSecrets" $ | nindent 6 }}
+      securityContext:
+        {{- toYaml $.Values.global.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "ats.image" (dict "svc" $svc "name" $name "root" $) }}
+          imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
+          securityContext:
+            {{- toYaml $.Values.global.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $svc.port }}
+          envFrom:
+            - configMapRef:
+                name: cdc-ats-common
+          env:
+            - name: PORT
+              value: {{ $svc.port | quote }}
+            - name: SERVICE_NAME
+              value: {{ $name | quote }}
+            {{- /* Primary DB URL from the Secret (backends only). */}}
+            {{- if $svc.dbKey }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: {{ $svc.dbKey }} }
+            {{- end }}
+            {{- /* Alias key for services whose Prisma reads a non-generic env
+                   (job-service reads JOB_DATABASE_URL). Same Secret value. */}}
+            {{- if $svc.aliasDbEnv }}
+            - name: {{ $svc.aliasDbEnv }}
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: {{ $svc.aliasDbEnv }} }
+            {{- end }}
+            {{- /* Shared secret env every service gets. */}}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: JWT_SECRET }
+            - name: INTERNAL_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: INTERNAL_SERVICE_TOKEN }
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: OPENROUTER_API_KEY, optional: true }
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: ANTHROPIC_API_KEY, optional: true }
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: OPENAI_API_KEY, optional: true }
+            {{- /* S3 creds - injected for the two object-storage services. */}}
+            {{- if or (eq $name "resume-service") (eq $name "job-service") }}
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: S3_ACCESS_KEY_ID }
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: S3_SECRET_ACCESS_KEY }
+            {{- end }}
+            {{- /* Per-service secret env (e.g. EMBED_SECRET, ATS_CONFIG_ENC_KEY). */}}
+            {{- range $envName, $secretKey := $svc.extraSecretEnv }}
+            - name: {{ $envName }}
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: {{ $secretKey }} }
+            {{- end }}
+            {{- /* Per-service literal env. */}}
+            {{- range $envName, $envVal := $svc.extraEnv }}
+            - name: {{ $envName }}
+              value: {{ $envVal | quote }}
+            {{- end }}
+          {{- if eq ($svc.healthKind | default "backend") "frontend" }}
+          {{- include "ats.frontendProbes" $ | nindent 10 }}
+          {{- else }}
+          {{- include "ats.backendProbes" $ | nindent 10 }}
+          {{- end }}
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "ats.selectorLabels" (dict "name" $name "instance" $.Release.Name) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $svc.port }}
+      targetPort: http
+{{- end }}

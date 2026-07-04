@@ -1,0 +1,58 @@
+{{/*
+══════════════════════════════════════════════════════════════════════════════
+  HorizontalPodAutoscalers - one per service that opts in (backends + frontend).
+
+  Rendered ONLY when global autoscaling.enabled AND the service's own
+  autoscaling.enabled. Mirrors deploy/k8s/55-autoscalers.yaml: CPU-utilization
+  driven, per-service min/max/target, with a scaling behavior block.
+
+  REQUIRES autoscaling/v2 (k8s 1.23+ GA) + metrics-server on the cluster, and CPU
+  resources.requests on the target (every service sets them). HPA computes
+  utilization as a percentage OF THE REQUEST, so a missing request breaks it.
+
+  HONEST: these targets + bounds are engineering estimates derived from the
+  compose stack to justify the 10k story in docs/SCALABILITY.md, NOT measured
+  against production load. Load-test, then tune.
+══════════════════════════════════════════════════════════════════════════════
+*/}}
+{{- if .Values.autoscaling.enabled }}
+{{- /* Merge the backend services + frontend into one loop. */}}
+{{- $targets := dict }}
+{{- range $name, $svc := .Values.services }}
+  {{- $_ := set $targets $name $svc }}
+{{- end }}
+{{- if .Values.frontend.enabled }}
+  {{- $_ := set $targets "frontend" .Values.frontend }}
+{{- end }}
+{{- range $name, $svc := $targets }}
+{{- if and $svc.autoscaling $svc.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ $svc.autoscaling.minReplicas }}
+  maxReplicas: {{ $svc.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $svc.autoscaling.targetCPUUtilizationPercentage }}
+  behavior:
+    {{- if $svc.autoscalingBehavior }}
+    {{- toYaml $svc.autoscalingBehavior | nindent 4 }}
+    {{- else }}
+    {{- toYaml $.Values.autoscaling.behavior | nindent 4 }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

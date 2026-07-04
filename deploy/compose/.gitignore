@@ -1,0 +1,6 @@
+# Never commit the real prod env or TLS certs for the scaled single-host stack.
+.env
+.env.*
+!.env.prod.example
+nginx/certs/*
+!nginx/certs/.gitkeep

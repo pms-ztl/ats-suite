@@ -1,0 +1,279 @@
+# PodDisruptionBudgets - keep a minimum number of replicas serving during
+# VOLUNTARY disruptions (node drain for an upgrade, cluster autoscaler compaction,
+# `kubectl drain`). A PDB does NOT protect against involuntary disruption (a node
+# crash); it caps how many pods the scheduler/drain may take down at once.
+#
+# ── Honest status ─────────────────────────────────────────────────────────────
+# Additive, derived from the Deployments in this tree. NOT applied to or tested
+# against a live cluster (README.md "Honest status"). The min-available numbers are
+# chosen against each Deployment's baseline replica count (2 for the HPA-managed and
+# multi-replica services) so a drain always leaves at least one pod serving.
+#
+# ── Why these selectors ───────────────────────────────────────────────────────
+# Each PDB selects the SAME app.kubernetes.io/name label the Deployment's pods carry.
+# The app services run >=2 replicas (their Deployment baseline and/or their HPA/KEDA
+# minReplicas), so `minAvailable: 1` lets a drain evict one at a time while keeping
+# the service up. For the two public-facing, highest-baseline deployables
+# (api-gateway, frontend - Deployment replicas: 2) we still use minAvailable: 1 so a
+# drain can proceed one pod at a time (a node cannot host both if you spread them).
+#
+# ── Why the single-replica StatefulSets are NOT here ──────────────────────────
+# postgres, redis, nats, minio (and the demo runs each as ONE replica) are
+# intentionally OMITTED: a PDB with minAvailable: 1 on a single-replica workload makes
+# the pod UNDRAINABLE (the drain can never satisfy "keep 1 available" while evicting
+# the only pod), which blocks node maintenance instead of protecting availability.
+# The right protection for those is to run them HA (a Postgres operator with a standby,
+# a Redis Sentinel/cluster, a multi-node NATS, a distributed MinIO) and add PDBs THEN.
+# Until they are HA, a PDB would do more harm than good - see 20/21/22/23-*.yaml and
+# the SCALABILITY.md note that these are shared infra to size/HA separately.
+# pgbouncer (25-pgbouncer.yaml) runs 2 replicas and DOES get a PDB below.
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: identity-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: identity-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: identity-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tenant-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: tenant-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tenant-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: billing-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: billing-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: billing-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: job-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: job-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: job-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: candidate-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: candidate-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: candidate-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: interview-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: interview-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: interview-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: resume-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: resume-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: resume-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: screening-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: screening-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: screening-service
+---
+# notification-service runs 1 replica at baseline but its KEDA ScaledObject
+# (60-keda-scaledobjects.yaml) has minReplicaCount 1; a minAvailable: 1 PDB would
+# make a single-replica period undrainable, so use maxUnavailable: 1 instead - it
+# permits a drain to evict the pod (allowed disruptions = 1) while still capping
+# concurrent voluntary loss once KEDA has scaled it out.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notification-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+---
+# assessment-service KEDA minReplicaCount is 1 (spiky, low steady-state), so the
+# same single-replica-drainable reasoning as notification-service applies.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: assessment-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: assessment-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: assessment-service
+---
+# search / agent / analytics / compliance run 1 replica at baseline and have no HPA;
+# use maxUnavailable: 1 so a node drain can always proceed (a minAvailable PDB would
+# wedge a single-replica pod). Bump to minAvailable once you raise their replicas.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: search-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: search-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: search-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: agent-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agent-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: analytics-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: analytics-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: compliance-service
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: compliance-service
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: compliance-service
+---
+# pgbouncer runs 2 replicas (25-pgbouncer.yaml) - keep 1 pooler available through a
+# drain so app DB traffic is never fully cut.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pgbouncer
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pgbouncer

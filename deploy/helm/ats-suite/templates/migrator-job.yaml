@@ -1,0 +1,58 @@
+{{/*
+  Migrator - a pre-install/pre-upgrade Helm HOOK Job. Runs `bash infra/migrate.sh`
+  from the tools image (infra/Dockerfile.tools), which `prisma migrate deploy`s the
+  core services and `db push`es the rest against each per-service DATABASE_URL.
+  Because it is a pre-install/pre-upgrade hook, Helm runs it to COMPLETION before
+  the Deployments roll, giving us the ordering that compose gets from depends_on
+  (condition: service_completed_successfully). Idempotent (migrate deploy + db push
+  are safe to re-run).
+
+  IMAGE: build + push the tools image as <registry>/<migrator.image.repository>:<tag>
+  (e.g. ghcr.io/cdc-ats/tools:latest).
+
+  NOTE: this hook depends on the Postgres StatefulSet being reachable. When
+  postgres.internal is true, the StatefulSet is created by the SAME `helm install`
+  but hooks run BEFORE the normal resources - so on a first install the in-chart
+  Postgres is not up yet when this hook fires. migrate.sh must therefore RETRY the
+  connection (it does - Prisma retries; and it runs against a fresh DB). If you use
+  managed Postgres (postgres.internal:false) this is a non-issue: the DB pre-exists.
+  If a first-install migrator hook races the in-chart Postgres on your cluster,
+  either install Postgres first (a separate release / --set with only postgres) or
+  raise migrator backoffLimit so it retries until Postgres is Ready.
+*/}}
+{{- if .Values.migrator.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrator
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "migrator" "root" .) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": {{ .Values.migrator.hookWeight | quote }}
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrator.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "migrator" "root" .) | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- include "ats.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: migrator
+          image: {{ .Values.global.image.registry }}/{{ .Values.migrator.image.repository }}:{{ .Values.migrator.image.tag }}
+          imagePullPolicy: {{ .Values.migrator.image.pullPolicy }}
+          command: ["bash", "infra/migrate.sh"]
+          env:
+            {{- range $name, $svc := .Values.services }}
+            {{- if $svc.dbKey }}
+            - name: {{ $svc.dbKey }}
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" $ }}, key: {{ $svc.dbKey }} }
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.migrator.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,250 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CDC ATS - release build + deploy pipeline (tag-triggered).
+#
+#  HONEST STATUS: this is a TEMPLATE. It is wired to real files in this repo
+#  (infra/Dockerfile.service, infra/Dockerfile.frontend, deploy/k8s/,
+#  infra/k8s/charts/cdc-ats) but the registry, cluster, and secrets are
+#  PLACEHOLDERS you must supply. Nothing here contains real credentials. It has
+#  NOT been run end to end against a live registry + cluster.
+#
+#  TRIGGER: pushing a semver tag (v1.2.3) builds + pushes every service + frontend
+#  image at that tag, then deploys. It is INTENTIONALLY separate from ci.yml, which
+#  builds :latest/:sha on pushes to main for continuous integration. This pipeline
+#  is the auditable "cut a release" path.
+#
+#  IMAGE MATRIX: builds all 15 backend services in docker-compose.demo.yml
+#  (api-gateway + the 14 services) plus the frontend. NOTE this is a SUPERSET of
+#  ci.yml's matrix (which lists 11); the full running stack has 15 backend images,
+#  so a release must build all of them. collab-service / onboarding-service exist
+#  under apps/ but are NOT in the compose stack, so they are deliberately excluded.
+#
+#  REQUIRED REPO SECRETS / VARS (set in GitHub → Settings → Secrets and variables):
+#    vars.REGISTRY            e.g. ghcr.io/your-org   (defaults to ghcr.io/<owner>)
+#    secrets.REGISTRY_USERNAME / secrets.REGISTRY_PASSWORD
+#                            omit for GHCR (uses the built-in GITHUB_TOKEN)
+#    secrets.KUBE_CONFIG_B64  base64 of a kubeconfig scoped to the deploy SA
+#                            (omit to skip the deploy job - build/push still runs)
+#    vars.DEPLOY_METHOD       "helm" (default) or "kustomize"
+#    vars.DEPLOY_NAMESPACE    defaults to cdc-ats
+# ═══════════════════════════════════════════════════════════════════════════════
+name: Release & Deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  # Manual re-deploy of an already-built tag (skips build if the image exists).
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or SHA to deploy (image tag must already exist)"
+        required: true
+        default: ""
+
+concurrency:
+  # One release/deploy at a time, never cancelled mid-flight.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  # Default to GHCR under the repo owner; override with vars.REGISTRY.
+  REGISTRY: ${{ vars.REGISTRY || format('ghcr.io/{0}', github.repository_owner) }}
+
+jobs:
+  # ── Gate: reuse the existing CI (typecheck) before any release build ────────
+  # Keeps the release honest: no image ships unless the monorepo typechecks. The
+  # heavier unit/E2E suites run in ci.yml on the commit that became this tag.
+  gate:
+    name: Pre-release gate (typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx turbo run typecheck
+
+  # ── Build + push every service + frontend image at the tag ──────────────────
+  build-and-push:
+    name: Build & push ${{ matrix.app }}
+    needs: gate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 15 backend services (the full docker-compose.demo.yml stack).
+          - { app: api-gateway,          dockerfile: infra/Dockerfile.service }
+          - { app: identity-service,     dockerfile: infra/Dockerfile.service }
+          - { app: tenant-service,       dockerfile: infra/Dockerfile.service }
+          - { app: billing-service,      dockerfile: infra/Dockerfile.service }
+          - { app: job-service,          dockerfile: infra/Dockerfile.service }
+          - { app: candidate-service,    dockerfile: infra/Dockerfile.service }
+          - { app: interview-service,    dockerfile: infra/Dockerfile.service }
+          - { app: resume-service,       dockerfile: infra/Dockerfile.service }
+          - { app: screening-service,    dockerfile: infra/Dockerfile.service }
+          - { app: notification-service, dockerfile: infra/Dockerfile.service }
+          - { app: search-service,       dockerfile: infra/Dockerfile.service }
+          - { app: agent-service,        dockerfile: infra/Dockerfile.service }
+          - { app: analytics-service,    dockerfile: infra/Dockerfile.service }
+          - { app: compliance-service,   dockerfile: infra/Dockerfile.service }
+          - { app: assessment-service,   dockerfile: infra/Dockerfile.service }
+          # Frontend (different Dockerfile, no SERVICE build-arg).
+          - { app: frontend,             dockerfile: infra/Dockerfile.frontend }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # GHCR uses the built-in token; a third-party registry uses the secrets.
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ startsWith(env.REGISTRY, 'ghcr.io') && 'ghcr.io' || vars.REGISTRY_HOST }}
+          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ matrix.app }}
+          # A semver tag → :1.2.3 + :1.2 + :sha-<long> + :latest.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          # Only the service Dockerfile needs the SERVICE build-arg.
+          build-args: |
+            ${{ matrix.app != 'frontend' && format('SERVICE={0}', matrix.app) || '' }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Per-app buildx cache so a rebuild of one service is fast.
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  # ── Deploy the tag to the cluster (Helm OR kustomize) ───────────────────────
+  # Runs only if KUBE_CONFIG_B64 is configured; otherwise it self-skips so the
+  # build/push above is still useful on its own (pull the images, deploy manually).
+  deploy:
+    name: Deploy to cluster
+    needs: build-and-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production   # gate with GitHub environment protection rules
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: tag
+        run: echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure kubeconfig
+        id: kube
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          if [ -z "$KUBE_CONFIG_B64" ]; then
+            echo "KUBE_CONFIG_B64 not set - skipping deploy. The images at ${GITHUB_REF_NAME} are pushed; deploy manually (see docs/DEPLOYMENT.md)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p "$HOME/.kube"
+          echo "$KUBE_CONFIG_B64" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Install kubectl + helm
+        if: steps.kube.outputs.skip != 'true'
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Deploy (Helm)
+        if: steps.kube.outputs.skip != 'true' && (vars.DEPLOY_METHOD == 'helm' || vars.DEPLOY_METHOD == '')
+        env:
+          NS: ${{ vars.DEPLOY_NAMESPACE || 'cdc-ats' }}
+          REGISTRY: ${{ env.REGISTRY }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Pin every service image at this release tag. The chart's global keys are
+          # global.imageRegistry / global.imageTag (see infra/k8s/charts/cdc-ats/
+          # values.yaml), and per-service tags are services.<app>.image.tag.
+          # HONEST: the shipped chart's `services:` map only lists 11 of the 15
+          # backend services (identity/tenant/billing/job/candidate/interview/
+          # resume/screening/notification/api-gateway/frontend). If you deploy the
+          # full stack via Helm, extend the chart's services map (search/agent/
+          # analytics/compliance/assessment) OR use the kustomize method below,
+          # which covers all 15. --install creates the release on first deploy;
+          # --atomic rolls back on failure; --wait blocks until rollouts are Ready.
+          helm upgrade --install cdc-ats infra/k8s/charts/cdc-ats \
+            --namespace "$NS" --create-namespace \
+            --values infra/k8s/charts/cdc-ats/values.yaml \
+            --values infra/k8s/charts/cdc-ats/values-production.yaml \
+            --set global.imageRegistry="$REGISTRY" \
+            --set global.imageTag="$VERSION" \
+            --atomic --wait --timeout 15m
+
+      - name: Deploy (kustomize)
+        if: steps.kube.outputs.skip != 'true' && vars.DEPLOY_METHOD == 'kustomize'
+        env:
+          NS: ${{ vars.DEPLOY_NAMESPACE || 'cdc-ats' }}
+          REGISTRY: ${{ env.REGISTRY }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          # kustomize is bundled with modern kubectl. Pin every ATS image to the
+          # release tag via `kustomize edit set image`, then apply. Ordering
+          # (migrator Job → services → seeder) is NOT enforced by apply -k - for a
+          # first bring-up follow the ordered recipe in deploy/k8s/README.md.
+          curl -sSLo kubectl https://dl.k8s.io/release/v1.30.4/bin/linux/amd64/kubectl
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+          cd deploy/k8s
+          for app in api-gateway identity-service tenant-service billing-service \
+                     job-service candidate-service interview-service resume-service \
+                     screening-service notification-service search-service agent-service \
+                     analytics-service compliance-service assessment-service frontend; do
+            kubectl kustomize edit set image "ghcr.io/cdc-ats/${app}=${REGISTRY}/${app}:${VERSION}" || \
+              kustomize edit set image "ghcr.io/cdc-ats/${app}=${REGISTRY}/${app}:${VERSION}"
+          done
+          kubectl apply -k . -n "$NS"
+          # Wait for the app rollouts (not the one-shot Jobs).
+          for d in api-gateway frontend job-service resume-service screening-service; do
+            kubectl -n "$NS" rollout status deploy/$d --timeout=10m
+          done
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          {
+            echo "### CDC ATS release ${GITHUB_REF_NAME}"
+            echo ""
+            echo "- Registry: \`${REGISTRY}\`"
+            echo "- Method: \`${{ vars.DEPLOY_METHOD || 'helm' }}\`"
+            echo "- Namespace: \`${{ vars.DEPLOY_NAMESPACE || 'cdc-ats' }}\`"
+            if [ "${{ steps.kube.outputs.skip }}" = "true" ]; then
+              echo "- Deploy: SKIPPED (no KUBE_CONFIG_B64). Images are pushed; deploy manually."
+            else
+              echo "- Deploy: attempted (see job logs)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

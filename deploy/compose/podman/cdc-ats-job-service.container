@@ -1,0 +1,35 @@
+# Quadlet unit - job-service (public apply accept-fast path + apply-ingest worker).
+# TEMPLATE for the other backend services: copy this, change Image (SERVICE build
+# arg), ContainerName, PORT, and drop the S3_* block for services that don't use it.
+# Ports (from docker-compose.prod.yml): identity 4001, tenant 4002, billing 4003,
+# job 4004, candidate 4005, interview 4006, resume 4007, screening 4008,
+# notification 4009, search 4010, agent 4011, analytics 4012, compliance 4013,
+# assessment 4014.
+[Unit]
+Description=CDC ATS job-service
+After=cdc-ats-pgbouncer.service cdc-ats-redis.service cdc-ats-nats.service
+Requires=cdc-ats-pgbouncer.service cdc-ats-redis.service
+
+[Container]
+ContainerName=job-service
+Image=localhost/cdc-ats/job-service:latest
+Network=cdc-ats.network
+EnvironmentFile=/etc/cdc-ats/prod.env
+Environment=PORT=4004
+Environment=SERVICE_NAME=job-service
+Environment=REDIS_URL=redis://redis:6379
+Environment=NATS_URL=nats://nats:4222
+# Fast-path apply object storage (job-service only).
+Environment=S3_ENDPOINT=http://minio:9000
+Environment=S3_INCOMING_BUCKET=ats-incoming
+Environment=S3_REGION=us-east-1
+Environment=S3_FORCE_PATH_STYLE=true
+HealthCmd=curl -fsS http://127.0.0.1:4004/healthz || exit 1
+HealthInterval=15s
+HealthRetries=3
+
+[Service]
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target

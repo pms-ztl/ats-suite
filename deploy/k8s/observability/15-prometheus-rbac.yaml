@@ -1,0 +1,45 @@
+# RBAC for the self-contained Prometheus (path A). Grants the Kubernetes SD used
+# in 10-prometheus-config.yaml read access to pods/endpoints/nodes across
+# namespaces (it scrapes the cdc-ats namespace). If you use the Prometheus
+# Operator (path B) you do NOT need this - the operator manages its own RBAC.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cdc-ats-prometheus
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+rules:
+  - apiGroups: [""]
+    resources: [nodes, nodes/metrics, services, endpoints, pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get]
+  - nonResourceURLs: ["/metrics"]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cdc-ats-prometheus
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cdc-ats-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: cdc-ats-monitoring

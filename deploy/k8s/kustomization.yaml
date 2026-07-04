@@ -7,7 +7,7 @@
 # first bring-up follow the ordered apply recipe in README.md instead of a single
 # `apply -k`. This file is the convenient "everything" manifest + the inventory.
 #
-# The 11-secrets.example.yaml is intentionally NOT listed — copy it to
+# The 11-secrets.example.yaml is intentionally NOT listed - copy it to
 # 11-secrets.yaml with real values and either add it here or apply it separately.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -21,13 +21,18 @@ resources:
   # ── Namespace + shared config ──────────────────────────────────────────────
   - 00-namespace.yaml
   - 10-config.yaml
-  # 11-secrets.example.yaml is a template — copy to 11-secrets.yaml (real values)
+  # 11-secrets.example.yaml is a template - copy to 11-secrets.yaml (real values)
   # and add it here (or `kubectl apply -f 11-secrets.yaml`) before the rest.
   # ── Infrastructure (StatefulSets + one-shot setup) ─────────────────────────
   - 20-postgres.yaml
   - 21-redis.yaml
   - 22-nats.yaml
   - 23-minio.yaml
+  # PgBouncer transaction/session connection pooler in front of Postgres. Inert by
+  # default (nothing routes through it until you repoint the *_DATABASE_URL Secrets
+  # at pgbouncer:6432 - see the README "PgBouncer" section + the RLS caveat in the
+  # file header). Safe to apply as-is; it just stands up an unused pooler.
+  - 25-pgbouncer.yaml
   # ── One-shot Jobs (schema migrate + demo seed) ─────────────────────────────
   - 30-migrator-job.yaml
   - 31-seeder-job.yaml
@@ -50,9 +55,27 @@ resources:
   # ── Frontend + Ingress ─────────────────────────────────────────────────────
   - 60-frontend.yaml
   - 70-ingress.yaml
-  # ── Autoscaling (HorizontalPodAutoscalers for the hot-path deployables) ─────
+  # ── Autoscaling (HorizontalPodAutoscalers for the hot-path HTTP deployables) ─
   # Additive. Requires autoscaling/v2 + metrics-server on the cluster. See the
   # honest-status header in the file and docs/SCALABILITY.md before relying on
   # the target percentages / replica bounds (they are estimates, untested on a
   # live cluster). Applied last so its scaleTargetRef Deployments already exist.
+  # NOTE: the four QUEUE-DRIVEN Deployments (job/resume/screening/assessment) are
+  # NOT here anymore - KEDA owns them (60-keda-scaledobjects.yaml); this file now
+  # covers the pure HTTP surfaces (frontend, gateway, identity, tenant, billing,
+  # candidate, interview).
   - 55-autoscalers.yaml
+  # ── Availability + isolation hardening ─────────────────────────────────────
+  # PodDisruptionBudgets (keep a replica serving through node drains) + the
+  # default-deny/allow NetworkPolicy set (east-west + egress isolation). See each
+  # file's header for the single-replica-drainable + CNI-enforcement caveats.
+  - 56-pdb.yaml
+  - 57-networkpolicy.yaml
+  # ── Event-driven autoscaling of the BullMQ queue workers (KEDA) ────────────
+  # Scales job/resume/screening/assessment/notification on real Redis queue depth
+  # (the metric CPU cannot see). REQUIRES the KEDA CRDs + operator installed on the
+  # cluster (keda.sh/v1alpha1) - see the file header. If KEDA is NOT installed, OMIT
+  # this line (the API server rejects the unknown CRD kind); the CPU HPAs in
+  # 55-autoscalers.yaml still scale the HTTP surfaces, but the queue workers fall
+  # back to their Deployment's static replica count.
+  - 60-keda-scaledobjects.yaml

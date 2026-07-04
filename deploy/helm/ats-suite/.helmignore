@@ -1,0 +1,12 @@
+# Patterns to ignore when packaging the chart (helm package / helm install .).
+.git/
+.gitignore
+*.tmp
+*.bak
+*.orig
+*.swp
+.DS_Store
+# Do NOT package any real secrets file that lives next to the chart.
+values-*.secrets.yaml
+secrets*.yaml
+*.local.yaml

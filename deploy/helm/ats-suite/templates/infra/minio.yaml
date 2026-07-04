@@ -1,0 +1,140 @@
+{{/*
+  MinIO object storage - StatefulSet + headless Service + one-shot bucket-setup
+  Job. Deployed ONLY when minio.internal. resume-service stores resumes in the
+  `resumes` bucket; job-service's fast-path apply uploads to `ats-incoming`. The
+  setup Job idempotently creates both (mc mb --ignore-existing), matching compose.
+  For managed S3 set minio.internal:false and point commonEnv.S3_ENDPOINT +
+  secrets.s3AccessKeyId/s3SecretAccessKey at it (and pre-create the buckets).
+*/}}
+{{- if .Values.minio.internal }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.minio.host }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "minio" "root" .) | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "ats.selectorLabels" (dict "name" "minio" "instance" .Release.Name) | nindent 4 }}
+  ports:
+    - name: s3
+      port: {{ .Values.minio.apiPort }}
+      targetPort: 9000
+    - name: console
+      port: {{ .Values.minio.consolePort }}
+      targetPort: 9001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "minio" "root" .) | nindent 4 }}
+spec:
+  serviceName: {{ .Values.minio.host }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" "minio" "instance" .Release.Name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "minio" "root" .) | nindent 8 }}
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          args: ["server", "/data", "--console-address", ":9001"]
+          ports:
+            - name: s3
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          env:
+            # Cluster + app share one source of truth (the Secret).
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: S3_ACCESS_KEY_ID }
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: S3_SECRET_ACCESS_KEY }
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.minio.resources | nindent 12 }}
+      {{- if not .Values.minio.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.minio.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{ toYaml .Values.minio.persistence.accessModes | nindent 10 }}
+        {{- if .Values.minio.persistence.storageClass }}
+        storageClassName: {{ .Values.minio.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.minio.persistence.size }}
+  {{- end }}
+---
+{{/* One-shot bucket creation (mirrors compose minio-setup). Runs as a post-install
+     Helm hook so the buckets exist before the app services need them. */}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "minio-setup" "root" .) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "minio-setup" "root" .) | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: {{ .Values.minio.mcImage.repository }}:{{ .Values.minio.mcImage.tag }}
+          imagePullPolicy: {{ .Values.minio.mcImage.pullPolicy }}
+          env:
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: S3_ACCESS_KEY_ID }
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "ats.secretName" . }}, key: S3_SECRET_ACCESS_KEY }
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until mc alias set local http://{{ .Values.minio.host }}:{{ .Values.minio.apiPort }} "$S3_ACCESS_KEY_ID" "$S3_SECRET_ACCESS_KEY"; do
+                echo waiting-for-minio; sleep 2;
+              done;
+              {{- range .Values.minio.buckets }}
+              mc mb --ignore-existing local/{{ . }};
+              {{- end }}
+              echo minio-bucket-ready;
+{{- end }}

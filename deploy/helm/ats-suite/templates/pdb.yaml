@@ -1,0 +1,42 @@
+{{/*
+══════════════════════════════════════════════════════════════════════════════
+  PodDisruptionBudgets - one per service (backends + frontend) when pdb.enabled.
+
+  A PDB caps voluntary disruptions (node drain, rollout) so a service never drops
+  to zero. minAvailable comes from the service's own pdb.minAvailable, else the
+  global pdb.minAvailable default. Services running a single replica get a PDB too
+  (minAvailable 0 effectively, i.e. drain is allowed) - to avoid blocking node
+  drains on singletons we SKIP the PDB for services with replicaCount <= 1 and no
+  autoscaling, since a minAvailable PDB on a 1-replica Deployment would block every
+  drain. Scale those services to >=2 (or enable their HPA) to get a meaningful PDB.
+══════════════════════════════════════════════════════════════════════════════
+*/}}
+{{- if .Values.pdb.enabled }}
+{{- $targets := dict }}
+{{- range $name, $svc := .Values.services }}
+  {{- $_ := set $targets $name $svc }}
+{{- end }}
+{{- if .Values.frontend.enabled }}
+  {{- $_ := set $targets "frontend" .Values.frontend }}
+{{- end }}
+{{- range $name, $svc := $targets }}
+{{- $hpaOn := and $.Values.autoscaling.enabled $svc.autoscaling $svc.autoscaling.enabled }}
+{{- $multi := or $hpaOn (gt (int ($svc.replicaCount | default 1)) 1) }}
+{{- if $multi }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" $name "root" $) | nindent 4 }}
+spec:
+  {{- $minAvail := $.Values.pdb.minAvailable }}
+  {{- if and $svc.pdb $svc.pdb.minAvailable }}{{ $minAvail = $svc.pdb.minAvailable }}{{ end }}
+  minAvailable: {{ $minAvail | quote }}
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" $name "instance" $.Release.Name) | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

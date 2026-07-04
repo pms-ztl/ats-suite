@@ -1,0 +1,37 @@
+# Quadlet unit - api-gateway (the single public API entrypoint).
+# Build the image first (Quadlet does not build):
+#   podman build -f infra/Dockerfile.service --build-arg SERVICE=api-gateway \
+#     -t localhost/cdc-ats/api-gateway:latest .   (from the repo root)
+# or pull from your registry and change Image= below.
+#
+# For MULTIPLE gateway instances, make this a template (rename to
+# cdc-ats-api-gateway@.container, add ContainerName=api-gateway-%i) and start
+# cdc-ats-api-gateway@{1,2,3}. NGINX must then resolve all instances - simpler to
+# use docker-compose.prod.yml with --scale for replicas.
+[Unit]
+Description=CDC ATS api-gateway
+After=cdc-ats-pgbouncer.service cdc-ats-redis.service cdc-ats-nats.service
+Requires=cdc-ats-pgbouncer.service cdc-ats-redis.service
+
+[Container]
+ContainerName=api-gateway
+Image=localhost/cdc-ats/api-gateway:latest
+Network=cdc-ats.network
+# All service env (DB URLs → pgbouncer:6432, service URLs, JWT_SECRET, etc.) in
+# the root-only env file. Keep the same keys as ../.env.prod.example.
+EnvironmentFile=/etc/cdc-ats/prod.env
+Environment=PORT=4000
+Environment=SERVICE_NAME=api-gateway
+Environment=REDIS_URL=redis://redis:6379
+Environment=NATS_URL=nats://nats:4222
+# Behind NGINX → trust the proxy for real client IP in rate limiting.
+Environment=TRUST_PROXY=true
+HealthCmd=curl -fsS http://127.0.0.1:4000/healthz || exit 1
+HealthInterval=15s
+HealthRetries=3
+
+[Service]
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target

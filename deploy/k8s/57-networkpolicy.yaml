@@ -1,0 +1,398 @@
+# NetworkPolicies - default-deny + explicit allow for the cdc-ats namespace.
+#
+# ── Honest status + PREREQUISITE ──────────────────────────────────────────────
+# NetworkPolicy is enforced ONLY by a CNI that implements it (Calico, Cilium,
+# Antrea, Weave, ...). On a cluster whose CNI ignores NetworkPolicy (e.g. plain
+# flannel, or some managed defaults) these objects apply cleanly but enforce
+# NOTHING - verify your CNI enforces policy before relying on this for isolation.
+# Untested against a live cluster (README.md "Honest status"). The allow rules below
+# are derived from the REAL call graph in docker-compose.demo.yml + the gateway proxy
+# map; a missed flow shows up as a service that cannot reach a dependency, so
+# validate with a smoke test after applying.
+#
+# ── Model ─────────────────────────────────────────────────────────────────────
+# 1. default-deny-ingress: every pod in the namespace rejects all ingress unless a
+#    later policy allows it (policies are additive/OR).
+# 2. default-deny-egress WITH a namespace-wide DNS allow: every pod may resolve DNS
+#    (kube-dns) but nothing else, unless a later policy allows it. DNS is allowed for
+#    ALL pods up front because almost every egress rule below depends on resolving a
+#    Service name first, and a missing DNS allow is the classic silent breakage.
+# 3. Per-tier allow rules that reopen exactly the real flows:
+#      ingress-controller → api-gateway (4000) + frontend (3000)
+#      frontend           → api-gateway (server-side /api proxy)
+#      api-gateway        → every backend service (it proxies all /api/*)
+#      backend services   → each other (cross-service *_SERVICE_URL calls)
+#      all app pods       → postgres(5432) / pgbouncer(6432) / redis(6379) /
+#                           nats(4222) / minio(9000)
+#      keda (its ns)      → redis(6379) for the queue-depth scaler
+#
+# NOTE: the app pods carry `app.kubernetes.io/part-of: cdc-ats` (kustomization
+# commonLabels stamps it on everything, and every manifest also sets it). These
+# policies key on that label to mean "an in-namespace ATS workload".
+---
+# ── 1. Default-deny INGRESS for every pod in the namespace ────────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  # No ingress rules → deny all ingress (later policies add back specific flows).
+---
+# ── 2. Default-deny EGRESS, but allow DNS for every pod ───────────────────────
+# Allowing egress to kube-dns (UDP/TCP 53) namespace-wide up front, so every later
+# egress allow can rely on Service-name resolution working.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress-allow-dns
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    # DNS to kube-dns / CoreDNS in kube-system. The namespaceSelector matches the
+    # well-known kube-system label; if your cluster labels it differently, adjust.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# ── 3a. Ingress controller → api-gateway (4000) ──────────────────────────────
+# The public entrypoint. Allows traffic from the ingress-nginx namespace AND (as a
+# fallback for controllers that source-NAT or run in-namespace) from within the
+# cdc-ats namespace. Widen/narrow the namespaceSelector to match YOUR ingress
+# controller's namespace + labels.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-api-gateway
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        # Same-namespace callers (the frontend's server-side /api proxy).
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: cdc-ats
+      ports:
+        - protocol: TCP
+          port: 4000
+---
+# ── 3b. Ingress controller → frontend (3000) ─────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-frontend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# ── 3c. Backend services accept ingress from other ATS pods ───────────────────
+# The gateway proxies to every backend, and services call each other via
+# *_SERVICE_URL. Rather than enumerate 15×15 pairs, allow ingress to the backend
+# HTTP ports (4001-4014) FROM any in-namespace ATS pod. This keeps east-west traffic
+# inside the namespace and blocks anything from outside it. The public edge is still
+# constrained by 3a/3b (only the ingress controller reaches the gateway/frontend).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-intra-namespace-backend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  # Selects the backend services (they all carry part-of: cdc-ats). The api-gateway
+  # and frontend also match, but their public ingress is governed by 3a/3b; this adds
+  # the east-west allow, which is what the gateway→service + service→service calls need.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: cdc-ats
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: cdc-ats
+      ports:
+        - protocol: TCP
+          port: 4000
+        - protocol: TCP
+          port: 4001
+        - protocol: TCP
+          port: 4002
+        - protocol: TCP
+          port: 4003
+        - protocol: TCP
+          port: 4004
+        - protocol: TCP
+          port: 4005
+        - protocol: TCP
+          port: 4006
+        - protocol: TCP
+          port: 4007
+        - protocol: TCP
+          port: 4008
+        - protocol: TCP
+          port: 4009
+        - protocol: TCP
+          port: 4010
+        - protocol: TCP
+          port: 4011
+        - protocol: TCP
+          port: 4012
+        - protocol: TCP
+          port: 4013
+        - protocol: TCP
+          port: 4014
+---
+# ── 3d. App pods → shared infra (postgres/pgbouncer/redis/nats/minio) ─────────
+# Egress allow from every ATS app pod to the stateful infra ports. Keyed by the
+# infra pods' own name labels so egress is scoped to exactly those Services, not
+# "anywhere on those ports".
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress-to-infra
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: cdc-ats
+  policyTypes: [Egress]
+  egress:
+    # Postgres (direct) + PgBouncer (pooled) - a service may use either.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: pgbouncer
+      ports:
+        - protocol: TCP
+          port: 6432
+    # Redis (BullMQ queues + rate-limit store).
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # NATS (JetStream events) - client 4222 + monitoring 8222.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+        - protocol: TCP
+          port: 8222
+    # MinIO / S3 (resume + incoming buckets) - S3 API 9000.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+      ports:
+        - protocol: TCP
+          port: 9000
+---
+# ── 3e. App pods → other ATS app pods (east-west egress) ──────────────────────
+# The egress counterpart to 3c: the gateway and services must be ALLOWED to egress to
+# the backend HTTP ports (an egress default-deny blocks this otherwise). Scoped to
+# in-namespace ATS pods on the service ports.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress-to-backend
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: cdc-ats
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: cdc-ats
+      ports:
+        - protocol: TCP
+          port: 4000
+        - protocol: TCP
+          port: 4001
+        - protocol: TCP
+          port: 4002
+        - protocol: TCP
+          port: 4003
+        - protocol: TCP
+          port: 4004
+        - protocol: TCP
+          port: 4005
+        - protocol: TCP
+          port: 4006
+        - protocol: TCP
+          port: 4007
+        - protocol: TCP
+          port: 4008
+        - protocol: TCP
+          port: 4009
+        - protocol: TCP
+          port: 4010
+        - protocol: TCP
+          port: 4011
+        - protocol: TCP
+          port: 4012
+        - protocol: TCP
+          port: 4013
+        - protocol: TCP
+          port: 4014
+        # frontend (3000) - the server-side proxy target the browser never reaches
+        # directly, but other pods may health-check it.
+        - protocol: TCP
+          port: 3000
+---
+# ── 3f. App pods → external HTTPS (LLM vendors, S3, job boards, OA vendors) ────
+# Several services make OUTBOUND calls to the public internet: the AI agents call the
+# OpenRouter/Anthropic/OpenAI endpoints, job-service/assessment-service call external
+# job boards + OA vendors, notification-service calls email/Slack. With egress
+# default-deny those all break, so allow egress to 443 (+ 80 for redirects) to any
+# destination EXCEPT the cluster-internal + link-local ranges. Tighten to a vendor
+# CIDR allowlist if your egress posture requires it (an egress gateway / proxy is the
+# stricter pattern).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress-external-https
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: cdc-ats
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              # RFC1918 + link-local: keep "external" egress off the cluster/private
+              # network (in-cluster flows are covered by 3d/3e by pod label instead).
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+---
+# ── 3g. KEDA (its own namespace) → redis (6379) for the queue-depth scaler ────
+# The KEDA operator polls Redis list length to drive the ScaledObjects in
+# 60-keda-scaledobjects.yaml. It runs in the `keda` namespace, so redis must accept
+# ingress from there. Adjust the namespace label if you install KEDA elsewhere.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-keda-to-redis
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keda
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+# ── 3h. Infra pods accept ingress from ATS app pods ───────────────────────────
+# The egress side (3d) is not enough - with ingress default-deny (policy 1) the infra
+# pods also need an ingress ALLOW from the app tier. This reopens exactly the infra
+# ports FROM in-namespace ATS pods (and, for postgres, from pgbouncer).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-infra-ingress-from-app
+  namespace: cdc-ats
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+spec:
+  # Selects the four stateful infra workloads + pgbouncer (all carry part-of).
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [postgres, pgbouncer, redis, nats, minio]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: cdc-ats
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 4222
+        - protocol: TCP
+          port: 8222
+        - protocol: TCP
+          port: 9000
+        - protocol: TCP
+          port: 9001

@@ -1,0 +1,198 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  values-prod.yaml - production / 10k-concurrent-spike posture.
+#
+#  Use with:  helm upgrade --install ats ./deploy/helm/ats-suite \
+#               -n cdc-ats --create-namespace \
+#               -f values-prod.yaml -f values-prod.secrets.yaml
+#
+#  (Keep real secrets in a SEPARATE, gitignored file - or better, set
+#   secrets.existingSecret and manage them with external-secrets / sealed-secrets.)
+#
+#  Posture that backs the 10k story in docs/SCALABILITY.md:
+#    • HPA ON for the six hot-path deployables (gateway, job, resume, screening,
+#      assessment, frontend), with higher MINIMUMS on the hottest ones so a spike
+#      starts from warm capacity instead of cold-scaling from 1.
+#    • PDBs ON so node drains / rollouts never take a service to zero.
+#    • Persistent, larger infra volumes; monitoring ServiceMonitors ON.
+#    • Seeder OFF (you provision real tenants, not the demo tenant).
+#    • Externalize the datastores in production (see the commented block at the
+#      bottom): managed Postgres/Redis/S3 remove the single-host DB ceiling that
+#      SCALABILITY.md §6/§7 calls out as the real limit.
+#
+#  HONEST: replica bounds + CPU targets are engineering estimates derived from the
+#  compose stack, NOT measured against real production load. Load-test, then tune.
+# ══════════════════════════════════════════════════════════════════════════════
+
+global:
+  image:
+    # Pin a real, immutable CI tag in production - do NOT float on "latest".
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+autoscaling:
+  enabled: true
+pdb:
+  enabled: true
+  minAvailable: "50%"
+monitoring:
+  enabled: true
+  serviceMonitor:
+    # Match your Prometheus Operator's serviceMonitorSelector, e.g.:
+    labels:
+      release: kube-prometheus-stack
+# KEDA off by default; flip on per-worker once you have verified the BullMQ Redis
+# keys (keda.enabled + services.<svc>.keda.enabled). Do NOT run KEDA AND the CPU
+# HPA on the same Deployment - pick one per worker.
+keda:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: nginx
+  host: app.cdc-ats.example.com    # <-- set your real domain
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: true
+    secretName: cdc-ats-tls
+
+# Larger, persistent infra volumes for production. NOTE: single-replica
+# StatefulSets are still single points of failure - for real HA, externalize
+# these (see the bottom block). These sizes assume the in-chart singletons.
+postgres:
+  persistence:
+    enabled: true
+    size: 100Gi
+  resources:
+    requests: { cpu: "1",  memory: 2Gi }
+    limits:   { cpu: "4",  memory: 8Gi }
+redis:
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits:   { cpu: "1",  memory: 2Gi }
+nats:
+  persistence:
+    enabled: true
+    size: 20Gi
+minio:
+  persistence:
+    enabled: true
+    size: 200Gi
+
+# ── Hot-path services: higher HPA minimums so a spike starts warm ──────────────
+# The six deployables a 10k-applicant spike actually exercises (SCALABILITY.md §5).
+services:
+  api-gateway:
+    # Single public entrypoint - every /api/* transits it. Start from 3.
+    replicaCount: 3
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 16
+      targetCPUUtilizationPercentage: 60
+    pdb:
+      minAvailable: "50%"
+
+  job-service:
+    # THE apply accept-fast path + in-process apply-ingest worker. Widest range.
+    replicaCount: 4
+    autoscaling:
+      enabled: true
+      minReplicas: 4
+      maxReplicas: 24
+      targetCPUUtilizationPercentage: 65
+    pdb:
+      minAvailable: "50%"
+
+  resume-service:
+    # Extract/parse/OCR + in-process parse worker (CPU-heaviest). Start from 3.
+    replicaCount: 3
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 16
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      minAvailable: "50%"
+
+  screening-service:
+    # In-process candidate-screener worker (LLM-bound). Modest range.
+    replicaCount: 2
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      minAvailable: "50%"
+
+  assessment-service:
+    replicaCount: 2
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      minAvailable: "50%"
+
+  # ── Control-plane services: keep >=2 for HA + a meaningful PDB ───────────────
+  identity-service:   { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  tenant-service:     { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  billing-service:    { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  candidate-service:  { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  interview-service:  { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  notification-service: { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  search-service:     { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  agent-service:      { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  analytics-service:  { replicaCount: 2, pdb: { minAvailable: "50%" } }
+  compliance-service: { replicaCount: 2, pdb: { minAvailable: "50%" } }
+
+frontend:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 12
+    targetCPUUtilizationPercentage: 65
+  pdb:
+    minAvailable: "50%"
+
+# Do NOT seed the demo tenant in production.
+seeder:
+  enabled: false
+
+# ── Externalizing the datastores (RECOMMENDED for real production) ─────────────
+# The in-chart singletons above are single points of failure and the single-host
+# DB is the real ceiling (SCALABILITY.md §6). For genuine 10k+ HA, point at
+# managed backing stores and turn the in-chart ones OFF:
+#
+# postgres:
+#   internal: false
+# redis:
+#   internal: false
+# nats:
+#   internal: false
+# minio:
+#   internal: false
+# commonEnv:
+#   REDIS_URL: "rediss://<elasticache-endpoint>:6379"
+#   NATS_URL:  "nats://<nats-cluster>:4222"
+#   S3_ENDPOINT: "https://s3.us-east-1.amazonaws.com"
+# secrets:
+#   # Prefer an existing Secret from your secrets manager over inline values:
+#   existingSecret: cdc-ats-secrets
+#   # If you must inline, put the managed per-service URLs here (with pool params):
+#   databaseUrls:
+#     IDENTITY_DATABASE_URL: "postgresql://user:pass@pg.internal:5432/identity_db?connection_limit=10&pool_timeout=20&sslmode=require"
+#     JOB_DATABASE_URL:      "postgresql://user:pass@pg.internal:5432/job_db?connection_limit=8&pool_timeout=20&sslmode=require"
+#     # ... one per service. When databaseUrls is set, postgres.* is not consulted.
+#
+# With managed Postgres, ALSO put PgBouncer (transaction pooling, SET LOCAL audit
+# per SCALABILITY.md §6) in front so 24 job-service replicas x a small pool do not
+# exhaust connections.

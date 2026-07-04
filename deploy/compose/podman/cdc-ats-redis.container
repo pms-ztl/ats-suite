@@ -1,0 +1,21 @@
+# Quadlet unit - Redis (BullMQ + rate-limit store). noeviction so queued jobs are
+# never dropped under memory pressure (they error, the safe failure).
+[Unit]
+Description=CDC ATS Redis
+After=network-online.target
+
+[Container]
+ContainerName=redis
+Image=docker.io/library/redis:7-alpine
+Network=cdc-ats.network
+Volume=cdc-ats-redisdata:/data
+Exec=redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy noeviction
+HealthCmd=redis-cli ping
+HealthInterval=5s
+HealthRetries=20
+
+[Service]
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target

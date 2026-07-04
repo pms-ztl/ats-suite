@@ -1,0 +1,85 @@
+{{/*
+  Redis 7 - StatefulSet + headless Service. Deployed ONLY when redis.internal.
+  Append-only, same as compose. BullMQ queues + rate-limit stores use this.
+  For managed Redis (ElastiCache/MemoryStore) set redis.internal:false and point
+  commonEnv.REDIS_URL at it.
+*/}}
+{{- if .Values.redis.internal }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.redis.host }}
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "redis" "root" .) | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "ats.selectorLabels" (dict "name" "redis" "instance" .Release.Name) | nindent 4 }}
+  ports:
+    - name: redis
+      port: {{ .Values.redis.port }}
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  labels:
+    {{- include "ats.componentLabels" (dict "name" "redis" "root" .) | nindent 4 }}
+spec:
+  serviceName: {{ .Values.redis.host }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ats.selectorLabels" (dict "name" "redis" "instance" .Release.Name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ats.componentLabels" (dict "name" "redis" "root" .) | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+      {{- if not .Values.redis.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.redis.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{ toYaml .Values.redis.persistence.accessModes | nindent 10 }}
+        {{- if .Values.redis.persistence.storageClass }}
+        storageClassName: {{ .Values.redis.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.redis.persistence.size }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,130 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  values-dev.yaml - single-node / low-resource overlay.
+#
+#  Use with:  helm upgrade --install ats ./deploy/helm/ats-suite \
+#               -n cdc-ats --create-namespace -f values-dev.yaml
+#
+#  Posture: 1 replica everywhere, tiny resources, HPA/KEDA/PDB OFF, ephemeral
+#  storage (no PVCs) so it schedules on a laptop kind/minikube/k3d cluster. This
+#  is the closest k8s equivalent of `docker compose -f docker-compose.demo.yml up`.
+#  Data is EMPTYDIR here - it does NOT survive a pod restart; that is intentional
+#  for a throwaway dev cluster. Do not use this overlay for anything you care about.
+# ══════════════════════════════════════════════════════════════════════════════
+
+autoscaling:
+  enabled: false
+keda:
+  enabled: false
+pdb:
+  enabled: false
+monitoring:
+  enabled: false
+
+# Ephemeral infra (no PVCs) + smaller footprint for a laptop cluster.
+postgres:
+  persistence:
+    enabled: false
+  # Dial the burst-tuning down for a small dev host.
+  tuning:
+    max_connections: "200"
+    shared_buffers: "256MB"
+    work_mem: "4MB"
+    maintenance_work_mem: "64MB"
+    wal_buffers: "16MB"
+    max_wal_size: "2GB"
+    min_wal_size: "512MB"
+    checkpoint_completion_target: "0.9"
+    effective_cache_size: "1GB"
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: "1",  memory: 1Gi }
+redis:
+  persistence:
+    enabled: false
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits:   { cpu: 250m, memory: 256Mi }
+nats:
+  persistence:
+    enabled: false
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits:   { cpu: 250m, memory: 256Mi }
+minio:
+  persistence:
+    enabled: false
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+# Ingress off by default in dev - reach the app via kubectl port-forward svc/frontend.
+ingress:
+  enabled: false
+
+# ── Every deployable: 1 replica, small requests, HPA off ──────────────────────
+# Overriding replicaCount + turning autoscaling off per-service keeps a single pod
+# each. (Only the fields that DIFFER from values.yaml are set here; the rest merge.)
+services:
+  api-gateway:
+    replicaCount: 1
+    autoscaling: { enabled: false }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits:   { cpu: 500m, memory: 512Mi }
+  identity-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  tenant-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  billing-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  job-service:
+    replicaCount: 1
+    autoscaling: { enabled: false }
+    resources: { requests: { cpu: 100m, memory: 256Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  candidate-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  interview-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  resume-service:
+    replicaCount: 1
+    autoscaling: { enabled: false }
+    resources: { requests: { cpu: 100m, memory: 384Mi }, limits: { cpu: "1", memory: 1Gi } }
+  screening-service:
+    replicaCount: 1
+    autoscaling: { enabled: false }
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  notification-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  search-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  agent-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  analytics-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  compliance-service:
+    replicaCount: 1
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+  assessment-service:
+    replicaCount: 1
+    autoscaling: { enabled: false }
+    resources: { requests: { cpu: 50m, memory: 192Mi }, limits: { cpu: 500m, memory: 512Mi } }
+
+frontend:
+  replicaCount: 1
+  autoscaling: { enabled: false }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+# Seeder ON in dev (you want the demo tenant/data).
+seeder:
+  enabled: true

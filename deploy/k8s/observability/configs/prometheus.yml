@@ -1,0 +1,50 @@
+# Prometheus scrape config for the CDC ATS stack (self-contained, path A).
+# Consumed by the observability kustomization configMapGenerator (prometheus-config).
+# The literal-ConfigMap twin is 10-prometheus-config.yaml (for `kubectl apply -f`).
+# Keep the two in sync. See 10-prometheus-config.yaml for the full commentary.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: cdc-ats
+    stack: ats
+
+rule_files:
+  - /etc/prometheus/rules/*.yaml
+
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ["alertmanager.cdc-ats-monitoring.svc:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: cdc-ats-services
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: [cdc-ats]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        target_label: app
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node

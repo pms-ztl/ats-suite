@@ -1,0 +1,52 @@
+apiVersion: v2
+name: ats-suite
+description: >-
+  CDC ATS - a multi-tenant, AI-powered Applicant Tracking System. This umbrella
+  chart deploys the whole stack: 15 Express microservices (api-gateway + 14
+  backends), the Next.js frontend, and the stateful infra (Postgres, Redis,
+  NATS, MinIO), driven entirely from values.yaml. Derived from
+  docker-compose.demo.yml and deploy/k8s/*; NOT yet validated against a live
+  cluster (see README.md).
+type: application
+
+# Chart version - bump on chart template/values changes.
+version: 0.1.0
+
+# The application version the chart deploys. Matches the image tag convention
+# (ghcr.io/cdc-ats/<service>:<appVersion>) used as the per-service default tag.
+appVersion: "1.0.0"
+
+kubeVersion: ">=1.23.0-0"
+
+home: https://github.com/cdc-ats/ats
+sources:
+  - https://github.com/cdc-ats/ats
+
+keywords:
+  - ats
+  - recruiting
+  - microservices
+  - multi-tenant
+  - ai
+
+maintainers:
+  - name: CDC ATS Platform Team
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+# The stateful infra (Postgres, Redis, NATS, MinIO) is shipped as first-class
+# in-chart StatefulSet templates (templates/infra/*), toggled per component under
+# .Values.postgres/redis/nats/minio with an `.internal` flag. That keeps the
+# chart self-contained and byte-faithful to docker-compose.demo.yml's tuning
+# flags, WITHOUT pulling external subcharts.
+#
+# For a production deploy you will almost always point at MANAGED backing stores
+# (RDS / Cloud SQL / Neon for Postgres, ElastiCache / MemoryStore for Redis, a
+# NATS operator cluster, S3 for object storage). Set `<component>.internal:
+# false` and provide the external endpoint/credentials via values - see
+# values-prod.yaml and README.md "Externalizing the datastores". No subchart
+# dependencies are declared, so `helm dependency build` is not required.
+dependencies: []
+
+annotations:
+  category: ApplicationServer
+  licenses: Proprietary

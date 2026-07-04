@@ -1,0 +1,36 @@
+
+  CDC ATS ({{ .Chart.Name }}-{{ .Chart.Version }}, app {{ .Chart.AppVersion }})
+  Release: {{ .Release.Name }}   Namespace: {{ .Release.Namespace }}
+
+  Deployed:
+    - 15 backend services (api-gateway + 14 backends) + frontend
+    - Stateful infra in-chart: postgres={{ .Values.postgres.internal }} redis={{ .Values.redis.internal }} nats={{ .Values.nats.internal }} minio={{ .Values.minio.internal }}
+    - migrator hook={{ .Values.migrator.enabled }}  seeder hook={{ .Values.seeder.enabled }}
+    - autoscaling(HPA)={{ .Values.autoscaling.enabled }}  KEDA={{ .Values.keda.enabled }}  PDBs={{ .Values.pdb.enabled }}  monitoring={{ .Values.monitoring.enabled }}
+
+  Check rollout:
+    kubectl -n {{ .Release.Namespace }} get pods,hpa,pdb
+    kubectl -n {{ .Release.Namespace }} rollout status deploy/api-gateway
+
+{{- if .Values.ingress.enabled }}
+
+  Ingress host (set your DNS + TLS):
+    https://{{ .Values.ingress.host }}/         -> frontend
+    https://{{ .Values.ingress.host }}/api      -> api-gateway
+{{- else }}
+
+  Ingress is DISABLED. Reach the app via port-forward:
+    kubectl -n {{ .Release.Namespace }} port-forward svc/frontend 3000:{{ .Values.frontend.port }}
+{{- end }}
+
+{{- if not .Values.secrets.existingSecret }}
+
+  WARNING: this release rendered the chart-managed Secret from values, which
+  default to WEAK DEMO placeholders. For anything beyond a throwaway demo, either
+  set real values (--set-file / a private values file) or point at a managed
+  Secret via secrets.existingSecret. NEVER commit real secrets.
+{{- end }}
+
+  HONEST CAVEAT: this chart is derived from docker-compose.demo.yml and has NOT
+  been validated against a live cluster. Resource requests/limits and HPA targets
+  are engineering estimates. Load-test, then tune. See the chart README.

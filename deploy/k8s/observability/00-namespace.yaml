@@ -1,0 +1,14 @@
+# Observability namespace for the CDC ATS monitoring stack.
+#
+# Kept SEPARATE from the `cdc-ats` app namespace so the monitoring stack can be
+# installed, upgraded, or torn down independently of the application. The
+# ServiceMonitor/PodMonitor CRs below select workloads in the `cdc-ats`
+# namespace by label; Prometheus (running here) is granted cross-namespace read
+# via its RBAC (30-prometheus-rbac.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cdc-ats-monitoring
+  labels:
+    app.kubernetes.io/part-of: cdc-ats
+    app.kubernetes.io/component: observability
