@@ -37,7 +37,10 @@ const router = Router();
 const KindSchema = z.enum(INTEGRATION_KINDS);
 
 // ── GET /internal/integrations ─────────────────────────────────────────────
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+// Admin-only, matching the PUT/DELETE/test on this router. Integration config
+// (channels, enabled state, subdomains/regions, redacted secret tails) is a
+// tenant settings surface reserved to ADMIN.
+router.get("/", requireTenantAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const rows = await prisma.tenantIntegration.findMany({

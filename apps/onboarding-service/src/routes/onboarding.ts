@@ -10,10 +10,14 @@ import { openCase } from "../lib/case-service.js";
 import { getPresignedDownloadUrl } from "../lib/storage.js";
 
 const router = Router();
-const requireRecruiter = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
+// Onboarding is a hiring/HR function. Gate every route (reads carry candidate PII:
+// names/emails, KYC/PAN/bank verifications, presigned document links) to the
+// recruiting/hiring side + HR + admins. Interviewers/leadership have no onboarding
+// role. HR_MANAGER added here (was recruiter/admin only) since onboarding is HR.
+const requireRecruiter = requireRole("ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER");
 
 // GET /internal/onboarding-cases — list the tenant's onboarding cases.
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/", requireRecruiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     getTenantId(req);
     const rows = await prisma.onboardingCase.findMany({
@@ -38,7 +42,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // GET /internal/onboarding-cases/:id — full case detail.
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/:id", requireRecruiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     getTenantId(req);
     const id = req.params["id"] as string;
@@ -56,7 +60,7 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 // re-read on the request client so a recruiter can only reach their own tenant's
 // documents. Returns 404 (not 200 with a fake URL) when nothing was uploaded or
 // storage is unavailable — never a fabricated link.
-router.get("/:id/tasks/:taskId/document", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/:id/tasks/:taskId/document", requireRecruiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     getTenantId(req);
     const caseId = req.params["id"] as string;

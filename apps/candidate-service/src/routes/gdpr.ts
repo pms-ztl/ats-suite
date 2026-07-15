@@ -10,7 +10,7 @@
  * in the response.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, Errors, getTenantId, getUserId, createLogger, requireTenantAdmin } from "@cdc-ats/common";
+import { ok, Errors, getTenantId, getUserId, createLogger, requireRole, requireTenantAdmin } from "@cdc-ats/common";
 // GDPR erase does a multi-table $transaction with explicit tenant filters; it
 // uses the admin client so the batch transaction isn't reshaped by the RLS
 // per-operation wrapper.
@@ -20,7 +20,11 @@ const logger = createLogger({ serviceName: "candidate-service:gdpr" });
 const router = Router();
 
 // ── GET /internal/gdpr/candidates/:id/export ──────────────────────────────
-router.get("/candidates/:id/export", async (req: Request, res: Response, next: NextFunction) => {
+// Per-candidate PII bundle (email/phone/notes/applications/attachments) —
+// gate to tenant admin + compliance officer per the least-privilege matrix
+// (the sibling /tenant/export + DELETE are already admin-gated; this one
+// was missed, leaving it reachable by any authenticated role incl. INTERVIEWER).
+router.get("/candidates/:id/export", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const id = req.params["id"] as string;

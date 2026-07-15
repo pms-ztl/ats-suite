@@ -14,7 +14,12 @@ import { prisma } from "../lib/prisma.js";
 import { signCollabToken, collabWsUrl } from "../lib/collab-token.js";
 
 const router = Router({ mergeParams: true });
-const requireRoomMember = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER");
+const requireRoomMember = requireRole("ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER", "INTERVIEWER");
+// The export bundle collates EVERY panelist's raw scorecard (notes/rating/
+// recommendation). Restrict it to the recruiting/hiring side + admins; an
+// INTERVIEWER must not pull other panelists' feedback, and leadership consumes
+// decisions/analytics, not raw scorecards.
+const requireExporter = requireRole("ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER");
 
 async function loadInterview(tenantId: string, interviewId: string) {
   const iv = await prisma.interview.findFirst({ where: { id: interviewId, tenantId } });
@@ -22,8 +27,10 @@ async function loadInterview(tenantId: string, interviewId: string) {
   return iv;
 }
 
-// GET artifact
-router.get("/:id/artifact", async (req: Request, res: Response, next: NextFunction) => {
+// GET artifact — same room-member gate as the PUT sibling: room content
+// (notes/code/whiteboard) is only for the recruiting/hiring/admin side +
+// interviewers, not any authenticated tenant role (e.g. leadership).
+router.get("/:id/artifact", requireRoomMember, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const interviewId = req.params["id"] as string;
@@ -129,7 +136,7 @@ router.post("/:id/collab-token", requireRoomMember, async (req: Request, res: Re
 //   • default (JSON)            — the authoritative bundle the client PDF uses.
 //   • ?format=html / Accept html — a self-contained, printable document the
 //     browser can save as PDF (window.print()), for callers without jsPDF.
-router.get("/:id/artifact/export", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/:id/artifact/export", requireExporter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const interviewId = req.params["id"] as string;

@@ -1,12 +1,19 @@
 /** Thin HTTP layer: validate -> delegate to the service -> respond. */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, getTenantId } from "@cdc-ats/common";
+import { ok, getTenantId, requireRole } from "@cdc-ats/common";
 import { SearchBody, RankBody, IndexBody } from "../schemas/search.schemas.js";
 import * as searchService from "../services/search.service.js";
 
 const router = Router();
 
-router.post("/candidates", async (req: Request, res: Response, next: NextFunction) => {
+// Free-text search + ranking expose the whole candidate pool and match scores.
+// Per the least-privilege matrix these are hiring roles + leadership read;
+// INTERVIEWER ("NOT candidate lists at large") and CANDIDATE are excluded.
+const SEARCH_ROLES = ["ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER", "DEPARTMENT_HEAD", "EXECUTIVE"] as const;
+// Writing into the search index is index-maintenance — recruiting-ops only.
+const INDEX_ROLES = ["ADMIN", "RECRUITER", "HR_MANAGER"] as const;
+
+router.post("/candidates", requireRole(...SEARCH_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const { query, limit } = SearchBody.parse(req.body);
@@ -15,7 +22,7 @@ router.post("/candidates", async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 });
 
-router.post("/jobs", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/jobs", requireRole(...SEARCH_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const { query, limit } = SearchBody.parse(req.body);
@@ -24,7 +31,7 @@ router.post("/jobs", async (req: Request, res: Response, next: NextFunction) => 
   } catch (err) { next(err); }
 });
 
-router.post("/match/rank", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/match/rank", requireRole(...SEARCH_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const body = RankBody.parse(req.body);
@@ -33,7 +40,7 @@ router.post("/match/rank", async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 });
 
-router.post("/index", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/index", requireRole(...INDEX_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const input = IndexBody.parse(req.body);

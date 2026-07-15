@@ -30,7 +30,7 @@
  * question metadata; we never re-grade and never fabricate missing grades.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -581,7 +581,11 @@ interface GradeOverrideBody {
   clearNeedsReview?: boolean;
 }
 
-router.patch("/attempts/:attemptId/grade", async (req: Request, res: Response, next: NextFunction) => {
+// Mutating HITL override — rewrites AssessmentResult (rawScore/passed), refreshes
+// explainability, and marks the Attempt GRADED. Gate to the hiring roles that own
+// grading decisions per the least-privilege matrix (the sibling authoring/invite
+// routers are all requireRole-gated; INTERVIEWER + EXECUTIVE must not reach it).
+router.patch("/attempts/:attemptId/grade", requireRole("ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const reviewerId = getUserId(req);

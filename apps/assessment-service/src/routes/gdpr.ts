@@ -32,7 +32,7 @@
  *    anonymized rather than orphaned. No em / en dashes.
  */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, getTenantId } from "@cdc-ats/common";
+import { ok, getTenantId, requireRole } from "@cdc-ats/common";
 // Cross-table batch + RLS-bypassing admin path (see file header). Every query
 // carries an explicit tenantId filter so isolation holds without the RLS wrapper.
 import { prismaAdmin as prisma } from "../lib/prisma.js";
@@ -92,7 +92,10 @@ function sanitizeGradeForSubject(grade: AnyObj): AnyObj {
 // candidate: attempts (with their answers, sanitized grades, explainability, and
 // proctoring events) + invites. The answer key / hidden test-case I/O are
 // stripped; the data subject gets THEIR data, not the grading key.
-router.get("/candidates/:id/export", async (req: Request, res: Response, next: NextFunction) => {
+// Gated to tenant admin + compliance officer per the least-privilege matrix,
+// aligning with candidate-service + job-service GDPR export (this OA leg was
+// reachable by any authenticated role with only readAuthHeaders).
+router.get("/candidates/:id/export", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const candidateId = req.params["id"] as string;
@@ -193,7 +196,10 @@ router.get("/candidates/:id/export", async (req: Request, res: Response, next: N
 // (Attempt keeps the row but drops candidateId + the frozen answerKey;
 // AssessmentInvite keeps the row but scrubs email + the candidate token hashes).
 // Scoped by tenantId on every where-clause; runs as one transaction.
-router.delete("/candidates/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Destructive DSAR erasure — gate to tenant admin + compliance officer per the
+// least-privilege matrix (candidate-service's equivalent DELETE is admin-gated;
+// this OA erasure was reachable by any authenticated tenant role).
+router.delete("/candidates/:id", requireRole("ADMIN", "COMPLIANCE_OFFICER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const candidateId = req.params["id"] as string;

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, Errors, getTenantId, getUserId } from "@cdc-ats/common";
+import { ok, Errors, getTenantId, getUserId, requireRole } from "@cdc-ats/common";
 import { runAgent, type ScreeningInput, type ScreeningOutput, type AgentRunSnapshot } from "@cdc-ats/ai-engine";
 import { prisma, prismaAdmin } from "../lib/prisma.js";
 import { fetchRequisition } from "../lib/service-client.js";
@@ -18,7 +18,11 @@ const ScoreBodySchema = z.object({
   resumeText: z.string(),
   resumeSkills: z.array(z.string()).optional(),
 });
-router.post("/score", async (req: Request, res: Response, next: NextFunction) => {
+// Mutating, money-spending LLM agent call (scores arbitrary resume text) —
+// gate to ADMIN + RECRUITER like every other agent-invoking POST. The
+// resume-service bulk-archive worker forwards the originating recruiter/admin's
+// X-User-Role, so this guard does not break that internal path.
+router.post("/score", requireRole("ADMIN", "RECRUITER"), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);

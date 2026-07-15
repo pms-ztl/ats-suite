@@ -34,7 +34,7 @@ const router = Router();
 // Lists every agent with platform-wide kill state, total runs in last 30d,
 // total cost, and per-tenant kill-switch count (so super-admin can see which
 // agents are getting throttled at the tenant level even if globally enabled).
-router.get("/agents", async (_req: Request, res: Response, next: NextFunction) => {
+router.get("/agents", requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -163,7 +163,7 @@ router.put("/agents/:type", requireSuperAdmin, async (req: Request, res: Respons
 // ─── GET /internal/platform/audit?limit=100 ─────────────────────────────────
 // Phase 22 — append-only audit of every platform kill switch toggle.
 // Optional ?agentType= filter to scope to one agent's history.
-router.get("/audit", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/audit", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = Math.max(1, Math.min(500, Number(req.query["limit"]) || 100));
     const agentType = typeof req.query["agentType"] === "string" ? req.query["agentType"] : undefined;
@@ -214,7 +214,7 @@ function humanizeFlagName(name: string): string {
     .join(" ");
 }
 
-router.get("/flags", async (_req: Request, res: Response, next: NextFunction) => {
+router.get("/flags", requireSuperAdmin, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const [byNameEnabled, byNameTotal, tenantTotal] = await Promise.all([
       // Tenants with the flag ENABLED, grouped by flag name.
@@ -261,7 +261,7 @@ router.get("/flags", async (_req: Request, res: Response, next: NextFunction) =>
 // ─── GET /internal/platform/cost?days=30&groupBy=tenant|agent ───────────────
 // Cross-tenant cost rollup. Returns aggregates suitable for the super-admin
 // "who's spending what" dashboard.
-router.get("/cost", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/cost", requireSuperAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const days = Math.max(1, Math.min(365, Number(req.query["days"]) || 30));
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

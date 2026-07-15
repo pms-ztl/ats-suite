@@ -1,6 +1,6 @@
 /** Thin HTTP layer: validate -> delegate to the service -> respond. */
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ok, getTenantId, getUserId, createLogger } from "@cdc-ats/common";
+import { ok, getTenantId, getUserId, createLogger, requireRole } from "@cdc-ats/common";
 import { IngestBody } from "../schemas/analytics.schemas.js";
 import * as analyticsService from "../services/analytics.service.js";
 import { rollupTenant } from "../lib/rollup.js";
@@ -8,7 +8,12 @@ import { rollupTenant } from "../lib/rollup.js";
 const router = Router();
 const rollupLogger = createLogger({ serviceName: "analytics-service:rollup-route" });
 
-router.post("/ingest", async (req: Request, res: Response, next: NextFunction) => {
+// Org analytics is leadership + recruiting-ops per the least-privilege matrix.
+// INTERVIEWER (assigned interviews only) and CANDIDATE (own portal only) must
+// NOT read org funnel/metrics or write analytics events.
+const ANALYTICS_ROLES = ["ADMIN", "RECRUITER", "HR_MANAGER", "DEPARTMENT_HEAD", "EXECUTIVE"] as const;
+
+router.post("/ingest", requireRole(...ANALYTICS_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     ok(res, await analyticsService.ingest(getTenantId(req), IngestBody.parse(req.body)));
   } catch (err) { next(err); }
@@ -20,7 +25,7 @@ router.post("/ingest", async (req: Request, res: Response, next: NextFunction) =
 // pipeline change) instead of waiting for the next tick. tenant-scoped: it only
 // rolls up the caller's own tenant. Returns { refreshed } — false when
 // candidate-service was unreachable (rollup left untouched, no fabricated data).
-router.post("/rollup/run", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/rollup/run", requireRole(...ANALYTICS_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
     getUserId(req); // presence-check (readAuthHeaders already enforced auth headers)
@@ -29,19 +34,19 @@ router.post("/rollup/run", async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 });
 
-router.get("/summary", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/summary", requireRole(...ANALYTICS_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     ok(res, await analyticsService.summary(getTenantId(req)));
   } catch (err) { next(err); }
 });
 
-router.get("/funnel", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/funnel", requireRole(...ANALYTICS_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     ok(res, { funnel: await analyticsService.funnel(getTenantId(req)) });
   } catch (err) { next(err); }
 });
 
-router.get("/metrics", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/metrics", requireRole(...ANALYTICS_ROLES), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const metric = req.query["metric"] as string | undefined;
     const period = req.query["period"] as string | undefined;

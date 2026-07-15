@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { z } from "zod";
-import { ok, created, Errors, getTenantId, requireRole, createLogger } from "@cdc-ats/common";
+import { ok, created, Errors, getTenantId, requireRole, filterVisibleFields, createLogger } from "@cdc-ats/common";
 import { publishEvent } from "@cdc-ats/nats-client";
 import { tenantSubject } from "@cdc-ats/contracts";
 
@@ -9,6 +9,12 @@ import { tenantSubject } from "@cdc-ats/contracts";
 // - feedback → interviewer or recruiter or admin (interviewer is the primary submitter)
 const requireScheduler   = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER");
 const requireFeedbackSubmitter = requireRole("ADMIN", "RECRUITER", "HIRING_MANAGER", "INTERVIEWER");
+// Reads on interview rows (list + detail). Leadership may read; an INTERVIEWER is
+// additionally scoped server-side to only their own panel interviews and has other
+// panelists' notes/scores stripped via filterVisibleFields (see routes below).
+const requireInterviewReader = requireRole(
+  "ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER", "INTERVIEWER", "DEPARTMENT_HEAD", "EXECUTIVE",
+);
 import { InterviewTypeSchema, InterviewStatusSchema, InterviewRecommendationSchema } from "@cdc-ats/contracts";
 import { prisma } from "../lib/prisma.js";
 import { advanceApplicationToNextRound } from "../lib/round-progression.js";
@@ -30,9 +36,10 @@ const CreateInterviewSchema = z.object({
   roundId: z.string().uuid().optional(),
 });
 
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/", requireInterviewReader, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
+    const role = req.user?.role ?? "";
     const candidateId = req.query["candidateId"] as string | undefined;
     const status = req.query["status"] as string | undefined;
     // Phase 23 — tier-3 staff filtering. `panelistId=me` (or the explicit
@@ -41,7 +48,11 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     // pulling system-wide rows.
     const panelistIdRaw = req.query["panelistId"] as string | undefined;
     const callerId = req.headers["x-user-id"] as string | undefined;
-    const panelistId = panelistIdRaw === "me" ? callerId : panelistIdRaw;
+    let panelistId = panelistIdRaw === "me" ? callerId : panelistIdRaw;
+    // Least-privilege: an INTERVIEWER may NEVER pull the system-wide list. Force
+    // the panel filter to the caller's own id server-side, ignoring any client
+    // panelistId (so they cannot omit it or point it at another user).
+    if (role === "INTERVIEWER") panelistId = callerId;
 
     // `feedbackPending=true` further narrows to interviews where the
     // caller (or specified panelist) hasn't yet submitted feedback —
@@ -68,7 +79,12 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     const filtered = feedbackPending && panelistId
       ? rows.filter((r: any) => !r.feedback || r.feedback.length === 0)
       : rows;
-    ok(res, filtered);
+    // Strip sensitive interview fields per the caller's role. An INTERVIEWER is
+    // scoped to their own panel above, so isOwner=true keeps their own view; the
+    // matrix still hides other panelists' notes/scores it does not enumerate.
+    const isOwner = role === "INTERVIEWER";
+    const visible = filtered.map((r: any) => filterVisibleFields(r, role, "interview", { isOwner }));
+    ok(res, visible);
   } catch (err) { next(err); }
 });
 
@@ -101,16 +117,26 @@ router.post("/", requireScheduler, async (req: Request, res: Response, next: Nex
   } catch (err) { next(err); }
 });
 
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/:id", requireInterviewReader, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
+    const role = req.user?.role ?? "";
+    const callerId = req.headers["x-user-id"] as string | undefined;
     const id = req.params["id"] as string;
     const row = await prisma.interview.findFirst({
       where: { id, tenantId },
       include: { panelMembers: true, feedback: true, round: true },
     });
     if (!row) throw Errors.notFound("Interview");
-    ok(res, row);
+    // An INTERVIEWER may only read an interview they are on the panel for.
+    // Non-panel access is 404 (do not confirm the row exists), matching the
+    // list route's server-side panel scoping.
+    const onPanel = (row.panelMembers ?? []).some((m: any) => m.userId === callerId);
+    if (role === "INTERVIEWER" && !onPanel) throw Errors.notFound("Interview");
+    // Strip other panelists' notes/scores for interviewers (isOwner only when
+    // this is their own panel interview); recruiting/hiring/admin keep the view.
+    const visible = filterVisibleFields(row, role, "interview", { isOwner: role === "INTERVIEWER" && onPanel });
+    ok(res, visible);
   } catch (err) { next(err); }
 });
 

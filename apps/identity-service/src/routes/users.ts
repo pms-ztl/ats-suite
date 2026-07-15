@@ -524,6 +524,23 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw Errors.notFound("User");
 
+    // IDOR guard — this row (email, role, tenantId, isActive) must not leak
+    // across tenants. When the request carries an authenticated caller, scope
+    // the lookup to that caller's tenant UNLESS: it is the caller's OWN record,
+    // the caller is SUPER_ADMIN (cross-tenant /auth/me + impersonation resolve
+    // pass a synthetic SUPER_ADMIN role), or an impersonation actor is present.
+    // Unauthenticated internal callers (login / register saga use synthetic
+    // headers, so req.user is set to SUPER_ADMIN; the pre-auth optional path
+    // leaves req.user undefined) are left untouched so those flows keep working.
+    if (req.user) {
+      const isSelf = req.user.id === id;
+      const isSuperAdmin = req.user.role === "SUPER_ADMIN";
+      const isImpersonating = Boolean(req.user.actorUserId);
+      if (!isSelf && !isSuperAdmin && !isImpersonating && user.tenantId !== req.user.tenantId) {
+        throw Errors.notFound("User");
+      }
+    }
+
     const prefsRow = await prisma.userUiPrefs
       .findUnique({ where: { userId: id } })
       .catch(() => null);
