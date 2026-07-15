@@ -69,4 +69,4 @@ See [stateless-hopping-cupcake.md](file:///C:/Users/ASUS/.claude/plans/stateless
 
 ## License
 
-Proprietary — CDC.
+Proprietary -> CDC.
