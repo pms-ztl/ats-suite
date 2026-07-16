@@ -18,6 +18,8 @@
     "test:a11y": "playwright test e2e/a11y.spec.ts"
   },
   "dependencies": {
+    "@cdc-ats/contracts": "*",
+    "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -43,7 +45,6 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@monaco-editor/react": "^4.6.0",
     "@react-three/drei": "^9.114.0",
     "@react-three/fiber": "^8.17.10",
     "@tanstack/react-table": "^8.21.3",
@@ -66,6 +67,7 @@
     "react-dom": "^18",
     "react-grid-layout": "^2.2.3",
     "recharts": "^3.8.1",
+    "shaders": "^3.0.438",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
@@ -75,8 +77,7 @@
     "y-monaco": "^0.1.6",
     "y-prosemirror": "^1.2.12",
     "yjs": "^13.6.20",
-    "zod": "^3.24.1",
-    "@cdc-ats/contracts": "*"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

@@ -69,5 +69,7 @@ export default function BreakdownBody({ state, viz }: WidgetBodyProps<ScreeningV
     );
   }
 
-  return <WaffleField segments={segments} valueLabel={(n) => `${n} verdict${n === 1 ? "" : "s"}`} />;
+  // `dense` so the waffle + share list stay side-by-side and compact in the narrow
+  // dashboard cell rather than wrapping into a tall square that overflows the pane.
+  return <WaffleField segments={segments} dense valueLabel={(n) => `${n} verdict${n === 1 ? "" : "s"}`} />;
 }

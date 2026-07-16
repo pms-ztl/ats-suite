@@ -341,7 +341,7 @@ export function CdShell({ children }: { children: React.ReactNode }) {
   }, [nav, role]);
 
   const planUsage: PlanUsage | undefined = seats
-    ? { label: "Seats used", used: seats.used, limit: seats.unlimited ? seats.used : seats.limit }
+    ? { label: "Seats used", used: seats.used, limit: seats.limit, unlimited: seats.unlimited }
     : undefined;
 
   const shellUser: ShellUser = {

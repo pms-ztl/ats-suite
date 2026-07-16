@@ -219,7 +219,13 @@ const CSS = `
 /* Two-column working layout: auto-fit so ultrawide gains columns and the band
    collapses to 1 col on narrow screens; stretch so the short column matches the
    tall one (spec 2). */
-.wsadminx .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: clamp(8px, 2vw, 24px); align-items: stretch; }
+/* align-items:start (was "stretch"). The Members card is short (~450px) while the
+   right column stacks three cards (~780px); stretching forced Members to match and
+   left a large void under "Invite member". Each column now sizes to its content —
+   and "Connected integrations" moved INTO the left column to keep the two columns
+   close in height rather than trading a void for a lopsided page. */
+.wsadminx .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: clamp(8px, 2vw, 24px); align-items: start; }
+.wsadminx .grid2 > .col { display: flex; flex-direction: column; gap: 16px; }
 .wsadminx .card { border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--e1); overflow: hidden; }
 .wsadminx .card-h { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--line); }
 .wsadminx .card-h .t { font-weight: 700; font-size: 14.5px; display: inline-flex; gap: 8px; align-items: center; }
@@ -355,6 +361,7 @@ export default function WorkspaceAdminPage() {
             </div>
 
             <div className="grid2">
+              <div className="col">
               <div className="card">
                 <div className="card-h">
                   <span className="t"><I d={<path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11.5A3.25 3.25 0 1 0 10 5a3.25 3.25 0 0 0 0 6.5" />} s={16} /> Members</span>
@@ -383,7 +390,26 @@ export default function WorkspaceAdminPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Moved up from a full-width row BELOW the grid so the left column
+                  carries comparable weight to the three-card right column. */}
+              <div className="card">
+                <div className="card-h">
+                  <span className="t"><I d={<path d="M9 3v5M15 3v5M7 8h10v3a5 5 0 0 1-10 0zM12 16v5" />} s={16} /> Connected integrations</span>
+                  <a href="/integrations">Browse all <I d={<path d="M9 6l6 6-6 6" />} s={13} /></a>
+                </div>
+                <div className="card-b" style={{ display: "flex", gap: 10, flexWrap: "wrap", paddingTop: 14 }}>
+                  {INTEGRATIONS.map((g) => (
+                    <div key={g[0]} style={{ display: "flex", gap: 9, alignItems: "center", padding: "9px 14px", borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 99, background: "var(--ok)" }} />
+                      <b style={{ fontSize: 13 }}>{g[0]}</b>
+                      <span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>{g[1]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              </div>
+
+              <div className="col">
                 <div className="card">
                   <div className="card-h">
                     <span className="t"><I d={<path d="M6 9a6 6 0 0 1 12 0c0 5 1.5 6.5 1.5 6.5h-15S6 14 6 9zM10 19a2 2 0 0 0 4 0" />} s={16} /> Needs attention</span>
@@ -433,7 +459,12 @@ export default function WorkspaceAdminPage() {
                       total={seatInfo && !seatInfo.unlimited ? seatInfo.limit : null}
                       label="Seats"
                       sub={seatInfo && !seatInfo.unlimited && seatInfo.plan ? `${toTitleCase(seatInfo.plan)} plan` : undefined}
-                      height={210}
+                      // Unlimited (Enterprise) has no gauge to draw — FillGauge falls
+                      // back to its emptyLabel note, and a 150px dashed box for one
+                      // line of text read as dead space. Keep 150 only when a real
+                      // tube renders; collapse to a compact note otherwise.
+                      height={seatInfo && !seatInfo.unlimited ? 150 : 64}
+                      maxWidth={148}
                       emptyLabel={
                         seatInfo?.unlimited
                           ? `${seatInfo.used} active member${seatInfo.used === 1 ? "" : "s"} · unlimited seats${seatInfo.plan ? ` on the ${toTitleCase(seatInfo.plan)} plan` : ""}`
@@ -445,21 +476,6 @@ export default function WorkspaceAdminPage() {
               </div>
             </div>
 
-            <div className="card" style={{ marginTop: 16 }}>
-              <div className="card-h">
-                <span className="t"><I d={<path d="M9 3v5M15 3v5M7 8h10v3a5 5 0 0 1-10 0zM12 16v5" />} s={16} /> Connected integrations</span>
-                <a href="/integrations">Browse all <I d={<path d="M9 6l6 6-6 6" />} s={13} /></a>
-              </div>
-              <div className="card-b" style={{ display: "flex", gap: 10, flexWrap: "wrap", paddingTop: 14 }}>
-                {INTEGRATIONS.map((g) => (
-                  <div key={g[0]} style={{ display: "flex", gap: 9, alignItems: "center", padding: "9px 14px", borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
-                    <span style={{ width: 8, height: 8, borderRadius: 99, background: "var(--ok)" }} />
-                    <b style={{ fontSize: 13 }}>{g[0]}</b>
-                    <span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>{g[1]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         ) : (
           /* ===== AUDIT LOG ===== */

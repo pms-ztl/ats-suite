@@ -166,11 +166,15 @@ export function StreamGraph({
 /* ---- WaffleField: a 100-cell square grid where each REAL category claims its
    share, paired with a labelled value/percent breakdown. ---- */
 export function WaffleField({
-  segments, cols = 10, valueLabel,
+  segments, cols = 10, valueLabel, dense = false,
   emptyLabel = "The grid fills in once data arrives.",
 }: {
   segments: { label: string; n: number; color?: string }[];
   cols?: number; valueLabel?: (n: number) => string; emptyLabel?: string;
+  // `dense` bounds the grid + stats so they sit side-by-side in a NARROW cell
+  // (e.g. the w4 dashboard widget) instead of wrapping into a tall square that
+  // overflows a short pane. Wide usages (Billing / Org overview) leave it off.
+  dense?: boolean;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const live = segments.filter((s) => s.n > 0);
@@ -191,8 +195,8 @@ export function WaffleField({
   while (fill.length < cells) fill.push("");
   const fmt = valueLabel || ((n: number) => String(n));
   return (
-    <div style={SPLIT}>
-      <div style={{ flex: "0 1 360px", minWidth: 240 }}>
+    <div style={dense ? { ...SPLIT, gap: 16 } : SPLIT}>
+      <div style={dense ? { flex: "1 1 150px", minWidth: 120, maxWidth: 200 } : { flex: "0 1 360px", minWidth: 240 }}>
         <style dangerouslySetInnerHTML={{ __html: `
           @media (prefers-reduced-motion: no-preference){
             .waffle-${uid} > span{animation:waffle-pop-${uid} .45s cubic-bezier(.22,1,.36,1) both;}
@@ -209,7 +213,7 @@ export function WaffleField({
           ))}
         </div>
       </div>
-      <div style={PANELCOL}>
+      <div style={dense ? { ...PANELCOL, flex: "1 1 140px", minWidth: 130 } : PANELCOL}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", paddingBottom: 4, borderBottom: `1px solid ${T.line}` }}>
           <span style={{ fontSize: 10.5, fontWeight: 700, color: T.ink3, textTransform: "uppercase", letterSpacing: ".06em" }}>Share</span>
           <span className="mono" style={{ fontSize: 14, fontWeight: 800, color: T.ink, fontFamily: "var(--font-mono, monospace)" }}>{fmt(total)}</span>
@@ -319,10 +323,15 @@ export function CalendarHeat({
     cellsByKey.set(`${col}:${wd(d.dt)}`, d.n);
     if (d.n > busiest.n) busiest = d;
   });
-  const cell = 16, gp = 5, leftPad = 22, topPad = 16;
-  const cols = maxCol + 1;
-  const W = leftPad + cols * (cell + gp);
-  const H = topPad + 7 * (cell + gp);
+  // Horizontal layout: seven day-of-week COLUMNS across, one ROW per week down.
+  // Reads wider-than-tall and fills the card even with only a few weeks of data —
+  // the old weeks-as-columns orientation was a narrow sliver beside a big void.
+  // Cells are RECTANGULAR (wider than tall) so the grid reads as neat horizontal
+  // rows without ballooning into big chunky squares. gp = gap between cells.
+  const cellW = 22, cellH = 15, gp = 5, leftPad = 30, topPad = 20;
+  const weeks = maxCol + 1;
+  const W = leftPad + 7 * (cellW + gp);
+  const H = topPad + weeks * (cellH + gp);
   const [svgRef, k] = useMeasuredScale(W);
   const dayLabels = weekStartsMonday ? ["M", "", "W", "", "F", "", ""] : ["S", "M", "", "W", "", "F", ""];
   const color = (n: number | undefined) => {
@@ -332,16 +341,16 @@ export function CalendarHeat({
   const rects: React.ReactNode[] = [];
   const monthMarks: React.ReactNode[] = [];
   let prevMonth = -1;
-  for (let c = 0; c < cols; c++) {
+  for (let c = 0; c < weeks; c++) {          // c = week index -> ROW
     const colDate = new Date(originMs + c * 7 * 86400000);
     if (colDate.getMonth() !== prevMonth) {
       prevMonth = colDate.getMonth();
-      monthMarks.push(<text key={`m${c}`} x={leftPad + c * (cell + gp)} y={10} fontSize={scaledFont(9.5, k)} fontWeight="700" fill={T.ink3}>{MONTHS[prevMonth]}</text>);
+      monthMarks.push(<text key={`m${c}`} x={0} y={topPad + c * (cellH + gp) + cellH - 2} fontSize={scaledFont(9.5, k)} fontWeight="700" fill={T.ink3}>{MONTHS[prevMonth]}</text>);
     }
-    for (let r = 0; r < 7; r++) {
+    for (let r = 0; r < 7; r++) {             // r = day of week -> COLUMN
       const n = cellsByKey.get(`${c}:${r}`);
       rects.push(
-        <rect key={`${c}-${r}`} x={leftPad + c * (cell + gp)} y={topPad + r * (cell + gp)} width={cell} height={cell} rx={4}
+        <rect key={`${c}-${r}`} x={leftPad + r * (cellW + gp)} y={topPad + c * (cellH + gp)} width={cellW} height={cellH} rx={3}
           fill={color(n)} stroke={n ? `color-mix(in oklab, ${T.brand} 32%, transparent)` : "none"} strokeWidth={n ? 0.8 : 0}>
           <title>{n ? `${n}` : "0"}</title>
         </rect>
@@ -358,12 +367,12 @@ export function CalendarHeat({
     </div>
   );
   return (
-    <div style={SPLIT}>
-      <div style={{ flex: "2 1 360px", minWidth: 300 }}>
-        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: "auto", display: "block" }} role="img" aria-label="Daily activity">
+    <div style={{ ...SPLIT, justifyContent: "center", gap: 40 }}>
+      <div style={{ flex: "0 1 auto", minWidth: 0 }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: 360, height: "auto", display: "block" }} role="img" aria-label="Daily activity">
           {monthMarks}
           {dayLabels.map((d, r) => d ? (
-            <text key={r} x={leftPad - 6} y={topPad + r * (cell + gp) + cell - 4} textAnchor="end" fontSize={scaledFont(9, k)} fontWeight="700" fill={T.ink3}>{d}</text>
+            <text key={r} x={leftPad + r * (cellW + gp) + cellW / 2} y={topPad - 6} textAnchor="middle" fontSize={scaledFont(9, k)} fontWeight="700" fill={T.ink3}>{d}</text>
           ) : null)}
           {rects}
         </svg>
@@ -375,7 +384,7 @@ export function CalendarHeat({
           <span>more</span>
         </div>
       </div>
-      <div style={{ ...PANELCOL, gap: 13 }}>
+      <div style={{ ...PANELCOL, flex: "0 1 240px", gap: 13 }}>
         <div style={{ paddingBottom: 4, borderBottom: `1px solid ${T.line}` }}>
           <div className="mono" style={{ fontSize: 30, fontWeight: 800, color: T.ink, fontFamily: "var(--font-mono, monospace)", lineHeight: 1 }}>{totalN}</div>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: T.ink3, textTransform: "uppercase", letterSpacing: ".06em", marginTop: 3 }}>total in range</div>

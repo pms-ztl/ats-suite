@@ -88,9 +88,9 @@ function inflowBySourceWeekly(
 
 const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen", ASSESSMENT: "Assessment",
-  INTERVIEW: "Interview", FINAL_REVIEW: "Final review", OFFER: "Offer", HIRED: "Hired",
+  INTERVIEW: "Interview", TECHNICAL_ROUND: "Technical round", HR_ROUND: "HR round", FINAL_REVIEW: "Final review", OFFER: "Offer", HIRED: "Hired",
 };
-const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED"];
+const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED"];
 // Hex (not CSS vars) so the recharts FunnelViz fills render outside the Aurora token scope.
 const FUNNEL_COLORS = [CHART_COLORS.brand, CHART_COLORS.brand, CHART_COLORS.info, CHART_COLORS.info, CHART_COLORS.violet, CHART_COLORS.ai, CHART_COLORS.ai, CHART_COLORS.ok];
 
@@ -111,7 +111,7 @@ export function AnalyticsLive() {
     const ia = STAGE_ORDER.indexOf(a.stage), ib = STAGE_ORDER.indexOf(b.stage);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
-  const funnelStages: FunnelStage[] = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage, n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
+  const funnelStages: FunnelStage[] = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage.replace(/_/g, " "), n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
   const applied = stages.find((s) => s.stage === "APPLIED")?.count ?? stages[0]?.count ?? 0;
   const hired = stages.find((s) => s.stage === "HIRED")?.count ?? 0;
   const conv = applied > 0 ? +((hired / applied) * 100).toFixed(1) : 0;

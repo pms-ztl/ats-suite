@@ -204,7 +204,9 @@ const CATALOG: Record<WidgetType, CatalogEntry> = {
     component: KpiScorecardWidget,
     bodyLoader: () => import("@/components/dashboard/widgets/kpi-scorecard-body"),
     defaultConfig: { maxTiles: 4 },
-    defaultSize: { w: 6, h: 4, minW: 3, minH: 3 },
+    // A KPI scorecard is a single tile row (~one ROW_HEIGHT of content + header),
+    // so h:2 fits it snugly. h:4 left ~280px of dead space inside the card.
+    defaultSize: { w: 6, h: 2, minW: 3, minH: 2 },
     roles: TENANT_ROLES,
     requiredModule: "core-hiring",
   },

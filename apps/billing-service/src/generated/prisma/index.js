@@ -264,7 +264,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\CDC\\ATS\\apps\\billing-service\\src\\generated\\prisma",
+      "value": "/Users/sanjayn/ats-suite/ats-suite/apps/billing-service/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -273,17 +273,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\CDC\\ATS\\apps\\billing-service\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/sanjayn/ats-suite/ats-suite/apps/billing-service/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.19.3",
@@ -311,8 +310,8 @@ const fs = require('fs')
 config.dirname = __dirname
 if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
   const alternativePaths = [
-    "apps/billing-service/src/generated/prisma",
-    "billing-service/src/generated/prisma",
+    "src/generated/prisma",
+    "generated/prisma",
   ]
   
   const alternativePath = alternativePaths.find((altPath) => {
@@ -341,8 +340,8 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
-path.join(__dirname, "query_engine-windows.dll.node");
-path.join(process.cwd(), "apps/billing-service/src/generated/prisma/query_engine-windows.dll.node")
+path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
+path.join(process.cwd(), "src/generated/prisma/libquery_engine-darwin-arm64.dylib.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "apps/billing-service/src/generated/prisma/schema.prisma")
+path.join(process.cwd(), "src/generated/prisma/schema.prisma")

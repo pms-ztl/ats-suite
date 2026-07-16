@@ -176,9 +176,15 @@ export default function ChatPage() {
             </div>
           </>
         ) : (
-          <div style={{ margin: "auto", textAlign: "center", color: "var(--c-ink-3)" }}>
-            <div style={{ fontSize: "var(--fs-xl)", fontWeight: 700, color: "var(--c-ink-2)", marginBottom: 6 }}>Your team chat</div>
-            <div style={{ fontSize: "var(--fs-sm)" }}>Select a conversation, or start a new one with the + button.</div>
+          <div style={{ margin: "auto", textAlign: "center", color: "var(--c-ink-3)", padding: 24, maxWidth: 360, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 76, height: 76, borderRadius: 99, background: "var(--c-brand-tint)", color: "var(--c-brand)", display: "grid", placeItems: "center" }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: "var(--fs-xl)", fontWeight: 700, color: "var(--c-ink-2)", marginBottom: 6 }}>Your team chat</div>
+              <div style={{ fontSize: "var(--fs-sm)", lineHeight: 1.55 }}>Select a conversation on the left, or start a new one to message anyone on your team.</div>
+            </div>
+            <button onClick={() => setShowNew(true)} style={{ padding: "10px 18px", borderRadius: "var(--r-lg)", border: "none", background: "var(--c-brand)", color: "var(--c-on-brand)", fontWeight: 700, fontSize: "var(--fs-sm)", cursor: "pointer", fontFamily: "var(--font-sans)" }}>+ New message</button>
           </div>
         )}
       </div>

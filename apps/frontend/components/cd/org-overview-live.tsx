@@ -20,10 +20,10 @@ import type { OrgOverviewData, TimelineItem, PendingItem, OrgHeroKpi } from "./t
 
 const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen",
-  ASSESSMENT: "Assessment", INTERVIEW: "Interview", FINAL_REVIEW: "Final review",
+  ASSESSMENT: "Assessment", INTERVIEW: "Interview", TECHNICAL_ROUND: "Technical round", HR_ROUND: "HR round", FINAL_REVIEW: "Final review",
   OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected", WITHDRAWN: "Withdrawn",
 };
-const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED"];
+const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED"];
 // CD tokens (full colors under .cd-scope), not the app's bare-channel --c-* tokens.
 const FUNNEL_COLORS = ["var(--brand)", "var(--brand)", "var(--info)", "var(--info)", "var(--ai-2)", "var(--ai)", "var(--ai)", "var(--ok)"];
 const GROUP_COLORS = ["var(--brand)", "var(--ai)", "var(--info)", "var(--warn)", "var(--ok)", "var(--ink-3)"];
@@ -68,7 +68,7 @@ export function OrgOverviewLive() {
     const ia = STAGE_ORDER.indexOf(a.stage), ib = STAGE_ORDER.indexOf(b.stage);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
-  const funnelStages = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage, n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
+  const funnelStages = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage.replace(/_/g, " "), n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
   const applied = stages.find((s) => s.stage === "APPLIED")?.count ?? stages[0]?.count ?? 0;
   const hired = stages.find((s) => s.stage === "HIRED")?.count ?? stages[stages.length - 1]?.count ?? 0;
   const overallConv = applied > 0 ? +((hired / applied) * 100).toFixed(1) : 0;

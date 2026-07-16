@@ -133,8 +133,16 @@ export function SchedulingLive() {
         <p className="mt-1 text-ink-2">Book a real interview against a requisition&apos;s configured loop. AI slot proposals switch on once a Google or Outlook calendar is connected.</p>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "clamp(12px, 2vw, 24px)", alignItems: "stretch" }}>
-        <Reveal i={1} style={{ height: "100%" }}><SectionCard title="Book an interview" icon="calendar" style={{ height: "100%" }}>
+      {/* Two balanced columns, each sizing to its own content (alignItems:start —
+          "stretch" used to force the short booking form to match the ~830px charts
+          column, leaving a large void under the Book button).
+            LEFT : Book an interview + Next up   (act, then see what's booked)
+            RIGHT: This week's load + On the radar + the AI-proposals note
+          Splitting this way keeps the two columns close in height so the page reads
+          as one composition rather than one tall column beside a stub. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "clamp(12px, 2vw, 24px)", alignItems: "start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Reveal i={1}><SectionCard title="Book an interview" icon="calendar">
           {loading && <div className="grid gap-2"><Skeleton className="h-10 rounded-[11px]" /><Skeleton className="h-10 rounded-[11px]" /><Skeleton className="h-10 rounded-[11px]" /></div>}
           {!loading && (cands.error || reqs.error) && <ErrorState title="Could not load scheduling data" body="Candidates or requisitions did not respond." code="GET /api/candidates · /api/requisitions" onRetry={() => { cands.reload(); reqs.reload(); }} />}
           {!loading && !cands.error && !reqs.error && (
@@ -184,6 +192,31 @@ export function SchedulingLive() {
           )}
         </SectionCard></Reveal>
 
+          {/* "Next up" lives in the LEFT column, under the booking form. The form is
+              short (~260px) while the charts column runs ~830px; with the form alone
+              on the left the page read as badly lopsided. Pairing the form with the
+              upcoming list balances the two columns AND is the better grouping —
+              you book an interview, then immediately see what's already booked. */}
+          <Reveal i={4}><SectionCard title="Next up" icon="clock">
+            {interviews.loading && <div className="grid gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
+            {interviews.data && upcoming.length === 0 && <EmptyState title="Nothing scheduled" body="Booked interviews appear here in start-time order." />}
+            {interviews.data && upcoming.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {upcoming.map((iv) => (
+                  <a key={iv.id} href="/interviews" style={{ display: "flex", gap: 10, alignItems: "center", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", textDecoration: "none", color: "inherit" }}>
+                    <span style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center", background: "var(--c-ai-tint)", color: "var(--c-ai)", flexShrink: 0 }}><Icon name="calendar" size={14} /></span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{candById.get(iv.candidateId) ?? "Candidate"}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{iv.round} · {iv.durationMins}m</div>
+                    </div>
+                    <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-2)", whiteSpace: "nowrap" }}>{whenLabel(iv.startsAt)}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </SectionCard></Reveal>
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Reveal i={2}><SectionCard title="This week's load" icon="chart"
             headRight={weekTotal ? <Pill tone="var(--c-ink-2)" bg="var(--c-surface-2)">{weekTotal} scheduled</Pill> : undefined}>
@@ -221,25 +254,6 @@ export function SchedulingLive() {
                 height={300}
                 emptyLabel="No interviews on the 7-day radar yet."
               />
-            )}
-          </SectionCard></Reveal>
-
-          <Reveal i={4}><SectionCard title="Next up" icon="clock">
-            {interviews.loading && <div className="grid gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-[11px]" />)}</div>}
-            {interviews.data && upcoming.length === 0 && <EmptyState title="Nothing scheduled" body="Booked interviews appear here in start-time order." />}
-            {interviews.data && upcoming.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {upcoming.map((iv) => (
-                  <a key={iv.id} href="/interviews" style={{ display: "flex", gap: 10, alignItems: "center", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", textDecoration: "none", color: "inherit" }}>
-                    <span style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center", background: "var(--c-ai-tint)", color: "var(--c-ai)", flexShrink: 0 }}><Icon name="calendar" size={14} /></span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{candById.get(iv.candidateId) ?? "Candidate"}</div>
-                      <div style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{iv.round} · {iv.durationMins}m</div>
-                    </div>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-2)", whiteSpace: "nowrap" }}>{whenLabel(iv.startsAt)}</span>
-                  </a>
-                ))}
-              </div>
             )}
           </SectionCard></Reveal>
 

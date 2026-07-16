@@ -239,7 +239,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/user/ats-suite/apps/interview-service/src/generated/prisma",
+      "value": "/Users/sanjayn/ats-suite/ats-suite/apps/interview-service/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -248,12 +248,12 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "debian-openssl-3.0.x",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/user/ats-suite/apps/interview-service/prisma/schema.prisma",
+    "sourceFilePath": "/Users/sanjayn/ats-suite/ats-suite/apps/interview-service/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

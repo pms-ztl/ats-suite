@@ -32,10 +32,10 @@ async function rawList(path: string): Promise<any[]> {
 
 const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen",
-  ASSESSMENT: "Assessment", INTERVIEW: "Interview", FINAL_REVIEW: "Final review",
+  ASSESSMENT: "Assessment", INTERVIEW: "Interview", TECHNICAL_ROUND: "Technical round", HR_ROUND: "HR round", FINAL_REVIEW: "Final review",
   OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected", WITHDRAWN: "Withdrawn",
 };
-const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED"];
+const STAGE_ORDER: ApplicationStage[] = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED"];
 const FUNNEL_COLORS = ["var(--c-brand)", "var(--c-brand)", "var(--c-info)", "var(--c-info)", "var(--c-ai-2)", "var(--c-ai)", "var(--c-ai)", "var(--c-ok)"];
 const GROUP_COLORS = ["var(--c-brand)", "var(--c-ai)", "var(--c-info)", "var(--c-warn)", "var(--c-ok)", "var(--c-ink-3)"];
 const AGENTS = ["candidate-screener", "bias-auditor", "jd-author", "copilot"];
@@ -76,7 +76,7 @@ export function OrgOverview() {
     const ia = STAGE_ORDER.indexOf(a.stage), ib = STAGE_ORDER.indexOf(b.stage);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
-  const funnelStages = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage, n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
+  const funnelStages = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage.replace(/_/g, " "), n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
   const applied = stages.find((s) => s.stage === "APPLIED")?.count ?? stages[0]?.count ?? 0;
   const hired = stages.find((s) => s.stage === "HIRED")?.count ?? stages[stages.length - 1]?.count ?? 0;
   const overallConv = applied > 0 ? +((hired / applied) * 100).toFixed(1) : 0;

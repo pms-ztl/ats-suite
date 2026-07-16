@@ -117,6 +117,10 @@ export interface PlanUsage {
   label: string;          // e.g. "Resumes this month"
   used: number;
   limit: number;
+  /** True when the plan has no cap (e.g. Enterprise seats). When set, the footer
+   *  renders "used / ∞" with no progress bar and no upgrade CTA — a meter and an
+   *  "Upgrade plan" prompt are meaningless with nothing to fill or upgrade past. */
+  unlimited?: boolean;
 }
 
 export interface Notif {

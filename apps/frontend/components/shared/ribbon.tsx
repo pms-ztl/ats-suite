@@ -66,7 +66,9 @@ export function FlowRibbon({
       </div>
     );
   }
-  const W = 1000, H = height, padX = 46, midY = Math.round(H * 0.47), maxHalf = Math.round(H * 0.3), minHalf = 4;
+  // Wider left/right padding when many stages are packed in, so the angled
+  // end-anchored labels (dense branch below) don't run off the card edges.
+  const W = 1000, H = height, padX = points.length > 8 ? 72 : 46, midY = Math.round(H * 0.47), maxHalf = Math.round(H * 0.3), minHalf = 4;
   const maxN = Math.max(...points.map((s) => s.n), 1);
   const step = points.length > 1 ? (W - padX * 2) / (points.length - 1) : 0;
   const pts = points.map((s, i) => ({
@@ -97,6 +99,22 @@ export function FlowRibbon({
   const fmt = valueLabel || ((n: number) => String(n));
   // With many points (e.g. weekly series), thin out the share row to avoid clutter.
   const dense = pts.length > 8;
+  // Wrap multi-word stage labels onto <=2 lines so wide labels ("PHONE SCREEN",
+  // "TECHNICAL ROUND") don't collide with their neighbours when many stages are
+  // packed horizontally. Single-word / numeric labels are unaffected.
+  const labelLines = (label: string): string[] => {
+    const words = String(label ?? "").split(/\s+/).filter(Boolean);
+    if (words.length <= 1) return words.length ? words : [""];
+    return [words[0], words.slice(1).join(" ")];
+  };
+  const maxLabelLines = Math.max(1, ...pts.map((p) => labelLines(p.label).length));
+  // Dense charts (many stages) get a smaller rendered floor + no letter-spacing so
+  // long single-word labels ("ASSESSMENT", "INTERVIEW") shrink to fit their column
+  // instead of growing (via the min-px floor) and colliding on narrow containers.
+  const labelFont = scaledFont(dense ? 9 : 10.5, k, dense ? 8.5 : 11);
+  const labelLineH = labelFont + 2;
+  const labelTopY = midY + maxHalf + 30;
+  const subY = labelTopY + (maxLabelLines - 1) * labelLineH + labelLineH + 2;
   return (
     <div style={{ width: "100%" }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -126,11 +144,29 @@ export function FlowRibbon({
             <circle cx={p.x} cy={midY} r="4" fill={T.surface} stroke={T.ai} strokeWidth="2" />
             <text x={p.x} y={midY - p.half - 20} textAnchor="middle" fontSize={scaledFont(dense ? 14 : 17, k, 13)} fontWeight="800"
               fill={T.ink} fontFamily="var(--font-mono, monospace)">{fmt(p.n)}</text>
-            <text x={p.x} y={midY + maxHalf + 30} textAnchor="middle" fontSize={scaledFont(dense ? 9.5 : 10.5, k)} fontWeight="700"
-              fill={T.ink2} style={{ textTransform: "uppercase", letterSpacing: ".05em" } as any}>{p.label}</text>
-            {(p.sub || (showShare && total > 0)) && (
-              <text x={p.x} y={midY + maxHalf + 44} textAnchor="middle" fontSize={scaledFont(10, k)}
-                fill={T.ink3} fontFamily="var(--font-mono, monospace)">{p.sub ?? `${Math.round((p.n / total) * 100)}%`}</text>
+            {dense ? (
+              /* Many stages: angle the stage name so long labels never collide with
+                 their neighbours. The per-stage count is already shown above the
+                 ribbon, so we fold the share % into the angled label (or its sub)
+                 rather than adding a second cramped row. */
+              <text x={p.x} y={labelTopY - 4} textAnchor="end" fontSize={labelFont} fontWeight="700"
+                fill={T.ink2} transform={`rotate(-30 ${p.x} ${labelTopY - 4})`}
+                style={{ textTransform: "uppercase", letterSpacing: "0" } as any}>
+                {p.label}{(p.sub || (showShare && total > 0)) ? `  ${p.sub ?? `${Math.round((p.n / total) * 100)}%`}` : ""}
+              </text>
+            ) : (
+              <>
+                <text x={p.x} y={labelTopY} textAnchor="middle" fontSize={labelFont} fontWeight="700"
+                  fill={T.ink2} style={{ textTransform: "uppercase", letterSpacing: ".05em" } as any}>
+                  {labelLines(p.label).map((ln, li) => (
+                    <tspan key={li} x={p.x} dy={li === 0 ? 0 : labelLineH}>{ln}</tspan>
+                  ))}
+                </text>
+                {(p.sub || (showShare && total > 0)) && (
+                  <text x={p.x} y={subY} textAnchor="middle" fontSize={scaledFont(10, k)}
+                    fill={T.ink3} fontFamily="var(--font-mono, monospace)">{p.sub ?? `${Math.round((p.n / total) * 100)}%`}</text>
+                )}
+              </>
             )}
           </g>
         ))}
@@ -179,7 +215,10 @@ export function ArcMeter({
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   if (value == null || !isFinite(value) || max <= 0) return <EmptyNote label={emptyLabel} height={height} />;
   const pct = Math.max(0, Math.min(1, value / max));
-  const W = 400, H = 250, cx = 200, cy = 196, r = 142, width = 21;
+  // H sized to fully contain the 240° arc: its endpoints land at cy + r·sin(30°)
+  // and the outer ticks a little below that. cy raised so the arc sits with even
+  // top/bottom padding — previously H=250 clipped and the arc spilled past the card.
+  const W = 400, H = 262, cx = 200, cy = 168, r = 142, width = 21;
   const a0 = 210, a1 = -30; // 240-degree sweep
   const rad = (a: number) => (a * Math.PI) / 180;
   const pt = (a: number, rr = r) => [cx + rr * Math.cos(rad(a)), cy - rr * Math.sin(rad(a))];
@@ -721,11 +760,14 @@ export function TideBands({
    REAL used/total ratio. Gentle wave + rising bubbles behind reduced-motion.
    For capacity: seats, plan limits, budgets. ---- */
 export function FillGauge({
-  used, total, label, sub, height = 230,
+  used, total, label, sub, height = 230, maxWidth = 240,
   emptyLabel = "The gauge appears once a limit is known.",
 }: {
   used: number | null | undefined; total: number | null | undefined;
-  label?: string; sub?: string; height?: number; emptyLabel?: string;
+  label?: string; sub?: string; height?: number;
+  /** cap the rendered gauge width (px); the tube scales to it. Lower = more compact. */
+  maxWidth?: number;
+  emptyLabel?: string;
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   if (used == null || total == null || !isFinite(used) || !isFinite(total) || total <= 0) {
@@ -739,7 +781,7 @@ export function FillGauge({
   const c1 = hot ? "var(--c-danger, var(--danger, #e05252))" : T.info;
   const wave = `M ${tx - 20} ${levelY} q 14 -7 28 0 t 28 0 t 28 0 t 28 0 t 28 0 L ${tx + tw + 20} ${ty + th + 4} L ${tx - 20} ${ty + th + 4} Z`;
   return (
-    <div style={{ width: "100%", maxWidth: 240, margin: "0 auto", textAlign: "center" }}>
+    <div style={{ width: "100%", maxWidth, margin: "0 auto", textAlign: "center" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @media (prefers-reduced-motion: no-preference){
           .wave-${uid}{animation:wave-sway-${uid} 3.4s ease-in-out infinite alternate;}

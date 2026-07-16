@@ -139,15 +139,33 @@ function buildDocument(placements: Placement[]): DashboardDocument {
  * provider, per-agent spend, human oversight, and the candidates table. Every
  * tile binds a real tenant-scoped source; an empty source self-empties. */
 const ADMIN_PLACEMENTS: Placement[] = [
-  { instanceId: "admin_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 4 } },
-  { instanceId: "admin_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "FlowRibbon", lg: { x: 0, y: 4, w: 8, h: 5 } },
-  { instanceId: "admin_verdicts", type: "breakdown", title: "Screening verdict mix", viz: "WaffleField", lg: { x: 8, y: 4, w: 4, h: 5 } },
-  { instanceId: "admin_spend", type: "time_series", title: "AI spend by provider", viz: "StreamGraph", lg: { x: 0, y: 9, w: 6, h: 5 } },
-  { instanceId: "admin_oversight", type: "oversight_gauge", title: "Human oversight", viz: "BeadStream", lg: { x: 6, y: 9, w: 6, h: 5 } },
-  { instanceId: "admin_agents", type: "billing_spend", title: "Per-agent runs & spend", viz: "BarsChart", lg: { x: 0, y: 14, w: 6, h: 5 } },
-  { instanceId: "admin_pending", type: "list_feed", title: "Pending actions", config: { limit: 10 }, lg: { x: 6, y: 14, w: 6, h: 5 } },
-  { instanceId: "admin_candidates", type: "table", title: "Recent candidates", config: { pageSize: 8 }, lg: { x: 0, y: 19, w: 12, h: 6 } },
+  { instanceId: "admin_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 2 } },
+  // Right-sized to content: FlowRibbon is aspect-locked (~200px tall at this width),
+  // so at h:5 (544px) it left a large void below the ribbon. h:3 fits the ribbon +
+  // stage labels tightly. Verdict waffle matched to h:3 to keep the band level.
+  { instanceId: "admin_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "FlowRibbon", lg: { x: 0, y: 2, w: 8, h: 3 } },
+  { instanceId: "admin_verdicts", type: "breakdown", title: "Screening verdict mix", viz: "WaffleField", lg: { x: 8, y: 2, w: 4, h: 3 } },
+  // Right-sized to their REAL content instead of inherited defaults:
+  //   agents     — only 3 agent types exist (resume-parser / resume-verifier /
+  //                candidate-screener); h:2 hugs the 3 bars (the body now fills the
+  //                cell, so no void below them).
+  //   candidates — 8 rows + header ≈ 400px, so h:4.
+  // Placed side by side so the board closes on a tight 3-band composition.
+  { instanceId: "admin_agents", type: "billing_spend", title: "Per-agent runs & spend", viz: "BarsChart", lg: { x: 0, y: 5, w: 6, h: 2 } },
+  { instanceId: "admin_candidates", type: "table", title: "Recent candidates", config: { pageSize: 8 }, lg: { x: 6, y: 5, w: 6, h: 4 } },
 ];
+// REMOVED from the default board (they are not deleted — a user can re-add any of
+// them from Customize -> Add widget):
+//   admin_spend      "AI spend by provider"  — every AgentRun is a $0 stub until a
+//                                              real LLM key is configured, so the
+//                                              stream graph has nothing to plot.
+//   admin_oversight  "Human oversight"       — reads the HITL checkpoint queue.
+//   admin_pending    "Pending actions"       — same queue.
+// Checkpoints are only raised by the agentic screener calling flag_for_human_review
+// or by an OA grade needing review; with stubbed agents neither fires, so all three
+// render a permanently-empty state and left large dead gaps on the board. Dropping
+// them from the DEFAULT is the honest fix — the alternative would be fabricating
+// spend/checkpoints, which this codebase explicitly refuses to do.
 
 /* ----------------------------- RECRUITER -----------------------------
  * Mirrors the recruiter home (RecruiterDash): KPIs, the pipeline flow, latest
@@ -157,12 +175,12 @@ const ADMIN_PLACEMENTS: Placement[] = [
  * default leans on the real funnel + screening + candidate sources instead of
  * fabricating those. */
 const RECRUITER_PLACEMENTS: Placement[] = [
-  { instanceId: "rec_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 4 } },
-  { instanceId: "rec_flow", type: "pipeline_funnel", title: "Pipeline flow", viz: "FlowRibbon", lg: { x: 0, y: 4, w: 8, h: 5 } },
-  { instanceId: "rec_apps", type: "breakdown", title: "Latest screening verdicts", viz: "WaffleField", lg: { x: 8, y: 4, w: 4, h: 5 } },
-  { instanceId: "rec_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "StepCascade", lg: { x: 0, y: 9, w: 8, h: 5 } },
-  { instanceId: "rec_queue", type: "list_feed", title: "Review queue", config: { limit: 10 }, lg: { x: 8, y: 9, w: 4, h: 5 } },
-  { instanceId: "rec_candidates", type: "table", title: "Candidates", config: { pageSize: 8 }, lg: { x: 0, y: 14, w: 12, h: 6 } },
+  { instanceId: "rec_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 2 } },
+  { instanceId: "rec_flow", type: "pipeline_funnel", title: "Pipeline flow", viz: "FlowRibbon", lg: { x: 0, y: 2, w: 8, h: 5 } },
+  { instanceId: "rec_apps", type: "breakdown", title: "Latest screening verdicts", viz: "WaffleField", lg: { x: 8, y: 2, w: 4, h: 5 } },
+  { instanceId: "rec_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "StepCascade", lg: { x: 0, y: 7, w: 8, h: 5 } },
+  { instanceId: "rec_queue", type: "list_feed", title: "Review queue", config: { limit: 10 }, lg: { x: 8, y: 7, w: 4, h: 5 } },
+  { instanceId: "rec_candidates", type: "table", title: "Candidates", config: { pageSize: 8 }, lg: { x: 0, y: 12, w: 12, h: 6 } },
 ];
 
 /* ----------------------------- HIRING MANAGER -----------------------------
@@ -170,12 +188,12 @@ const RECRUITER_PLACEMENTS: Placement[] = [
  * (review queue), the screening quality donut, offer pipeline, and human
  * oversight. All bound to real screening / review / offer / oversight sources. */
 const HM_PLACEMENTS: Placement[] = [
-  { instanceId: "hm_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 4 } },
-  { instanceId: "hm_verdicts", type: "breakdown", title: "Screening verdicts", viz: "WaffleField", lg: { x: 0, y: 4, w: 8, h: 5 } },
-  { instanceId: "hm_decisions", type: "list_feed", title: "Decisions awaiting you", config: { limit: 8 }, lg: { x: 8, y: 4, w: 4, h: 5 } },
-  { instanceId: "hm_quality", type: "breakdown", title: "AI screening quality", viz: "DonutChart", lg: { x: 0, y: 9, w: 6, h: 5 } },
-  { instanceId: "hm_oversight", type: "oversight_gauge", title: "Human oversight", viz: "BeadStream", lg: { x: 6, y: 9, w: 6, h: 5 } },
-  { instanceId: "hm_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "StepCascade", lg: { x: 0, y: 14, w: 12, h: 5 } },
+  { instanceId: "hm_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 2 } },
+  { instanceId: "hm_verdicts", type: "breakdown", title: "Screening verdicts", viz: "WaffleField", lg: { x: 0, y: 2, w: 8, h: 5 } },
+  { instanceId: "hm_decisions", type: "list_feed", title: "Decisions awaiting you", config: { limit: 8 }, lg: { x: 8, y: 2, w: 4, h: 5 } },
+  { instanceId: "hm_quality", type: "breakdown", title: "AI screening quality", viz: "DonutChart", lg: { x: 0, y: 7, w: 6, h: 5 } },
+  { instanceId: "hm_oversight", type: "oversight_gauge", title: "Human oversight", viz: "BeadStream", lg: { x: 6, y: 7, w: 6, h: 5 } },
+  { instanceId: "hm_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "StepCascade", lg: { x: 0, y: 12, w: 12, h: 5 } },
 ];
 
 /* ----------------------------- INTERVIEWER -----------------------------
@@ -186,9 +204,9 @@ const HM_PLACEMENTS: Placement[] = [
  * shared, real-data widgets the interviewer can act on (KPIs + review queue +
  * funnel) rather than inventing interview tiles. */
 const INTERVIEWER_PLACEMENTS: Placement[] = [
-  { instanceId: "int_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 4 } },
-  { instanceId: "int_queue", type: "list_feed", title: "Review queue", config: { limit: 10 }, lg: { x: 0, y: 4, w: 6, h: 6 } },
-  { instanceId: "int_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "FlowRibbon", lg: { x: 6, y: 4, w: 6, h: 6 } },
+  { instanceId: "int_kpis", type: "kpi_scorecard", title: "Overview", config: { maxTiles: 4 }, lg: { x: 0, y: 0, w: 12, h: 2 } },
+  { instanceId: "int_queue", type: "list_feed", title: "Review queue", config: { limit: 10 }, lg: { x: 0, y: 2, w: 6, h: 6 } },
+  { instanceId: "int_funnel", type: "pipeline_funnel", title: "Hiring funnel", viz: "FlowRibbon", lg: { x: 6, y: 2, w: 6, h: 6 } },
 ];
 
 /** The system-default documents, keyed by role. These are the hardcoded WF5

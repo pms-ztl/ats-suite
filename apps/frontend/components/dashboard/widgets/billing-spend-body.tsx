@@ -11,7 +11,7 @@ import type { WidgetBodyProps } from "../WidgetFrame";
 import type { BillingUsage } from "@/lib/api";
 import { PetalBloom } from "@/components/shared/ribbon";
 import { BarsChart, CHART_COLORS } from "@/components/shared/charts";
-import { BodyNote, BodyFill } from "./widget-body";
+import { BodyNote } from "./widget-body";
 
 const EMPTY = "Agent activity appears once AI runs are metered.";
 
@@ -40,9 +40,11 @@ export default function BillingSpendBody({ state, viz }: WidgetBodyProps<Billing
     );
   }
 
-  // Default: sortable per-agent metered spend (BarsChart, verbatim).
+  // Default: sortable per-agent metered spend (BarsChart, verbatim). Fills the cell
+  // height (with a small floor) instead of a fixed 160px block, so the bars use the
+  // whole pane and a taller cell never leaves a void beneath them.
   return (
-    <BodyFill height={Math.max(160, rows.length * 38)}>
+    <div style={{ width: "100%", height: "100%", minHeight: Math.max(140, rows.length * 40) }}>
       <BarsChart
         data={rows}
         categoryKey="agent"
@@ -50,6 +52,6 @@ export default function BillingSpendBody({ state, viz }: WidgetBodyProps<Billing
         series={[{ key: "cost", name: "Spend", color: CHART_COLORS.ai }]}
         valueFormatter={(v) => `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}
       />
-    </BodyFill>
+    </div>
   );
 }
