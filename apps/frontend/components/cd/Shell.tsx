@@ -210,7 +210,9 @@ function UserMenu({ user, role, roles, onSetRole, onNavigate, onShortcuts, onSig
             </div>
           </div>
           <div style={{ borderTop: "1px solid var(--line)", marginTop: 6, paddingTop: 5 }}>
-            {([["Account settings", "settings", () => { onNavigate?.("settings"); setOpen(false); }], ["Keyboard shortcuts", "command", () => { onShortcuts?.(); setOpen(false); }]] as [string, IconName, () => void][]).map(([t, i, fn]) => (
+            {/* "Keyboard shortcuts" removed from this menu — shortcuts now surface as
+                hover tooltips on the buttons that own them (see nav item `title`s). */}
+            {([["Account settings", "settings", () => { onNavigate?.("settings"); setOpen(false); }]] as [string, IconName, () => void][]).map(([t, i, fn]) => (
               <button key={t} onClick={fn} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: "var(--r)", border: "none", background: "transparent", cursor: "pointer", color: "var(--ink-2)", fontSize: "var(--fs-sm)", fontWeight: 500 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                 <Icon name={i} size={16} /> {t}
@@ -452,14 +454,23 @@ export function Shell(props: ShellProps) {
       {!(collapsed && !mobile) && planUsage && (
         <div style={{ padding: 12, borderTop: "1px solid var(--line)" }}>
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "11px 12px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: planUsage.unlimited ? 0 : 7 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-2)" }}>{planUsage.label}</span>
-              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{planUsage.used.toLocaleString()} / {planUsage.limit.toLocaleString()}</span>
+              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{planUsage.used.toLocaleString()} / {planUsage.unlimited ? "∞" : planUsage.limit.toLocaleString()}</span>
             </div>
-            <div style={{ height: 6, borderRadius: 99, background: "var(--surface-3)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: Math.min(100, (planUsage.used / planUsage.limit) * 100) + "%", borderRadius: 99, background: "linear-gradient(90deg, var(--brand-2), var(--brand))" }} />
-            </div>
-            <button onClick={() => go("billing")} style={{ marginTop: 9, width: "100%", padding: "6px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontWeight: 600, fontSize: 11.5, cursor: "pointer", fontFamily: "var(--font-sans)" }}>Upgrade plan</button>
+            {planUsage.unlimited ? (
+              // Unlimited plan (e.g. Enterprise seats): no cap to meter and nothing
+              // to upgrade past, so show a plain caption instead of a full bar +
+              // "Upgrade plan" CTA (which would falsely read as a maxed-out seat cap).
+              <div style={{ fontSize: 10.5, color: "var(--ink-3)" }}>Unlimited seats included</div>
+            ) : (
+              <>
+                <div style={{ height: 6, borderRadius: 99, background: "var(--surface-3)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: Math.min(100, (planUsage.used / planUsage.limit) * 100) + "%", borderRadius: 99, background: "linear-gradient(90deg, var(--brand-2), var(--brand))" }} />
+                </div>
+                <button onClick={() => go("billing")} style={{ marginTop: 9, width: "100%", padding: "6px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontWeight: 600, fontSize: 11.5, cursor: "pointer", fontFamily: "var(--font-sans)" }}>Upgrade plan</button>
+              </>
+            )}
           </div>
         </div>
       )}

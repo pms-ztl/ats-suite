@@ -154,7 +154,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\CDC\\ATS\\apps\\compliance-service\\src\\generated\\prisma",
+      "value": "/Users/sanjayn/ats-suite/ats-suite/apps/compliance-service/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -163,12 +163,12 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\CDC\\ATS\\apps\\compliance-service\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/sanjayn/ats-suite/ats-suite/apps/compliance-service/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

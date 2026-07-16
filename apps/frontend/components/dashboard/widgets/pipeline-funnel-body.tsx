@@ -16,11 +16,11 @@ type FunnelRow = { stage: ApplicationStage; count: number };
 
 const STAGE_LABEL: Partial<Record<ApplicationStage, string>> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen",
-  ASSESSMENT: "Assessment", INTERVIEW: "Interview", FINAL_REVIEW: "Final review",
+  ASSESSMENT: "Assessment", INTERVIEW: "Interview", TECHNICAL_ROUND: "Technical round", HR_ROUND: "HR round", FINAL_REVIEW: "Final review",
   OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected", WITHDRAWN: "Withdrawn",
 };
 const STAGE_ORDER: ApplicationStage[] = [
-  "APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "FINAL_REVIEW", "OFFER", "HIRED",
+  "APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED",
 ];
 
 const EMPTY = "The flow appears once candidates enter the pipeline.";
@@ -37,7 +37,7 @@ export default function PipelineFunnelBody({ state, viz }: WidgetBodyProps<Funne
       const ia = STAGE_ORDER.indexOf(a.stage), ib = STAGE_ORDER.indexOf(b.stage);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     })
-    .map((s) => ({ label: STAGE_LABEL[s.stage] ?? s.stage, n: s.count }));
+    .map((s) => ({ label: STAGE_LABEL[s.stage] ?? s.stage.replace(/_/g, " "), n: s.count }));
 
   return (
     <BodyFill height={240}>

@@ -24,6 +24,11 @@ function SevDot({ sev }: { sev: AnalyticsInsight["sev"] }) {
 export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflowWeekly, inflowBySource, onExport }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; conversionPct?: number | null; inflowWeekly?: { label: string; n: number }[]; inflowBySource?: { buckets: { label: string }[]; series: { label: string; values: number[] }[] }; onExport?: () => void }) {
   const a = data;
 
+  // Only surface KPIs we actually have a value for. A metric with no data (e.g.
+  // Compliance score / Diversity index / Cost per hire before those pipelines run)
+  // is hidden rather than shown as an em-dash placeholder tile.
+  const shownKpis = a.kpis.filter((k) => k.hasValue ?? (k.value !== null && k.value !== undefined));
+
   // Real time-to-hire trend (avg line + dashed median + dashed p90) from the
   // /analytics/time-to-hire endpoint. Empty array -> honest EmptyChart below.
   const tthData = (tthRows ?? []).map((r) => ({
@@ -109,10 +114,12 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
         </Reveal>
         <div style={{ height: 16 }} />
 
-        {/* KPIs */}
-        <div className="cd-grid-kpi an-kpis" style={{ marginBottom: 18 }}>
-          {a.kpis.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}
-        </div>
+        {/* KPIs — populated metrics only (see shownKpis) */}
+        {shownKpis.length > 0 && (
+          <div className="cd-grid-kpi an-kpis" style={{ marginBottom: 18 }}>
+            {shownKpis.map((k, i) => <KPICard key={k.id} k={k} i={i} />)}
+          </div>
+        )}
 
         {/* AI insights */}
         <Reveal i={4}>
@@ -145,47 +152,46 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
                 : <EmptyChart label="Pipeline funnel - no candidates in pipeline yet" />}
             </div>
           </SectionCard></Reveal>
+          {diversityBars.length > 0 && (
           <Reveal i={6}><SectionCard title="Adverse impact (four-fifths)" icon="grid" action="EEOC report">
             <div style={{ height: 260 }}>
-              {diversityBars.length
-                ? <BarsChart
-                    data={diversityBars}
-                    categoryKey="group"
-                    series={[{ key: "ratio", name: "Impact ratio" }]}
-                    valueFormatter={(v) => Number(v).toFixed(2)}
-                    threshold={{ value: 0.8, label: "0.80 four-fifths" }}
-                    colorFn={(row) => (row.flagged ? CHART_COLORS.danger : CHART_COLORS.brand)}
-                  />
-                : <EmptyChart label="Diversity - no demographic data yet" />}
+              <BarsChart
+                data={diversityBars}
+                categoryKey="group"
+                series={[{ key: "ratio", name: "Impact ratio" }]}
+                valueFormatter={(v) => Number(v).toFixed(2)}
+                threshold={{ value: 0.8, label: "0.80 four-fifths" }}
+                colorFn={(row) => (row.flagged ? CHART_COLORS.danger : CHART_COLORS.brand)}
+              />
             </div>
           </SectionCard></Reveal>
+          )}
         </div>
 
-        {/* time-to-hire trend + by dept */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" }} className="an-row">
-          <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={hasTth && a.tthDelta ? <Pill mono tone="var(--ink-2)" bg="var(--surface-2)">{a.tthDelta}</Pill> : undefined}>
-            {/* Real monthly avg-days-to-hire with dashed median + p90 bands from
-                /api/analytics/time-to-hire. Empty -> honest EmptyChart. */}
-            <div style={{ height: 200 }}>
-              {hasTth
-                ? <TrendChart
-                    data={tthData}
-                    xKey="label"
-                    series={[
-                      { key: "avgDays", name: "Avg days", color: CHART_COLORS.brand, type: "area" },
-                      { key: "medianDays", name: "Median", color: CHART_COLORS.info, type: "line", dashed: true },
-                      { key: "p90Days", name: "P90", color: CHART_COLORS.violet, type: "line", dashed: true },
-                    ]}
-                    valueFormatter={(v) => `${Math.round(Number(v))}d`}
-                  />
-                : <EmptyChart label="Time-to-hire trend - no hires yet" />}
-            </div>
-          </SectionCard></Reveal>
-          <Reveal i={8}><SectionCard title="By department" icon="briefcase">
-            {/* No per-department time-to-hire series from the gateway today. */}
-            <div style={{ height: 200 }}><EmptyChart label="By department - awaiting analytics aggregator" /></div>
-          </SectionCard></Reveal>
-        </div>
+        {/* Time-to-hire trend — rendered ONLY when there are real hires to chart, so
+            an empty demo shows nothing here instead of a placeholder void. The old
+            "By department" card was removed outright: the gateway exposes no
+            per-department series, so it could never be more than an empty box. */}
+        {hasTth && (
+          <div style={{ marginBottom: 16 }} className="an-row">
+            <Reveal i={7}><SectionCard title="Time-to-hire trend" icon="chart" headRight={a.tthDelta ? <Pill mono tone="var(--ink-2)" bg="var(--surface-2)">{a.tthDelta}</Pill> : undefined}>
+              {/* Real monthly avg-days-to-hire with dashed median + p90 bands from
+                  /api/analytics/time-to-hire. */}
+              <div style={{ height: 200 }}>
+                <TrendChart
+                  data={tthData}
+                  xKey="label"
+                  series={[
+                    { key: "avgDays", name: "Avg days", color: CHART_COLORS.brand, type: "area" },
+                    { key: "medianDays", name: "Median", color: CHART_COLORS.info, type: "line", dashed: true },
+                    { key: "p90Days", name: "P90", color: CHART_COLORS.violet, type: "line", dashed: true },
+                  ]}
+                  valueFormatter={(v) => `${Math.round(Number(v))}d`}
+                />
+              </div>
+            </SectionCard></Reveal>
+          </div>
+        )}
 
         {/* source effectiveness - real hires per source (falls back to real application
             volume, labelled, until the first hires land) */}

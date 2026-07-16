@@ -40,10 +40,13 @@ function IVList({ data, weekAhead, densityDays, onOpen, onSchedule }: { data: In
         {all.length > 0 && (
           <SectionCard title="Interview flow" icon="calendar" style={{ marginBottom: 16 }}
             headRight={<Pill icon="calendar" tone="var(--ink-2)" bg="var(--surface-2)" style={{ textTransform: "none" }}>ribbon thickness = live interviews by state</Pill>}>
+            {/* Keep all three lifecycle stages (Scheduled → Feedback due → Completed)
+                even at 0 so the ribbon reads as a flow spanning the card. Filtering to
+                n>0 collapsed it to a single floating number whenever every interview sat
+                in one state (e.g. all upcoming), leaving the card mostly empty. */}
             <FlowRibbon
               points={([["scheduled", "Scheduled"], ["awaiting", "Feedback due"], ["completed", "Completed"]] as const)
-                .map(([k, label]) => ({ label, n: all.filter((r) => r.status === k).length }))
-                .filter((p) => p.n > 0)}
+                .map(([k, label]) => ({ label, n: all.filter((r) => r.status === k).length }))}
               showShare
               height={190}
               emptyLabel="The flow appears once interviews are on the calendar." />

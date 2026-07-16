@@ -210,7 +210,28 @@ export function BarsChart({
   const fillFor = (s: { key: string; color?: string }, i: number) =>
     s.color === "transparent" ? "transparent" : `url(#bar-${uid}-${i})`;
   return (
-    <AutoSize height={height}>{(__w, __h) => (
+    <AutoSize height={height}>{(__w, __h) => {
+      // Horizontal bars put the CATEGORY on the Y axis. The tick font scales with
+      // the card width (fontFor -> ~w/60), but this gutter used to be pinned at
+      // 120px — so on a wide card the text outgrew the gutter and was clipped
+      // mid-word ("Company website" -> "pany website"). Derive the gutter from the
+      // longest real label at the ACTUAL font size, clamped so it can never eat
+      // more than ~38% of the card. Anything still too long is ellipsised below
+      // rather than sliced.
+      const catFont = fontFor(__w);
+      const longestLabel = horizontal
+        ? data.reduce((m: number, row: any) => Math.max(m, String(row?.[categoryKey] ?? "").length), 0)
+        : 0;
+      // ~0.58em mean glyph advance for the UI sans stack, + tick padding.
+      const catAxisWidth = horizontal
+        ? Math.max(80, Math.min(Math.ceil(longestLabel * catFont * 0.58) + 16, Math.round(__w * 0.38)))
+        : 44;
+      const catCharBudget = Math.max(6, Math.floor((catAxisWidth - 16) / (catFont * 0.58)));
+      const catTick = (v: any) => {
+        const s = String(v ?? "");
+        return s.length > catCharBudget ? `${s.slice(0, catCharBudget - 1)}…` : s;
+      };
+      return (
       <ResponsiveContainer width={__w} height={__h}>
       <BarChart data={data} layout={horizontal ? "vertical" : "horizontal"} margin={{ top: 8, right: 16, bottom: 0, left: horizontal ? 8 : -8 }}>
         <defs>
@@ -226,7 +247,8 @@ export function BarsChart({
         {horizontal ? (
           <>
             <XAxis type="number" {...axisPropsFor(__w)} />
-            <YAxis type="category" dataKey={categoryKey} {...axisPropsFor(__w)} width={120} />
+            <YAxis type="category" dataKey={categoryKey} {...axisPropsFor(__w)}
+              width={catAxisWidth} tickFormatter={catTick} />
           </>
         ) : (
           <>
@@ -249,7 +271,8 @@ export function BarsChart({
         ))}
       </BarChart>
     </ResponsiveContainer>
-      )}</AutoSize>
+      );
+    }}</AutoSize>
   );
 }
 

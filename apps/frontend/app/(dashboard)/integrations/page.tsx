@@ -74,15 +74,26 @@ function Connector({
         onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--e2)"; e.currentTarget.style.borderColor = `color-mix(in oklab, ${ac} 35%, var(--c-line))`; }}
         onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--e1)"; e.currentTarget.style.borderColor = "var(--c-line)"; }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* alignItems:flex-start keeps the pill pinned to the top when a long name
+            wraps, instead of drifting to the vertical centre. */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <span style={{ width: 40, height: 40, borderRadius: 11, display: "grid", placeItems: "center", flexShrink: 0, background: connected ? ab : "var(--c-surface-2)", color: connected ? ac : "var(--c-ink-2)" }}>
             <Icon name={it.icon} size={20} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: "var(--fs-md)" }}>{it.n}</div>
+            {/* The name is allowed to wrap. The overlap this used to cause was NOT a
+                wrapping problem — it was the pill having no flex-shrink guard, so it
+                got squeezed under the text. Pinning the pill (below) fixes it without
+                truncating names like "Google Calendar" down to "Goo…". */}
+            <div style={{ fontWeight: 700, fontSize: "var(--fs-md)", lineHeight: 1.25 }}>{it.n}</div>
             <div style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{it.cat}</div>
           </div>
-          {connected && <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">Connected</Pill>}
+          {/* flexShrink:0 so the pill is never squeezed into the title. */}
+          {connected && (
+            <span style={{ flexShrink: 0 }}>
+              <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">Connected</Pill>
+            </span>
+          )}
         </div>
         <p style={{ margin: 0, flex: 1, fontSize: "var(--fs-sm)", color: "var(--c-ink-2)", lineHeight: 1.5 }}>{it.desc}</p>
         <div style={{ display: "flex", gap: 8 }}>
@@ -148,7 +159,10 @@ export default function IntegrationsPage() {
             {connected.length === 0 ? (
               <EmptyState title="Nothing connected yet" body="Connect a tool below and it will appear here, ready to manage." />
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+              // Connected cards carry an extra ~90px "Connected" pill in the header,
+              // so they need more room than the Available cards (230px) — at 230 the
+              // name column collapsed and "Google Calendar" broke apart.
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 12 }}>
                 {connected.map((it, i) => (
                   <Connector key={it.id} it={it} connected busy={busy === it.id} onConnect={() => connect(it)} onManage={() => manage(it)} i={i} />
                 ))}
@@ -165,28 +179,38 @@ export default function IntegrationsPage() {
             </SectionCard>
           </Reveal>
         ) : (
-          categories.map((cat, ci) => {
-            const items = available.filter((it) => it.cat === cat);
-            const [ac, ab] = CAT_ACCENT[cat] ?? ["var(--c-ink-2)", "var(--c-surface-2)"];
-            return (
-              <div key={cat} style={{ marginBottom: ci === categories.length - 1 ? 0 : 22 }}>
-                <Reveal i={2 + ci}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 9, margin: "0 2px 12px" }}>
-                    <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", background: ab, color: ac }}>
-                      <Icon name={items[0]?.icon ?? "plug"} size={15} />
-                    </span>
-                    <h2 style={{ margin: 0, fontSize: "var(--fs-md)", fontWeight: 700, letterSpacing: "-0.01em" }}>{cat}</h2>
-                    <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{items.length} available</span>
+          // Each category used to render as its OWN full-width row. With the real
+          // catalog most categories hold a single integration, so that produced a
+          // stack of near-empty rows with a large void to the right of each lone
+          // card. Flow the CATEGORY SECTIONS themselves into a responsive grid:
+          // sparse categories now sit side by side and fill the width, while a
+          // category that genuinely has many tools still gets its own column and
+          // wraps internally. `alignItems: start` keeps unequal columns top-aligned
+          // instead of stretching.
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 22, alignItems: "start" }}>
+            {categories.map((cat, ci) => {
+              const items = available.filter((it) => it.cat === cat);
+              const [ac, ab] = CAT_ACCENT[cat] ?? ["var(--c-ink-2)", "var(--c-surface-2)"];
+              return (
+                <div key={cat}>
+                  <Reveal i={2 + ci}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9, margin: "0 2px 12px" }}>
+                      <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", background: ab, color: ac }}>
+                        <Icon name={items[0]?.icon ?? "plug"} size={15} />
+                      </span>
+                      <h2 style={{ margin: 0, fontSize: "var(--fs-md)", fontWeight: 700, letterSpacing: "-0.01em" }}>{cat}</h2>
+                      <span style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{items.length} available</span>
+                    </div>
+                  </Reveal>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 12 }}>
+                    {items.map((it, i) => (
+                      <Connector key={it.id} it={it} connected={false} busy={busy === it.id} onConnect={() => connect(it)} onManage={() => manage(it)} i={i} />
+                    ))}
                   </div>
-                </Reveal>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-                  {items.map((it, i) => (
-                    <Connector key={it.id} it={it} connected={false} busy={busy === it.id} onConnect={() => connect(it)} onManage={() => manage(it)} i={i} />
-                  ))}
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

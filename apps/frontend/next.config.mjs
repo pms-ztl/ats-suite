@@ -14,6 +14,13 @@ const nextConfig = {
   // uses — image stays small.
   output: "standalone",
 
+  // Separate build dir override (env-driven). Lets a second `next dev` (e.g. a
+  // preview/verification instance) run alongside the primary dev server without
+  // both writing to the same .next — sharing it corrupts chunks and yields
+  // "Loading chunk … failed" at runtime. Defaults to ".next" so nothing changes
+  // for normal single-server dev/prod.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+
   // Demo build: don't block on lint/type errors we haven't yet cleaned up.
   // The codebase still has a few conditional-hook warnings (notifications,
   // settings/features, settings/team) and unused-import warnings that

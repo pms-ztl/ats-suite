@@ -13,7 +13,7 @@ import { BodyNote } from "./widget-body";
 
 const STAGE_LABEL: Record<string, string> = {
   APPLIED: "Applied", SCREENED: "Screened", PHONE_SCREEN: "Phone screen",
-  ASSESSMENT: "Assessment", INTERVIEW: "Interview", FINAL_REVIEW: "Final review",
+  ASSESSMENT: "Assessment", INTERVIEW: "Interview", TECHNICAL_ROUND: "Technical round", HR_ROUND: "HR round", FINAL_REVIEW: "Final review",
   OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected", WITHDRAWN: "Withdrawn",
 };
 
@@ -40,7 +40,7 @@ export default function TableBody({ state, config }: WidgetBodyProps<Candidate[]
         {rows.map((c) => (
           <tr key={c.id} style={{ borderTop: "1px solid var(--line)" }}>
             <td style={{ padding: "7px 8px", fontWeight: 600 }}>{c.name}</td>
-            <td style={{ padding: "7px 8px", color: "var(--ink-2)" }}>{STAGE_LABEL[c.stage] ?? c.stage}</td>
+            <td style={{ padding: "7px 8px", color: "var(--ink-2)" }}>{STAGE_LABEL[c.stage] ?? c.stage.replace(/_/g, " ")}</td>
             <td style={{ padding: "7px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
               {/* Honest: a candidate with no advisory score shows a dash, not a 0. */}
               {typeof c.aiScore === "number" ? c.aiScore : "—"}

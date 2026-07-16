@@ -5,9 +5,12 @@
 /* ---------- Enums (exact values) ---------- */
 export type ScreeningResult = "PASS" | "REVIEW" | "FAIL";
 
+// Mirrors ApplicationStageSchema in @cdc-ats/contracts. TECHNICAL_ROUND / HR_ROUND
+// were missing here, so funnels typed against this union fell back to the raw enum
+// string ("HR_ROUND") and sorted those stages to the end of the pipeline.
 export type ApplicationStage =
   | "APPLIED" | "SCREENED" | "PHONE_SCREEN" | "ASSESSMENT" | "INTERVIEW"
-  | "FINAL_REVIEW" | "OFFER" | "HIRED" | "REJECTED" | "WITHDRAWN";
+  | "TECHNICAL_ROUND" | "HR_ROUND" | "FINAL_REVIEW" | "OFFER" | "HIRED" | "REJECTED" | "WITHDRAWN";
 
 export type InterviewStatus =
   | "SCHEDULED" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW" | "RESCHEDULED";

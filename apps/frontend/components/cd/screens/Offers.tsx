@@ -128,9 +128,12 @@ function OffersList({ data, lifecycle, onOpen, onCreate }: { data: OffersData; l
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", gap: 11, alignItems: "center" }}>
                     <span className="mono" style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center", fontWeight: 700, fontSize: 11, background: "linear-gradient(135deg, var(--brand), var(--ai))", color: "var(--on-brand)" }}>{o.ini}</span>
-                    <div><div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{o.name}</div><div style={{ fontSize: 11, color: "var(--ink-3)" }}>{o.role}</div></div>
+                    <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{o.name}</div>
                   </div>
-                  <span className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{o.reqId}</span>
+                  {/* Requisition column shows the resolved role/title (not the raw
+                      requisition UUID, which is meaningless to a viewer). Falls back to
+                      a dash if the title map has not resolved the id. */}
+                  <span style={{ fontSize: 13, color: "var(--ink-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.role || "—"}</span>
                   <span className="mono tnum" style={{ fontSize: 13.5, fontWeight: 600 }}>{money(o.base)}</span>
                   <span style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 11, fontWeight: 700, color: st.tone, background: st.bg, padding: "3px 10px", borderRadius: 99, justifySelf: "start" }}><Icon name={st.icon} size={11} />{toTitleCase(st.label)}</span>
                   <span className="mono" style={{ fontSize: 11.5, color: "var(--ink-3)", textAlign: "right" }}>{o.expires}</span>

@@ -19,16 +19,34 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <h1 className="mb-3 text-lg font-extrabold tracking-tight">Settings</h1>
         {NAV.map((g) => (
           <div key={g.group} className="mb-4">
-            <div className="mb-1 px-2 text-xs font-bold uppercase tracking-wide text-ink-3">{g.group}</div>
-            {g.items.map(([href, label]) => (
-              <Link key={href} href={href}
-                aria-current={path === href ? "page" : undefined}
-                className={"block rounded px-3 py-2 text-sm font-medium " + (path === href ? "bg-brand-tint text-brand-ink" : "text-ink-2 hover:bg-surface-2")}>
-                {label}
-              </Link>
-            ))}
+            <div className="mb-1 px-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--ink-3)" }}>{g.group}</div>
+            {g.items.map(([href, label]) => {
+              const active = path === href;
+              return (
+                <Link key={href} href={href} aria-current={active ? "page" : undefined}
+                  data-active={active || undefined}
+                  className="settings-nav-link block rounded px-3 py-2 text-sm font-medium"
+                  // Inline style + CSS vars, matching the idiom used across the rest
+                  // of the app. The previous Tailwind colour utilities (bg-brand-tint /
+                  // text-brand-ink) were emitted correctly but live in @layer utilities,
+                  // which loses the cascade to this app's unlayered globals.css — so the
+                  // active item rendered with a transparent background and inherited
+                  // text colour, i.e. no visible highlight at all.
+                  style={{
+                    background: active ? "var(--brand-tint)" : "transparent",
+                    color: active ? "var(--brand-ink)" : "var(--ink-2)",
+                    boxShadow: active ? "inset 2px 0 0 var(--brand)" : undefined,
+                  }}>
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         ))}
+        {/* Hover affordance for the non-active items (inline styles can't express :hover). */}
+        <style jsx global>{`
+          .settings-nav-link:not([data-active]):hover { background: var(--surface-2) !important; }
+        `}</style>
       </nav>
       <section>{children}</section>
     </div>
