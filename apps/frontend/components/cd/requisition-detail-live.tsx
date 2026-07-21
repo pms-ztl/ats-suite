@@ -176,6 +176,7 @@ export function RequisitionDetailLive() {
         }
         onBack={() => router.push("/requisitions")}
         onCandidates={() => router.push("/candidates")}
+        onEdit={() => router.push(`/requisitions/${id}/edit`)}
         onPost={onPost}
       />
       {publish.open && (

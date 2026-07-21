@@ -296,12 +296,12 @@ function CommandPalette({ open, commands, onClose, onNav }: { open: boolean; com
 }
 
 /* ---------------- Safety banner (super admin) ---------------- */
-function SafetyBanner({ ws }: { ws: Workspace }) {
+function SafetyBanner({ ws, onExit }: { ws: Workspace; onExit?: () => void }) {
   return (
     <div style={{ height: 34, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--on-ai)", background: "linear-gradient(90deg, var(--ai-2), var(--ai))", zIndex: 40, position: "relative" }}>
       <span style={{ display: "inline-flex", gap: 7, alignItems: "center" }}><Icon name="bolt" size={14} /> Platform Operator, cross-tenant access. You are viewing <b>{ws.name}</b>.</span>
       <span className="mono" style={{ opacity: 0.9, display: "inline-flex", gap: 5, alignItems: "center" }}><Icon name="clock" size={13} /> impersonation expires 58:24</span>
-      <button style={{ fontSize: 11.5, fontWeight: 700, color: "var(--on-ai)", background: "color-mix(in oklab, black 16%, transparent)", border: "1px solid color-mix(in oklab, white 30%, transparent)", borderRadius: 99, padding: "2px 10px", cursor: "pointer" }}>Exit session</button>
+      <button onClick={onExit} style={{ fontSize: 11.5, fontWeight: 700, color: "var(--on-ai)", background: "color-mix(in oklab, black 16%, transparent)", border: "1px solid color-mix(in oklab, white 30%, transparent)", borderRadius: 99, padding: "2px 10px", cursor: "pointer" }}>Exit session</button>
     </div>
   );
 }
@@ -327,6 +327,7 @@ export interface ShellProps {
   onThemeChange?: (t: string) => void;
   onSignOut?: () => void;
   onShortcuts?: () => void;
+  onExitImpersonation?: () => void;        // ends a super-admin impersonation session
   // D6 / WF-D — optional render-prop seams the adapter (cd-shell) fills with the
   // WF-B <Slot/> at the closed-union shell positions. ADDITIVE + FAIL-SOFT: when a
   // prop is undefined nothing is rendered, so the chrome is byte-identical to today.
@@ -344,7 +345,7 @@ export function Shell(props: ShellProps) {
   const {
     user, workspace, workspaces = [workspace], roles, nav, commands = [], notifications = [],
     planUsage, breadcrumbTitle, hasUnreadNotifs = true, logoLight, logoDark,
-    onNavigate, onSwitchWorkspace, onSetRole, onThemeChange, onSignOut, onShortcuts,
+    onNavigate, onSwitchWorkspace, onSetRole, onThemeChange, onSignOut, onShortcuts, onExitImpersonation,
     headerRight, navFooter, children,
   } = props;
 
@@ -480,7 +481,7 @@ export function Shell(props: ShellProps) {
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {role === "super_admin" && <SafetyBanner ws={workspace} />}
+      {role === "super_admin" && <SafetyBanner ws={workspace} onExit={onExitImpersonation} />}
       <div style={{ flex: 1, display: "flex", minHeight: 0, position: "relative" }}>
         {mobile && drawer && <div onClick={() => setDrawer(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "color-mix(in oklab, var(--bg-deep) 55%, transparent)", backdropFilter: "blur(3px)", animation: "pop .15s var(--ease-out)" }} />}
         {sidebar}

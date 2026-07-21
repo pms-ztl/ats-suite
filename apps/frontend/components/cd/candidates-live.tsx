@@ -11,11 +11,36 @@ import { FlowRibbon, HiveCells, PetalBloom } from "@/components/shared/ribbon";
 import { useData } from "@/lib/use-data";
 import { useUiConfig } from "@/lib/config/ui-config-provider";
 import { listCandidates, listRequisitions, listScreening, prettySource } from "@/lib/api";
+import { exportToCSV } from "@/lib/export";
 import type { Candidate as GwCandidate, Requisition, ScreeningResult, ScreeningVerdict } from "@/lib/types";
 import type { Candidate, CandStage, SavedView } from "./types";
 import { initials, reqTitleMap } from "./wire-helpers";
+import { toast } from "sonner";
 
 const KIND: Record<ScreeningResult, "pass" | "review" | "fail"> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
+
+// Bulk actions hit the real application-stage API: resolve each candidate's active
+// application, then advance it one stage or reject it. NOTE: lib/api.ts's own
+// advanceStage() calls PATCH /candidates/:id/stage, which is a DEAD route (no
+// backend handler exists anywhere) — do not reuse it. This mirrors the proven,
+// verified-working path already used for the Screening bulk bar.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const STAGE_ORDER = ["APPLIED", "SCREENED", "PHONE_SCREEN", "ASSESSMENT", "INTERVIEW", "TECHNICAL_ROUND", "HR_ROUND", "FINAL_REVIEW", "OFFER", "HIRED"];
+const TERMINAL = new Set(["REJECTED", "WITHDRAWN", "HIRED"]);
+function authHeaders(): Record<string, string> {
+  let t: string | null = null;
+  try { t = window.sessionStorage.getItem("ats-access-token"); } catch { /* storage blocked */ }
+  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+}
+async function resolveActiveApp(candidateId: string, reqId: string): Promise<{ id: string; stage: string } | null> {
+  const res = await fetch(`${API_BASE}/candidates/${candidateId}/applications`, { credentials: "include", headers: authHeaders() });
+  if (!res.ok) return null;
+  const j = await res.json().catch(() => null);
+  const apps: { id: string; stage: string; requisitionId?: string }[] = j?.data ?? j ?? [];
+  return apps.find((a) => a.requisitionId === reqId && !TERMINAL.has(a.stage))
+    ?? apps.find((a) => !TERMINAL.has(a.stage))
+    ?? null;
+}
 
 // Module H — canonical pipeline columns (ids must match ApplicationStage values).
 // A tenant's authored workflow (UiConfig.workflow.stages) overrides labels/colors
@@ -100,6 +125,39 @@ export function CandidatesLive() {
   // "Pipeline hive": one hex per real candidate, grouped by stage in pipeline
   // order, colored with the same stage colors the board columns use.
   const hiveGroups = STAGES.map((s, i) => ({ label: s.label, n: stageCounts[i].n, color: s.color }));
+  const candById = new Map(candidates.map((c) => [c.id, c]));
+
+  async function bulkAct(ids: string[], mode: "advance" | "reject") {
+    let ok = 0, failed = 0;
+    for (const id of ids) {
+      const row = candById.get(id);
+      if (!row) { failed++; continue; }
+      const app = await resolveActiveApp(id, row.reqId);
+      if (!app) { failed++; continue; }
+      const body = mode === "reject"
+        ? { stage: "REJECTED", status: "REJECTED" }
+        : { stage: (() => { const i = STAGE_ORDER.indexOf(app.stage); return i >= 0 && i < STAGE_ORDER.length - 1 ? STAGE_ORDER[i + 1] : app.stage; })() };
+      const res = await fetch(`${API_BASE}/applications/${app.id}`, { method: "PATCH", credentials: "include", headers: authHeaders(), body: JSON.stringify(body) });
+      if (res.ok) ok++; else failed++;
+    }
+    const verb = mode === "reject" ? "Rejected" : "Advanced";
+    if (ok) toast.success(`${verb} ${ok} candidate${ok === 1 ? "" : "s"}${failed ? ` · ${failed} could not be updated` : ""}.`);
+    else toast.error(`Couldn't ${mode} ${failed || "the"} candidate${failed === 1 ? "" : "s"}.`);
+    cands.reload();
+    screen.reload();
+  }
+
+  const onBulkAdvance = (ids: string[]) => { void bulkAct(ids, "advance"); };
+  const onBulkReject = (ids: string[]) => { void bulkAct(ids, "reject"); };
+  const onBulkExport = (ids: string[]) => {
+    const rows = ids.map((id) => candById.get(id)).filter(Boolean) as Candidate[];
+    exportToCSV(
+      `candidates-selected-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Name", "Role", "Location", "Stage", "Source", "AI score", "Days in stage"],
+      rows.map((r) => [r.name, r.role, r.loc ?? "", r.stage, r.source, r.st === "pending" ? "" : r.score, r.days]),
+    );
+  };
+
   const savedViews: SavedView[] = [
     { id: "all", label: "All candidates", icon: "users", count: candidates.length },
     { id: "review", label: "Needs review", icon: "eye", ai: true, count: candidates.filter((c) => c.st === "review").length, predicate: (c) => c.st === "review" },
@@ -115,6 +173,9 @@ export function CandidatesLive() {
           onOpenProfile={(id) => router.push(`/candidates/${id}`)}
           onImport={() => router.push("/candidates/import")}
           onSource={() => router.push("/sourcing")}
+          onBulkAdvance={onBulkAdvance}
+          onBulkReject={onBulkReject}
+          onBulkExport={onBulkExport}
           ribbonSlot={
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div className="viz-2up">

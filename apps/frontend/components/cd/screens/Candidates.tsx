@@ -12,18 +12,27 @@ import { CandBoard } from "./CandBoard";
 import { CandTable } from "./CandTable";
 import type { Candidate, CandStage, SavedView } from "../types";
 
-function BulkBar({ n, onClear }: { n: number; onClear: () => void }) {
+function BulkBar({ n, onClear, onAdvance, onReject, onExport }: { n: number; onClear: () => void; onAdvance?: () => void; onReject?: () => void; onExport?: () => void }) {
+  // "Schedule" and "Re-screen" stay unwired here: bulk-scheduling has no single
+  // sensible API call (scheduling is one candidate -> one interview -> a real
+  // date/time/interviewer flow), and bulk re-screen needs each candidate's resume
+  // text (only some candidates have one) worked out with the product owner first.
   return (
     <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 40, animation: "rise .25s var(--ease-out)" }}>
       <div className="glass" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px 9px 16px", borderRadius: "var(--r-pill)", boxShadow: "var(--e3)" }}>
         <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>{n} selected</span>
         <div style={{ width: 1, height: 22, background: "var(--line)" }} />
-        {([["check", "Advance"], ["calendar", "Schedule"], ["sparkles", "Re-screen"], ["arrowUpRight", "Export"]] as [IconName, string][]).map(([ic, l]) => (
-          <button key={l} style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "transparent", color: l === "Re-screen" ? "var(--ai-ink)" : "var(--ink-2)", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+        <button onClick={onAdvance} style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "transparent", color: "var(--ink-2)", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+          <Icon name="check" size={14} />Advance</button>
+        {([["calendar", "Schedule"], ["sparkles", "Re-screen"]] as [IconName, string][]).map(([ic, l]) => (
+          <button key={l} disabled title="Coming soon" style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "transparent", color: "var(--ink-3)", cursor: "not-allowed", fontSize: 12.5, fontWeight: 600, opacity: 0.5 }}>
             <Icon name={ic} size={14} />{l}</button>
         ))}
-        <button style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "var(--danger-tint)", color: "var(--danger)", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}><Icon name="x" size={14} />Reject</button>
+        <button onClick={onExport} style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "transparent", color: "var(--ink-2)", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+          <Icon name="arrowUpRight" size={14} />Export</button>
+        <button onClick={onReject} style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "6px 11px", borderRadius: "var(--r-pill)", border: "none", background: "var(--danger-tint)", color: "var(--danger)", cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}><Icon name="x" size={14} />Reject</button>
         <button onClick={onClear} style={{ width: 28, height: 28, borderRadius: 99, border: "none", background: "var(--surface-2)", color: "var(--ink-3)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="x" size={15} /></button>
       </div>
     </div>
@@ -37,13 +46,16 @@ export interface CandidatesData {
   sources: string[];                 // source filter options; first is the "All sources" default
 }
 
-export function Candidates({ data, onMove, onOpenProfile, onImport, onSource, ribbonSlot }: {
+export function Candidates({ data, onMove, onOpenProfile, onImport, onSource, ribbonSlot, onBulkAdvance, onBulkReject, onBulkExport }: {
   data: CandidatesData;
   onMove?: (id: string, stage: string) => void;   // persist a stage move (kanban drag)
   onOpenProfile?: (id: string) => void;            // navigate to /candidates/[id]
   onImport?: () => void;                           // navigate to /candidates/import
   onSource?: () => void;                           // navigate to /sourcing
   ribbonSlot?: React.ReactNode;                    // optional hero viz rendered above the board/table
+  onBulkAdvance?: (ids: string[]) => void;         // bulk-action bar: advance selected one stage
+  onBulkReject?: (ids: string[]) => void;          // bulk-action bar: reject selected
+  onBulkExport?: (ids: string[]) => void;          // bulk-action bar: export selected as CSV
 }) {
   const { candidates = [], stages = [], savedViews = [], sources = ["All sources"] } = data;
   const [cands, setCands] = useState<Candidate[]>(candidates);
@@ -64,7 +76,7 @@ export function Candidates({ data, onMove, onOpenProfile, onImport, onSource, ri
   const move = (id: string, stage: string) => { setCands((cs) => cs.map((c) => (c.id === id ? { ...c, stage, days: 0 } : c))); onMove?.(id, stage); };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, position: "relative", overflowY: "auto" }}>
       <div style={{ padding: "20px 28px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
           <div>
@@ -108,13 +120,29 @@ export function Candidates({ data, onMove, onOpenProfile, onImport, onSource, ri
 
       {ribbonSlot && <div style={{ padding: "0 28px 14px" }}>{ribbonSlot}</div>}
 
-      <div key={view} style={{ flex: 1, minHeight: 0, padding: view === "board" ? "0 28px 16px" : "0 28px 20px", animation: "fadein .25s var(--ease-out)" }}>
+      {/* minHeight is a real floor, not 0: the root above is now scrollable (see the
+          overflowY:"auto" a few lines up), but a big ribbonSlot (3 chart panels) can
+          still eat nearly all the fixed-height page on its own, leaving this flex:1
+          region almost no space to grow into — collapsing the board/table to a
+          barely-visible sliver no amount of scrolling would ever make usable. A
+          concrete floor guarantees the board/table always renders at a real,
+          workable height; the page grows taller and the new page-level scroll
+          reaches the rest. */}
+      <div key={view} style={{ flex: 1, minHeight: 420, padding: view === "board" ? "0 28px 16px" : "0 28px 20px", animation: "fadein .25s var(--ease-out)" }}>
         {view === "board"
           ? <CandBoard cands={filtered} stages={stages} onMove={move} onOpen={(id) => onOpenProfile?.(id)} blind={blind} />
           : <CandTable cands={filtered} stages={stages} sel={sel} setSel={setSel} onOpen={(id) => onOpenProfile?.(id)} blind={blind} dense={dense} />}
       </div>
 
-      {view === "table" && sel.size > 0 && <BulkBar n={sel.size} onClear={() => setSel(new Set())} />}
+      {view === "table" && sel.size > 0 && (
+        <BulkBar
+          n={sel.size}
+          onClear={() => setSel(new Set())}
+          onAdvance={() => { onBulkAdvance?.([...sel]); setSel(new Set()); }}
+          onReject={() => { onBulkReject?.([...sel]); setSel(new Set()); }}
+          onExport={() => onBulkExport?.([...sel])}
+        />
+      )}
     </div>
   );
 }

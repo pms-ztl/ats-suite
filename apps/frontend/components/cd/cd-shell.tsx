@@ -14,6 +14,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Shell } from "./Shell";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 import { useTenantBranding } from "@/hooks/use-tenant-branding";
 import { useModules } from "@/hooks/use-modules";
 import { useUiConfig } from "@/lib/config/ui-config-provider";
@@ -378,6 +379,30 @@ export function CdShell({ children }: { children: React.ReactNode }) {
     try { document.cookie = "ats-token=; Max-Age=0; path=/"; } catch { /* no cookie access */ }
     logout();
   };
+  // Ends a super-admin impersonation session. POST /super-admin/impersonate/stop
+  // signs a fresh super-admin JWT into the ats-token cookie (it no-ops gracefully
+  // if not actually impersonating); we drop the stale impersonation token from
+  // sessionStorage so getToken() falls back to that cookie, then hard-nav to /admin
+  // so the app reloads on the operator's own identity. Mirrors the flow in
+  // components/auth/impersonation-banner.tsx.
+  const onExitImpersonation = async () => {
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+    let token: string | null = null;
+    try { token = window.sessionStorage.getItem("ats-access-token"); } catch { /* storage blocked */ }
+    try {
+      const res = await fetch(`${API}/super-admin/impersonate/stop`, {
+        method: "POST",
+        credentials: "include",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      try { window.sessionStorage.removeItem("ats-access-token"); } catch { /* storage blocked */ }
+      toast.success("Returned to your platform operator account.");
+      window.location.href = "/admin";
+    } catch {
+      toast.error("Couldn't exit the session — try again.");
+    }
+  };
 
   // Full-height CD screens (own internal scroll, edge-to-edge) render full-bleed;
   // flow pages (dashboards + not-yet-swapped pages) keep the scroll + padding
@@ -485,6 +510,7 @@ export function CdShell({ children }: { children: React.ReactNode }) {
         onNavigate={onNavigate}
         onThemeChange={onThemeChange}
         onSignOut={onSignOut}
+        onExitImpersonation={onExitImpersonation}
         // D6 — WF-B slot seams at the closed shell positions. Each <Slot> resolves
         // its bindings (defaults + the tenant's resolved UiConfig, gated by the same
         // role/plan/module filter) and renders them lazily; with no bindings it is

@@ -112,7 +112,10 @@ export function AnalyticsLive() {
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
   const funnelStages: FunnelStage[] = stages.map((s, i) => ({ stage: STAGE_LABEL[s.stage] ?? s.stage.replace(/_/g, " "), n: s.count, color: FUNNEL_COLORS[i % FUNNEL_COLORS.length] }));
-  const applied = stages.find((s) => s.stage === "APPLIED")?.count ?? stages[0]?.count ?? 0;
+  // "Applied → hired" conversion is hires over TOTAL applications, not the count
+  // currently sitting in the APPLIED stage (which is ~0 once candidates advance).
+  const applied = (sourceStats.data ?? []).reduce((sum, x) => sum + (x.applied ?? 0), 0)
+    || (funnel.data ?? []).reduce((sum, s) => sum + (s.count ?? 0), 0);
   const hired = stages.find((s) => s.stage === "HIRED")?.count ?? 0;
   const conv = applied > 0 ? +((hired / applied) * 100).toFixed(1) : 0;
 

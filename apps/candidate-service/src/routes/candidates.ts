@@ -92,6 +92,14 @@ const CreateCandidateSchema = z.object({
 });
 
 // GET /internal/candidates
+//
+// Embeds each candidate's applications (most-recently-updated first) so callers
+// can read the candidate's CURRENT pipeline stage without a second round-trip.
+// The frontend's toCandidate() already expects this shape (it reads
+// c.applications?.[0]?.stage) — this was the missing half: without the include
+// every candidate here came back with no stage at all and fell back to the
+// hardcoded "APPLIED" default, so every list/funnel/board built on this endpoint
+// showed 100% Applied regardless of real progress.
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
@@ -99,6 +107,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       where: { tenantId },
       orderBy: { createdAt: "desc" },
       take: 100,
+      include: { applications: { orderBy: { updatedAt: "desc" } } },
     });
     // Strip role-restricted candidate fields server-side before responding.
     ok(res, candidates.map((c) => serializeCandidate(c, req)));
@@ -262,6 +271,26 @@ router.post("/upsert-from-application", async (req: Request, res: Response, next
   } catch (err) { next(err); }
 });
 
+// POST /internal/candidates/check-existing — resume-service's bulk archive
+// review screen uses this to flag detected emails that already belong to a
+// candidate in this tenant (duplicate detection for the ZIP import pipeline).
+// NOT requireRole-guarded: same reasoning as upsert-from-application above —
+// internal service-to-service call (resume-service -> candidate-service),
+// trusted via inter-service network policy, not user-facing.
+const CheckExistingSchema = z.object({ emails: z.array(z.string()) });
+router.post("/check-existing", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { emails } = CheckExistingSchema.parse(req.body);
+    const lowered = emails.map((e) => e.toLowerCase());
+    const existing = await prisma.candidate.findMany({
+      where: { tenantId, email: { in: lowered } },
+      select: { id: true, email: true },
+    });
+    ok(res, { existing: existing.map((c) => ({ email: c.email.toLowerCase(), candidateId: c.id })) });
+  } catch (err) { next(err); }
+});
+
 // GET /internal/candidates/:id
 router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -329,6 +358,88 @@ router.patch("/:id", requireRecruiterOrAdmin, async (req: Request, res: Response
     if (count === 0) throw Errors.notFound("Candidate");
     const updated = await prisma.candidate.findUnique({ where: { id } });
     ok(res, serializeCandidate(updated, req));
+  } catch (err) { next(err); }
+});
+
+// Notes on a candidate — team-only annotations, not visible to the candidate
+// themselves. The CandidateNote table has existed since the schema was authored;
+// this is the first route that actually reads/writes it (the profile page's note
+// composer previously only held typed notes in local React state, discarding them
+// on refresh — this makes them real).
+const requireNoteAccess = requireRole("ADMIN", "RECRUITER", "HR_MANAGER", "HIRING_MANAGER");
+const CreateNoteSchema = z.object({
+  content: z.string().trim().min(1).max(4000),
+  isPrivate: z.boolean().optional(),
+});
+
+function serializeNote(n: { id: string; authorUserId: string; content: string; isPrivate: boolean; createdAt: Date }, req: Request) {
+  // No cross-service user directory lookup here (candidate-service does not own
+  // identity data) — only the author's own request carries their email, so a
+  // note authored by anyone else surfaces no fabricated name, just the fact that
+  // it is a teammate's note. The frontend renders authorUserId === current user
+  // as "You"; everyone else reads as "Teammate".
+  const mine = n.authorUserId === getUserId(req);
+  return {
+    id: n.id, content: n.content, isPrivate: n.isPrivate, createdAt: n.createdAt,
+    authorUserId: n.authorUserId,
+    authorEmail: mine ? (req.user?.email ?? null) : null,
+    mine,
+  };
+}
+
+// GET /internal/candidates/:id/notes
+router.get("/:id/notes", requireNoteAccess, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const exists = await prisma.candidate.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!exists) throw Errors.notFound("Candidate");
+    const notes = await prisma.candidateNote.findMany({
+      where: { candidateId: id, tenantId },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+    ok(res, notes.map((n) => serializeNote(n, req)));
+  } catch (err) { next(err); }
+});
+
+// POST /internal/candidates/:id/notes
+router.post("/:id/notes", requireNoteAccess, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const body = CreateNoteSchema.parse(req.body);
+    const exists = await prisma.candidate.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!exists) throw Errors.notFound("Candidate");
+    const note = await prisma.candidateNote.create({
+      data: {
+        tenantId, candidateId: id,
+        authorUserId: getUserId(req),
+        content: body.content,
+        isPrivate: body.isPrivate ?? true,
+      },
+    });
+    created(res, serializeNote(note, req));
+  } catch (err) { next(err); }
+});
+
+// DELETE /internal/candidates/:id/notes/:noteId
+// Own-note delete (the everyday "undo what I just wrote" case) OR an ADMIN
+// override — nobody else can remove a teammate's note. requireNoteAccess only
+// gates WHO may touch notes at all; the ownership check below is what decides
+// WHICH notes a given caller may delete.
+router.delete("/:id/notes/:noteId", requireNoteAccess, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const noteId = req.params["noteId"] as string;
+    const note = await prisma.candidateNote.findFirst({ where: { id: noteId, candidateId: id, tenantId } });
+    if (!note) throw Errors.notFound("Note");
+    const isOwner = note.authorUserId === getUserId(req);
+    const isAdmin = req.user?.role === "ADMIN";
+    if (!isOwner && !isAdmin) throw Errors.forbidden("You can only delete your own notes");
+    await prisma.candidateNote.delete({ where: { id: noteId } });
+    ok(res, { deleted: true, id: noteId });
   } catch (err) { next(err); }
 });
 

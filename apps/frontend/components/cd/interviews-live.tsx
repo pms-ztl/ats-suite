@@ -8,6 +8,7 @@
 // refresh. (A candidate is not bound to a single requisition - the link is the
 // Application - so the requisition is chosen explicitly here.)
 import { useState, useEffect, type CSSProperties } from "react";
+import { useSearchParams } from "next/navigation";
 import { Interviews } from "./screens/Interviews";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
@@ -44,10 +45,18 @@ export function InterviewsLive() {
   const candById = new Map((cands.data ?? []).map((c) => [c.id, c]));
   const [scheduling, setScheduling] = useState(false);
 
-  const interviews: InterviewRow[] = (ivs.data ?? []).map((iv) => {
+  // Arriving from a candidate's profile ("All feedback") scopes the whole list
+  // (not just one auto-opened row, unlike screening's verdict panel — a candidate
+  // can have several rounds) to that candidate's interviews only. No param -> the
+  // normal, unfiltered /interviews page.
+  const filterCandidateId = useSearchParams().get("candidateId") ?? undefined;
+  const scopedIvs = filterCandidateId ? (ivs.data ?? []).filter((iv) => iv.candidateId === filterCandidateId) : (ivs.data ?? []);
+
+  const interviews: InterviewRow[] = scopedIvs.map((iv) => {
     const name = candById.get(iv.candidateId)?.name ?? iv.candidateId;
     return {
       id: iv.id, ini: initials(name), name, role: titles[iv.requisitionId] ?? "",
+      candidateId: iv.candidateId,
       reqId: iv.requisitionId, round: iv.round, type: "standard",
       when: whenLabel(iv.startsAt), dur: iv.durationMins, mode: MODE[iv.mode] ?? iv.mode,
       panel: iv.panel ?? [], status: STATUS[iv.status] ?? "scheduled",
@@ -60,7 +69,7 @@ export function InterviewsLive() {
   const today = new Date();
   const weekAhead = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-    const onDay = (ivs.data ?? []).filter((iv) => {
+    const onDay = scopedIvs.filter((iv) => {
       const d = new Date(iv.startsAt);
       return !isNaN(d.getTime()) && dayKey(d) === dayKey(day);
     });
@@ -78,7 +87,7 @@ export function InterviewsLive() {
   const isoDay = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const perDay = new Map<string, number>();
-  for (const iv of ivs.data ?? []) {
+  for (const iv of scopedIvs) {
     const d = new Date(iv.startsAt);
     if (isNaN(d.getTime())) continue;
     const key = isoDay(d);

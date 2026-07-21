@@ -8,6 +8,7 @@
 // fabricated AI slot scores: AI slot proposals require a connected calendar, and
 // the page says so honestly instead of faking them.
 import { useState, useEffect, type CSSProperties } from "react";
+import { useSearchParams } from "next/navigation";
 import { SectionCard, Pill, Reveal } from "@/components/aurora-kit";
 import { Btn } from "./aurora-ui";
 import { Icon } from "./icon";
@@ -41,8 +42,12 @@ export function SchedulingLive() {
   const reqs = useData<Requisition[]>(listRequisitions);
   const interviews = useData<Interview[]>(listInterviews);
 
-  const [candidateId, setCandidateId] = useState("");
-  const [requisitionId, setRequisitionId] = useState("");
+  // Arriving from a candidate's profile (its "Schedule" button) carries the
+  // candidate + their requisition as query params so the form opens pre-filled
+  // instead of making the recruiter re-pick someone they already had open.
+  const searchParams = useSearchParams();
+  const [candidateId, setCandidateId] = useState(() => searchParams.get("candidateId") ?? "");
+  const [requisitionId, setRequisitionId] = useState(() => searchParams.get("requisitionId") ?? "");
   const [rounds, setRounds] = useState<RoundLite[]>([]);
   const [roundId, setRoundId] = useState("");
   // Default the slot to the next weekday at 10:00 so booking is two picks + a click.

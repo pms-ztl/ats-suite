@@ -148,18 +148,24 @@ export function aggregatorRouter(logger: Logger): Router {
         role: req.user.role,
         email: req.user.email,
       };
-      // Candidate.source is captured but we don't yet have an aggregator
-      // endpoint. Return an empty-but-shaped payload.
-      const candList = await callService<any[]>("candidate", {
-        path: "/internal/candidates",
-        userHeaders,
-        timeoutMs: 3000,
-      }).catch(() => [] as any[]);
+      // Applications-per-source come from the candidate list (Candidate.source);
+      // hires-per-source come from the tenant's HIRED-stage applications joined
+      // back to their candidate's source.
+      const [candList, hiredApps] = await Promise.all([
+        callService<any[]>("candidate", { path: "/internal/candidates", userHeaders, timeoutMs: 3000 }).catch(() => [] as any[]),
+        callService<any[]>("candidate", { path: "/internal/applications?stage=HIRED", userHeaders, timeoutMs: 3000 }).catch(() => [] as any[]),
+      ]);
+      const sourceOf = new Map<string, string>();
       const bySource: Record<string, { applied: number; hired: number }> = {};
       for (const c of candList ?? []) {
         const s = c.source ?? "unknown";
+        sourceOf.set(c.id, s);
         if (!bySource[s]) bySource[s] = { applied: 0, hired: 0 };
         bySource[s].applied++;
+      }
+      for (const a of hiredApps ?? []) {
+        const s = sourceOf.get(a.candidateId);
+        if (s && bySource[s]) bySource[s].hired++;
       }
       ok(res, {
         sources: Object.entries(bySource).map(([source, counts]) => ({

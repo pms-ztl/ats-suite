@@ -288,6 +288,7 @@ export interface TraceStep {
 }
 export interface ScreeningRow {
   id: string;
+  candidateId: string;           // real candidate id — `id` above may be a verdict id instead, so this is the reliable key for "find this exact person's row" (e.g. arriving from their profile's "Open full verdict")
   ini: string;                   // candidate initials for the avatar
   name: string;
   role: string;
@@ -377,7 +378,7 @@ export interface ParsedResume {
   skills: { n: string; c: number }[];            // skill name + confidence 0..1 (<0.7 flags)
   honestyFlag?: string;          // optional honesty-flag sentence (warn-tinted box)
 }
-export interface ProfileNote { who: string; ini: string; t: string; text: string; }
+export interface ProfileNote { id?: string; who: string; ini: string; t: string; text: string; mine?: boolean; }
 export interface ProfileNextStep { icon: IconName; title: string; detail: string; }
 export interface CandidateProfileData {
   candidate: Candidate;          // the candidate (reuses the Candidate shape)
@@ -464,6 +465,7 @@ export interface IVTypeMeta { label: string; tone: string; }       // interview 
 export interface IVStatusMeta { label: string; tone: string; bg: string; icon: IconName }
 export interface InterviewRow {
   id: string; ini: string; name: string; role: string; reqId: string;
+  candidateId: string;           // real candidate id — lets a list be scoped to one candidate's rounds (e.g. "All feedback" from their profile), same reasoning as ScreeningRow.candidateId
   round: string; type: string;            // type is a key into InterviewsData.types
   when: string; dur: number; mode: string;// when label, duration MIN, mode e.g. "Video"
   panel: string[];                        // panelist names (avatars show first 3)

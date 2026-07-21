@@ -129,9 +129,30 @@ export async function listCandidates(q?: { stage?: ApplicationStage; requisition
   if (q?.requisitionId) params.requisitionId = q.requisitionId;
   return arr(await api.candidates.listCandidates(params)).map(toCandidate);
 }
-export async function advanceStage(id: string, stage: ApplicationStage): Promise<Candidate> {
-  const res: any = await raw("PATCH", `/candidates/${id}/stage`, { stage });
-  return toCandidate(res?.data ?? res);
+// NOTE: takes an APPLICATION id (not a candidate id) — PATCH /candidates/:id/stage
+// this used to call is a dead route with no backend handler; this now hits the
+// real, verified endpoint. Confirmed zero existing call sites assumed the old
+// (broken) candidate-id signature before this fix.
+export async function patchApplicationStage(applicationId: string, body: { stage: ApplicationStage; status?: string }): Promise<void> {
+  await raw("PATCH", `/applications/${applicationId}`, body);
+}
+
+export interface CandidateNote {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorEmail: string | null;
+  mine: boolean;
+}
+export async function listCandidateNotes(candidateId: string): Promise<CandidateNote[]> {
+  return arr(await raw("GET", `/candidates/${candidateId}/notes`));
+}
+export async function addCandidateNote(candidateId: string, content: string): Promise<CandidateNote> {
+  const res: any = await raw("POST", `/candidates/${candidateId}/notes`, { content });
+  return res?.data ?? res;
+}
+export async function deleteCandidateNote(candidateId: string, noteId: string): Promise<void> {
+  await raw("DELETE", `/candidates/${candidateId}/notes/${noteId}`);
 }
 export async function importCandidates(file: FormData): Promise<{ imported: number; flagged: number }> {
   const t = authToken();
@@ -181,6 +202,7 @@ export interface BulkUploadStatus {
   approvedCount: number;
   rejectedCount: number;
   committedCount: number;
+  duplicateCount: number;
   parsedFiles: number;
   failedFiles: number;
 }
@@ -198,6 +220,7 @@ export interface BulkImportItem {
   // Module C — ATS score (0-100) vs the bound requisition; null until scored.
   score: number | null;
   scoreStatus: "pending" | "scored" | "failed" | null;
+  duplicateReason: "existing" | "in_file" | null;
 }
 function toBulkStatus(d: any): BulkUploadStatus {
   return {
@@ -209,6 +232,7 @@ function toBulkStatus(d: any): BulkUploadStatus {
     approvedCount: Number(d?.approvedCount ?? 0),
     rejectedCount: Number(d?.rejectedCount ?? 0),
     committedCount: Number(d?.committedCount ?? 0),
+    duplicateCount: Number(d?.duplicateCount ?? 0),
     parsedFiles: Number(d?.parsedFiles ?? 0),
     failedFiles: Number(d?.failedFiles ?? 0),
   };
@@ -227,6 +251,7 @@ function toBulkItem(d: any): BulkImportItem {
     candidateId: d?.candidateId ?? null,
     score: typeof d?.score === "number" ? d.score : null,
     scoreStatus: (["pending", "scored", "failed"] as const).includes(d?.scoreStatus) ? d.scoreStatus : null,
+    duplicateReason: (["existing", "in_file"] as const).includes(d?.duplicateReason) ? d.duplicateReason : null,
   };
 }
 // POST /api/resume/bulk-archive (multipart, single field "archive"). Returns the
@@ -255,6 +280,44 @@ export async function getBulkUpload(id: string): Promise<BulkUploadStatus> {
   const res: any = await raw("GET", `/resume/bulk/${id}`);
   return toBulkStatus(res?.data ?? res);
 }
+// Open (not-yet-done) archive imports for the caller's tenant — lets the
+// upload screen surface a job the recruiter navigated away from mid-extraction
+// or mid-review instead of it staying orphaned. Honest empty ([]) when there
+// is nothing open.
+export interface OpenBulkUpload {
+  id: string;
+  archiveName: string | null;
+  phase: BulkUploadStatus["phase"];
+  status: string;
+  totalFiles: number;
+  extractedCount: number;
+  pendingCount: number;
+  approvedCount: number;
+  createdAt: string;
+}
+// GET /api/resume/bulk - recent open archive imports, most recent first.
+export async function listOpenBulkUploads(): Promise<OpenBulkUpload[]> {
+  const res: any = await raw("GET", `/resume/bulk`);
+  const d = res?.data ?? res;
+  const rows = Array.isArray(d?.uploads) ? d.uploads : [];
+  return rows.map((r: any) => ({
+    id: String(r?.id ?? ""),
+    archiveName: r?.archiveName ?? null,
+    phase: (["extracting", "review", "committing", "done", "failed"] as const).includes(r?.phase) ? r.phase : "extracting",
+    status: String(r?.status ?? ""),
+    totalFiles: Number(r?.totalFiles ?? 0),
+    extractedCount: Number(r?.extractedCount ?? 0),
+    pendingCount: Number(r?.pendingCount ?? 0),
+    approvedCount: Number(r?.approvedCount ?? 0),
+    createdAt: String(r?.createdAt ?? ""),
+  }));
+}
+// DELETE /api/resume/bulk/:id - discard an import's staging data. Only ever
+// removes the job + its not-yet-committed staging rows; already-committed
+// candidates are separate records and are never touched by this.
+export async function deleteBulkUpload(id: string): Promise<void> {
+  await raw("DELETE", `/resume/bulk/${id}`);
+}
 // GET /api/resume/bulk/:id/items?cursor=&limit= - paginated staging rows.
 export async function getBulkItems(
   id: string, cursor?: string, limit = 50, sort?: "score",
@@ -280,7 +343,7 @@ export async function patchBulkItem(
 }
 // POST /api/resume/bulk/:id/review-all - bulk approve/reject across all items.
 export async function reviewAllBulk(
-  id: string, action: "approve-nonempty" | "reject-empty" | "approve-all",
+  id: string, action: "approve-nonempty" | "reject-empty" | "approve-all" | "reject-duplicates",
 ): Promise<BulkUploadStatus> {
   const res: any = await raw("POST", `/resume/bulk/${id}/review-all`, { action });
   return toBulkStatus(res?.data ?? res);
@@ -424,6 +487,25 @@ export async function getCandidate(id: string): Promise<Candidate> {
   return toCandidate(res?.data ?? res);
 }
 
+// "View source" on the Parsed résumé zone. GET /api/resume/:candidateId ->
+// resume-service's stored Resume row. We show extractedText (the real text the
+// parser actually read), NOT the original file binary — this dev environment has
+// no object storage configured, so the download-url route would 404 for every
+// candidate; extractedText is always real when a résumé was ever parsed.
+export interface ResumeSource {
+  fileName?: string;
+  originalFilename?: string;
+  extractedText?: string | null;
+}
+export async function getResumeSource(candidateId: string): Promise<ResumeSource | null> {
+  try {
+    const res: any = await raw("GET", `/resume/${candidateId}`);
+    return (res?.data ?? res) as ResumeSource;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------- Requisitions ---------- */
 function toRequisition(r: any): Requisition {
   return {
@@ -456,6 +538,13 @@ export async function generateJD(title: string): Promise<{ description: string; 
 }
 export async function createRequisition(b: Partial<Requisition>): Promise<Requisition> {
   const res: any = await api.platform.createRequisition(b);
+  return toRequisition(res?.data ?? res);
+}
+// api.platform.updateRequisition sends PUT, but job-service only registers
+// PATCH /internal/requisitions/:id (see requisitions.ts) — a PUT 404s. Use the
+// module-local PATCH-capable raw() instead, same as patchApplicationStage above.
+export async function updateRequisition(id: string, b: Partial<Requisition>): Promise<Requisition> {
+  const res: any = await raw("PATCH", `/requisitions/${id}`, b);
   return toRequisition(res?.data ?? res);
 }
 

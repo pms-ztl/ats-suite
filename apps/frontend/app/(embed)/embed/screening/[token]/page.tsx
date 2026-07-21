@@ -52,6 +52,7 @@ function toRow(s: any): ScreeningRow {
   const name = s?.candidate?.name || [s?.candidate?.firstName, s?.candidate?.lastName].filter(Boolean).join(" ") || s?.candidateId || "Candidate";
   return {
     id: s?.id ?? s?.candidateId ?? Math.random().toString(36).slice(2),
+    candidateId: s?.candidateId ?? "",
     ini: initials(name),
     name,
     role: s?.agentType ?? s?.screeningType ?? "candidate-screener",

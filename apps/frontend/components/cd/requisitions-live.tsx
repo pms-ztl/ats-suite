@@ -11,6 +11,7 @@ import { HoneyComb } from "@/components/shared/ribbon-ext";
 import { useData } from "@/lib/use-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { listRequisitions } from "@/lib/api";
+import { exportToCSV } from "@/lib/export";
 import type { Requisition } from "@/lib/types";
 import type { ReqRow, ReqStatusKey, ReqStatusMeta } from "./types";
 
@@ -60,6 +61,14 @@ export function RequisitionsLive() {
   const reqs = useData<Requisition[]>(listRequisitions);
   const rows = (reqs.data ?? []).map(toRow);
 
+  // Real CSV export of exactly the requisitions shown (data in hand — no backend).
+  const onExport = () =>
+    exportToCSV(
+      `requisitions-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Title", "Department", "Location", "Status", "Openings", "Candidates", "Salary min", "Salary max", "Created"],
+      rows.map((r) => [r.title, r.dept, r.loc, r.status, r.head, r.cands, r.min ?? "", r.max ?? "", r.created]),
+    );
+
   // "Requisition mix" comb: one hex per real requisition, grouped by status in
   // lifecycle order, colored with the same tone the status badge uses in the
   // table. Empty statuses drop out; HoneyComb renders its own empty state when
@@ -71,6 +80,7 @@ export function RequisitionsLive() {
   return (
     <Requisitions
       data={{ rows, statusMeta: STATUS_META, workspaceName: user?.tenant?.name ?? "your workspace" }}
+      onExport={onExport}
       onCreate={() => router.push("/requisitions/new")}
       onOpen={(id) => router.push(`/requisitions/${id}`)}
       ribbonSlot={

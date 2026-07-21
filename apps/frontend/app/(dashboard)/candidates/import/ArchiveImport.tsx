@@ -13,12 +13,14 @@
 // / error states; no fabricated rows or counts. Theme-adaptive + responsive via
 // the shared --c-* tokens and the Aurora kit primitives.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import {
   uploadResumeArchive, getBulkUpload, getBulkItems, patchBulkItem,
-  reviewAllBulk, commitBulkImport, listRequisitions,
-  type BulkUploadStatus, type BulkImportItem,
+  reviewAllBulk, commitBulkImport, listRequisitions, listOpenBulkUploads,
+  deleteBulkUpload,
+  type BulkUploadStatus, type BulkImportItem, type OpenBulkUpload,
 } from "@/lib/api";
 import { useData } from "@/lib/use-data";
 import type { Requisition } from "@/lib/types";
@@ -36,6 +38,14 @@ function extractBadge(s: BulkImportItem["extractStatus"]) {
     case "unsupported": return { t: "Unsupported", icon: "x", tone: "var(--c-ink-3)", bg: "var(--c-surface-3)" };
     default: return { t: "Failed", icon: "flag", tone: "var(--c-danger)", bg: "var(--c-danger-tint)" };
   }
+}
+
+// "in_file" wins over "existing" server-side (computeDuplicates), so this just
+// maps the already-decided reason to a label distinct from the other.
+function duplicateBadge(reason: NonNullable<BulkImportItem["duplicateReason"]>) {
+  return reason === "existing"
+    ? { t: "Duplicate", icon: "copy", tone: "var(--c-warn)" }
+    : { t: "Duplicate in file", icon: "copy", tone: "var(--c-warn)" };
 }
 
 // Module C — render the ATS-score cell for a staged item: a color-banded score
@@ -64,13 +74,18 @@ function fileTypeLabel(name: string, mime: string): string {
 const fmtBytes = (n: number) => n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
 
 export default function ArchiveImport({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   // upload
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // lifecycle
-  const [bulkId, setBulkId] = useState<string | null>(null);
+  // lifecycle — bulkId seeds from the URL so a reload/return mid-extraction
+  // reattaches to the same job instead of dropping back to the upload screen.
+  const [bulkId, setBulkId] = useState<string | null>(() => searchParams.get("bulkId"));
   const [status, setStatus] = useState<BulkUploadStatus | null>(null);
 
   // staging table
@@ -87,10 +102,26 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
   const [reqId, setReqId] = useState<string>("");
   const reqs = useData<Requisition[]>(listRequisitions, []);
 
+  // Task 2 — imports left waiting for review from an earlier session (e.g. the
+  // recruiter navigated away mid-extraction); surfaced so real, already-done
+  // extraction work never sits undiscoverable.
+  const [openUploads, setOpenUploads] = useState<OpenBulkUpload[]>([]);
+  const [confirmDeleteUploadId, setConfirmDeleteUploadId] = useState<string | null>(null);
+  const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null);
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const itemsLoadedFor = useRef<string | null>(null);
 
   const phase = status?.phase;
+
+  // While sitting on the upload screen, check for any archive imports still
+  // open from a previous session so they're discoverable, not orphaned.
+  useEffect(() => {
+    if (bulkId) return;
+    let cancelled = false;
+    listOpenBulkUploads().then((rows) => { if (!cancelled) setOpenUploads(rows); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [bulkId]);
 
   /* ---- polling: runs while extracting / committing (and a tick after upload) ---- */
   useEffect(() => {
@@ -106,7 +137,19 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
     };
     void tick();
     pollRef.current = setInterval(() => { void tick(); }, POLL_MS);
-    return () => { cancelled = true; if (pollRef.current) clearInterval(pollRef.current); };
+    // Browsers throttle/pause setInterval in a backgrounded tab, so a
+    // recruiter who tabs away mid-extraction (the screen's own copy invites
+    // exactly this: "come back later") can return to a stale screen even
+    // though extraction finished long ago — nothing was actually stuck, the
+    // scheduled tick just never got to run. Force an immediate tick the
+    // moment the tab is visible again instead of waiting for the next one.
+    const onVisible = () => { if (document.visibilityState === "visible") void tick(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [bulkId]);
 
   // Stop polling once nothing is in flight; keep polling through commit so the
@@ -118,6 +161,13 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
       pollRef.current = null;
     }
   }, [phase]);
+
+  // A terminal phase means there's nothing left to reattach to — drop the
+  // query param so a fresh visit lands on the upload screen, not back on a
+  // finished or failed job.
+  useEffect(() => {
+    if (phase === "done" || phase === "failed") router.replace(pathname);
+  }, [phase, pathname, router]);
 
   /* ---- load the first page of staging items once we enter review ---- */
   const loadFirstPage = useCallback(async (id: string) => {
@@ -155,6 +205,27 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
   /* ---- actions ---- */
   const onChoose = (f: File | null) => { setFile(f); setError(null); };
 
+  // Jump straight into an already-open import found by the Task 2 banner below.
+  const openExisting = (id: string) => {
+    setBulkId(id);
+    router.replace(`${pathname}?bulkId=${id}`);
+  };
+
+  // Discards an import's staging data (server-side: the BulkUpload job + its
+  // BulkImportItem rows only — never touches already-committed candidates).
+  const deleteUpload = async (id: string) => {
+    setDeletingUploadId(id);
+    try {
+      await deleteBulkUpload(id);
+      setOpenUploads((prev) => prev.filter((u) => u.id !== id));
+      setConfirmDeleteUploadId(null);
+    } catch (e: any) {
+      setError(e?.message || "Could not delete that import.");
+    } finally {
+      setDeletingUploadId(null);
+    }
+  };
+
   const startUpload = async () => {
     if (!file) return;
     setUploading(true); setError(null);
@@ -162,7 +233,10 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
       const { bulkUploadId } = await uploadResumeArchive(file, reqId || undefined);
       if (!bulkUploadId) throw new Error("The server did not return an upload id.");
       setBulkId(bulkUploadId);
-      setStatus({ id: bulkUploadId, phase: "extracting", totalFiles: 0, extractedCount: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0, committedCount: 0, parsedFiles: 0, failedFiles: 0 });
+      // replace, not push — this re-parameterizes the same screen rather than
+      // navigating to a new one, so it shouldn't grow the back-button history.
+      router.replace(`${pathname}?bulkId=${bulkUploadId}`);
+      setStatus({ id: bulkUploadId, phase: "extracting", totalFiles: 0, extractedCount: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0, committedCount: 0, duplicateCount: 0, parsedFiles: 0, failedFiles: 0 });
     } catch (e: any) {
       setError(e?.message || "Could not upload that archive.");
     } finally {
@@ -205,7 +279,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const runReviewAll = async (action: "approve-nonempty" | "reject-empty" | "approve-all") => {
+  const runReviewAll = async (action: "approve-nonempty" | "reject-empty" | "approve-all" | "reject-duplicates") => {
     if (!bulkId) return;
     setBulkActionBusy(true); setError(null);
     try {
@@ -243,6 +317,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
     itemsLoadedFor.current = null;
     setFile(null); setBulkId(null); setStatus(null); setItems([]); setNextCursor(null);
     setEdits({}); setError(null);
+    router.replace(pathname);
   };
 
   /* ----------------------------- render ----------------------------- */
@@ -261,6 +336,54 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
       <>
         <div style={card}>
           {errorBanner}
+          {openUploads.length > 0 && (
+            <div style={{ marginBottom: 18, borderRadius: "var(--r-lg)", border: "1px solid var(--c-line)", background: "var(--c-surface-2)", padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, fontWeight: 700, color: "var(--c-ink)", marginBottom: 10 }}>
+                <Icon name="clock" size={15} style={{ color: "var(--c-brand)" }} />
+                {openUploads.length} import{openUploads.length === 1 ? "" : "s"} waiting for review
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {openUploads.map((u) => {
+                  const armed = confirmDeleteUploadId === u.id;
+                  const busy = deletingUploadId === u.id;
+                  return (
+                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <button onClick={() => openExisting(u.id)} style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line)", background: "var(--c-surface)", cursor: "pointer", fontFamily: "var(--font-sans)", textAlign: "left" }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--c-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.archiveName || "Archive import"}</span>
+                        <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+                          <Pill icon={u.phase === "review" ? "clock" : "bolt"} tone="var(--c-ink-2)" bg="var(--c-surface-3)">
+                            {u.phase === "review" ? `${u.approvedCount.toLocaleString()} of ${u.totalFiles.toLocaleString()} approved` : u.phase}
+                          </Pill>
+                          <Icon name="chevR" size={13} style={{ color: "var(--c-ink-3)" }} />
+                        </span>
+                      </button>
+                      {armed ? (
+                        <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0, position: "relative", zIndex: 60 }}>
+                          <button onClick={() => void deleteUpload(u.id)} disabled={busy} title="Confirm delete" style={{ width: 26, height: 26, borderRadius: 6, border: "none", background: "var(--c-danger)", color: "white", display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
+                            <Icon name="check" size={12} stroke={3} />
+                          </button>
+                          <button onClick={() => setConfirmDeleteUploadId(null)} disabled={busy} title="Cancel" style={{ width: 26, height: 26, borderRadius: 6, border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}>
+                            <Icon name="x" size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteUploadId(u.id)}
+                          title="Delete this import"
+                          style={{ width: 26, height: 26, flexShrink: 0, borderRadius: 6, border: "none", background: "transparent", color: "var(--c-ink-3)", display: "grid", placeItems: "center", cursor: "pointer" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--c-danger-tint)"; e.currentTarget.style.color = "var(--c-danger)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--c-ink-3)"; }}
+                        >
+                          <Icon name="x" size={13} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {confirmDeleteUploadId && <div onClick={() => setConfirmDeleteUploadId(null)} style={{ position: "fixed", inset: 0, zIndex: 55 }} />}
+            </div>
+          )}
           <input id="archive-input" type="file" accept={ARCHIVE_ACCEPT} style={{ display: "none" }} onChange={(e) => onChoose(e.target.files?.[0] ?? null)} />
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <div onClick={() => document.getElementById("archive-input")?.click()} style={{ width: "100%", maxWidth: 460, margin: "0 auto", border: "1.5px dashed var(--c-line-strong)", borderRadius: "var(--r-xl)", padding: "36px 20px", background: "var(--c-surface-2)", cursor: "pointer" }}>
@@ -395,6 +518,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
   const pending = status?.pendingCount ?? 0;
   const approved = status?.approvedCount ?? 0;
   const rejected = status?.rejectedCount ?? 0;
+  const duplicates = status?.duplicateCount ?? 0;
   const total = status?.totalFiles ?? 0;
   const failedExtract = status?.failedFiles ?? 0;
 
@@ -410,10 +534,12 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
             <Pill icon="clock" tone="var(--c-ink-2)" bg="var(--c-surface-2)">{pending.toLocaleString()} pending</Pill>
             <Pill icon="check" tone="var(--c-ok)" bg="var(--c-ok-tint)">{approved.toLocaleString()} approved</Pill>
             {rejected > 0 && <Pill icon="x" tone="var(--c-ink-3)" bg="var(--c-surface-3)">{rejected.toLocaleString()} rejected</Pill>}
+            {duplicates > 0 && <Pill icon="copy" tone="var(--c-warn)" bg="var(--c-warn-tint)">{duplicates.toLocaleString()} duplicates</Pill>}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Btn variant="soft" size="sm" icon="check" disabled={bulkActionBusy} onClick={() => void runReviewAll("approve-nonempty")}>Approve all non-empty</Btn>
             <Btn variant="soft" size="sm" icon="x" disabled={bulkActionBusy} onClick={() => void runReviewAll("reject-empty")}>Reject empty</Btn>
+            <Btn variant="soft" size="sm" icon="copy" disabled={bulkActionBusy} onClick={() => void runReviewAll("reject-duplicates")}>Reject all duplicates</Btn>
           </div>
         </div>
 
@@ -433,6 +559,7 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
             </div>
             {items.map((it, i) => {
               const eb = extractBadge(it.extractStatus);
+              const db = it.duplicateReason ? duplicateBadge(it.duplicateReason) : null;
               const tlabel = fileTypeLabel(it.fileName, it.mimeType);
               const e = edits[it.id] ?? {};
               const nameVal = e.name !== undefined ? e.name : (it.detectedName ?? "");
@@ -450,8 +577,15 @@ export default function ArchiveImport({ onBack }: { onBack: () => void }) {
                     onBlur={() => void persistEdit(it)}
                     className="mono" style={{ ...inputStyle, fontFamily: "var(--font-mono)" }} />
                   <span style={{ color: "var(--c-ink-2)" }}>{tlabel}</span>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: eb.tone, fontWeight: 600, fontSize: 11 }} title={it.extractStatus}>
-                    <Icon name={eb.icon} size={13} />{eb.t}
+                  <span style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: eb.tone, fontWeight: 600, fontSize: 11 }} title={it.extractStatus}>
+                      <Icon name={eb.icon} size={13} />{eb.t}
+                    </span>
+                    {db && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: db.tone, fontWeight: 600, fontSize: 11 }} title={db.t}>
+                        <Icon name={db.icon} size={13} />{db.t}
+                      </span>
+                    )}
                   </span>
                   {/* Module C — ATS score vs the bound requisition (ranked desc). */}
                   {scoreCell(it)}

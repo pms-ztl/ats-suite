@@ -10,8 +10,10 @@ import { StreamGraph } from "@/components/shared/ribbon-ext";
 import {
   BarsChart, TrendChart, EmptyChart, CHART_COLORS,
 } from "@/components/shared/charts";
-import type { AnalyticsData, AnalyticsInsight } from "./types";
+import type { AnalyticsData, AnalyticsInsight, KPI } from "./types";
 import type { FairnessMetric } from "@/lib/types";
+import { toast } from "sonner";
+import { exportReport, type ExportReport, type ExportFormat } from "@/lib/export";
 
 // One real monthly time-to-hire row (from /api/analytics/time-to-hire).
 export interface TthRow { label: string; avgDays: number; medianDays: number; p90Days: number; hires: number; }
@@ -21,7 +23,124 @@ function SevDot({ sev }: { sev: AnalyticsInsight["sev"] }) {
   return <span style={{ width: 8, height: 8, borderRadius: 99, background: c, flexShrink: 0 }} />;
 }
 
-export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflowWeekly, inflowBySource, onExport }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; conversionPct?: number | null; inflowWeekly?: { label: string; n: number }[]; inflowBySource?: { buckets: { label: string }[]; series: { label: string; values: number[] }[] }; onExport?: () => void }) {
+// A populated KPI rendered as text ("$1,200", "64%", …); absent value -> em-dash.
+function fmtKpiValue(k: KPI): string {
+  const has = k.hasValue ?? (k.value !== null && k.value !== undefined);
+  if (!has) return "—";
+  return `${k.prefix ?? ""}${Number(k.value).toLocaleString()}${k.suffix ?? ""}`;
+}
+
+// Assemble the on-screen analytics into a multi-section report. Every section binds
+// REAL page data; sections with no rows (e.g. time-to-hire before any hires) are
+// dropped by exportReport, so an export never contains an empty table.
+function buildAnalyticsReport(
+  a: AnalyticsData, fairness: FairnessMetric[], tthRows: TthRow[],
+  conversionPct: number | null | undefined, inflowWeekly: { label: string; n: number }[],
+): ExportReport {
+  const generated = new Date().toLocaleString();
+  const firstN = a.funnel[0]?.n ?? 0;
+  const slug = (a.orgName || "workspace").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const dateTag = new Date().toISOString().slice(0, 10);
+
+  // Derived headline numbers for an at-a-glance Summary (all from real page data).
+  const totalApps = a.sources.reduce((sum, s) => sum + (s.apps || 0), 0);
+  const totalHires = a.sources.reduce((sum, s) => sum + (s.hires || 0), 0);
+  const pipelineTotal = a.funnel.reduce((sum, s) => sum + (s.n || 0), 0);
+  const activeStages = a.funnel.filter((s) => s.n > 0).length;
+  const topSource = a.sources.slice().sort((x, y) => (y.apps || 0) - (x.apps || 0))[0];
+  const totalInflow = inflowWeekly.reduce((sum, w) => sum + w.n, 0);
+
+  const kpiRows = a.kpis
+    .filter((k) => k.hasValue ?? (k.value !== null && k.value !== undefined))
+    .map((k) => [k.label, fmtKpiValue(k), k.delta != null ? `${k.delta > 0 ? "+" : ""}${k.delta}` : ""]);
+  const funnelRows = a.funnel.map((s) => [s.stage, s.n, firstN > 0 ? `${Math.round((s.n / firstN) * 100)}%` : "—"]);
+  const sourceRows: (string | number)[][] = a.sources.map((s) => [s.src, s.apps, s.hires]);
+  if (sourceRows.length) sourceRows.push(["Total", totalApps, totalHires]);
+  const inflowRows: (string | number)[][] = inflowWeekly.map((w) => [w.label, w.n]);
+  if (inflowRows.length) inflowRows.push(["Total", totalInflow]);
+  // Only months that actually had hires — the trend feed emits a full trailing year
+  // (mostly zeros) for a continuous on-screen axis, but zero-rows are noise in a table.
+  const tthReportRows = tthRows.filter((r) => r.hires > 0).map((r) => [r.label, r.avgDays, r.medianDays, r.p90Days, r.hires]);
+  const diversityRows = fairness.map((m) => [
+    m.group, (m.impactRatio ?? 0).toFixed(2),
+    (m.flagged || (m.impactRatio ?? 1) < 0.8) ? "Yes (below 0.80)" : "No",
+  ]);
+
+  return {
+    filename: `analytics-${slug}-${dateTag}`,
+    title: `Analytics — ${a.orgName}`,
+    subtitle: `${a.range} · generated ${generated}`,
+    sections: [
+      { filename: "", title: "Summary", headers: ["Metric", "Value"], rows: [
+        ["Total candidates in pipeline", pipelineTotal],
+        ["Total applications", totalApps],
+        ["Total hires", totalHires],
+        ["Applied → hired conversion", conversionPct != null ? `${conversionPct}%` : "—"],
+        ["Active pipeline stages", activeStages],
+        ["Sourcing channels", a.sources.length],
+        ["Top channel", topSource ? `${topSource.src} (${topSource.apps} applications)` : "—"],
+      ] },
+      { filename: "", title: "Key metrics", headers: ["Metric", "Value", "Δ vs prev"], rows: kpiRows },
+      { filename: "", title: "Hiring funnel", headers: ["Stage", "Candidates", "Share of screened"], rows: funnelRows },
+      { filename: "", title: "Source effectiveness", headers: ["Channel", "Applications", "Hires"], rows: sourceRows },
+      { filename: "", title: "Weekly inflow", headers: ["Week", "New candidates"], rows: inflowRows },
+      { filename: "", title: "Time to hire", headers: ["Month", "Avg days", "Median days", "P90 days", "Hires"], rows: tthReportRows },
+      { filename: "", title: "Diversity (four-fifths)", headers: ["Group", "Impact ratio", "Flagged"], rows: diversityRows },
+    ],
+  };
+}
+
+// The Export control: the page's primary button, but a click opens a small menu to
+// pick the format. All four run fully client-side off the data already on the page.
+function AnalyticsExport({ report }: { report: () => ExportReport }) {
+  const [open, setOpen] = React.useState(false);
+  const [busy, setBusy] = React.useState<ExportFormat | null>(null);
+  const run = async (format: ExportFormat) => {
+    setOpen(false);
+    const r = report();
+    if (!r.sections.some((s) => s.rows.length > 0)) { toast.error("Nothing to export yet."); return; }
+    try {
+      setBusy(format);
+      await exportReport(format, r);
+      toast.success(`Analytics exported (${format.toUpperCase()}).`);
+    } catch {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const items: { format: ExportFormat; label: string }[] = [
+    { format: "xlsx", label: "Excel (.xlsx)" },
+    { format: "pdf", label: "PDF (.pdf)" },
+    { format: "csv", label: "CSV (.csv)" },
+    { format: "docx", label: "Word (.docx)" },
+  ];
+  return (
+    <div style={{ position: "relative" }}>
+      <Btn variant="primary" icon="arrowUpRight" onClick={() => setOpen((o) => !o)}>
+        {busy ? "Exporting…" : "Export"}
+      </Btn>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+          <div role="menu" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 41, minWidth: 184, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r)", boxShadow: "0 10px 30px color-mix(in oklab, var(--ink) 16%, transparent)", padding: 6 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", padding: "5px 8px 5px" }}>Download as</div>
+            {items.map((it) => (
+              <button key={it.format} role="menuitem" onClick={() => void run(it.format)} disabled={!!busy}
+                style={{ width: "100%", textAlign: "left", padding: "8px 8px", borderRadius: "var(--r-sm)", border: "none", background: "transparent", color: "var(--ink)", fontSize: "var(--fs-sm)", fontWeight: 500, cursor: busy ? "default" : "pointer", fontFamily: "var(--font-sans)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-2)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                {it.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflowWeekly, inflowBySource }: { data: AnalyticsData; fairness?: FairnessMetric[]; tthRows?: TthRow[]; conversionPct?: number | null; inflowWeekly?: { label: string; n: number }[]; inflowBySource?: { buckets: { label: string }[]; series: { label: string; values: number[] }[] } }) {
   const a = data;
 
   // Only surface KPIs we actually have a value for. A metric with no data (e.g.
@@ -64,7 +183,7 @@ export function AnalyticsScreen({ data, fairness, tthRows, conversionPct, inflow
             <p style={{ margin: "5px 0 0", color: "var(--ink-2)", fontSize: "var(--fs-md)" }}>Hiring performance across {a.orgName} · {a.range}.</p></div>
           <div style={{ display: "flex", gap: 9 }}>
             <Pill icon="clock" tone="var(--ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>{a.range}</Pill>
-            <Btn variant="primary" icon="arrowUpRight" onClick={onExport}>Export</Btn>
+            <AnalyticsExport report={() => buildAnalyticsReport(a, fairness ?? [], tthRows ?? [], conversionPct, inflowWeekly ?? [])} />
           </div>
         </div>
 

@@ -49,6 +49,41 @@ export async function upsertCandidate(
   }
 }
 
+export async function checkExistingCandidates(
+  emails: string[],
+  tenantId: string,
+  userId: string
+): Promise<Map<string, string>> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Tenant-Id": tenantId,
+    "X-User-Id": userId,
+    "X-User-Role": "ADMIN",
+  };
+  if (INTERNAL_TOKEN) headers["X-Internal-Service"] = INTERNAL_TOKEN;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(`${CANDIDATE_URL}/internal/candidates/check-existing`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ emails }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return new Map();
+    const body: any = await res.json();
+    const data = body?.data ?? body;
+    const existing = Array.isArray(data?.existing) ? data.existing : [];
+    return new Map(existing.map((e: any) => [String(e.email).toLowerCase(), String(e.candidateId)]));
+  } catch {
+    clearTimeout(timer);
+    return new Map();
+  }
+}
+
 export interface ResumeQuota {
   allowed: boolean;
   used: number;

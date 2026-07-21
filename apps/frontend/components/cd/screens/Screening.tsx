@@ -142,14 +142,24 @@ function VerdictPanel({ row, requirements, trace, onClose, onDecide }: {
   );
 }
 
-export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvance, onBulkReview, verdictFlow }: {
-  data: ScreeningData; onExport?: () => void; onDecide?: (id: string, decision: string) => void; onBulkAdvance?: (ids: string[]) => void; onBulkReview?: (ids: string[]) => void;
+export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvance, onBulkReject, verdictFlow, initialOpenCandidateId }: {
+  data: ScreeningData; onExport?: () => void; onDecide?: (id: string, decision: string) => void; onBulkAdvance?: (ids: string[]) => void; onBulkReject?: (ids: string[]) => void;
   /** real PASS / REVIEW / FAIL counts (+ avg score sub) for the verdict-flow ribbon; supplied by screening-live */
   verdictFlow?: { label: string; n: number; sub?: string }[];
+  /** Arriving from one candidate's profile ("Open full verdict") — opens straight
+   *  to their verdict panel instead of the bare queue. See the effect below: rows
+   *  can still be loading on mount, so this can't just be a useState initializer. */
+  initialOpenCandidateId?: string;
 }) {
   const { rows = [], requirements = [], trace = [] } = data;
   const [filter, setFilter] = useState<"all" | VerdictKind>("all");
   const [open, setOpen] = useState<ScreeningRow | null>(null);
+  const autoOpenedRef = React.useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || !initialOpenCandidateId) return;
+    const row = rows.find((r) => r.candidateId === initialOpenCandidateId);
+    if (row) { setOpen(row); autoOpenedRef.current = true; }
+  }, [rows, initialOpenCandidateId]);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [decided, setDecided] = useState<Record<string, string>>({});
   const filtered = rows.filter((r) => filter === "all" || r.kind === filter);
@@ -176,7 +186,7 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
     row.lo >= 70 ? CHART_COLORS.ok : row.lo >= 40 ? CHART_COLORS.warn : CHART_COLORS.danger;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, position: "relative", overflowY: "auto" }}>
       <div style={{ padding: "20px 28px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
           <div>
@@ -242,7 +252,7 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
         </div>
       )}
 
-      <div style={{ flex: 1, minHeight: 0, padding: "0 28px 20px" }}>
+      <div style={{ flex: 1, minHeight: 420, padding: "0 28px 20px" }}>
         <div style={{ height: "100%", overflowY: "auto", borderRadius: "var(--r-xl)", border: "1px solid var(--line)", background: "var(--surface)", boxShadow: "var(--e1)" }}>
           <div style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: "10px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", position: "sticky", top: 0, zIndex: 2, fontSize: 10.5, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-3)", alignItems: "center" }}>
             <span></span>
@@ -292,8 +302,8 @@ export function Screening({ data, onExport, onDecide: onDecideProp, onBulkAdvanc
           <div className="glass" style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px 9px 16px", borderRadius: "var(--r-pill)", boxShadow: "var(--e3)" }}>
             <span style={{ fontSize: "var(--fs-sm)", fontWeight: 700 }}>{sel.size} selected</span>
             <div style={{ width: 1, height: 20, background: "var(--line)" }} />
-            <Btn variant="primary" size="sm" icon="check" onClick={() => onBulkAdvance?.([...sel])}>Advance passing</Btn>
-            <Btn variant="soft" size="sm" icon="flag" onClick={() => onBulkReview?.([...sel])}>Send to review</Btn>
+            <Btn variant="primary" size="sm" icon="check" onClick={() => { onBulkAdvance?.([...sel]); setSel(new Set()); }}>Advance passing</Btn>
+            <Btn variant="danger" size="sm" icon="x" onClick={() => { onBulkReject?.([...sel]); setSel(new Set()); }}>Reject</Btn>
             <button onClick={() => setSel(new Set())} style={{ width: 26, height: 26, borderRadius: 99, border: "none", background: "var(--surface-2)", color: "var(--ink-3)", display: "grid", placeItems: "center", cursor: "pointer" }}><Icon name="x" size={14} /></button>
           </div>
         </div>

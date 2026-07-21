@@ -17,6 +17,7 @@ import { KpiRow, SectionCard, Reveal, Pill, Btn, type Kpi } from "@/components/a
 import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { TrendChart, BarsChart, EmptyChart, CHART_COLORS } from "@/components/shared/charts";
+import { exportReport } from "@/lib/export";
 
 /* ----------------------------- local data layer ----------------------------- */
 // Local raw() (per task rules: do NOT edit lib/api.ts). Mirrors lib/api.ts: bearer
@@ -162,7 +163,21 @@ export default function TimeToHirePage() {
         </div>
         <div style={{ display: "flex", gap: 9 }}>
           <Pill icon="clock" tone="var(--c-ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 90 days</Pill>
-          <Btn variant="primary" icon="arrowUpRight">Export</Btn>
+          <Btn variant="primary" icon="arrowUpRight" onClick={() => exportReport("xlsx", {
+            filename: `time-to-hire-${new Date().toISOString().slice(0, 10)}`,
+            title: "Time to hire",
+            subtitle: `Last 90 days · generated ${new Date().toLocaleString()}`,
+            sections: [
+              { filename: "", title: "Summary", headers: ["Metric", "Value"], rows: [
+                ["Average days", d?.avgDays ?? "—"],
+                ["Median days", d?.medianDays ?? "—"],
+                ["P90 days", d?.p90Days ?? "—"],
+                ["Total hires", d?.hiredCount ?? 0],
+              ] },
+              { filename: "", title: "Trend", headers: ["Month", "Avg days", "Median days", "P90 days", "Hires"], rows: (d?.trendRows ?? []).filter((t) => t.hires > 0).map((t) => [t.label, t.avgDays, t.medianDays, t.p90Days, t.hires]) },
+              { filename: "", title: "By department", headers: ["Department", "Avg days"], rows: byDept.map((x) => [x.dept, x.days]) },
+            ],
+          })}>Export</Btn>
         </div>
       </div>
 

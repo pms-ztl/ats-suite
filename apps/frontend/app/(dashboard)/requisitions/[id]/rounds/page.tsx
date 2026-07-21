@@ -20,6 +20,12 @@ type CSS = React.CSSProperties;
 type RoundType = "PHONE_SCREEN" | "TECHNICAL" | "BEHAVIORAL" | "PANEL" | "FINAL";
 type Round = { id: string; name: string; type: RoundType; dur: number; panel: string; auto: boolean; instr: string };
 
+// interview-kit agent I/O (packages/ai-engine/src/agents/interview-kit.ts).
+type KitQuestion = { question: string; category: string; difficulty: "easy" | "medium" | "hard" };
+type KitCriterion = { criterion: string; weight: number; description: string };
+type InterviewKit = { questions: KitQuestion[]; rubric: KitCriterion[] };
+type ReqInfo = { title: string; requirements: string[] };
+
 // Round-type metadata (mirrors the prototype's ROUND_TYPES). Tones use the
 // --c-* full-color tokens so they resolve to real colors.
 const ROUND_TYPES: Record<RoundType, { label: string; tone: string }> = {
@@ -106,6 +112,11 @@ export default function RoundsPage() {
   const [loading, setLoading] = useState(true);
   const [loadedSaved, setLoadedSaved] = useState(false);
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
+  const [reqInfo, setReqInfo] = useState<ReqInfo | null>(null);
+  const [reqLoading, setReqLoading] = useState(true);
+  const [kits, setKits] = useState<Record<string, InterviewKit | null>>({});
+  const [kitErrors, setKitErrors] = useState<Record<string, string>>({});
+  const [kitsLoading, setKitsLoading] = useState(false);
 
   // Best-effort load: try the dedicated rounds endpoint, then fall back to the
   // requisition itself. Anything that does not parse leaves the defaults in place.
@@ -117,6 +128,27 @@ export default function RoundsPage() {
       if (!alive) return;
       if (next.length) { setRounds(next); setLoadedSaved(true); }
       setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, [id]);
+
+  // The requisition's real title/requirements are fetched separately from
+  // rounds (a different endpoint) so the interview-kit agent gets honest
+  // job context instead of the requisition id as a fake title.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await raw("GET", `/requisitions/${encodeURIComponent(id)}`);
+        const r = res?.data ?? res;
+        const title = typeof r?.title === "string" ? r.title.trim() : "";
+        if (!alive) return;
+        if (title) {
+          const requirements = Array.isArray(r?.requirements) ? r.requirements.filter((x: any) => typeof x === "string") : [];
+          setReqInfo({ title, requirements });
+        }
+      } catch { /* leave reqInfo null; the button disables with a reason */ }
+      if (alive) setReqLoading(false);
     })();
     return () => { alive = false; };
   }, [id]);
@@ -146,7 +178,49 @@ export default function RoundsPage() {
     }
   }, [rounds, id]);
 
+  // Snapshot the round list up front: rounds is async-mutable (reorder/edit/
+  // remove) while the calls are in flight, and results are keyed by the id
+  // each call was actually made for, not whatever `rounds` looks like later.
+  // allSettled (not all) so one round's failure doesn't blank out the rest.
+  const generateKits = useCallback(async () => {
+    if (!reqInfo || rounds.length === 0) return;
+    const targets = rounds;
+    setKitsLoading(true);
+    const settled = await Promise.allSettled(
+      targets.map((r) =>
+        raw("POST", "/agents/run", {
+          agentType: "interview-kit",
+          input: { jobTitle: reqInfo.title, jobRequirements: reqInfo.requirements, interviewType: ROUND_TYPES[r.type].label },
+        }),
+      ),
+    );
+    const nextKits: Record<string, InterviewKit | null> = {};
+    const nextErrors: Record<string, string> = {};
+    settled.forEach((result, i) => {
+      const rid = targets[i]!.id;
+      if (result.status === "fulfilled") {
+        const out = result.value?.data?.output;
+        const questions = Array.isArray(out?.questions) ? out.questions : [];
+        const rubric = Array.isArray(out?.rubric) ? out.rubric : [];
+        if (questions.length || rubric.length) nextKits[rid] = { questions, rubric };
+        else nextErrors[rid] = "The agent returned an empty kit.";
+      } else {
+        nextErrors[rid] = "Could not generate a kit for this round.";
+      }
+    });
+    setKits((prev) => ({ ...prev, ...nextKits }));
+    setKitErrors((prev) => ({ ...prev, ...nextErrors }));
+    setKitsLoading(false);
+  }, [reqInfo, rounds]);
+
   const totalMins = rounds.reduce((sum, r) => sum + (Number.isFinite(r.dur) ? r.dur : 0), 0);
+  const kitDisabledReason = rounds.length === 0
+    ? "Add a round first."
+    : reqLoading
+    ? null
+    : !reqInfo
+    ? "Could not load the job title — reload the page to try again."
+    : null;
 
   return (
     <div className="mx-auto w-full max-w-[1280px]">
@@ -221,6 +295,8 @@ export default function RoundsPage() {
                         <span style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.name}</span>
                         <Pill tone={t.tone} bg={tintBg}>{t.label}</Pill>
                         <span className="mono" style={{ fontSize: 11, color: "var(--c-ink-3)" }}>{r.dur}m</span>
+                        {kits[r.id] && <Pill tone="var(--c-ai-ink)" bg="var(--c-ai-tint)" icon="sparkles">Kit ready</Pill>}
+                        {kitErrors[r.id] && <Pill tone="var(--c-danger)" bg="var(--c-danger-tint)" icon="flag">Kit failed</Pill>}
                       </div>
                       <div style={{ fontSize: 11.5, color: "var(--c-ink-3)", marginTop: 2 }}>Panel: {r.panel}{r.instr ? ` · ${r.instr}` : ""}</div>
                     </div>
@@ -286,6 +362,41 @@ export default function RoundsPage() {
                           placeholder="What this round should assess..."
                           style={{ width: "100%", padding: "8px 11px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", fontSize: "var(--fs-sm)", color: "var(--c-ink)", fontFamily: "var(--font-sans)", outline: "none", resize: "vertical" }} />
                       </div>
+
+                      {/* generated interview kit — read-only, additive, never overwrites instr */}
+                      {kits[r.id] && (
+                        <div style={{ marginTop: 14, padding: 12, borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+                            <Icon name="sparkles" size={14} style={{ color: "var(--c-ai)" }} />
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--c-ai-ink)" }}>Generated interview kit</span>
+                          </div>
+                          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>Questions</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                            {kits[r.id]!.questions.map((q, qi) => (
+                              <div key={qi} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
+                                <span style={{ flex: 1 }}>{q.question}</span>
+                                <Pill tone="var(--c-ink-2)">{q.category}</Pill>
+                                <Pill tone="var(--c-ink-2)" mono>{q.difficulty}</Pill>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>Scoring rubric</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {kits[r.id]!.rubric.map((c, ci) => (
+                              <div key={ci} style={{ fontSize: "var(--fs-sm)", color: "var(--c-ink-2)" }}>
+                                <span style={{ fontWeight: 600, color: "var(--c-ink)" }}>{c.criterion}</span>
+                                <span className="mono" style={{ color: "var(--c-ink-3)" }}> · {c.weight}%</span>
+                                <div style={{ fontSize: 11.5, color: "var(--c-ink-3)" }}>{c.description}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {!kits[r.id] && kitErrors[r.id] && (
+                        <div style={{ marginTop: 12, display: "flex", gap: 6, alignItems: "center", fontSize: 12, fontWeight: 600, color: "var(--c-warn)" }}>
+                          <Icon name="flag" size={13} />{kitErrors[r.id]}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -301,10 +412,16 @@ export default function RoundsPage() {
         )}
 
         {/* interview-kit AI accent */}
-        <div style={{ marginTop: 14, padding: "11px 14px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)", display: "flex", gap: 9, alignItems: "center", fontSize: 12.5, color: "var(--c-ink-2)" }}>
+        <div style={{ marginTop: 14, padding: "11px 14px", borderRadius: "var(--r)", background: "var(--c-ai-tint)", border: "1px solid color-mix(in oklab, var(--c-ai) 20%, transparent)", display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap", fontSize: 12.5, color: "var(--c-ink-2)" }}>
           <Icon name="sparkles" size={15} style={{ color: "var(--c-ai)", flexShrink: 0 }} />
           <span>The <b style={{ color: "var(--c-ai-ink)" }}>interview-kit</b> agent can draft questions + a scoring rubric for each round.</span>
-          <Btn variant="outlineAi" size="sm" icon="sparkles" style={{ marginLeft: "auto" }}>Generate kits</Btn>
+          {kitDisabledReason && !kitsLoading && (
+            <span style={{ fontSize: 11.5, color: "var(--c-warn)" }}>{kitDisabledReason}</span>
+          )}
+          <Btn variant="outlineAi" size="sm" icon={kitsLoading ? "clock" : "sparkles"} style={{ marginLeft: "auto" }}
+            disabled={kitsLoading || rounds.length === 0 || reqLoading || !reqInfo} onClick={generateKits}>
+            {kitsLoading ? "Generating…" : "Generate kits"}
+          </Btn>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@
 // best-effort POST with a graceful fallback to a local "submitted" state.
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { useUiConfig } from "@/lib/config/ui-config-provider";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Skeleton, ErrorState } from "@/components/aurora";
@@ -74,6 +75,14 @@ const fmtWhen = (iso: string) => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "Not scheduled";
   return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+};
+
+// ISO -> <input type="datetime-local"> value (local wall-clock, no timezone).
+const toLocalInput = (iso: string) => {
+  const d = new Date(iso);
+  if (!iso || isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 // Defensive mapping: core fields are reliable; AI / panelist / question blocks
@@ -153,6 +162,32 @@ export default function InterviewDetailPage() {
     ? customRecs.map((r) => [r.value, r.label] as [string, string])
     : REC_OPTIONS;
   const { data, loading, error, reload } = useData<IVDetail>(() => raw("GET", `/interviews/${id}`).then(mapDetail), [id]);
+
+  // Reschedule form: PATCH /interviews/:id, prefilled from the loaded interview.
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newWhen, setNewWhen] = useState("");
+  const [newDuration, setNewDuration] = useState(60);
+  const [reschedSubmitting, setReschedSubmitting] = useState(false);
+
+  function openReschedule() {
+    if (data) { setNewWhen(toLocalInput(data.startsAt)); setNewDuration(data.durationMins); }
+    setRescheduling(true);
+  }
+
+  async function submitReschedule() {
+    if (!newWhen) { toast.error("Pick a date and time."); return; }
+    setReschedSubmitting(true);
+    try {
+      await raw("PATCH", `/interviews/${id}`, { scheduledAt: new Date(newWhen).toISOString(), duration: newDuration });
+      toast.success("Interview rescheduled.");
+      setRescheduling(false);
+      reload();
+    } catch (e: any) {
+      toast.error(e?.message || "Could not reschedule.");
+    } finally {
+      setReschedSubmitting(false);
+    }
+  }
 
   // Controlled scorecard form + best-effort submit with graceful fallback.
   const [rec, setRec] = useState("YES");
@@ -255,11 +290,31 @@ export default function InterviewDetailPage() {
             {d.round} · Req <span className="mono">{d.requisitionId || "unassigned"}</span>
           </div>
         </div>
-        <Btn variant="soft" icon="calendar">Reschedule</Btn>
+        <Btn variant="soft" icon="calendar" onClick={openReschedule}>Reschedule</Btn>
         <Btn variant="primary" icon="check" disabled={submitting || submitted} onClick={submitScorecard}>
           {submitted ? "Feedback submitted" : "Submit feedback"}
         </Btn>
       </div>
+
+      {rescheduling && (
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", borderRadius: "var(--r-xl)", border: "1px solid var(--c-line)", background: "var(--c-surface)", padding: 16, marginBottom: 18, boxShadow: "var(--e1)" }}>
+          <div style={{ flex: "1 1 220px" }}>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>New date &amp; time</div>
+            <input type="datetime-local" value={newWhen} onChange={(e) => setNewWhen(e.target.value)}
+              style={{ width: "100%", padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-sans)", outline: "none" }} />
+          </div>
+          <div style={{ width: 110 }}>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>Duration</div>
+            <input type="number" min={15} step={15} value={newDuration} className="mono"
+              onChange={(e) => setNewDuration(Math.max(15, Number(e.target.value) || 60))}
+              style={{ width: "100%", padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--c-line-2)", background: "var(--c-surface)", color: "var(--c-ink)", fontSize: "var(--fs-sm)", fontFamily: "var(--font-sans)", outline: "none" }} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Btn variant="primary" icon="check" disabled={reschedSubmitting} onClick={submitReschedule}>{reschedSubmitting ? "Saving..." : "Save"}</Btn>
+            <Btn variant="ghost" disabled={reschedSubmitting} onClick={() => setRescheduling(false)}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18, alignItems: "start" }}>
         {/* main column */}

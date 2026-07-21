@@ -3,7 +3,10 @@
 // Candidate profile (/candidates/[id]), ported pixel-exact from cand-profile.jsx:
 // multi-zone layout (screening verdict, scorecards, parsed resume, activity, snapshot,
 // notes, AI next steps), prev/next navigation, and blind / bias-reduced mode.
-// Data via props. Notes are locally editable (optimistic) and report via onAddNote.
+// Data via props. Notes are composed from a popover anchored on the header's
+// "Add note" button (see NoteComposer below); onAddNote persists via the parent
+// and `notes` renders whatever the parent currently has (no local snapshot), so
+// a successful save shows up as soon as the parent's data refreshes.
 import * as React from "react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
@@ -42,17 +45,71 @@ function RatingDots({ n }: { n: number }) {
   return <span style={{ display: "inline-flex", gap: 3 }}>{Array.from({ length: 5 }).map((_, i) => <span key={i} style={{ width: 7, height: 7, borderRadius: 99, background: i < Math.round(n) ? "var(--brand)" : "var(--surface-3)" }} />)}</span>;
 }
 
-export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind = false, onNav, onBack, onToggleBlind, onVerdict, onAddNote, onSchedule, onAdvance }: {
+export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind = false, onNav, onBack, onToggleBlind, onVerdict, onAllFeedback, onAddNote, onDeleteNote, onSchedule, onAdvance, onViewSource }: {
   data: CandidateProfileData; stages?: CandStage[]; idx?: number; total?: number; blind?: boolean;
   onNav?: (dir: number) => void; onBack?: () => void; onToggleBlind?: () => void; onVerdict?: () => void;
-  onAddNote?: (text: string) => void; onSchedule?: () => void; onAdvance?: () => void;
+  onAllFeedback?: () => void;
+  onAddNote?: (text: string) => void | Promise<void>; onDeleteNote?: (noteId: string) => void | Promise<void>;
+  onSchedule?: () => void; onAdvance?: () => void; onViewSource?: () => void;
 }) {
-  const { candidate: c, applied, email, phone, verdict: s, scorecards = [], parsed, activity = [], notes: initialNotes = [], nextSteps = [] } = data;
-  const [noteText, setNoteText] = useState("");
-  const [notes, setNotes] = useState(initialNotes);
-  const addNote = () => { if (!noteText.trim()) return; setNotes([{ who: "You", ini: "AC", t: "now", text: noteText }, ...notes]); onAddNote?.(noteText); setNoteText(""); };
+  const { candidate: c, applied, email, phone, verdict: s, scorecards = [], parsed, activity = [], notes = [], nextSteps = [] } = data;
+  // Popover draft: lives independently of whether the popover is open, so closing
+  // it (click outside) does not lose what was typed — the button below shows a
+  // dot while a draft is pending, and reopening restores it.
+  const [noteDraft, setNoteDraft] = useState("");
+  const [notePopoverOpen, setNotePopoverOpen] = useState(false);
+  const [savingNote, setSavingNote] = useState(false);
+  const submitNote = async () => {
+    const text = noteDraft.trim();
+    if (!text || savingNote) return;
+    setSavingNote(true);
+    try {
+      await onAddNote?.(text);
+      setNoteDraft("");
+      setNotePopoverOpen(false);
+    } catch {
+      // Save failed — keep the popover open and the draft intact (the parent's
+      // onAddNote is expected to toast the specific error) rather than silently
+      // discarding what the user wrote.
+    } finally {
+      setSavingNote(false);
+    }
+  };
+  // Delete is a two-click arm/confirm on the note's own row (see the notes list
+  // below) — no modal, consistent with the note popover's own lightweight,
+  // click-outside-friendly style. Armed state clears on any outside click, on
+  // opening the note popover, or once the delete completes.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [hoveredNoteId, setHoveredNoteId] = useState<string | null>(null);
+  const confirmDelete = async (noteId: string) => {
+    setDeletingId(noteId);
+    try {
+      await onDeleteNote?.(noteId);
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
   const name = blind ? "Candidate " + (c.id || "C1").toUpperCase() : c.name;
   const stageLabel = stages.find((x) => x.id === c.stage)?.label || "Screening";
+
+  // "Suggested next steps" mini-stepper: this used to be four HARDCODED labels
+  // (Screened / You're here / Interview / Decide) regardless of the candidate's
+  // real stage — on anyone not literally between Screened and Interview it was
+  // simply wrong (most visibly: it still said "you're here" there for a
+  // candidate who had since been REJECTED). Now it's a real 4-wide window over
+  // the tenant's actual ordered stages, centered on wherever the candidate
+  // really is. HIRED/REJECTED/WITHDRAWN are terminal — a forward-looking
+  // "what's next" stepper doesn't apply once the pipeline has ended, so those
+  // render a plain status line instead (see the render below).
+  const TERMINAL_STAGES = new Set(["HIRED", "REJECTED", "WITHDRAWN"]);
+  const isTerminal = TERMINAL_STAGES.has(c.stage);
+  const activeStages = stages.filter((s) => !TERMINAL_STAGES.has(s.id));
+  const curIdx = activeStages.findIndex((s) => s.id === c.stage);
+  const winStart = Math.max(0, Math.min(curIdx - 1, activeStages.length - 4));
+  const stepWindow = activeStages.slice(winStart, winStart + 4);
+  const curWinIdx = curIdx - winStart;
 
   // D6 / WF-B slot seams — the resolved per-tenant UiConfig (fail-soft all-enabled
   // when unauthored) + the live route key drive which custom blocks mount. The
@@ -112,7 +169,43 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
           </div>
           <div style={{ display: "flex", gap: 9 }}>
             <Btn variant="soft" icon="calendar" onClick={onSchedule}>Schedule</Btn>
-            <Btn variant="soft" icon="fileText">Add note</Btn>
+            <div style={{ position: "relative" }}>
+              <Btn variant="soft" icon="fileText" onClick={() => setNotePopoverOpen((o) => !o)} style={{ position: "relative" }}>
+                Add note
+                {/* Draft dot: a note was started but not saved. No separate pane or
+                    label change — just this, per the "don't make it clumsy" ask. */}
+                {!notePopoverOpen && noteDraft.trim() !== "" && (
+                  <span title="Unsaved draft" style={{ position: "absolute", top: 3, right: 3, width: 7, height: 7, borderRadius: 99, background: "var(--warn)", border: "1.5px solid var(--surface)" }} />
+                )}
+              </Btn>
+              {notePopoverOpen && (
+                <>
+                  {/* Click-outside-to-close backdrop — closing this way keeps the
+                      draft (submitNote is the only path that clears it). */}
+                  <div onClick={() => setNotePopoverOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 320, zIndex: 60, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", boxShadow: "var(--e3)", padding: 14 }}>
+                    <textarea
+                      autoFocus
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submitNote(); }}
+                      rows={4}
+                      placeholder="Add a private team note…"
+                      style={{ width: "100%", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: 12.5, fontFamily: "var(--font-sans)", resize: "vertical", outline: "none" }}
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                      <Btn
+                        variant="primary" size="sm" icon="plus"
+                        onClick={savingNote ? undefined : submitNote}
+                        style={{ opacity: savingNote || !noteDraft.trim() ? 0.6 : 1, cursor: savingNote || !noteDraft.trim() ? "not-allowed" : "pointer" }}
+                      >
+                        {savingNote ? "Saving…" : "Save note"}
+                      </Btn>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <Btn variant="primary" icon="check" onClick={onAdvance}>Advance</Btn>
           </div>
         </div>
@@ -210,7 +303,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
               )}
             </Zone>
 
-            <Zone title="Interview scorecards" icon="fileText" action="All feedback">
+            <Zone title="Interview scorecards" icon="fileText" action="All feedback" onAction={onAllFeedback}>
               {scorecards.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {scorecards.map((sc, i) => (
@@ -235,7 +328,7 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
               ) : <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)" }}>No interview feedback yet.</p>}
             </Zone>
 
-            <Zone title="Parsed résumé" icon="fileText" ai action="View source">
+            <Zone title="Parsed résumé" icon="fileText" ai action="View source" onAction={onViewSource}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 <div>
                   <div style={{ ...LABEL, marginBottom: 8 }}>Fields</div>
@@ -279,45 +372,130 @@ export function CandidateProfile({ data, stages = [], idx = 0, total = 1, blind 
               </Zone>
             )}
             {canSee("recruiterNotes") && (
-            <Zone title="Notes" icon="fileText">
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-                <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} rows={2} placeholder="Add a private team note…" style={{ width: "100%", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: 12.5, fontFamily: "var(--font-sans)", resize: "vertical", outline: "none" }} />
-                <Btn variant="primary" size="sm" icon="plus" onClick={addNote} style={{ alignSelf: "flex-end" }}>Add note</Btn>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {notes.map((n, i) => (
-                  <div key={i} style={{ display: "flex", gap: 10 }}>
-                    <span className="mono" style={{ width: 26, height: 26, borderRadius: 99, flexShrink: 0, background: "var(--surface-3)", display: "grid", placeItems: "center", fontSize: 9.5, fontWeight: 700, color: "var(--ink-2)" }}>{n.ini}</span>
-                    <div><div style={{ fontSize: 12, marginBottom: 2 }}><b>{n.who}</b> <span className="mono" style={{ color: "var(--ink-3)", fontSize: 10.5 }}>· {n.t}</span></div><p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.5 }}>{n.text}</p></div>
-                  </div>
-                ))}
-              </div>
+            <Zone title="Notes" icon="fileText" action={notes.length ? undefined : "Add note"} onAction={notes.length ? undefined : () => setNotePopoverOpen(true)}>
+              {notes.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)" }}>No notes yet — use "Add note" above to start one.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {notes.map((n, i) => {
+                    const key = n.id ?? String(i);
+                    const armed = confirmDeleteId === key;
+                    const busy = deletingId === key;
+                    return (
+                      <div key={key}
+                        onMouseEnter={() => setHoveredNoteId(key)}
+                        onMouseLeave={() => setHoveredNoteId((h) => (h === key ? null : h))}
+                        style={{ display: "flex", gap: 10, position: "relative" }}>
+                        <span className="mono" style={{ width: 26, height: 26, borderRadius: 99, flexShrink: 0, background: "var(--surface-3)", display: "grid", placeItems: "center", fontSize: 9.5, fontWeight: 700, color: "var(--ink-2)" }}>{n.ini}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, marginBottom: 2 }}><b>{n.who}</b> <span className="mono" style={{ color: "var(--ink-3)", fontSize: 10.5 }}>· {n.t}</span></div>
+                          <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.5 }}>{n.text}</p>
+                        </div>
+                        {/* Only the author can undo their own note (an ADMIN override
+                            exists server-side for moderation, not surfaced here to
+                            keep this a plain "undo what I wrote" control). */}
+                        {n.mine && onDeleteNote && (
+                          armed ? (
+                            <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0, position: "relative", zIndex: 60 }}>
+                              <span style={{ fontSize: 11, color: "var(--danger)", fontWeight: 600, marginRight: 2 }}>Delete?</span>
+                              <button onClick={() => confirmDelete(key)} disabled={busy} title="Confirm delete" style={{ width: 22, height: 22, borderRadius: 6, border: "none", background: "var(--danger)", color: "white", display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>
+                                <Icon name="check" size={12} stroke={3} />
+                              </button>
+                              <button onClick={() => setConfirmDeleteId(null)} disabled={busy} title="Cancel" style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink-2)", display: "grid", placeItems: "center", cursor: "pointer" }}>
+                                <Icon name="x" size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteId(key)}
+                              title="Delete this note"
+                              style={{ width: 22, height: 22, flexShrink: 0, borderRadius: 6, border: "none", background: "transparent", color: "var(--ink-3)", display: "grid", placeItems: "center", cursor: "pointer", opacity: hoveredNoteId === key ? 1 : 0, transition: "opacity var(--t-fast)" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--danger-tint)"; e.currentTarget.style.color = "var(--danger)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--ink-3)"; }}
+                            >
+                              <Icon name="x" size={13} />
+                            </button>
+                          )
+                        )}
+                      </div>
+                    );
+                  })}
+                  {/* Click-outside cancels an armed confirm, same language as the
+                      note popover's own backdrop. */}
+                  {confirmDeleteId && <div onClick={() => setConfirmDeleteId(null)} style={{ position: "fixed", inset: 0, zIndex: 55 }} />}
+                </div>
+              )}
             </Zone>
             )}
             <Zone title="Suggested next steps" icon="sparkles" ai>
-              <svg viewBox="0 0 240 96" style={{ width: "100%", height: "auto", display: "block", marginBottom: 12 }} aria-hidden="true">
-                <defs><linearGradient id="cpNs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--ai)" /><stop offset="1" stopColor="var(--brand)" /></linearGradient></defs>
-                <path d="M16 72 H224" stroke="var(--line)" strokeWidth="1.5" />
-                {[40, 96, 152, 208].map((x, i) => (
-                  <g key={i}>
-                    <line x1={x} y1="72" x2={i < 3 ? x + 56 : x} y2="72" stroke={i < 2 ? "url(#cpNs)" : "var(--line-2)"} strokeWidth="2.5" />
-                    <circle cx={x} cy="72" r={i === 1 ? 8 : 6} fill={i < 2 ? "url(#cpNs)" : "var(--surface)"} stroke={i < 2 ? "none" : "var(--line-2)"} strokeWidth="2" />
-                    {i === 1 && <circle cx={x} cy="72" r="13" fill="none" stroke="var(--ai)" strokeWidth="1.5" opacity="0.4" />}
-                  </g>
-                ))}
-                <text x="40" y="44" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--ink-3)">SCREENED</text>
-                <text x="96" y="44" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--ai-ink)">YOU&#39;RE HERE</text>
-                <text x="152" y="44" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--ink-3)">INTERVIEW</text>
-                <text x="208" y="44" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--ink-3)">DECIDE</text>
-              </svg>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {nextSteps.map((step) => (
-                  <div key={step.title} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
-                    <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, display: "grid", placeItems: "center", background: "var(--ai-tint)", color: "var(--ai)" }}><Icon name={step.icon} size={14} /></span>
-                    <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{step.title}</div><div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>{step.detail}</div></div>
+              {isTerminal ? (
+                // A forward "what's next" stepper does not apply once the
+                // pipeline has ended — say so plainly instead of a stepper that
+                // would (as it did before this fix) still point at some stage
+                // in the middle of a process that is already over.
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 13px", marginBottom: 4, borderRadius: "var(--r)", background: c.stage === "HIRED" ? "var(--ok-tint)" : "var(--danger-tint)" }}>
+                  <Icon name={c.stage === "HIRED" ? "check" : "x"} size={15} style={{ color: c.stage === "HIRED" ? "var(--ok)" : "var(--danger)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: c.stage === "HIRED" ? "var(--ok)" : "var(--danger)" }}>
+                    {c.stage === "HIRED" ? "Hired — this pipeline is complete." : c.stage === "REJECTED" ? "Rejected — no further steps." : "Withdrawn — no further steps."}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <svg viewBox="0 0 240 96" style={{ width: "100%", height: "auto", display: "block", marginBottom: 12 }} aria-hidden="true">
+                    <defs><linearGradient id="cpNs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--ai)" /><stop offset="1" stopColor="var(--brand)" /></linearGradient></defs>
+                    <path d="M16 72 H224" stroke="var(--line)" strokeWidth="1.5" />
+                    {stepWindow.map((s, i) => {
+                      const x = 40 + i * 56;
+                      const passed = i <= curWinIdx;
+                      return (
+                        <g key={s.id}>
+                          <line x1={x} y1="72" x2={i < stepWindow.length - 1 ? x + 56 : x} y2="72" stroke={passed ? "url(#cpNs)" : "var(--line-2)"} strokeWidth="2.5" />
+                          <circle cx={x} cy="72" r={i === curWinIdx ? 8 : 6} fill={passed ? "url(#cpNs)" : "var(--surface)"} stroke={passed ? "none" : "var(--line-2)"} strokeWidth="2" />
+                          {i === curWinIdx && <circle cx={x} cy="72" r="13" fill="none" stroke="var(--ai)" strokeWidth="1.5" opacity="0.4" />}
+                        </g>
+                      );
+                    })}
+                    {stepWindow.map((s, i) => {
+                      const x = 40 + i * 56;
+                      if (i === curWinIdx) {
+                        // Smaller + italic + lowercase (unlike the all-caps real
+                        // stage names around it): this is a POINTER at a stage
+                        // ("you are here"), not a stage name itself — it read
+                        // like a fifth peer stage before this differentiation,
+                        // and was hardcoded to this position regardless of the
+                        // candidate's real stage before this fix.
+                        return <text key={s.id} x={x} y="44" textAnchor="middle" fontSize="7.5" fontStyle="italic" fontWeight="600" fill="var(--ai-ink)">you're here</text>;
+                      }
+                      // Real stage labels are now dynamic and can run to two
+                      // words ("PHONE SCREEN", "TECHNICAL ROUND", "HR ROUND"),
+                      // which collided with the fixed-width neighboring slot at
+                      // a single line. Wrap onto a second line at the FIRST
+                      // space instead of shrinking text to fit or truncating —
+                      // both node-neighbor collisions and unreadably-tiny text
+                      // would only get worse as tenants author longer stage
+                      // names, so this is the one label treatment that stays
+                      // correct regardless of label length.
+                      const label = s.label.toUpperCase();
+                      const spaceAt = label.indexOf(" ");
+                      const lines = spaceAt === -1 ? [label] : [label.slice(0, spaceAt), label.slice(spaceAt + 1)];
+                      const startY = lines.length === 2 ? 40 : 44;
+                      return (
+                        <text key={s.id} x={x} y={startY} textAnchor="middle" fontSize="8" fontWeight="700" fill="var(--ink-3)">
+                          {lines.map((line, li) => <tspan key={li} x={x} dy={li === 0 ? 0 : 9}>{line}</tspan>)}
+                        </text>
+                      );
+                    })}
+                  </svg>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {nextSteps.map((step) => (
+                      <div key={step.title} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "9px 11px", borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
+                        <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, display: "grid", placeItems: "center", background: "var(--ai-tint)", color: "var(--ai)" }}><Icon name={step.icon} size={14} /></span>
+                        <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{step.title}</div><div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>{step.detail}</div></div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
               <p style={{ margin: "11px 2px 0", fontSize: 10.5, color: "var(--ink-3)", display: "flex", gap: 6, alignItems: "center" }}><Icon name="shield" size={12} /> AI-suggested · you decide what happens next.</p>
             </Zone>
           </div>

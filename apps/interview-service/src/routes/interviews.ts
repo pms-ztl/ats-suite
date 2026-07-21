@@ -140,6 +140,36 @@ router.get("/:id", requireInterviewReader, async (req: Request, res: Response, n
   } catch (err) { next(err); }
 });
 
+const UpdateInterviewSchema = z.object({
+  scheduledAt: z.string().datetime().optional(),
+  duration: z.number().int().optional(),
+  location: z.string().optional(),
+});
+
+router.patch("/:id", requireScheduler, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const body = UpdateInterviewSchema.parse(req.body);
+    const interview = await prisma.interview.findFirst({ where: { id, tenantId } });
+    if (!interview) throw Errors.notFound("Interview");
+    const data: any = {};
+    if (body.scheduledAt !== undefined) {
+      const scheduledAt = new Date(body.scheduledAt);
+      data.scheduledAt = scheduledAt;
+      // Only relabel RESCHEDULED when the time actually moved — a duration/
+      // location-only edit isn't a reschedule.
+      if (!interview.scheduledAt || interview.scheduledAt.getTime() !== scheduledAt.getTime()) {
+        data.status = "RESCHEDULED";
+      }
+    }
+    if (body.duration !== undefined) data.duration = body.duration;
+    if (body.location !== undefined) data.location = body.location;
+    const updated = await prisma.interview.update({ where: { id }, data });
+    ok(res, updated);
+  } catch (err) { next(err); }
+});
+
 // ── POST /internal/interviews/:id/feedback ─────────────────────────────
 const FeedbackSchema = z.object({
   interviewerId: z.string().uuid(),

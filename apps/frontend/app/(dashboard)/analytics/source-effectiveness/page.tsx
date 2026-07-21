@@ -18,6 +18,7 @@ import { Icon } from "@/components/aurora-icon";
 import { Skeleton, EmptyState, ErrorState } from "@/components/aurora";
 import { BarsChart, colorAt } from "@/components/shared/charts";
 import { useData } from "@/lib/use-data";
+import { exportToCSV } from "@/lib/export";
 
 /* ---------- local raw() (unwrap res?.data ?? res) ---------- */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -103,7 +104,11 @@ export default function SourceEffectivenessPage() {
         </div>
         <div style={{ display: "flex", gap: 9 }}>
           <Pill icon="clock" tone="var(--c-ink-2)" style={{ padding: "7px 12px", fontSize: "var(--fs-sm)" }}>Last 90 days</Pill>
-          <Btn variant="primary" icon="arrowUpRight">Export</Btn>
+          <Btn variant="primary" icon="arrowUpRight" onClick={() => exportToCSV(
+            `source-effectiveness-${new Date().toISOString().slice(0, 10)}.csv`,
+            ["Channel", "Applications", "Hires", "Conversion %", "Cost per hire"],
+            rows.map((r) => [r.source, r.applied, r.hired, r.conversion, r.cost ?? ""]),
+          )}>Export</Btn>
         </div>
       </div>
 

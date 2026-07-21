@@ -14,9 +14,26 @@ import { CandidateAssessmentSection } from "./candidate-assessment-section";
 import { CandidateSummaryExport } from "@/components/shared/candidate-summary-export";
 import { HireActions } from "@/components/shared/hire-actions";
 import { useData } from "@/lib/use-data";
-import { getCandidate, getVerdict, listCandidates, listRequisitions, getCandidateInterviewScores } from "@/lib/api";
+import { getCandidate, getVerdict, listCandidates, listRequisitions, getCandidateInterviewScores, listCandidateNotes, addCandidateNote, deleteCandidateNote, patchApplicationStage, getResumeSource } from "@/lib/api";
+import type { ResumeSource } from "@/lib/api";
 import type { Candidate as GwCandidate, ScreeningVerdict, ScreeningResult, RequirementMatch, Requisition } from "@/lib/types";
-import type { CandidateProfileData, CandStage, Candidate as CdCandidate, ProfileVerdict, ReqBreakdown, ParsedResume, ProfileDimension } from "./types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import type { CandidateProfileData, CandStage, Candidate as CdCandidate, ProfileVerdict, ReqBreakdown, ParsedResume, ProfileDimension, ProfileNote } from "./types";
+import { toast } from "sonner";
+
+// "just now" for a fresh note, else a short relative time — matches the compact
+// style already used elsewhere on this page (interview "in 34m" etc.) rather
+// than a full timestamp that would not fit the note-row layout.
+function relTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!isFinite(ms) || ms < 0) return "just now";
+  const m = Math.round(ms / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
 
 type Kind = "pass" | "review" | "fail";
 const KIND: Record<ScreeningResult, Kind> = { PASS: "pass", REVIEW: "review", FAIL: "fail" };
@@ -86,6 +103,10 @@ const STAGE_META: Record<string, { label: string; color: string }> = {
   WITHDRAWN: { label: "Withdrawn", color: "var(--ink-3)" },
 };
 const STAGES: CandStage[] = Object.entries(STAGE_META).map(([id, m]) => ({ id, label: m.label, color: m.color }));
+// STAGE_META's own key order already runs APPLIED -> HIRED (see above), so the
+// forward-progression order "Advance" needs is just its keys minus the two
+// terminal-decline stages (REJECTED/WITHDRAWN are never an "advance" target).
+const STAGE_ORDER = Object.keys(STAGE_META).filter((s) => s !== "REJECTED" && s !== "WITHDRAWN");
 
 const initials = (name: string) => {
   const p = (name || "").trim().split(/\s+/).filter(Boolean);
@@ -106,7 +127,10 @@ export function CandidateProfileLive() {
   const reqs = useData<Requisition[]>(listRequisitions, []);
   // Real interview scores for the intelligent candidate-summary export (honest-empty).
   const ivScores = useData<string[]>(() => getCandidateInterviewScores(id), [id]);
+  const notesQuery = useData(() => listCandidateNotes(id), [id]);
+  const resumeSource = useData<ResumeSource | null>(() => getResumeSource(id), [id]);
   const [blind, setBlind] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   const list = roster.data ?? [];
   const idx = useMemo(() => list.findIndex((x) => x.id === id), [list, id]);
@@ -166,6 +190,18 @@ export function CandidateProfileLive() {
     match: "", source: c.source ?? "Direct", days: c.timeInStageDays ?? 0,
   };
 
+  // Real, persisted notes (GET /candidates/:id/notes) — newest first, as
+  // CandidateProfile expects. Empty/loading both render as [] (an honest empty
+  // state, not a fabricated placeholder note).
+  const profileNotes: ProfileNote[] = (notesQuery.data ?? []).map((n) => ({
+    id: n.id,
+    who: n.mine ? "You" : (n.authorEmail ?? "Teammate"),
+    ini: n.mine ? "Y" : (n.authorEmail ? n.authorEmail[0]!.toUpperCase() : "T"),
+    t: relTime(n.createdAt),
+    text: n.content,
+    mine: n.mine,
+  }));
+
   const data: CandidateProfileData = {
     candidate: cdCandidate,
     applied: fmtDate(c.appliedAt),
@@ -175,7 +211,7 @@ export function CandidateProfileLive() {
     scorecards: [],
     parsed,
     activity: [],
-    notes: [],
+    notes: profileNotes,
     nextSteps: [
       { icon: "scan", title: "Open the AI screening verdict", detail: "Review the requirement-by-requirement match" },
       { icon: "calendar", title: "Schedule an interview", detail: "Move this candidate to the next round" },
@@ -197,7 +233,16 @@ export function CandidateProfileLive() {
   const dimLines = (profileVerdict.dimensions ?? [])
     .filter((d) => d.scored)
     .map((d) => `${d.label}: ${d.pct}% (${d.met}/${d.total} requirements met)`);
+  // Blind review hides identity ON SCREEN to reduce bias. The export must match
+  // that exactly, so redaction lives ENTIRELY inside CandidateSummaryExport /
+  // buildDoc (components/shared/candidate-summary-export.tsx) — not here. We
+  // always pass the real, complete data plus the `blind` flag; the shared
+  // component is the single place that decides what's safe to show, so a future
+  // field added here can't accidentally ship unredacted the way the raw parsed-
+  // resume summary once did (it used to be pasted in below unconditionally,
+  // and its free text opened with the candidate's own name).
   const summary = {
+    id: c.id,
     name: c.name,
     email: c.email,
     phone: c.phone,
@@ -206,9 +251,8 @@ export function CandidateProfileLive() {
     stage: c.stage,
     score: profileVerdict.score || null,
     band: profileVerdict.band,
-    scoreSummary: [profileVerdict.summary, ...dimLines, c.parsedSummaryText]
-      .filter(Boolean)
-      .join("\n"),
+    aiSummaryLines: [profileVerdict.summary, ...dimLines].filter(Boolean),
+    parsedResumeSummary: c.parsedSummaryText || null,
     skills: (parsed?.skills ?? []).map((s: any) => (typeof s === "string" ? s : s?.n ?? s?.name ?? "")).filter(Boolean),
     tags: c.tags ?? [],
     experience: c.experience ?? [],
@@ -221,7 +265,7 @@ export function CandidateProfileLive() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, padding: "8px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 }}>
-        <CandidateSummaryExport candidate={summary} />
+        <CandidateSummaryExport candidate={summary} blind={blind} />
         <HireActions applicationId={(c as any).applicationId} stage={c.stage} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
@@ -251,10 +295,68 @@ export function CandidateProfileLive() {
           onBack={() => router.push("/candidates")}
           onNav={onNav}
           onToggleBlind={() => setBlind((b) => !b)}
-          onVerdict={() => router.push("/screening")}
-          onSchedule={() => router.push("/scheduling")}
+          onVerdict={() => router.push(`/screening?candidateId=${c.id}`)}
+          onAllFeedback={() => router.push(`/interviews?candidateId=${c.id}`)}
+          onAddNote={async (text) => {
+            try {
+              await addCandidateNote(c.id, text);
+              notesQuery.reload();
+            } catch {
+              toast.error("Couldn't save the note — try again.");
+              throw new Error("save failed"); // tells the popover to keep the draft open
+            }
+          }}
+          onDeleteNote={async (noteId) => {
+            try {
+              await deleteCandidateNote(c.id, noteId);
+              notesQuery.reload();
+            } catch {
+              toast.error("Couldn't delete the note — try again.");
+            }
+          }}
+          onSchedule={() => {
+            // Carries this candidate (+ their requisition, if known) into the
+            // Scheduling form so it opens pre-filled instead of empty.
+            const params = new URLSearchParams({ candidateId: c.id });
+            if (c.requisitionId) params.set("requisitionId", c.requisitionId);
+            router.push(`/scheduling?${params.toString()}`);
+          }}
+          onAdvance={async () => {
+            const appId = c.applicationId;
+            const from = STAGE_ORDER.indexOf(c.stage);
+            if (!appId || from < 0 || from >= STAGE_ORDER.length - 1) {
+              toast.error(`${c.name} is already at ${STAGE_META[c.stage]?.label ?? c.stage} — nothing further to advance to.`);
+              return;
+            }
+            const next = STAGE_ORDER[from + 1]!;
+            try {
+              await patchApplicationStage(appId, { stage: next as any });
+              toast.success(`Advanced to ${STAGE_META[next]?.label ?? next}.`);
+              cand.reload();
+            } catch {
+              toast.error("Couldn't advance — try again.");
+            }
+          }}
+          onViewSource={() => setSourceOpen(true)}
         />
       </div>
+      <Dialog open={sourceOpen} onOpenChange={setSourceOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Parsed résumé source</DialogTitle>
+            {(resumeSource.data?.originalFilename || resumeSource.data?.fileName) && (
+              <DialogDescription>Parsed from: {resumeSource.data.originalFilename || resumeSource.data.fileName}</DialogDescription>
+            )}
+          </DialogHeader>
+          {resumeSource.data?.extractedText ? (
+            <div style={{ maxHeight: 420, overflowY: "auto", padding: 12, borderRadius: "var(--r)", border: "1px solid var(--line)", background: "var(--surface-2)", fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap", fontFamily: "var(--font-mono)" }}>
+              {resumeSource.data.extractedText}
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)" }}>No parsed source text available for this candidate.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

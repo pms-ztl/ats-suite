@@ -22,7 +22,7 @@ import { runParsePipeline } from "../lib/parse-pipeline.js";
 import { nameFromFileName } from "../lib/guess.js";
 
 const reparseLogger = createLogger({ serviceName: "resume-service:reparse" });
-import { upsertCandidate, checkResumeQuota } from "../lib/service-client.js";
+import { upsertCandidate, checkResumeQuota, checkExistingCandidates } from "../lib/service-client.js";
 import { extractResumeText } from "../lib/extract.js";
 import { buildKey, putObject, getPresignedDownloadUrl, isStorageConfigured } from "../lib/storage.js";
 
@@ -346,39 +346,136 @@ router.post(
   }
 );
 
+// ── GET /internal/resume/bulk — open archive imports needing attention ───
+// Lets the upload screen surface imports the recruiter never finished
+// reviewing (e.g. they navigated away mid-extraction and lost the bulkId,
+// which used to live only in frontend component state). Declared BEFORE the
+// GET /:candidateId dynamic route below so a bare "bulk" path segment can
+// never be swallowed as a candidateId. Scoped to archive-ingest rows
+// (archiveName set — loose-file bulk has no review screen to reattach to).
+//
+// Filters on `phase`, NOT `completedAt`: for archive rows, completedAt is only
+// set by the resume-parse worker's tickBulk() once (processedFiles+failedFiles)
+// reaches totalFiles — but totalFiles is every EXTRACTED file, while only
+// APPROVED items get enqueued for parsing. Any import where some extracted
+// files were rejected in review (the common case) never reaches that count, so
+// completedAt stays null forever even after phase flips to 'done'. `phase` is
+// set synchronously at each transition (extracting/review/committing/done/
+// failed) and is the reliable signal for "is this import still open."
+router.get("/bulk", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const rows = await prisma.bulkUpload.findMany({
+      where: {
+        tenantId,
+        archiveName: { not: null },
+        phase: { notIn: ["done", "failed"] },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+    ok(res, {
+      uploads: rows.map((row) => ({
+        id: row.id,
+        archiveName: row.archiveName,
+        phase: row.phase,
+        status: row.status,
+        totalFiles: row.totalFiles,
+        extractedCount: row.extractedCount,
+        pendingCount: row.pendingCount,
+        approvedCount: row.approvedCount,
+        createdAt: row.createdAt,
+      })),
+    });
+  } catch (err) { next(err); }
+});
+
+// Shared by GET /bulk/:id and POST /bulk/:id/review-all — both need to hand
+// the frontend the FULL current status (review-all used to return only the
+// three review counters; toBulkStatus() defaults every missing field,
+// including phase, which silently flipped the screen to "extracting" after
+// any bulk approve/reject click, not just the new reject-duplicates one).
+async function buildBulkStatusResponse(bulkUploadId: string, tenantId: string, userId: string) {
+  const row = await prisma.bulkUpload.findFirst({ where: { id: bulkUploadId, tenantId } });
+  if (!row) throw Errors.notFound("Bulk upload");
+  // Archive-ingest rows (archiveName set) track real progress via the
+  // staging counters, not processedFiles/failedFiles (those stay 0 for the
+  // whole archive lifecycle — they belong to the older loose-file path).
+  // While extracting, extractedCount/totalFiles is the honest fraction
+  // (totalFiles lands once extraction finishes). While committing/done,
+  // approvedCount — not totalFiles — is the right denominator: totalFiles
+  // counts every extracted file, including ones rejected in review that
+  // will never be committed.
+  const isArchive = row.archiveName != null;
+  let progress: number;
+  if (isArchive) {
+    progress = row.phase === "committing" || row.phase === "done"
+      ? (row.approvedCount > 0 ? Math.round((row.committedCount / row.approvedCount) * 100) : 0)
+      : (row.totalFiles > 0 ? Math.round((row.extractedCount / row.totalFiles) * 100) : 0);
+  } else {
+    progress = row.totalFiles > 0
+      ? Math.round(((row.processedFiles + row.failedFiles) / row.totalFiles) * 100)
+      : 0;
+  }
+  const { duplicateCount } = await computeDuplicates(bulkUploadId, tenantId, userId);
+  return {
+    id: row.id,
+    status: row.status,
+    // Archive-ingest lifecycle fields (additive; loose-file bulk leaves
+    // phase at its 'extracting' default and these counters at 0).
+    phase: row.phase,
+    archiveName: row.archiveName,
+    totalFiles: row.totalFiles,
+    processedFiles: row.processedFiles,
+    failedFiles: row.failedFiles,
+    // Staging counters
+    extractedCount: row.extractedCount,
+    pendingCount: row.pendingCount,
+    approvedCount: row.approvedCount,
+    rejectedCount: row.rejectedCount,
+    committedCount: row.committedCount,
+    duplicateCount,
+    // parse/screen progress (reuses the resume-parse worker's tick)
+    parsedFiles: row.processedFiles,
+    progress,
+    errors: row.errors,
+    requisitionId: row.requisitionId,
+    createdAt: row.createdAt,
+    completedAt: row.completedAt,
+  };
+}
+
 // ── GET /internal/resume/bulk/:id — poll ────────────────────────────────
 router.get("/bulk/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
+    const userId = getUserId(req);
     const id = req.params["id"] as string;
-    const row = await prisma.bulkUpload.findFirst({ where: { id, tenantId } });
-    if (!row) throw Errors.notFound("Bulk upload");
-    ok(res, {
-      id: row.id,
-      status: row.status,
-      // Archive-ingest lifecycle fields (additive; loose-file bulk leaves
-      // phase at its 'extracting' default and these counters at 0).
-      phase: row.phase,
-      archiveName: row.archiveName,
-      totalFiles: row.totalFiles,
-      processedFiles: row.processedFiles,
-      failedFiles: row.failedFiles,
-      // Staging counters
-      extractedCount: row.extractedCount,
-      pendingCount: row.pendingCount,
-      approvedCount: row.approvedCount,
-      rejectedCount: row.rejectedCount,
-      committedCount: row.committedCount,
-      // parse/screen progress (reuses the resume-parse worker's tick)
-      parsedFiles: row.processedFiles,
-      progress: row.totalFiles > 0
-        ? Math.round(((row.processedFiles + row.failedFiles) / row.totalFiles) * 100)
-        : 0,
-      errors: row.errors,
-      requisitionId: row.requisitionId,
-      createdAt: row.createdAt,
-      completedAt: row.completedAt,
-    });
+    ok(res, await buildBulkStatusResponse(id, tenantId, userId));
+  } catch (err) { next(err); }
+});
+
+// ── DELETE /internal/resume/bulk/:id — discard an import's staging data ──
+// Only removes this service's own rows (BulkUpload + its BulkImportItem
+// staging rows). Never touches Candidate/Resume rows in candidate-service —
+// those are separate, already-real records once committed, so discarding a
+// finished import's history doesn't undo anything it already created.
+// Blocked mid-flight (extracting/committing) since a worker is actively
+// writing to this row; safe once it's sitting in review/done/failed.
+router.delete("/bulk/:id", requireUploader, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = req.params["id"] as string;
+    const bulk = await prisma.bulkUpload.findFirst({ where: { id, tenantId } });
+    if (!bulk) throw Errors.notFound("Bulk upload");
+    if (bulk.phase === "extracting" || bulk.phase === "committing") {
+      throw Errors.validation(`Can't delete an import while it's still ${bulk.phase} — wait for it to finish.`);
+    }
+    await prisma.$transaction([
+      prisma.bulkImportItem.deleteMany({ where: { bulkUploadId: id, tenantId } }),
+      prisma.bulkUpload.delete({ where: { id } }),
+    ]);
+    ok(res, { deleted: true, id });
   } catch (err) { next(err); }
 });
 
@@ -386,6 +483,7 @@ router.get("/bulk/:id", async (req: Request, res: Response, next: NextFunction) 
 router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
+    const userId = getUserId(req);
     const id = req.params["id"] as string;
     const bulk = await prisma.bulkUpload.findFirst({ where: { id, tenantId } });
     if (!bulk) throw Errors.notFound("Bulk upload");
@@ -413,6 +511,8 @@ router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunc
     const items = hasMore ? rows.slice(0, limit) : rows;
     const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null;
 
+    const { byItemId } = await computeDuplicates(id, tenantId, userId);
+
     ok(res, {
       items: items.map((it) => ({
         id: it.id,
@@ -429,6 +529,7 @@ router.get("/bulk/:id/items", async (req: Request, res: Response, next: NextFunc
         scoreStatus: it.scoreStatus,
         candidateId: it.candidateId,
         createdAt: it.createdAt,
+        duplicateReason: byItemId.get(it.id) ?? null,
       })),
       nextCursor,
     });
@@ -470,11 +571,12 @@ router.patch("/bulk/:id/items/:itemId", requireUploader, express.json({ limit: "
 
 // ── POST /internal/resume/bulk/:id/review-all — bulk approve/reject ──────
 const ReviewAllSchema = z.object({
-  action: z.enum(["approve-nonempty", "reject-empty", "approve-all"]),
+  action: z.enum(["approve-nonempty", "reject-empty", "approve-all", "reject-duplicates"]),
 });
 router.post("/bulk/:id/review-all", requireUploader, express.json({ limit: "1mb" }), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = getTenantId(req);
+    const userId = getUserId(req);
     const id = req.params["id"] as string;
     const { action } = ReviewAllSchema.parse(req.body);
 
@@ -497,6 +599,12 @@ router.post("/bulk/:id/review-all", requireUploader, express.json({ limit: "1mb"
         where: { bulkUploadId: id, tenantId, extractStatus: { not: "extracted" } },
         data: { reviewStatus: "rejected" },
       });
+    } else if (action === "reject-duplicates") {
+      const { byItemId } = await computeDuplicates(id, tenantId, userId);
+      await prisma.bulkImportItem.updateMany({
+        where: { id: { in: [...byItemId.keys()] }, tenantId },
+        data: { reviewStatus: "rejected" },
+      });
     } else {
       // reject-empty: reject anything that didn't yield text (leave the rest).
       await prisma.bulkImportItem.updateMany({
@@ -505,8 +613,8 @@ router.post("/bulk/:id/review-all", requireUploader, express.json({ limit: "1mb"
       });
     }
 
-    const counters = await recomputeReviewCounters(id, tenantId);
-    ok(res, counters);
+    await recomputeReviewCounters(id, tenantId);
+    ok(res, await buildBulkStatusResponse(id, tenantId, userId));
   } catch (err) { next(err); }
 });
 
@@ -636,6 +744,21 @@ router.get("/:candidateId", async (req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 });
 
+// ── DELETE /internal/resume?candidateId= — GDPR erasure leg ─────────────
+// Called by the gateway's GDPR delete fan-out (api-gateway/routes/gdpr.ts).
+// That fan-out already targets this exact path but the route never existed
+// here, so it silently 404'd and every GDPR delete reported the resume leg
+// as "failed-or-skipped" while the candidate's résumé text stayed behind.
+router.delete("/", requireUploader, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = getTenantId(req);
+    const candidateId = req.query["candidateId"] as string | undefined;
+    if (!candidateId) throw Errors.validation("candidateId query param is required");
+    await prisma.resume.deleteMany({ where: { tenantId, candidateId } });
+    ok(res, { candidateId, deleted: true });
+  } catch (err) { next(err); }
+});
+
 // ── GET /internal/resume/:resumeId/download-url ─────────────────────────
 // Phase 35b — generate a 10-minute presigned URL for the resume binary.
 // Recruiter clicks "Download original" in /candidates; we hand them a
@@ -683,6 +806,45 @@ router.post("/reparse/:candidateId", requireRole("ADMIN", "RECRUITER"), async (r
     ok(res, { reparsed: true, resumeId: r.id, ...out });
   } catch (err) { next(err); }
 });
+
+/**
+ * Duplicate detection for the ZIP/archive review screen — reuses the exact
+ * in-file-duplicate + existing-candidate precedence from the CSV import's
+ * /preview route (candidate-service import.ts): dupedInFile is checked FIRST,
+ * so an email repeated within this batch is tagged "in_file" even if it also
+ * happens to match an existing candidate.
+ */
+async function computeDuplicates(bulkUploadId: string, tenantId: string, userId: string):
+  Promise<{ byItemId: Map<string, "existing" | "in_file">; duplicateCount: number }> {
+  const items = await prisma.bulkImportItem.findMany({
+    where: { bulkUploadId, tenantId },
+    select: { id: true, detectedEmail: true },
+  });
+
+  const seenInFile = new Set<string>();
+  const dupedInFile = new Set<string>();
+  for (const it of items) {
+    const e = it.detectedEmail?.toLowerCase();
+    if (!e) continue;
+    if (seenInFile.has(e)) dupedInFile.add(e);
+    seenInFile.add(e);
+  }
+
+  const existingByEmail = await checkExistingCandidates([...seenInFile], tenantId, userId);
+
+  const byItemId = new Map<string, "existing" | "in_file">();
+  for (const it of items) {
+    const e = it.detectedEmail?.toLowerCase();
+    if (!e) continue;
+    if (dupedInFile.has(e)) {
+      byItemId.set(it.id, "in_file");
+    } else if (existingByEmail.has(e)) {
+      byItemId.set(it.id, "existing");
+    }
+  }
+
+  return { byItemId, duplicateCount: byItemId.size };
+}
 
 /**
  * Recompute the BulkUpload's pending/approved/rejected counters from the actual

@@ -68,21 +68,44 @@ async function pdfToPngBuffers(pdfBuffer: Buffer): Promise<Buffer[]> {
   const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const canvasMod: any = await import("@napi-rs/canvas");
 
-  // pdfjs requires the worker URL to be set OR disabled. In Node we
-  // run inline (no separate worker) for simplicity.
+  // pdfjs-dist detects Node itself and runs inline (no real worker thread).
+  // Two things had to be fixed for that to actually work in this repo:
+  //
+  // 1. Its "fake worker" dynamically imports its own worker-side module by
+  //    the bare relative specifier "./pdf.worker.mjs" — resolving that
+  //    explicitly, from this module's own location, guarantees the copy that
+  //    matches OUR installed version (see workerSrc below).
+  // 2. pdf-parse (tried before OCR, in extract.ts) has its OWN, different,
+  //    hoisted copy of pdfjs-dist, and — as a side effect of pdf-parse's own
+  //    first use — that OTHER copy stamps a process-wide `globalThis.pdfjsWorker`.
+  //    pdfjs-dist checks that global BEFORE even looking at workerSrc, so by
+  //    the time we get here (always after a pdf-parse attempt) it finds
+  //    pdf-parse's stale handler and throws "API version ... does not match
+  //    Worker version ..." on every single call — (1) above never even ran.
+  //    Clearing the global first forces OUR copy to resolve its own worker
+  //    via workerSrc instead; restoring it after leaves pdf-parse's own
+  //    behavior on the next file untouched.
+  const globalScope = globalThis as { pdfjsWorker?: unknown };
+  const priorGlobalWorker = globalScope.pdfjsWorker;
+  delete globalScope.pdfjsWorker;
   if (pdfjs.GlobalWorkerOptions) {
-    pdfjs.GlobalWorkerOptions.workerSrc = false;
+    pdfjs.GlobalWorkerOptions.workerSrc = import.meta.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
   }
 
   const data = new Uint8Array(pdfBuffer);
-  const loadingTask = pdfjs.getDocument({
-    data,
-    // Suppress the warnings pdfjs spams about Node-specific quirks
-    disableFontFace: true,
-    useSystemFonts: false,
-    isEvalSupported: false,
-  });
-  const pdf = await loadingTask.promise;
+  let pdf;
+  try {
+    const loadingTask = pdfjs.getDocument({
+      data,
+      // Suppress the warnings pdfjs spams about Node-specific quirks
+      disableFontFace: true,
+      useSystemFonts: false,
+      isEvalSupported: false,
+    });
+    pdf = await loadingTask.promise;
+  } finally {
+    if (priorGlobalWorker !== undefined) globalScope.pdfjsWorker = priorGlobalWorker;
+  }
   const numPages = Math.min(pdf.numPages, MAX_PAGES_OCR);
 
   const pngs: Buffer[] = [];

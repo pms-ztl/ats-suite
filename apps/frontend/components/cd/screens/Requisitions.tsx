@@ -28,6 +28,12 @@ export function Requisitions({ data, onCreate, onOpen, onExport, ribbonSlot }: {
   const pad = dense ? "8px 16px" : "13px 16px";
   const cols = "1.8fr 1fr 1.1fr 90px 80px 130px 90px";
   const { sorted, sort, toggle: toggleSort } = useTableSort(rows, { key: "created", dir: "desc" });
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // clamp inline rather than useEffect: keeps page in range the instant filters shrink `rows`, no extra render
+  const curPage = Math.min(page, pageCount - 1);
+  const pageRows = sorted.slice(curPage * PAGE_SIZE, curPage * PAGE_SIZE + PAGE_SIZE);
 
   const Select = ({ val, set, opts, render }: { val: string; set: (v: string) => void; opts: string[]; render?: (o: string) => string }) => (
     <select value={val} onChange={(e) => set(e.target.value)} style={{ padding: "8px 10px", borderRadius: "var(--r)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: "var(--fs-sm)", fontWeight: 600, fontFamily: "var(--font-sans)", cursor: "pointer" }}>
@@ -74,7 +80,7 @@ export function Requisitions({ data, onCreate, onOpen, onExport, ribbonSlot }: {
             <SortHead label="Recruiter" sortKey="rec" sort={sort} onSort={toggleSort} />
             <SortHead label="Created" sortKey="created" sort={sort} onSort={toggleSort} align="right" className="justify-end" style={{ width: "100%" }} />
           </div>
-          {sorted.map((r, i) => {
+          {pageRows.map((r, i) => {
             const m = statusMeta[r.status];
             return (
               <div key={r.id} onClick={() => onOpen?.(r.id)} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, padding: pad, alignItems: "center", borderTop: i ? "1px solid var(--line)" : "none", cursor: "pointer", transition: "background var(--t-fast)" }}
@@ -101,10 +107,10 @@ export function Requisitions({ data, onCreate, onOpen, onExport, ribbonSlot }: {
           {rows.length === 0 && <div style={{ padding: "40px", textAlign: "center", color: "var(--ink-3)", fontSize: "var(--fs-sm)" }}>No requisitions match your filters.</div>}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, fontSize: 12.5, color: "var(--ink-3)" }}>
-          <span>Showing {rows.length} of {allRows.length}</span>
+          <span>{pageCount === 1 ? `Showing ${rows.length} of ${rows.length}` : `Showing ${curPage * PAGE_SIZE + 1}–${Math.min((curPage + 1) * PAGE_SIZE, rows.length)} of ${rows.length}`}</span>
           <div style={{ display: "flex", gap: 6 }}>
-            <button style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink-3)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font-sans)" }}>Previous</button>
-            <button style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 600 }}>Next</button>
+            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={curPage === 0} style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink-3)", cursor: curPage === 0 ? "not-allowed" : "pointer", fontSize: 12, fontFamily: "var(--font-sans)", opacity: curPage === 0 ? 0.5 : 1 }}>Previous</button>
+            <button onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={curPage === pageCount - 1} style={{ padding: "6px 11px", borderRadius: "var(--r-sm)", border: "1px solid var(--line-2)", background: "var(--surface)", color: "var(--ink)", fontSize: 12, cursor: curPage === pageCount - 1 ? "not-allowed" : "pointer", fontFamily: "var(--font-sans)", fontWeight: 600, opacity: curPage === pageCount - 1 ? 0.5 : 1 }}>Next</button>
           </div>
         </div>
       </div>

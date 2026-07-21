@@ -7,6 +7,7 @@
 //   - "Resume files": multi-file dropzone (PDF/DOCX/DOC/TXT/images) -> /api/resume/bulk,
 //     which creates a candidate per file (the AI parser backfills details).
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Btn, Pill } from "@/components/aurora-kit";
 import { Icon } from "@/components/aurora-icon";
 import { bulkUploadResumes, previewCandidateImport, commitCandidateImport, type ImportPreview } from "@/lib/api";
@@ -48,7 +49,11 @@ const cand = (r: ImportPreview["preview"][number]) => ({
 
 export default function ImportScreen() {
   const onBack = () => { window.location.href = "/candidates"; };
-  const [mode, setMode] = useState<Mode>("csv");
+  // A bulkId in the URL means an archive import is mid-flight or waiting for
+  // review (see ArchiveImport.tsx) — land on that tab instead of the CSV
+  // default, or the reattach would mount a tab that never reads the param.
+  const hasOpenArchive = useSearchParams().get("bulkId") != null;
+  const [mode, setMode] = useState<Mode>(hasOpenArchive ? "archive" : "csv");
   const [step, setStep] = useState(1);
   const steps = mode === "resume" ? ["Upload", "Done"] : ["Upload", "Map columns", "Preview", "Done"];
 
